@@ -56,9 +56,18 @@ async function initDatabase() {
           all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
         }),
         exec: async (sql) => {
+          console.log('Turso exec called with SQL length:', sql.length);
           const statements = sql.split(';').filter(s => s.trim());
+          console.log('Number of statements:', statements.length);
           for (const stmt of statements) {
-            if (stmt.trim()) await client.execute({ sql: stmt });
+            if (stmt.trim()) {
+              console.log('Executing:', stmt.substring(0, 50) + '...');
+              try {
+                await client.execute({ sql: stmt });
+              } catch (e) {
+                console.error('Error executing statement:', e.message);
+              }
+            }
           }
         }
       };
