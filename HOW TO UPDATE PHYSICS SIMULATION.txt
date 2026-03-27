@@ -1,0 +1,110 @@
+================================================================================
+                    HOW TO UPDATE PHYSICS SIMULATION SITE
+================================================================================
+
+GITHUB REPO:   https://github.com/awork5814-hue/physics-sim-site
+LIVE SITE:     https://physics-sim-site.onrender.com
+
+================================================================================
+                           UPDATE PROCESS
+================================================================================
+
+STEP 1: Make your changes in the local folder:
+   /home/amr/physics-sim-site
+
+STEP 2: Commit and push changes:
+
+   Method A - Using terminal command (copy & paste):
+   -------------------------------------------------
+   cd /home/amr/physics-sim-site && git add . && git commit -m "Update" && git push origin main
+
+
+   Method B - Step by step:
+   -------------------------
+   cd /home/amr/physics-sim-site
+   git add .
+   git commit -m "Describe your changes here"
+   git push origin main
+
+
+STEP 3: Wait for auto-deploy
+   - Render will automatically detect the push
+   - Wait 1-2 minutes for deployment to complete
+   - Visit your site to verify changes
+
+
+================================================================================
+                           COMMON COMMANDS
+================================================================================
+
+Check git status:
+   cd /home/amr/physics-sim-site && git status
+
+View commit history:
+   cd /home/amr/physics-sim-site && git log --oneline
+
+Check what's changed:
+   cd /home/amr/physics-sim-site && git diff
+
+
+================================================================================
+                           IMPORTANT NOTES
+================================================================================
+
+1. MINIFIED FILES: If you modify styles.css or app.js, also update the
+   minified versions (styles.min.css, app.min.js) or remove them from gitignore
+
+2. DATABASE: Current setup uses SQLite which does NOT persist on Render.
+   User data will be lost on each deploy. See DATABASE SETUP below.
+
+3. ENVIRONMENT VARIABLES: These are set in Render dashboard, not in code:
+   - JWT_SECRET
+   - PORT
+   - NODE_ENV
+
+
+================================================================================
+                        DATABASE SETUP (PERSISTENT)
+================================================================================
+
+CURRENT STATE:
+   - Using SQLite (NOT persistent on Render free tier)
+   - User accounts/ progress will reset on restart
+
+RECOMMENDED SOLUTION: Turso (libSQL - Free)
+
+STEP 1: Create Turso Database
+   - Go to https://turso.tech
+   - Sign up and create free account
+   - Create new database: "physics-sim"
+   - Get DATABASE_URL and AUTH_TOKEN
+
+STEP 2: Add Environment Variables in Render:
+   TURSO_DATABASE_URL=libsql://your-database.turso.io
+   TURSO_AUTH_TOKEN=your-auth-token
+
+STEP 3: Update server.js to use Turso
+   (Contact developer for this step)
+
+
+================================================================================
+                           DEPLOYMENT INFO
+================================================================================
+
+RENDER DASHBOARD:  https://dashboard.render.com
+SERVICE NAME:      physics-sim-site
+BUILD COMMAND:     npm install
+START COMMAND:     node server.js
+
+
+================================================================================
+                           HELPFUL TIPS
+================================================================================
+
+- Always test locally before pushing: node server.js
+- Check Render logs if something breaks: Dashboard → Logs
+- Use "git stash" if you want to temporarily save changes without committing
+- The site auto-deploys on every push to main branch
+
+
+================================================================================
