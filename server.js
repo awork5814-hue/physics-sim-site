@@ -248,7 +248,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     const token = generateToken(userId);
-    const user = db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified FROM users WHERE id = ?').get(userId);
+    const user = await db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified FROM users WHERE id = ?').get(userId);
 
     res.json({ 
       success: true, 
@@ -286,12 +286,12 @@ app.post('/api/auth/signin', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
+    await db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?').run(user.id);
 
     const token = generateToken(user.id);
     
-    const userData = db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified FROM users WHERE id = ?').get(user.id);
-    const progressData = db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(user.id);
+    const userData = await db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified FROM users WHERE id = ?').get(user.id);
+    const progressData = await db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(user.id);
 
     res.json({ 
       success: true, 
@@ -327,8 +327,8 @@ app.post('/api/auth/verify', authMiddleware, (req, res) => {
   res.json({ success: true, user });
 });
 
-app.get('/api/auth/user-data', authMiddleware, (req, res) => {
-  const userData = db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(req.userId);
+app.get('/api/auth/user-data', authMiddleware, async (req, res) => {
+  const userData = await db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(req.userId);
   if (!userData) {
     return res.json({ success: true, data: null });
   }
@@ -345,7 +345,7 @@ app.get('/api/auth/user-data', authMiddleware, (req, res) => {
   });
 });
 
-app.post('/api/auth/user-data', authMiddleware, (req, res) => {
+app.post('/api/auth/user-data', authMiddleware, async (req, res) => {
   const { favorites, achievements, quizProgress, streakCount, streakLastDate, settings } = req.body;
   
   const updates = [];
@@ -392,7 +392,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+    const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
     
     if (!user) {
       return res.json({ success: true, message: 'If email exists, reset instructions will be sent' });
@@ -401,7 +401,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     const resetToken = uuidv4();
     const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
-    db.prepare('UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?').run(
+    await db.prepare('UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?').run(
       resetToken,
       resetExpiry,
       user.id
@@ -453,7 +453,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
 
     const passwordHash = hashPassword(password);
-    db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?').run(
+    await db.prepare('UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?').run(
       passwordHash,
       user.id
     );
