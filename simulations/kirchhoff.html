@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kirchhoff's Laws</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Kirchhoff's Laws</h1>
+        <p>KCL: Sum of currents at a node is zero. KVL: Sum of voltages in a loop is zero.</p>
+      </div>
+      <div class="pill">Series · Parallel · Bridge</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Circuit Diagram</h2>
+        <canvas id="kCanvas" width="560" height="320" aria-label="Kirchhoff"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Circuit Mode</label>
+            <select id="mode">
+              <option value="series">Series</option>
+              <option value="parallel">Parallel</option>
+              <option value="bridge" selected>Bridge</option>
+              <option value="complex">Complex</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Source Voltage (V)</label>
+            <input type="range" id="voltage" min="1" max="24" step="0.5" value="12" />
+            <div class="row"><span class="muted">V</span><span class="value" id="voltageValue">12 V</span></div>
+          </div>
+          <div class="control">
+            <label>R1 (Ω)</label>
+            <input type="range" id="r1" min="10" max="1000" step="10" value="100" />
+            <div class="row"><span class="muted">R1</span><span class="value" id="r1Value">100 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>R2 (Ω)</label>
+            <input type="range" id="r2" min="10" max="1000" step="10" value="200" />
+            <div class="row"><span class="muted">R2</span><span class="value" id="r2Value">200 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>R3 (Ω)</label>
+            <input type="range" id="r3" min="10" max="1000" step="10" value="300" />
+            <div class="row"><span class="muted">R3</span><span class="value" id="r3Value">300 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>R4 (Ω)</label>
+            <input type="range" id="r4" min="10" max="1000" step="10" value="150" />
+            <div class="row"><span class="muted">R4</span><span class="value" id="r4Value">150 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showKCL" checked> Show KCL</label>
+            <label class="toggle"><input type="checkbox" id="showKVL" checked> Show KVL</label>
+            <label class="toggle"><input type="checkbox" id="showEq"> Show equations</label>
+          </div>
+          <div class="control">
+            <label>Solver</label>
+            <button id="solve">Solve</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Currents</div>
+            <div class="row"><span>I_total</span><span class="value" id="itValue">0.00 A</span></div>
+            <div class="row"><span>I_branch1</span><span class="value" id="i1Value">0.00 A</span></div>
+            <div class="row"><span>I_branch2</span><span class="value" id="i2Value">0.00 A</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">KCL / KVL</div>
+            <div class="row"><span id="kclText">KCL: I_total = I1 + I2</span></div>
+            <div class="row"><span id="kvlText">KVL: V - I1(R1+R2) = 0</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Equations</div>
+            <div class="formula" id="eqText">I1 = V/(R1+R2)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Bridge mode is modeled as two series branches in parallel for KCL/KVL demonstration.</div>
+  </div>
+
+  <script>
+    const state = {
+      mode: 'bridge',
+      voltage: 12,
+      r1: 100,
+      r2: 200,
+      r3: 300,
+      r4: 150,
+      showKCL: true,
+      showKVL: true,
+      showEq: false
+    };
+
+    const dom = {
+      mode: document.getElementById('mode'),
+      voltage: document.getElementById('voltage'),
+      r1: document.getElementById('r1'),
+      r2: document.getElementById('r2'),
+      r3: document.getElementById('r3'),
+      r4: document.getElementById('r4'),
+      showKCL: document.getElementById('showKCL'),
+      showKVL: document.getElementById('showKVL'),
+      showEq: document.getElementById('showEq'),
+      solve: document.getElementById('solve'),
+      voltageValue: document.getElementById('voltageValue'),
+      r1Value: document.getElementById('r1Value'),
+      r2Value: document.getElementById('r2Value'),
+      r3Value: document.getElementById('r3Value'),
+      r4Value: document.getElementById('r4Value'),
+      itValue: document.getElementById('itValue'),
+      i1Value: document.getElementById('i1Value'),
+      i2Value: document.getElementById('i2Value'),
+      kclText: document.getElementById('kclText'),
+      kvlText: document.getElementById('kvlText'),
+      eqText: document.getElementById('eqText')
+    };
+
+    const canvas = document.getElementById('kCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function compute() {
+      let I1 = 0, I2 = 0, It = 0;
+      if (state.mode === 'series') {
+        It = state.voltage / (state.r1 + state.r2 + state.r3 + state.r4);
+        I1 = It; I2 = It;
+      } else if (state.mode === 'parallel') {
+        I1 = state.voltage / state.r1;
+        I2 = state.voltage / state.r2;
+        It = I1 + I2 + state.voltage / state.r3 + state.voltage / state.r4;
+      } else {
+        I1 = state.voltage / (state.r1 + state.r2);
+        I2 = state.voltage / (state.r3 + state.r4);
+        It = I1 + I2;
+      }
+      return { I1, I2, It };
+    }
+
+    function drawCircuit() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, 80);
+      ctx.lineTo(w - 80, 80);
+      ctx.lineTo(w - 80, h - 80);
+      ctx.lineTo(80, h - 80);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(80, 80);
+      ctx.lineTo(80, h - 80);
+      ctx.stroke();
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText(`V = ${state.voltage.toFixed(1)} V`, 30, h / 2);
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(160, 80);
+      ctx.lineTo(160, h - 80);
+      ctx.moveTo(w - 160, 80);
+      ctx.lineTo(w - 160, h - 80);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText(`R1 ${state.r1}Ω`, 140, 70);
+      ctx.fillText(`R2 ${state.r2}Ω`, 140, h - 60);
+      ctx.fillText(`R3 ${state.r3}Ω`, w - 210, 70);
+      ctx.fillText(`R4 ${state.r4}Ω`, w - 210, h - 60);
+    }
+
+    function update() {
+      const { I1, I2, It } = compute();
+      dom.voltageValue.textContent = `${state.voltage.toFixed(1)} V`;
+      dom.r1Value.textContent = `${state.r1} Ω`;
+      dom.r2Value.textContent = `${state.r2} Ω`;
+      dom.r3Value.textContent = `${state.r3} Ω`;
+      dom.r4Value.textContent = `${state.r4} Ω`;
+      dom.itValue.textContent = `${It.toFixed(3)} A`;
+      dom.i1Value.textContent = `${I1.toFixed(3)} A`;
+      dom.i2Value.textContent = `${I2.toFixed(3)} A`;
+
+      dom.kclText.textContent = state.showKCL ? `KCL: I_total = I1 + I2` : 'KCL hidden';
+      dom.kvlText.textContent = state.showKVL ? `KVL: V - I1(R1+R2) = 0` : 'KVL hidden';
+      dom.eqText.textContent = state.showEq
+        ? `I1 = V/(R1+R2), I2 = V/(R3+R4)`
+        : 'Equations hidden';
+
+      drawCircuit();
+    }
+
+    function bind() {
+      dom.mode.addEventListener('change', () => {
+        state.mode = dom.mode.value;
+        update();
+      });
+      dom.voltage.addEventListener('input', () => {
+        state.voltage = Number(dom.voltage.value);
+        update();
+      });
+      dom.r1.addEventListener('input', () => {
+        state.r1 = Number(dom.r1.value);
+        update();
+      });
+      dom.r2.addEventListener('input', () => {
+        state.r2 = Number(dom.r2.value);
+        update();
+      });
+      dom.r3.addEventListener('input', () => {
+        state.r3 = Number(dom.r3.value);
+        update();
+      });
+      dom.r4.addEventListener('input', () => {
+        state.r4 = Number(dom.r4.value);
+        update();
+      });
+      dom.showKCL.addEventListener('change', () => {
+        state.showKCL = dom.showKCL.checked;
+        update();
+      });
+      dom.showKVL.addEventListener('change', () => {
+        state.showKVL = dom.showKVL.checked;
+        update();
+      });
+      dom.showEq.addEventListener('change', () => {
+        state.showEq = dom.showEq.checked;
+        update();
+      });
+      dom.solve.addEventListener('click', update);
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

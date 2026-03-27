@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Diffraction Grating</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Diffraction Grating</h1>
+        <p>Spectral separation and interference maxima</p>
+      </div>
+      <div class="pill">d sin(θ) = mλ · N slits · Spectrum</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Beam, Grating, and Screen</h2>
+        <canvas id="patternCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Grating Close-Up</h2>
+            <canvas id="slitCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Intensity vs Angle</h2>
+            <canvas id="intensityCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Wavelength (nm)</label>
+            <input type="range" id="wavelength" min="380" max="750" step="1" value="550" />
+            <div class="row"><span class="muted">λ</span><span class="value" id="lambdaValue">550 nm</span></div>
+          </div>
+          <div class="control">
+            <label>Grating (lines/mm)</label>
+            <input type="range" id="lines" min="100" max="1000" step="10" value="500" />
+            <div class="row"><span class="muted">Lines</span><span class="value" id="linesValue">500 lines/mm</span></div>
+          </div>
+          <div class="control">
+            <label>Number of Slits (N)</label>
+            <input type="range" id="slits" min="2" max="100" step="1" value="20" />
+            <div class="row"><span class="muted">N</span><span class="value" id="slitsValue">20</span></div>
+          </div>
+          <div class="control">
+            <label>Incident Angle (°)</label>
+            <input type="range" id="incident" min="0" max="45" step="1" value="0" />
+            <div class="row"><span class="muted">θᵢ</span><span class="value" id="incidentValue">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Screen Distance (m)</label>
+            <input type="range" id="distance" min="0.5" max="5" step="0.1" value="2" />
+            <div class="row"><span class="muted">D</span><span class="value" id="distanceValue">2.0 m</span></div>
+          </div>
+          <div class="control">
+            <label>Light Type</label>
+            <select id="lightType">
+              <option value="mono" selected>Monochromatic</option>
+              <option value="white">White light</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Show Orders</label>
+            <div class="toggle">
+              <input type="checkbox" id="showOrders" checked />
+              <span>m = 0, ±1, ±2…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Grating Equation</div>
+            <div class="row"><span>Spacing d</span><span class="value" id="spacingValue">2.00 μm</span></div>
+            <div class="row"><span>m=1 angle</span><span class="value" id="m1Value">16.1°</span></div>
+            <div class="row"><span>m=2 angle</span><span class="value" id="m2Value">33.5°</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Resolving Power</div>
+            <div class="row"><span>R = mN</span><span class="value" id="resPower">20</span></div>
+            <div class="row"><span>Δλ (m=1)</span><span class="value" id="deltaLambda">27.5 nm</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">More lines/mm means smaller spacing and larger diffraction angles. White light splits into a spectrum.</div>
+  </div>
+
+  <script>
+    const state = {
+      wavelength: 550,
+      lines: 500,
+      slits: 20,
+      incident: 0,
+      distance: 2,
+      lightType: 'mono',
+      showOrders: true
+    };
+
+    const dom = {
+      wavelength: document.getElementById('wavelength'),
+      lines: document.getElementById('lines'),
+      slits: document.getElementById('slits'),
+      incident: document.getElementById('incident'),
+      distance: document.getElementById('distance'),
+      lightType: document.getElementById('lightType'),
+      showOrders: document.getElementById('showOrders'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      linesValue: document.getElementById('linesValue'),
+      slitsValue: document.getElementById('slitsValue'),
+      incidentValue: document.getElementById('incidentValue'),
+      distanceValue: document.getElementById('distanceValue'),
+      spacingValue: document.getElementById('spacingValue'),
+      m1Value: document.getElementById('m1Value'),
+      m2Value: document.getElementById('m2Value'),
+      resPower: document.getElementById('resPower'),
+      deltaLambda: document.getElementById('deltaLambda')
+    };
+
+    const patternCanvas = document.getElementById('patternCanvas');
+    const patternCtx = patternCanvas.getContext('2d');
+    const slitCanvas = document.getElementById('slitCanvas');
+    const slitCtx = slitCanvas.getContext('2d');
+    const intensityCanvas = document.getElementById('intensityCanvas');
+    const intensityCtx = intensityCanvas.getContext('2d');
+
+    function wavelengthToRGB(lambda) {
+      const w = Math.max(380, Math.min(750, lambda));
+      if (w < 440) return [90, 0, 255];
+      if (w < 490) return [0, 140, 255];
+      if (w < 510) return [0, 220, 180];
+      if (w < 580) return [90, 255, 0];
+      if (w < 645) return [255, 200, 0];
+      return [255, 60, 60];
+    }
+
+    function calcSpacing() {
+      return 1 / state.lines; // mm
+    }
+
+    function calcAngle(order, wavelengthNm) {
+      const d = calcSpacing() * 1e-3; // meters
+      const lambda = wavelengthNm * 1e-9;
+      const thetaI = state.incident * Math.PI / 180;
+      const argument = (order * lambda + d * Math.sin(thetaI)) / d;
+      if (Math.abs(argument) > 1) return null;
+      return Math.asin(argument);
+    }
+
+    function calcScreenY(theta) {
+      return Math.tan(theta) * state.distance;
+    }
+
+    function updateReadouts() {
+      dom.lambdaValue.textContent = `${state.wavelength} nm`;
+      dom.linesValue.textContent = `${state.lines} lines/mm`;
+      dom.slitsValue.textContent = `${state.slits}`;
+      dom.incidentValue.textContent = `${state.incident}°`;
+      dom.distanceValue.textContent = `${state.distance.toFixed(1)} m`;
+
+      const spacingUm = calcSpacing() * 1000;
+      dom.spacingValue.textContent = `${spacingUm.toFixed(2)} μm`;
+
+      const m1 = calcAngle(1, state.wavelength);
+      const m2 = calcAngle(2, state.wavelength);
+      dom.m1Value.textContent = m1 ? `${(m1 * 180 / Math.PI).toFixed(1)}°` : '—';
+      dom.m2Value.textContent = m2 ? `${(m2 * 180 / Math.PI).toFixed(1)}°` : '—';
+
+      const resPower = state.slits;
+      dom.resPower.textContent = resPower.toString();
+      dom.deltaLambda.textContent = `${(state.wavelength / resPower).toFixed(1)} nm`;
+    }
+
+    function drawPattern() {
+      const w = patternCanvas.width;
+      const h = patternCanvas.height;
+      patternCtx.clearRect(0, 0, w, h);
+      patternCtx.fillStyle = '#0b1420';
+      patternCtx.fillRect(0, 0, w, h);
+
+      const sourceX = 70;
+      const gratingX = 220;
+      const screenX = w - 80;
+      const centerY = h / 2;
+
+      patternCtx.strokeStyle = '#6ad7ff';
+      patternCtx.lineWidth = 2;
+      patternCtx.beginPath();
+      patternCtx.moveTo(sourceX - 40, centerY - 20);
+      patternCtx.lineTo(sourceX, centerY);
+      patternCtx.lineTo(sourceX - 40, centerY + 20);
+      patternCtx.stroke();
+
+      patternCtx.strokeStyle = '#8aa0b8';
+      patternCtx.beginPath();
+      patternCtx.moveTo(gratingX, 30);
+      patternCtx.lineTo(gratingX, h - 30);
+      patternCtx.stroke();
+      patternCtx.fillStyle = '#8aa0b8';
+      patternCtx.fillText('Grating', gratingX - 20, 20);
+
+      patternCtx.strokeStyle = '#1c2c43';
+      patternCtx.beginPath();
+      patternCtx.moveTo(screenX, 20);
+      patternCtx.lineTo(screenX, h - 20);
+      patternCtx.stroke();
+      patternCtx.fillStyle = '#8aa0b8';
+      patternCtx.fillText('Screen', screenX - 26, 18);
+
+      const orders = [];
+      for (let m = -3; m <= 3; m++) {
+        if (m === 0 || state.showOrders) orders.push(m);
+      }
+
+      const wavelengths = state.lightType === 'white' ? [400, 450, 500, 550, 600, 650, 700] : [state.wavelength];
+      for (const m of orders) {
+        for (const lambda of wavelengths) {
+          const theta = calcAngle(m, lambda);
+          if (theta === null) continue;
+          const y = centerY - calcScreenY(theta) * 30;
+          if (y < 20 || y > h - 20) continue;
+          const [r, g, b] = wavelengthToRGB(lambda);
+          patternCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+          patternCtx.beginPath();
+          patternCtx.arc(screenX, y, 4, 0, Math.PI * 2);
+          patternCtx.fill();
+          if (state.showOrders) {
+            patternCtx.fillStyle = '#f6c76b';
+            patternCtx.fillText(`m=${m}`, screenX + 8, y + 4);
+          }
+        }
+      }
+
+      patternCtx.strokeStyle = '#6ad7ff';
+      patternCtx.setLineDash([6, 6]);
+      patternCtx.beginPath();
+      patternCtx.moveTo(gratingX, centerY);
+      patternCtx.lineTo(screenX, centerY);
+      patternCtx.stroke();
+      patternCtx.setLineDash([]);
+    }
+
+    function drawSlits() {
+      const w = slitCanvas.width;
+      const h = slitCanvas.height;
+      slitCtx.clearRect(0, 0, w, h);
+      slitCtx.fillStyle = '#0b1420';
+      slitCtx.fillRect(0, 0, w, h);
+      const spacingPx = Math.max(6, 60 / (state.lines / 200));
+      const slitWidth = Math.max(2, spacingPx * 0.2);
+      let x = 40;
+      slitCtx.fillStyle = '#6ad7ff';
+      while (x < w - 20) {
+        slitCtx.fillRect(x, 30, slitWidth, h - 60);
+        x += spacingPx;
+      }
+      slitCtx.fillStyle = '#8aa0b8';
+      slitCtx.fillText(`d = ${(calcSpacing() * 1000).toFixed(2)} μm`, 20, h - 16);
+    }
+
+    function drawIntensity() {
+      const w = intensityCanvas.width;
+      const h = intensityCanvas.height;
+      intensityCtx.clearRect(0, 0, w, h);
+      intensityCtx.fillStyle = '#0b1420';
+      intensityCtx.fillRect(0, 0, w, h);
+      intensityCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 40) {
+        intensityCtx.beginPath();
+        intensityCtx.moveTo(x, 0);
+        intensityCtx.lineTo(x, h);
+        intensityCtx.stroke();
+      }
+
+      intensityCtx.strokeStyle = '#f6c76b';
+      intensityCtx.lineWidth = 2;
+      intensityCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const angle = (x / w) * Math.PI / 2;
+        const beta = Math.PI * state.slits * Math.sin(angle);
+        const intensity = beta === 0 ? 1 : Math.pow(Math.sin(beta) / beta, 2);
+        const y = h - intensity * (h - 20) - 10;
+        if (x === 0) intensityCtx.moveTo(x, y); else intensityCtx.lineTo(x, y);
+      }
+      intensityCtx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawPattern();
+      drawSlits();
+      drawIntensity();
+    }
+
+    function bind() {
+      dom.wavelength.addEventListener('input', () => { state.wavelength = Number(dom.wavelength.value); render(); });
+      dom.lines.addEventListener('input', () => { state.lines = Number(dom.lines.value); render(); });
+      dom.slits.addEventListener('input', () => { state.slits = Number(dom.slits.value); render(); });
+      dom.incident.addEventListener('input', () => { state.incident = Number(dom.incident.value); render(); });
+      dom.distance.addEventListener('input', () => { state.distance = Number(dom.distance.value); render(); });
+      dom.lightType.addEventListener('change', () => { state.lightType = dom.lightType.value; render(); });
+      dom.showOrders.addEventListener('change', () => { state.showOrders = dom.showOrders.checked; render(); });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

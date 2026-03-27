@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Capacitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(340px, 50vh, 520px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Capacitor</h1>
+    <div class="subtitle">Charge separation, electric field strength, and stored energy</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Animation Speed</label>
+          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
+          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
+        </div>
+        <div class="control">
+          <label>Battery Voltage (V)</label>
+          <input id="voltage" type="range" min="0" max="120" step="1" value="50" />
+          <div class="row"><span>0</span><span id="voltageVal" class="value">50 V</span><span>120</span></div>
+        </div>
+        <div class="control">
+          <label>RC Mode</label>
+          <div class="checks">
+            <label><input id="rcMode" type="checkbox" /> Enable RC charging</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Resistance (kΩ)</label>
+          <input id="resistor" type="range" min="0.5" max="50" step="0.5" value="5" />
+          <div class="row"><span>0.5</span><span id="resistorVal" class="value">5.0 kΩ</span><span>50</span></div>
+        </div>
+        <div class="control">
+          <label>RC State</label>
+          <select id="rcState">
+            <option value="charge">Charge</option>
+            <option value="discharge">Discharge</option>
+            <option value="hold">Hold</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Capacitance (μF)</label>
+          <input id="cap" type="range" min="1" max="150" step="1" value="20" />
+          <div class="row"><span>1</span><span id="capVal" class="value">20 μF</span><span>150</span></div>
+        </div>
+        <div class="control">
+          <label>Plate Separation (mm)</label>
+          <input id="sep" type="range" min="1" max="60" step="1" value="10" />
+          <div class="row"><span>1</span><span id="sepVal" class="value">10 mm</span><span>60</span></div>
+        </div>
+        <div class="control">
+          <label>Dielectric Constant (k)</label>
+          <input id="k" type="range" min="1" max="5" step="0.1" value="1" />
+          <div class="row"><span>1.0</span><span id="kVal" class="value">1.0</span><span>5.0</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showGrid" type="checkbox" checked /> Grid</label>
+            <label><input id="showField" type="checkbox" checked /> Field Lines</label>
+            <label><input id="showCharges" type="checkbox" checked /> Charges</label>
+            <label><input id="showGlow" type="checkbox" checked /> Field Glow</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Charge:</strong> <span style="font-family: var(--mono);">Q = CV</span></div>
+            <div><strong>Energy:</strong> <span style="font-family: var(--mono);">U = ½CV²</span></div>
+            <div><strong>Field:</strong> <span style="font-family: var(--mono);">E = V/d</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Tip: Increasing voltage or capacitance increases stored energy. Larger separation reduces field strength.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      Vb: 50,
+      Vc: 50,
+      Cmicro: 20,
+      dmm: 10,
+      k: 1,
+      Rk: 5,
+      rcEnabled: false,
+      rcState: 'charge',
+      speed: 1,
+      running: true,
+      showGrid: true,
+      showField: true,
+      showCharges: true,
+      showGlow: true,
+      t: 0,
+      charges: []
+    };
+
+    const eps0 = 8.854e-12;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function effectiveCapacitance() {
+      return state.Cmicro * 1e-6 * state.k;
+    }
+
+    function electricField() {
+      const d = state.dmm * 1e-3;
+      return d > 0 ? state.Vc / d : 0;
+    }
+
+    function updateReadout() {
+      const C = effectiveCapacitance();
+      const Q = C * state.Vc;
+      const U = 0.5 * C * state.Vc * state.Vc;
+      const E = electricField();
+      const u = 0.5 * eps0 * state.k * E * E;
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Charge</span><span class="data-value blue">${(Q * 1e6).toFixed(2)} μC</span></div>
+          <div class="data-card"><span class="data-label">Energy</span><span class="data-value orange">${(U * 1e3).toFixed(2)} mJ</span></div>
+          <div class="data-card"><span class="data-label">Field Strength</span><span class="data-value blue">${(E / 1e6).toFixed(2)} MV/m</span></div>
+          <div class="data-card"><span class="data-label">Energy Density</span><span class="data-value green">${u.toFixed(2)} J/m³</span></div>
+          <div class="data-card"><span class="data-label">Dielectric k</span><span class="data-value green">${state.k.toFixed(1)}</span></div>
+          <div class="data-card"><span class="data-label">Cap Voltage</span><span class="data-value blue">${state.Vc.toFixed(1)} V</span></div>
+          <div class="data-card"><span class="data-label">Battery</span><span class="data-value orange">${state.Vb.toFixed(1)} V</span></div>
+          <div class="data-card"><span class="data-label">Time Const</span><span class="data-value green">${(state.Rk * 1000 * C).toFixed(3)} s</span></div>
+        </div>
+      `;
+    }
+
+    function initCharges() {
+      state.charges = [];
+      const count = 30;
+      for (let i = 0; i < count; i++) {
+        state.charges.push({
+          x: 0,
+          y: 0,
+          dir: i % 2 === 0 ? 1 : -1,
+          offset: Math.random()
+        });
+      }
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.5, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.6, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      if (!state.showGrid) return;
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.clientWidth; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.clientHeight; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+      }
+    }
+
+    function drawPlates(cx, cy, plateW, gap) {
+      const plateH = 16;
+      const topY = cy - gap / 2 - plateH;
+      const botY = cy + gap / 2;
+      const gradTop = ctx.createLinearGradient(cx - plateW / 2, topY, cx + plateW / 2, topY + plateH);
+      gradTop.addColorStop(0, '#94a3b8');
+      gradTop.addColorStop(0.4, '#e2e8f0');
+      gradTop.addColorStop(1, '#64748b');
+      ctx.fillStyle = gradTop;
+      ctx.fillRect(cx - plateW / 2, topY, plateW, plateH);
+
+      const gradBot = ctx.createLinearGradient(cx - plateW / 2, botY, cx + plateW / 2, botY + plateH);
+      gradBot.addColorStop(0, '#64748b');
+      gradBot.addColorStop(0.6, '#e2e8f0');
+      gradBot.addColorStop(1, '#475569');
+      ctx.fillStyle = gradBot;
+      ctx.fillRect(cx - plateW / 2, botY, plateW, plateH);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 16px Inter, sans-serif';
+      ctx.fillText('+', cx - plateW / 2 + 12, topY + 12);
+      ctx.fillText('−', cx - plateW / 2 + 12, botY + 24);
+    }
+
+    function drawField(cx, cy, plateW, gap) {
+      if (!state.showField) return;
+      const intensity = Math.min(1, state.Vc / 80);
+      const color = `rgba(106,215,255,${0.15 + 0.45 * intensity})`;
+      for (let i = 0; i < 9; i++) {
+        const x = cx - plateW / 2 + 24 + i * (plateW - 48) / 8;
+        for (let j = 0; j < 3; j++) {
+          const y = cy - gap / 3 + j * gap / 3;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.moveTo(x, y - 8); ctx.lineTo(x, y + 8); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x, y + 8); ctx.lineTo(x - 4, y + 3); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(x, y + 8); ctx.lineTo(x + 4, y + 3); ctx.stroke();
+        }
+      }
+    }
+
+    function drawCharges(cx, cy, plateW, gap) {
+      if (!state.showCharges) return;
+      const count = state.charges.length;
+      const speed = 0.6 * state.speed;
+      for (let i = 0; i < count; i++) {
+        const c = state.charges[i];
+        const x = cx - plateW / 2 + 20 + (i % 12) * 18;
+        const phase = (state.t * 0.6 + c.offset) % 1;
+        const y = c.dir > 0
+          ? cy - gap / 2 - 10 - phase * (gap - 8)
+          : cy + gap / 2 + 20 + phase * (gap - 8);
+        ctx.globalAlpha = 1 - phase;
+        ctx.fillStyle = c.dir > 0 ? '#6ad7ff' : '#f6c76b';
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      state.t += 0.01 * speed;
+    }
+
+    function drawGlow(cx, cy, plateW, gap) {
+      if (!state.showGlow) return;
+      const intensity = Math.min(1, state.Vc / 90);
+      const glow = ctx.createRadialGradient(cx, cy, 20, cx, cy, plateW * 0.7);
+      glow.addColorStop(0, `rgba(106,215,255,${0.18 * intensity})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(cx - plateW, cy - plateW, plateW * 2, plateW * 2);
+    }
+
+    function drawCircuit(cx, cy, plateW, gap) {
+      const left = cx - plateW / 2 - 90;
+      const right = cx + plateW / 2 + 90;
+      const top = cy - gap / 2 - 40;
+      const bottom = cy + gap / 2 + 40;
+      const switchClosed = state.rcEnabled && state.rcState !== 'hold';
+      const flowAlpha = state.rcEnabled ? Math.min(1, Math.abs(state.Vb - state.Vc) / Math.max(1, state.Vb)) : 0;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(148,163,184,0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - plateW / 2, top);
+      ctx.lineTo(left, top);
+      ctx.lineTo(left, bottom);
+      ctx.lineTo(cx - plateW / 2, bottom);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(cx + plateW / 2, top);
+      ctx.lineTo(right, top);
+      ctx.lineTo(right, bottom);
+      ctx.lineTo(cx + plateW / 2, bottom);
+      ctx.stroke();
+
+      // Battery symbol (left side)
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, top + 28);
+      ctx.lineTo(left, top + 48);
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(left - 6, top + 36);
+      ctx.lineTo(left + 6, top + 36);
+      ctx.moveTo(left - 10, top + 44);
+      ctx.lineTo(left + 10, top + 44);
+      ctx.stroke();
+
+      // Resistor (right side)
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2.4;
+      const rz = bottom - 48;
+      ctx.beginPath();
+      ctx.moveTo(right, top + 26);
+      ctx.lineTo(right, top + 32);
+      for (let i = 0; i < 5; i++) {
+        const y = top + 32 + i * 10;
+        const dx = i % 2 === 0 ? -10 : 10;
+        ctx.lineTo(right + dx, y);
+      }
+      ctx.lineTo(right, top + 86);
+      ctx.lineTo(right, rz);
+      ctx.stroke();
+
+      // Switch (top wire)
+      ctx.strokeStyle = switchClosed ? '#22c55e' : '#fb7185';
+      ctx.lineWidth = 2;
+      const sx = (left + right) / 2 - 18;
+      const sy = top;
+      ctx.beginPath();
+      ctx.moveTo(sx - 14, sy);
+      ctx.lineTo(sx, sy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(sx + 18, sy + (switchClosed ? 0 : -10));
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx + 18, sy);
+      ctx.lineTo(sx + 32, sy);
+      ctx.stroke();
+
+      if (flowAlpha > 0.02) {
+        ctx.strokeStyle = `rgba(106,215,255,${0.25 + 0.5 * flowAlpha})`;
+        ctx.lineWidth = 2.2;
+        ctx.setLineDash([6, 8]);
+        ctx.lineDashOffset = -state.t * 120;
+        ctx.beginPath();
+        ctx.moveTo(left, top);
+        ctx.lineTo(right, top);
+        ctx.lineTo(right, bottom);
+        ctx.lineTo(left, bottom);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = 'rgba(248,250,252,0.85)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText('Battery', left - 18, top + 22);
+      ctx.fillText('Resistor', right - 22, top + 16);
+      ctx.fillText(switchClosed ? 'Switch Closed' : 'Switch Open', sx - 14, sy - 14);
+      ctx.restore();
+    }
+
+    function draw() {
+      drawBackground();
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      const plateW = 240;
+      const gap = Math.max(40, state.dmm * 3.2);
+
+      drawCircuit(cx, cy, plateW, gap);
+      drawGlow(cx, cy, plateW, gap);
+      drawPlates(cx, cy, plateW, gap);
+      drawField(cx, cy, plateW, gap);
+      if (state.running) drawCharges(cx, cy, plateW, gap);
+
+      ctx.fillStyle = 'rgba(248,250,252,0.85)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(`d = ${state.dmm.toFixed(0)} mm`, cx - 30, cy + gap / 2 + 48);
+    }
+
+    let lastTime = performance.now();
+    function tick() {
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lastTime) / 1000) * state.speed;
+      lastTime = now;
+
+      if (state.running) {
+        if (state.rcEnabled) {
+          const C = effectiveCapacitance();
+          const tau = Math.max(1e-6, state.Rk * 1000 * C);
+          if (state.rcState === 'charge') {
+            state.Vc += (state.Vb - state.Vc) * (dt / tau);
+          } else if (state.rcState === 'discharge') {
+            state.Vc += (-state.Vc) * (dt / tau);
+          }
+        } else {
+          state.Vc = state.Vb;
+        }
+        state.t += 0.008 * state.speed;
+      }
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('voltage').addEventListener('input', e => {
+      state.Vb = parseFloat(e.target.value);
+      if (!state.rcEnabled) state.Vc = state.Vb;
+      document.getElementById('voltageVal').textContent = `${state.Vb.toFixed(0)} V`;
+    });
+    document.getElementById('cap').addEventListener('input', e => {
+      state.Cmicro = parseFloat(e.target.value);
+      document.getElementById('capVal').textContent = `${state.Cmicro.toFixed(0)} μF`;
+    });
+    document.getElementById('sep').addEventListener('input', e => {
+      state.dmm = parseFloat(e.target.value);
+      document.getElementById('sepVal').textContent = `${state.dmm.toFixed(0)} mm`;
+    });
+    document.getElementById('k').addEventListener('input', e => {
+      state.k = parseFloat(e.target.value);
+      document.getElementById('kVal').textContent = `${state.k.toFixed(1)}`;
+    });
+    document.getElementById('rcMode').addEventListener('change', e => {
+      state.rcEnabled = e.target.checked;
+      if (!state.rcEnabled) state.Vc = state.Vb;
+    });
+    document.getElementById('resistor').addEventListener('input', e => {
+      state.Rk = parseFloat(e.target.value);
+      document.getElementById('resistorVal').textContent = `${state.Rk.toFixed(1)} kΩ`;
+    });
+    document.getElementById('rcState').addEventListener('change', e => {
+      state.rcState = e.target.value;
+    });
+
+    document.getElementById('showGrid').addEventListener('change', e => state.showGrid = e.target.checked);
+    document.getElementById('showField').addEventListener('change', e => state.showField = e.target.checked);
+    document.getElementById('showCharges').addEventListener('change', e => state.showCharges = e.target.checked);
+    document.getElementById('showGlow').addEventListener('change', e => state.showGlow = e.target.checked);
+
+    document.getElementById('speed').addEventListener('input', e => {
+      state.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      state.running = !state.running;
+      e.target.textContent = state.running ? 'Pause' : 'Play';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.Vb = 50;
+      state.Vc = 50;
+      state.Cmicro = 20;
+      state.dmm = 10;
+      state.k = 1;
+      state.Rk = 5;
+      state.rcEnabled = false;
+      state.rcState = 'charge';
+      state.speed = 1;
+      state.t = 0;
+      state.running = true;
+      state.showGrid = true;
+      state.showField = true;
+      state.showCharges = true;
+      state.showGlow = true;
+      document.getElementById('voltage').value = 50;
+      document.getElementById('cap').value = 20;
+      document.getElementById('sep').value = 10;
+      document.getElementById('k').value = 1;
+      document.getElementById('resistor').value = 5;
+      document.getElementById('rcMode').checked = false;
+      document.getElementById('rcState').value = 'charge';
+      document.getElementById('speed').value = 1;
+      document.getElementById('voltageVal').textContent = '50 V';
+      document.getElementById('capVal').textContent = '20 μF';
+      document.getElementById('sepVal').textContent = '10 mm';
+      document.getElementById('kVal').textContent = '1.0';
+      document.getElementById('resistorVal').textContent = '5.0 kΩ';
+      document.getElementById('speedVal').textContent = '1.00x';
+      document.getElementById('showGrid').checked = true;
+      document.getElementById('showField').checked = true;
+      document.getElementById('showCharges').checked = true;
+      document.getElementById('showGlow').checked = true;
+      document.getElementById('playPause').textContent = 'Pause';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    initCharges();
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heat Transfer</title>
+  <style>
+    :root {
+      --bg1: #1a0f12;
+      --bg2: #0f141d;
+      --panel: rgba(21, 24, 33, 0.86);
+      --panel-2: rgba(14, 18, 27, 0.92);
+      --text: #f5f3ef;
+      --muted: #c2b6a6;
+      --hot: #ff7a3d;
+      --hot-2: #ffb86b;
+      --cold: #6fb7ff;
+      --accent: #f3d08f;
+      --line: rgba(255, 255, 255, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Alegreya Sans", "Gill Sans", "Trebuchet MS", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 700px at 10% 10%, rgba(255, 146, 74, 0.16), transparent 60%),
+        radial-gradient(900px 600px at 90% 20%, rgba(75, 130, 255, 0.12), transparent 65%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      min-height: 100vh;
+    }
+    .app { max-width: 1280px; margin: 0 auto; padding: 20px 22px 28px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 6px 4px 18px; border-bottom: 1px solid var(--line);
+    }
+    header h1 { margin: 0; font-size: 30px; letter-spacing: 0.6px; }
+    header p { margin: 6px 0 0; color: var(--muted); }
+    .formula {
+      display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px;
+      border-radius: 999px; background: rgba(10, 10, 10, 0.25); border: 1px solid var(--line);
+      color: var(--muted); font-size: 12px; backdrop-filter: blur(8px);
+    }
+    .grid { display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent); }
+    canvas {
+      width: 100%; height: 360px;
+      background: radial-gradient(600px 360px at 50% 20%, rgba(255, 170, 90, 0.06), transparent 60%),
+                  linear-gradient(180deg, rgba(10, 12, 18, 0.9), rgba(6, 8, 12, 0.98));
+      border: 1px solid var(--line); border-radius: 14px;
+    }
+    #profileCanvas { height: 210px; margin-top: 14px; }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control {
+      background: rgba(12, 14, 20, 0.7);
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+    }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; accent-color: var(--hot); }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 10px; border: 1px solid var(--line);
+      background: rgba(10, 12, 18, 0.8); color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .toggle input { accent-color: var(--accent); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .muted { color: var(--muted); }
+    .readouts { display: grid; gap: 10px; margin-top: 14px; }
+    .readout {
+      background: rgba(12, 14, 20, 0.7); border: 1px solid var(--line); border-radius: 12px;
+      padding: 10px 12px; display: grid; gap: 6px; font-size: 13px;
+    }
+    .readout .title { color: var(--accent); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+      #profileCanvas { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Heat Transfer</h1>
+        <p>Conduction, convection, and radiation around a heated pot</p>
+      </div>
+      <div class="formula">Q̇ = kAΔT/d · Q̇ = hAΔT · Q̇ = εσA(T⁴ − Tₐ⁴)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Visualization</h2>
+        <canvas id="heatCanvas" width="780" height="360"></canvas>
+        <canvas id="profileCanvas" width="780" height="210"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Focus Mode</label>
+            <select id="mode">
+              <option value="all" selected>All Three Modes</option>
+              <option value="conduction">Conduction</option>
+              <option value="convection">Convection</option>
+              <option value="radiation">Radiation</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Material Type</label>
+            <select id="material">
+              <option value="copper" selected>Copper</option>
+              <option value="aluminum">Aluminum</option>
+              <option value="wood">Wood</option>
+              <option value="glass">Glass</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Thermal Conductivity k (W/m·K)</label>
+            <input type="range" id="k" min="0.1" max="400" step="1" value="400" />
+            <div class="row"><span class="muted">k</span><span class="value" id="kValue">400</span></div>
+          </div>
+          <div class="control">
+            <label>Hot Temperature (°C)</label>
+            <input type="range" id="th" min="30" max="240" step="1" value="120" />
+            <div class="row"><span class="muted">Tₕ</span><span class="value" id="thValue">120°C</span></div>
+          </div>
+          <div class="control">
+            <label>Ambient Temperature (°C)</label>
+            <input type="range" id="tc" min="0" max="80" step="1" value="20" />
+            <div class="row"><span class="muted">Tₐ</span><span class="value" id="tcValue">20°C</span></div>
+          </div>
+          <div class="control">
+            <label>Surface Area (m²)</label>
+            <input type="range" id="area" min="0.001" max="0.12" step="0.001" value="0.03" />
+            <div class="row"><span class="muted">A</span><span class="value" id="areaValue">0.03</span></div>
+          </div>
+          <div class="control">
+            <label>Wall Thickness (m)</label>
+            <input type="range" id="thick" min="0.005" max="0.15" step="0.005" value="0.04" />
+            <div class="row"><span class="muted">d</span><span class="value" id="thickValue">0.04</span></div>
+          </div>
+          <div class="control">
+            <label>Convection Mode</label>
+            <select id="convection">
+              <option value="natural" selected>Natural</option>
+              <option value="forced">Forced</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Emissivity</label>
+            <input type="range" id="emissivity" min="0" max="1" step="0.05" value="0.75" />
+            <div class="row"><span class="muted">ε</span><span class="value" id="emissivityValue">0.75</span></div>
+          </div>
+          <div class="control">
+            <label>Visualization Toggles</label>
+            <div class="toggle"><input id="showLabels" type="checkbox" checked />Show Labels</div>
+            <div class="toggle"><input id="showVectors" type="checkbox" checked />Show Vectors</div>
+            <div class="toggle"><input id="showIsotherms" type="checkbox" />Show Isotherms</div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Heat Flow</div>
+            <div class="row"><span>Q̇</span><span class="value" id="qValue">0 W</span></div>
+            <div class="row"><span>ΔT</span><span class="value" id="dtValue">80°C</span></div>
+            <div class="row"><span>Focus</span><span class="value" id="modeValue">All Three Modes</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span id="noteValue">Metals conduct heat quickly.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Higher emissivity increases radiation. Forced flow boosts convection.</div>
+  </div>
+
+  <script>
+    const materials = {
+      copper: { k: 400, note: 'Copper transfers heat quickly through the pot walls.' },
+      aluminum: { k: 205, note: 'Aluminum spreads heat efficiently but less than copper.' },
+      wood: { k: 0.12, note: 'Wood insulates, reducing conduction through the handle.' },
+      glass: { k: 1.0, note: 'Glass conducts moderately and stores heat in the surface.' }
+    };
+
+    const state = {
+      mode: 'all',
+      material: 'copper',
+      k: 400,
+      th: 120,
+      tc: 20,
+      area: 0.03,
+      thick: 0.04,
+      convection: 'natural',
+      emissivity: 0.75,
+      showLabels: true,
+      showVectors: true,
+      showIsotherms: false,
+      time: 0
+    };
+
+    const dom = {
+      mode: document.getElementById('mode'),
+      material: document.getElementById('material'),
+      k: document.getElementById('k'),
+      th: document.getElementById('th'),
+      tc: document.getElementById('tc'),
+      area: document.getElementById('area'),
+      thick: document.getElementById('thick'),
+      convection: document.getElementById('convection'),
+      emissivity: document.getElementById('emissivity'),
+      showLabels: document.getElementById('showLabels'),
+      showVectors: document.getElementById('showVectors'),
+      showIsotherms: document.getElementById('showIsotherms'),
+      kValue: document.getElementById('kValue'),
+      thValue: document.getElementById('thValue'),
+      tcValue: document.getElementById('tcValue'),
+      areaValue: document.getElementById('areaValue'),
+      thickValue: document.getElementById('thickValue'),
+      emissivityValue: document.getElementById('emissivityValue'),
+      qValue: document.getElementById('qValue'),
+      dtValue: document.getElementById('dtValue'),
+      modeValue: document.getElementById('modeValue'),
+      noteValue: document.getElementById('noteValue'),
+      heatCanvas: document.getElementById('heatCanvas'),
+      profileCanvas: document.getElementById('profileCanvas')
+    };
+
+    const heatCtx = dom.heatCanvas.getContext('2d');
+    const profileCtx = dom.profileCanvas.getContext('2d');
+
+    function calcHeatFlow() {
+      const deltaT = state.th - state.tc;
+      if (state.mode === 'conduction' || state.mode === 'all') {
+        return state.k * state.area * deltaT / state.thick;
+      }
+      if (state.mode === 'convection') {
+        const h = state.convection === 'forced' ? 25 : 10;
+        return h * state.area * deltaT;
+      }
+      const sigma = 5.67e-8;
+      const Th = state.th + 273.15;
+      const Ta = state.tc + 273.15;
+      return state.emissivity * sigma * state.area * (Th ** 4 - Ta ** 4);
+    }
+
+    function updateReadouts() {
+      dom.kValue.textContent = state.k.toFixed(1);
+      dom.thValue.textContent = `${state.th}°C`;
+      dom.tcValue.textContent = `${state.tc}°C`;
+      dom.areaValue.textContent = state.area.toFixed(3);
+      dom.thickValue.textContent = state.thick.toFixed(3);
+      dom.emissivityValue.textContent = state.emissivity.toFixed(2);
+      dom.qValue.textContent = `${calcHeatFlow().toFixed(1)} W`;
+      dom.dtValue.textContent = `${(state.th - state.tc).toFixed(0)}°C`;
+      dom.modeValue.textContent = dom.mode.options[dom.mode.selectedIndex].textContent;
+      dom.noteValue.textContent = materials[state.material].note;
+    }
+
+    function drawRoundedRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawPotScene() {
+      const w = dom.heatCanvas.width;
+      const h = dom.heatCanvas.height;
+      heatCtx.clearRect(0, 0, w, h);
+
+      const bg = heatCtx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, '#0b1019');
+      bg.addColorStop(1, '#090a0f');
+      heatCtx.fillStyle = bg;
+      heatCtx.fillRect(0, 0, w, h);
+
+      const tableY = h * 0.78;
+      const tableGrad = heatCtx.createLinearGradient(0, tableY, 0, h);
+      tableGrad.addColorStop(0, '#20110f');
+      tableGrad.addColorStop(1, '#120809');
+      heatCtx.fillStyle = tableGrad;
+      heatCtx.fillRect(0, tableY, w, h - tableY);
+
+      const potX = w * 0.42;
+      const potY = h * 0.34;
+      const potW = w * 0.34;
+      const potH = h * 0.32;
+      const potR = 18;
+
+      const heatIntensity = Math.min(1, Math.max(0, (state.th - state.tc) / 160));
+      const glow = heatCtx.createRadialGradient(potX + potW * 0.5, potY + potH * 0.9, 10, potX + potW * 0.5, potY + potH, potW * 0.7);
+      glow.addColorStop(0, `rgba(255, 150, 80, ${0.35 + heatIntensity * 0.25})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      heatCtx.fillStyle = glow;
+      heatCtx.fillRect(potX - potW * 0.3, potY - potH * 0.1, potW * 1.6, potH * 1.4);
+
+      const handleHighlight = state.material === 'wood' ? '#845c3b' : '#b0b7bf';
+      const handleAlpha = state.mode === 'conduction' || state.mode === 'all' ? 1 : 0.35;
+      heatCtx.save();
+      heatCtx.globalAlpha = handleAlpha;
+      heatCtx.strokeStyle = handleHighlight;
+      heatCtx.lineWidth = 10;
+      heatCtx.lineCap = 'round';
+      heatCtx.beginPath();
+      heatCtx.moveTo(potX + potW, potY + potH * 0.25);
+      heatCtx.lineTo(potX + potW + 70, potY + potH * 0.2);
+      heatCtx.stroke();
+      heatCtx.restore();
+
+      const handleGlow = heatCtx.createLinearGradient(potX + potW, potY, potX + potW + 80, potY);
+      handleGlow.addColorStop(0, `rgba(255, 140, 80, ${0.35 * heatIntensity})`);
+      handleGlow.addColorStop(1, 'rgba(0,0,0,0)');
+      heatCtx.strokeStyle = handleGlow;
+      heatCtx.lineWidth = 14;
+      heatCtx.beginPath();
+      heatCtx.moveTo(potX + potW - 6, potY + potH * 0.22);
+      heatCtx.lineTo(potX + potW + 75, potY + potH * 0.18);
+      heatCtx.stroke();
+
+      const potGrad = heatCtx.createLinearGradient(potX, potY, potX + potW, potY + potH);
+      potGrad.addColorStop(0, '#3c4350');
+      potGrad.addColorStop(0.5, '#a4abb4');
+      potGrad.addColorStop(1, '#4e5868');
+      heatCtx.fillStyle = potGrad;
+      drawRoundedRect(heatCtx, potX, potY, potW, potH, potR);
+      heatCtx.fill();
+
+      heatCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+      heatCtx.lineWidth = 2;
+      drawRoundedRect(heatCtx, potX + 2, potY + 2, potW - 4, potH - 4, potR - 2);
+      heatCtx.stroke();
+
+      heatCtx.save();
+      heatCtx.globalAlpha = 0.8;
+      heatCtx.fillStyle = '#c7ced6';
+      heatCtx.beginPath();
+      heatCtx.ellipse(potX + potW / 2, potY + 10, potW * 0.5, potH * 0.18, 0, 0, Math.PI * 2);
+      heatCtx.fill();
+      heatCtx.restore();
+
+      const waterY = potY + potH * 0.25;
+      const waterH = potH * 0.5;
+      const waterGrad = heatCtx.createLinearGradient(0, waterY, 0, waterY + waterH);
+      waterGrad.addColorStop(0, '#8ad1ff');
+      waterGrad.addColorStop(1, '#3e7bbf');
+      heatCtx.save();
+      heatCtx.beginPath();
+      heatCtx.rect(potX + potW * 0.12, waterY, potW * 0.76, waterH);
+      heatCtx.clip();
+      heatCtx.fillStyle = waterGrad;
+      heatCtx.fillRect(potX + potW * 0.12, waterY, potW * 0.76, waterH);
+      heatCtx.strokeStyle = 'rgba(255,255,255,0.25)';
+      heatCtx.lineWidth = 2;
+      heatCtx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const x = potX + potW * 0.12 + i * (potW * 0.76 / 9);
+        const wave = Math.sin(state.time * 0.6 + i) * 2;
+        heatCtx.lineTo(x, waterY + 6 + wave);
+      }
+      heatCtx.stroke();
+      heatCtx.restore();
+
+      const convectionAlpha = state.mode === 'convection' || state.mode === 'all' ? 1 : 0.35;
+      heatCtx.save();
+      heatCtx.globalAlpha = convectionAlpha;
+      if (state.showVectors) {
+        heatCtx.strokeStyle = '#ffb86b';
+        heatCtx.lineWidth = 2;
+        for (let i = 0; i < 4; i++) {
+          const x = potX + potW * 0.25 + i * potW * 0.17;
+          const baseY = waterY + waterH * 0.85;
+          const topY = waterY + waterH * 0.2;
+          heatCtx.beginPath();
+          heatCtx.moveTo(x, baseY);
+          heatCtx.lineTo(x, topY);
+          heatCtx.stroke();
+          heatCtx.beginPath();
+          heatCtx.moveTo(x - 4, topY + 6);
+          heatCtx.lineTo(x, topY);
+          heatCtx.lineTo(x + 4, topY + 6);
+          heatCtx.stroke();
+        }
+      }
+      if (state.showIsotherms) {
+        heatCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+        heatCtx.setLineDash([6, 6]);
+        for (let i = 1; i <= 3; i++) {
+          const y = waterY + (waterH / 4) * i;
+          heatCtx.beginPath();
+          heatCtx.moveTo(potX + potW * 0.14, y);
+          heatCtx.lineTo(potX + potW * 0.86, y);
+          heatCtx.stroke();
+        }
+        heatCtx.setLineDash([]);
+      }
+      heatCtx.restore();
+
+      const flameBaseY = potY + potH + 20;
+      const flameX = potX + potW * 0.2;
+      const flameW = potW * 0.6;
+      const flicker = Math.sin(state.time * 2.3) * 6 * heatIntensity;
+      for (let i = 0; i < 4; i++) {
+        const height = 36 + i * 12 + flicker;
+        heatCtx.fillStyle = i % 2 === 0 ? '#ff8c42' : '#ffb86b';
+        heatCtx.beginPath();
+        heatCtx.moveTo(flameX + i * 22, flameBaseY);
+        heatCtx.quadraticCurveTo(flameX + i * 22 + 10, flameBaseY - height, flameX + i * 22 + 24, flameBaseY);
+        heatCtx.closePath();
+        heatCtx.fill();
+      }
+
+      const radiationAlpha = state.mode === 'radiation' || state.mode === 'all' ? 1 : 0.3;
+      heatCtx.save();
+      heatCtx.globalAlpha = radiationAlpha;
+      heatCtx.strokeStyle = `rgba(255, 140, 90, ${0.65 + heatIntensity * 0.2})`;
+      heatCtx.lineWidth = 2;
+      for (let i = 0; i < 5; i++) {
+        heatCtx.beginPath();
+        heatCtx.arc(potX + potW * 0.5, potY + potH * 0.45, potW * 0.35 + i * 16, -0.5, 0.5);
+        heatCtx.stroke();
+      }
+      heatCtx.restore();
+
+      const conductionAlpha = state.mode === 'conduction' || state.mode === 'all' ? 1 : 0.35;
+      if (state.showVectors) {
+        heatCtx.save();
+        heatCtx.globalAlpha = conductionAlpha;
+        heatCtx.strokeStyle = '#ffb86b';
+        heatCtx.lineWidth = 2;
+        heatCtx.beginPath();
+        heatCtx.moveTo(potX + potW * 0.88, potY + potH * 0.18);
+        heatCtx.lineTo(potX + potW + 40, potY + potH * 0.13);
+        heatCtx.stroke();
+        heatCtx.beginPath();
+        heatCtx.moveTo(potX + potW + 34, potY + potH * 0.15);
+        heatCtx.lineTo(potX + potW + 40, potY + potH * 0.13);
+        heatCtx.lineTo(potX + potW + 34, potY + potH * 0.11);
+        heatCtx.stroke();
+        heatCtx.restore();
+      }
+
+      if (state.showLabels) {
+        heatCtx.fillStyle = '#f3d08f';
+        heatCtx.font = '16px "Alegreya Sans", "Gill Sans", sans-serif';
+        heatCtx.fillText('Convection', potX + potW * 0.2, waterY - 10);
+        heatCtx.fillText('Conduction', potX + potW + 18, potY + potH * 0.12);
+        heatCtx.fillText('Radiation', potX + potW * 0.62, potY + potH + 46);
+      }
+    }
+
+    function drawProfile() {
+      const w = dom.profileCanvas.width;
+      const h = dom.profileCanvas.height;
+      profileCtx.clearRect(0, 0, w, h);
+      profileCtx.fillStyle = 'rgba(6, 8, 12, 0.95)';
+      profileCtx.fillRect(0, 0, w, h);
+
+      profileCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+      profileCtx.lineWidth = 1;
+      profileCtx.beginPath();
+      profileCtx.moveTo(50, 30);
+      profileCtx.lineTo(50, h - 30);
+      profileCtx.lineTo(w - 30, h - 30);
+      profileCtx.stroke();
+
+      const hot = state.th;
+      const amb = state.tc;
+      const curve = state.mode === 'radiation' ? 0.6 : state.mode === 'convection' ? 0.8 : 1.0;
+      profileCtx.strokeStyle = '#ffb86b';
+      profileCtx.lineWidth = 2.5;
+      profileCtx.beginPath();
+      for (let i = 0; i <= 40; i++) {
+        const t = i / 40;
+        const temp = hot - (hot - amb) * Math.pow(t, curve);
+        const x = 50 + t * (w - 90);
+        const y = 30 + (1 - (temp - amb) / (hot - amb)) * (h - 60);
+        if (i === 0) profileCtx.moveTo(x, y); else profileCtx.lineTo(x, y);
+      }
+      profileCtx.stroke();
+
+      profileCtx.fillStyle = '#c2b6a6';
+      profileCtx.font = '12px "Alegreya Sans", "Gill Sans", sans-serif';
+      profileCtx.fillText('Temperature', 10, 18);
+      profileCtx.fillText('Distance', w - 80, h - 10);
+    }
+
+    function render() {
+      updateReadouts();
+      drawPotScene();
+      drawProfile();
+    }
+
+    function bind() {
+      dom.mode.addEventListener('change', () => { state.mode = dom.mode.value; });
+      dom.material.addEventListener('change', () => {
+        state.material = dom.material.value;
+        state.k = materials[state.material].k;
+        dom.k.value = state.k;
+      });
+      dom.k.addEventListener('input', () => { state.k = Number(dom.k.value); });
+      dom.th.addEventListener('input', () => { state.th = Number(dom.th.value); });
+      dom.tc.addEventListener('input', () => { state.tc = Number(dom.tc.value); });
+      dom.area.addEventListener('input', () => { state.area = Number(dom.area.value); });
+      dom.thick.addEventListener('input', () => { state.thick = Number(dom.thick.value); });
+      dom.convection.addEventListener('change', () => { state.convection = dom.convection.value; });
+      dom.emissivity.addEventListener('input', () => { state.emissivity = Number(dom.emissivity.value); });
+      dom.showLabels.addEventListener('change', () => { state.showLabels = dom.showLabels.checked; });
+      dom.showVectors.addEventListener('change', () => { state.showVectors = dom.showVectors.checked; });
+      dom.showIsotherms.addEventListener('change', () => { state.showIsotherms = dom.showIsotherms.checked; });
+    }
+
+    function tick() {
+      state.time += 0.016;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    bind();
+    tick();
+  </script>
+</body>
+</html>

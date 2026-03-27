@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Single Slit Diffraction</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Diffraction</span></div>
+    <header class="hero"><h1>Single Slit Diffraction</h1><p>a sin θ = mλ — Light bends around obstacles</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">a sin θ = mλ</div>
+        <div class="control-group">
+          <label>Wavelength (nm)</label>
+          <input type="range" id="waveSlider" min="380" max="750" value="550">
+        </div>
+        <div class="control-group">
+          <label>Slit Width (μm)</label>
+          <input type="range" id="slitSlider" min="1" max="50" value="10">
+        </div>
+        <div class="control-group">
+          <label>Screen Distance (m)</label>
+          <input type="range" id="distSlider" min="1" max="20" value="5">
+        </div>
+        <div class="data-panel">
+          <div>First minimum: <strong id="min1Val">±0.00°</strong></div>
+          <div>Central max width: <strong id="widthVal">0 mm</strong></div>
+          <div>Fringe spacing: <strong id="fringeVal">0 mm</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const waveSlider = document.getElementById('waveSlider');
+    const slitSlider = document.getElementById('slitSlider');
+    const distSlider = document.getElementById('distSlider');
+    let time = 0;
+    function update() {
+      const lambda = parseFloat(waveSlider.value) * 1e-9;
+      const a = parseFloat(slitSlider.value) * 1e-6;
+      const L = parseFloat(distSlider.value);
+      const theta1 = Math.asin(lambda / a) * 180 / Math.PI;
+      const y1 = L * Math.tan(theta1) * 1000;
+      document.getElementById('min1Val').textContent = '±' + theta1.toFixed(2) + '°';
+      document.getElementById('widthVal').textContent = (2 * y1).toFixed(2) + ' mm';
+      document.getElementById('fringeVal').textContent = y1.toFixed(2) + ' mm';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const lambda = parseFloat(waveSlider.value);
+      const a = parseFloat(slitSlider.value);
+      const L = parseFloat(distSlider.value);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.fillStyle = '#333';
+      ctx.fillRect(40, cy - 60, 20, 120);
+      ctx.fillStyle = '#222';
+      const slitH = a * 5;
+      ctx.fillRect(60, cy - slitH/2, 10, slitH);
+      const color = lambda < 450 ? '#0000ff' : lambda < 520 ? '#00ff00' : lambda < 590 ? '#ffff00' : lambda < 650 ? '#ff7f00' : '#ff0000';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(70, cy); ctx.lineTo(w - 50, cy); ctx.stroke();
+      const screenX = w - 50;
+      ctx.fillStyle = '#222';
+      ctx.fillRect(screenX, 50, 15, h - 100);
+      const intensity = [];
+      const numPoints = 200;
+      const maxY = h / 2 - 80;
+      for (let i = 0; i < numPoints; i++) {
+        const y = (i / numPoints) * maxY;
+        const beta = Math.PI * a * 1e-6 * y * 1000 / (lambda * 1e-9 * L) / 1000;
+        let I = 1;
+        if (beta > 0.001) I = Math.pow(Math.sin(beta) / beta, 2);
+        intensity.push({ y: cy - y, I: I });
+        intensity.push({ y: cy + y, I: I });
+      }
+      intensity.sort((a, b) => a.y - b.y);
+      ctx.beginPath();
+      intensity.forEach((p, i) => {
+        const brightness = p.I;
+        ctx.strokeStyle = `rgba(${color === '#ffff00' ? '255,255,0' : color === '#00ff00' ? '0,255,0' : color === '#ff0000' ? '255,0,0' : color === '#0000ff' ? '0,0,255' : '255,127,0'}, ${brightness})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(screenX + 15, p.y); ctx.lineTo(screenX + 15 + brightness * 80, p.y); ctx.stroke();
+      });
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Slit width: a = ' + a + ' μm', 30, cy - 80);
+      ctx.fillText('Screen', screenX + 20, h - 30);
+      ctx.fillText('λ = ' + lambda + ' nm', 30, 25);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    waveSlider.addEventListener('input', update);
+    slitSlider.addEventListener('input', update);
+    distSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Waveguides</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --magenta: #ff7ad9;
+      --green: #6bff6b;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .status-ok { color: var(--green); font-weight: 700; }
+    .status-bad { color: var(--red); font-weight: 700; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Waveguides</h1>
+        <p>Cutoff frequency, TE/TM modes, and field patterns</p>
+      </div>
+      <div class="pill">f₍c₎ = (c/2) √((m/a)² + (n/b)²)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Waveguide View</h2>
+        <canvas id="guideCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Field Pattern</h2>
+            <canvas id="fieldCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Cutoff Spectrum</h2>
+            <canvas id="spectrumCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Waveguide Type</label>
+            <select id="guideType">
+              <option value="rect" selected>Rectangular</option>
+              <option value="circ">Circular</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Width a (cm)</label>
+            <input type="range" id="width" min="1.0" max="5.0" step="0.1" value="2.286" />
+            <div class="row"><span class="muted">a</span><span class="value" id="widthValue">2.286 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Height b (cm)</label>
+            <input type="range" id="height" min="0.5" max="3.0" step="0.1" value="1.143" />
+            <div class="row"><span class="muted">b</span><span class="value" id="heightValue">1.143 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Radius r (cm)</label>
+            <input type="range" id="radius" min="0.5" max="3.0" step="0.1" value="1.2" />
+            <div class="row"><span class="muted">r</span><span class="value" id="radiusValue">1.2 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Frequency (GHz)</label>
+            <input type="range" id="freq" min="1" max="40" step="0.5" value="10" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">10.0 GHz</span></div>
+          </div>
+          <div class="control">
+            <label>Mode Type</label>
+            <select id="modeType">
+              <option value="TE" selected>TE</option>
+              <option value="TM">TM</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Mode m</label>
+            <input type="range" id="modeM" min="0" max="3" step="1" value="1" />
+            <div class="row"><span class="muted">m</span><span class="value" id="modeMValue">1</span></div>
+          </div>
+          <div class="control">
+            <label>Mode n</label>
+            <input type="range" id="modeN" min="0" max="3" step="1" value="0" />
+            <div class="row"><span class="muted">n</span><span class="value" id="modeNValue">0</span></div>
+          </div>
+          <div class="control">
+            <label>Show E-field</label>
+            <div class="toggle">
+              <input type="checkbox" id="showE" checked />
+              <span>Cyan field lines</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show H-field</label>
+            <div class="toggle">
+              <input type="checkbox" id="showH" />
+              <span>Magenta field lines</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Preset Sizes</label>
+            <div style="display:flex; gap:6px;">
+              <button data-preset="wr90">WR-90</button>
+              <button data-preset="wr10">WR-10</button>
+              <button data-preset="custom">Custom</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Cutoff & Mode</div>
+            <div class="row"><span>Mode</span><span class="value" id="modeLabel">TE(1,0)</span></div>
+            <div class="row"><span>Cutoff</span><span class="value" id="cutoffValue">6.56 GHz</span></div>
+            <div class="row"><span>Status</span><span class="value" id="statusValue"><span class="status-ok">Propagating</span></span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span>Dominant mode</span><span class="value" id="dominantValue">TE10</span></div>
+            <div class="row"><span>Mode rule</span><span class="value" id="ruleValue">TE: Eᶻ = 0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Below cutoff, fields become evanescent. TE₁₀ is dominant in rectangular guides.</div>
+  </div>
+
+  <script>
+    const C = 3e8;
+    const state = {
+      guideType: 'rect',
+      widthCm: 2.286,
+      heightCm: 1.143,
+      radiusCm: 1.2,
+      freqGHz: 10,
+      modeType: 'TE',
+      m: 1,
+      n: 0,
+      showE: true,
+      showH: false
+    };
+
+    const dom = {
+      guideType: document.getElementById('guideType'),
+      width: document.getElementById('width'),
+      height: document.getElementById('height'),
+      radius: document.getElementById('radius'),
+      freq: document.getElementById('freq'),
+      modeType: document.getElementById('modeType'),
+      modeM: document.getElementById('modeM'),
+      modeN: document.getElementById('modeN'),
+      showE: document.getElementById('showE'),
+      showH: document.getElementById('showH'),
+      widthValue: document.getElementById('widthValue'),
+      heightValue: document.getElementById('heightValue'),
+      radiusValue: document.getElementById('radiusValue'),
+      freqValue: document.getElementById('freqValue'),
+      modeMValue: document.getElementById('modeMValue'),
+      modeNValue: document.getElementById('modeNValue'),
+      modeLabel: document.getElementById('modeLabel'),
+      cutoffValue: document.getElementById('cutoffValue'),
+      statusValue: document.getElementById('statusValue'),
+      dominantValue: document.getElementById('dominantValue'),
+      ruleValue: document.getElementById('ruleValue'),
+      guideCanvas: document.getElementById('guideCanvas'),
+      fieldCanvas: document.getElementById('fieldCanvas'),
+      spectrumCanvas: document.getElementById('spectrumCanvas')
+    };
+
+    const presets = {
+      wr90: { widthCm: 2.286, heightCm: 1.016 },
+      wr10: { widthCm: 0.254, heightCm: 0.127 }
+    };
+
+    const circRoots = {
+      TE: { '1,1': 1.8412, '2,1': 3.0542, '0,1': 2.4048 },
+      TM: { '0,1': 2.4048, '1,1': 3.8317, '2,1': 5.1356 }
+    };
+
+    const guideCtx = dom.guideCanvas.getContext('2d');
+    const fieldCtx = dom.fieldCanvas.getContext('2d');
+    const spectrumCtx = dom.spectrumCanvas.getContext('2d');
+
+    function cutoffRect(m, n) {
+      if (m === 0 && n === 0) return Infinity;
+      const a = state.widthCm / 100;
+      const b = state.heightCm / 100;
+      return (C / 2) * Math.sqrt((m / a) ** 2 + (n / b) ** 2);
+    }
+
+    function cutoffCirc(m, n) {
+      const r = state.radiusCm / 100;
+      const key = `${m},${n}`;
+      const root = circRoots[state.modeType][key] || 1.8412;
+      return (C * root) / (2 * Math.PI * r);
+    }
+
+    function getCutoff() {
+      if (state.guideType === 'rect') return cutoffRect(state.m, state.n);
+      return cutoffCirc(state.m, state.n);
+    }
+
+    function updateReadouts() {
+      dom.widthValue.textContent = `${state.widthCm.toFixed(3)} cm`;
+      dom.heightValue.textContent = `${state.heightCm.toFixed(3)} cm`;
+      dom.radiusValue.textContent = `${state.radiusCm.toFixed(2)} cm`;
+      dom.freqValue.textContent = `${state.freqGHz.toFixed(1)} GHz`;
+      dom.modeMValue.textContent = state.m;
+      dom.modeNValue.textContent = state.n;
+      dom.modeLabel.textContent = `${state.modeType}(${state.m},${state.n})`;
+      dom.dominantValue.textContent = state.guideType === 'rect' ? 'TE10' : 'TE11';
+      dom.ruleValue.textContent = state.modeType === 'TE' ? 'TE: Eᶻ = 0' : 'TM: Hᶻ = 0';
+      const fc = getCutoff();
+      const fcGHz = fc / 1e9;
+      dom.cutoffValue.textContent = fc === Infinity ? '—' : `${fcGHz.toFixed(2)} GHz`;
+      const status = state.freqGHz > fcGHz ? 'Propagating' : 'Cutoff';
+      dom.statusValue.innerHTML = state.freqGHz > fcGHz
+        ? '<span class="status-ok">Propagating</span>'
+        : '<span class="status-bad">Evanescent</span>';
+    }
+
+    function drawGuide() {
+      const w = dom.guideCanvas.width;
+      const h = dom.guideCanvas.height;
+      guideCtx.clearRect(0, 0, w, h);
+      guideCtx.fillStyle = '#0b1420';
+      guideCtx.fillRect(0, 0, w, h);
+      guideCtx.strokeStyle = '#f6c76b';
+      guideCtx.lineWidth = 3;
+      if (state.guideType === 'rect') {
+        guideCtx.strokeRect(120, 60, 360, 140);
+        guideCtx.strokeRect(140, 80, 320, 100);
+      } else {
+        guideCtx.beginPath();
+        guideCtx.arc(w / 2, h / 2, 80, 0, Math.PI * 2);
+        guideCtx.stroke();
+        guideCtx.beginPath();
+        guideCtx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
+        guideCtx.stroke();
+      }
+      guideCtx.fillStyle = '#8aa0b8';
+      guideCtx.fillText('Waveguide', 20, 24);
+    }
+
+    function drawField() {
+      const w = dom.fieldCanvas.width;
+      const h = dom.fieldCanvas.height;
+      fieldCtx.clearRect(0, 0, w, h);
+      fieldCtx.fillStyle = '#0b1420';
+      fieldCtx.fillRect(0, 0, w, h);
+
+      const m = Math.max(1, state.m);
+      const n = Math.max(1, state.n || 1);
+      const cols = 40;
+      const rows = 28;
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const x = i / (cols - 1);
+          const y = j / (rows - 1);
+          const val = Math.sin(m * Math.PI * x) * Math.sin(n * Math.PI * y);
+          const shade = Math.floor(40 + Math.abs(val) * 180);
+          fieldCtx.fillStyle = `rgb(${shade},${shade},${shade})`;
+          fieldCtx.fillRect(i * (w / cols), j * (h / rows), w / cols, h / rows);
+        }
+      }
+
+      if (state.showE) {
+        fieldCtx.strokeStyle = '#6ad7ff';
+        for (let i = 1; i <= m; i++) {
+          const x = (i / (m + 1)) * w;
+          fieldCtx.beginPath();
+          fieldCtx.moveTo(x, 10);
+          fieldCtx.lineTo(x, h - 10);
+          fieldCtx.stroke();
+        }
+      }
+      if (state.showH) {
+        fieldCtx.strokeStyle = '#ff7ad9';
+        for (let j = 1; j <= n; j++) {
+          const y = (j / (n + 1)) * h;
+          fieldCtx.beginPath();
+          fieldCtx.moveTo(10, y);
+          fieldCtx.lineTo(w - 10, y);
+          fieldCtx.stroke();
+        }
+      }
+    }
+
+    function drawSpectrum() {
+      const w = dom.spectrumCanvas.width;
+      const h = dom.spectrumCanvas.height;
+      spectrumCtx.clearRect(0, 0, w, h);
+      spectrumCtx.fillStyle = '#0b1420';
+      spectrumCtx.fillRect(0, 0, w, h);
+      spectrumCtx.strokeStyle = '#1c2c43';
+      for (let y = 0; y <= h; y += 30) {
+        spectrumCtx.beginPath();
+        spectrumCtx.moveTo(0, y);
+        spectrumCtx.lineTo(w, y);
+        spectrumCtx.stroke();
+      }
+      const fc = getCutoff() / 1e9;
+      const f = state.freqGHz;
+      const mapX = (value) => (value / 40) * w;
+      spectrumCtx.strokeStyle = '#f6c76b';
+      spectrumCtx.beginPath();
+      spectrumCtx.moveTo(mapX(fc), 0);
+      spectrumCtx.lineTo(mapX(fc), h);
+      spectrumCtx.stroke();
+      spectrumCtx.fillStyle = '#6ad7ff';
+      spectrumCtx.beginPath();
+      spectrumCtx.arc(mapX(f), h / 2, 6, 0, Math.PI * 2);
+      spectrumCtx.fill();
+    }
+
+    function render() {
+      updateReadouts();
+      drawGuide();
+      drawField();
+      drawSpectrum();
+    }
+
+    function bind() {
+      dom.guideType.addEventListener('change', () => { state.guideType = dom.guideType.value; render(); });
+      dom.width.addEventListener('input', () => { state.widthCm = Number(dom.width.value); render(); });
+      dom.height.addEventListener('input', () => { state.heightCm = Number(dom.height.value); render(); });
+      dom.radius.addEventListener('input', () => { state.radiusCm = Number(dom.radius.value); render(); });
+      dom.freq.addEventListener('input', () => { state.freqGHz = Number(dom.freq.value); render(); });
+      dom.modeType.addEventListener('change', () => { state.modeType = dom.modeType.value; render(); });
+      dom.modeM.addEventListener('input', () => { state.m = Number(dom.modeM.value); render(); });
+      dom.modeN.addEventListener('input', () => { state.n = Number(dom.modeN.value); render(); });
+      dom.showE.addEventListener('change', () => { state.showE = dom.showE.checked; render(); });
+      dom.showH.addEventListener('change', () => { state.showH = dom.showH.checked; render(); });
+      document.querySelectorAll('button[data-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const preset = btn.dataset.preset;
+          if (preset === 'custom') return;
+          const dims = presets[preset];
+          state.widthCm = dims.widthCm;
+          state.heightCm = dims.heightCm;
+          dom.width.value = state.widthCm;
+          dom.height.value = state.heightCm;
+          render();
+        });
+      });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

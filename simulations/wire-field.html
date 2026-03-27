@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wire Magnetic Field</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 360px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      cursor: grab;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Wire Magnetic Field</h1>
+        <p>B = μ₀I / (2πr) · Circular field lines around a wire</p>
+      </div>
+      <div class="pill">Right-hand rule · Field strength</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Field Visualization</h2>
+        <canvas id="wireCanvas" width="600" height="360" aria-label="Wire field"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Current (A)</label>
+            <input type="range" id="current" min="-10" max="10" step="0.1" value="5" />
+            <div class="row"><span class="muted">I</span><span class="value" id="currentValue">5.0 A</span></div>
+          </div>
+          <div class="control">
+            <label>Wire Position</label>
+            <div class="row"><span class="muted">Drag on canvas</span><span class="value" id="posValue">Center</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showLines" checked> Show field lines</label>
+            <label class="toggle"><input type="checkbox" id="showCompasses" checked> Show compasses</label>
+            <label class="toggle"><input type="checkbox" id="showElectrons"> Show electrons</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Field Strength</div>
+            <div class="row"><span>B @ 1 cm</span><span class="value" id="bValue">0.10 mT</span></div>
+            <div class="row"><span>Direction</span><span class="value" id="dirValue">CCW</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Right-Hand Rule</div>
+            <div class="formula">
+              Thumb = current direction
+              <br>Fingers curl = B direction
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Positive current = out of page (⊙). Negative = into page (⊗).</div>
+  </div>
+
+  <script>
+    const mu0 = 4 * Math.PI * 1e-7;
+    const state = {
+      current: 5,
+      wireX: 300,
+      wireY: 180,
+      showLines: true,
+      showCompasses: true,
+      showElectrons: false,
+      dragging: false,
+      time: 0
+    };
+
+    const dom = {
+      current: document.getElementById('current'),
+      currentValue: document.getElementById('currentValue'),
+      posValue: document.getElementById('posValue'),
+      showLines: document.getElementById('showLines'),
+      showCompasses: document.getElementById('showCompasses'),
+      showElectrons: document.getElementById('showElectrons'),
+      bValue: document.getElementById('bValue'),
+      dirValue: document.getElementById('dirValue')
+    };
+
+    const canvas = document.getElementById('wireCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function fieldMagnitude(r) {
+      return mu0 * Math.abs(state.current) / (2 * Math.PI * r);
+    }
+
+    function drawField() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      if (state.showLines) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 1.5;
+        for (let r = 30; r < 180; r += 25) {
+          ctx.beginPath();
+          ctx.arc(state.wireX, state.wireY, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      if (state.showCompasses) {
+        ctx.strokeStyle = '#f6c76b';
+        ctx.lineWidth = 2;
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 4) {
+          const x = state.wireX + Math.cos(angle) * 110;
+          const y = state.wireY + Math.sin(angle) * 110;
+          const dir = state.current >= 0 ? angle + Math.PI / 2 : angle - Math.PI / 2;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + 18 * Math.cos(dir), y + 18 * Math.sin(dir));
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = '#f6c76b';
+          ctx.fill();
+        }
+      }
+
+      if (state.showElectrons) {
+        ctx.fillStyle = '#6bff6b';
+        for (let i = 0; i < 12; i++) {
+          const angle = state.time + i * (Math.PI / 6);
+          const x = state.wireX + Math.cos(angle) * 50;
+          const y = state.wireY + Math.sin(angle) * 50;
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = state.current >= 0 ? '#6ad7ff' : '#ff6b6b';
+      ctx.beginPath();
+      ctx.arc(state.wireX, state.wireY, 16, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0b1420';
+      ctx.font = '18px Trebuchet MS';
+      ctx.fillText(state.current >= 0 ? '⊙' : '⊗', state.wireX - 8, state.wireY + 6);
+
+      dom.posValue.textContent = `(${state.wireX.toFixed(0)}, ${state.wireY.toFixed(0)})`;
+    }
+
+    function updateReadouts() {
+      dom.currentValue.textContent = `${state.current.toFixed(1)} A`;
+      const b = fieldMagnitude(0.01);
+      dom.bValue.textContent = `${(b * 1e6).toFixed(2)} µT`;
+      dom.dirValue.textContent = state.current >= 0 ? 'CCW' : 'CW';
+    }
+
+    function update() {
+      updateReadouts();
+      drawField();
+    }
+
+    function tick() {
+      state.time += 0.05;
+      if (state.showElectrons) drawField();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.current.addEventListener('input', () => {
+        state.current = Number(dom.current.value);
+        update();
+      });
+      dom.showLines.addEventListener('change', () => {
+        state.showLines = dom.showLines.checked;
+        update();
+      });
+      dom.showCompasses.addEventListener('change', () => {
+        state.showCompasses = dom.showCompasses.checked;
+        update();
+      });
+      dom.showElectrons.addEventListener('change', () => {
+        state.showElectrons = dom.showElectrons.checked;
+        update();
+      });
+
+      canvas.addEventListener('mousedown', () => {
+        state.dragging = true;
+        canvas.style.cursor = 'grabbing';
+      });
+      window.addEventListener('mouseup', () => {
+        state.dragging = false;
+        canvas.style.cursor = 'grab';
+      });
+      canvas.addEventListener('mousemove', (e) => {
+        if (!state.dragging) return;
+        const rect = canvas.getBoundingClientRect();
+        state.wireX = e.clientX - rect.left;
+        state.wireY = e.clientY - rect.top;
+        update();
+      });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Special Relativity</title>
+  <link rel="stylesheet" href="/styles.css"/><link rel="stylesheet" href="/simulation-theme.css"/>
+  <style>
+    :root{--accent:#6ad7ff;--accent-2:#f6c76b;--panel:rgba(15,22,35,0.92);--sim-border:rgba(120,150,190,0.18);--sim-text:#e9f2ff;--sim-muted:#9fb0c5;}
+    body{margin:0;background:#0a111c;color:var(--sim-text);font-family:"Space Grotesk",sans-serif;}
+    .page{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{display:flex;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--sim-border);background:rgba(8,12,20,0.7)}
+    .topbar a{color:var(--sim-text);text-decoration:none;font-weight:600}
+    header{text-align:center;padding:30px 20px}
+    header h1{font-size:clamp(1.6rem,2.4vw,2.5rem);margin:0 0 10px;letter-spacing:0.08em;text-transform:uppercase}
+    header p{color:var(--sim-muted);margin:0}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:12px 28px 18px}
+    .panel{background:var(--panel);border:1px solid var(--sim-border);border-radius:18px;padding:18px}
+    canvas{width:100%;height:350px;background:rgba(6,10,18,0.7);border-radius:16px;border:1px solid var(--sim-border)}
+    .controls{display:grid;gap:16px}
+    label{font-size:0.9rem;color:var(--sim-muted);display:flex;justify-content:space-between}
+    input[type="range"],select{width:100%}
+    .data-panel{font-size:0.9rem;color:var(--sim-muted)}
+    .data-panel strong{color:var(--accent);font-weight:600}
+    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a></div>
+    <header><h1>Special Relativity</h1><p>Time dilation & length contraction</p></header>
+    <div class="layout">
+      <div><canvas id="relCanvas"></canvas>
+        <div class="panel" style="margin-top:16px">
+          <div class="results-grid">
+            <div class="data-panel"><div>β = v/c: <strong id="betaText">0</strong></div><div>γ factor: <strong id="gammaText">1.00</strong></div></div>
+            <div class="data-panel"><div>Time dilation: <strong id="timeText">1.00x</strong></div><div>Length: <strong id="lenText">100%</strong></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="panel"><div class="control-group"><label>Velocity (% of c) <span id="velVal">50</span>%</label><input type="range" id="velocity" min="0" max="99.9" value="50" step="0.1"/></div></div>
+        <div class="panel"><div class="data-panel"><strong>Lorentz Factor:</strong></div><div style="margin-top:8px">γ = 1/√(1-β²)</div><div style="margin-top:8px">β = v/c</div><div style="margin-top:8px">Time: t' = γt</div><div>Length: L' = L/γ</div></div>
+        <div class="panel"><div class="data-panel"><strong>Key Effects:</strong></div><div style="margin-top:8px">• Time slows for moving objects</div><div>• Length contracts in motion direction</div><div>• Mass increases: m = γm₀</div></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas=document.getElementById('relCanvas'),ctx=canvas.getContext('2d');
+    let vPercent=50;
+    const c=299792458;
+    function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width*devicePixelRatio;canvas.height=r.height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+    function draw(){
+      const w=canvas.width/devicePixelRatio,h=canvas.height/devicePixelRatio;
+      ctx.fillStyle='rgba(6,10,18,0.95)';ctx.fillRect(0,0,w,h);
+      const beta=vPercent/100;const gamma=1/Math.sqrt(1-beta*beta);
+      document.getElementById('betaText').textContent=beta.toFixed(3);
+      document.getElementById('gammaText').textContent=gamma.toFixed(2);
+      document.getElementById('timeText').textContent=gamma.toFixed(2)+'x';
+      document.getElementById('lenText').textContent=(100/gamma).toFixed(1)+'%';
+      const cx=w/2,cy=h/2;
+      ctx.fillStyle='#333';ctx.fillRect(50,cy-20,w-100,40);
+      const barWidth=(w-100)*beta;
+      ctx.fillStyle='#6ad7ff';ctx.fillRect(50,cy-20,barWidth,40);
+      ctx.fillStyle='#666';ctx.font='14px sans-serif';ctx.textAlign='center';
+      ctx.fillText('Stationary frame',w/2,cy+40);
+      const movingWidth=Math.max(20,(w-100)/gamma);
+      ctx.fillStyle='#333';ctx.fillRect(50,cy+60,w-100,40);
+      ctx.fillStyle='#f6c76b';ctx.fillRect(50+(w-100-movingWidth)/2,cy+60,movingWidth,40);
+      ctx.fillText('Moving frame (contracts)',w/2,cy+120);
+    }
+    document.getElementById('velocity').oninput=e=>{vPercent=parseFloat(e.target.value);document.getElementById('velVal').textContent=vPercent;};
+    function loop(){draw();requestAnimationFrame(loop);}
+    window.onresize=resize;resize();loop();
+  </script>
+</body>
+</html>

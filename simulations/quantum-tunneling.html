@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Tunneling</title>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --panel: #121a25;
+      --ink: #e7f2ff;
+      --muted: #9fb3c8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --good: #6bff6b;
+      --danger: #ff6b6b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2230 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .tab.active { color: var(--ink); border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(106,215,255,0.3); }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Quantum Tunneling</h1>
+    <div class="subtitle">Barrier penetration, wavefunctions, and transmission probability</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="barrier">Barrier</button>
+        <button class="tab" data-mode="step">Step</button>
+        <button class="tab" data-mode="double">Double</button>
+        <button class="tab" data-mode="packet">Wave Packet</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <canvas id="scene" width="960" height="420"></canvas>
+      </div>
+      <div style="margin-top: 10px;" class="buttons">
+        <button class="btn" id="fire">Fire Particle</button>
+        <button class="btn" id="auto">Auto</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Particle Type</label>
+          <select id="particle">
+            <option value="electron">Electron</option>
+            <option value="proton">Proton</option>
+            <option value="atom">Atom</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Energy E (eV)</label>
+          <input id="energy" type="range" min="1" max="100" step="1" value="5" />
+          <div class="row"><span>1</span><span id="energyVal">5</span><span>100</span></div>
+        </div>
+        <div class="control">
+          <label>Barrier Height V₀ (eV)</label>
+          <input id="height" type="range" min="1" max="100" step="1" value="8" />
+          <div class="row"><span>1</span><span id="heightVal">8</span><span>100</span></div>
+        </div>
+        <div class="control">
+          <label>Barrier Width (nm)</label>
+          <input id="width" type="range" min="0.5" max="10" step="0.1" value="2" />
+          <div class="row"><span>0.5</span><span id="widthVal">2.0</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showWave" type="checkbox" checked /> Wave function</label>
+            <label><input id="showProb" type="checkbox" checked /> Probability density</label>
+            <label><input id="showEnergy" type="checkbox" checked /> Energy lines</label>
+            <label><input id="showParticles" type="checkbox" checked /> Particle animation</label>
+            <label><input id="showTR" type="checkbox" checked /> T / R values</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    For E &lt; V₀, transmission decays roughly as exp(-2κa), with κ = sqrt(2m(V₀-E))/ħ.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const hbar = 1.054e-34;
+    const eV = 1.602e-19;
+
+    const masses = {
+      electron: 9.11e-31,
+      proton: 1.67e-27,
+      atom: 6.6e-26
+    };
+
+    const state = {
+      mode: 'barrier',
+      particle: 'electron',
+      E: 5,
+      V0: 8,
+      width: 2,
+      showWave: true,
+      showProb: true,
+      showEnergy: true,
+      showParticles: true,
+      showTR: true,
+      auto: false,
+      hits: [],
+      time: 0
+    };
+
+    function transmission() {
+      const m = masses[state.particle];
+      const E = state.E * eV;
+      const V0 = state.V0 * eV;
+      const a = state.width * 1e-9;
+      if (state.mode === 'step') return E > V0 ? 1 : 0;
+      if (E < V0) {
+        const kappa = Math.sqrt(2 * m * (V0 - E)) / hbar;
+        const denom = 1 + (V0*V0 * Math.sinh(kappa*a) ** 2) / (4 * E * (V0 - E));
+        return 1 / denom;
+      } else {
+        const k = Math.sqrt(2 * m * (E - V0)) / hbar;
+        const denom = 1 + (V0*V0 * Math.sin(k*a) ** 2) / (4 * E * (E - V0));
+        return 1 / denom;
+      }
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < canvas.width; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+    }
+
+    function drawPotential() {
+      const mid = canvas.height / 2;
+      const left = 240;
+      const right = left + 220;
+      const height = 120;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(80, mid);
+      ctx.lineTo(left, mid);
+      ctx.lineTo(left, mid - height);
+      ctx.lineTo(right, mid - height);
+      ctx.lineTo(right, mid);
+      ctx.lineTo(canvas.width - 80, mid);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(246,199,107,0.2)';
+      ctx.fillRect(left, mid - height, right - left, height);
+
+      if (state.mode === 'double') {
+        const gap = 60;
+        ctx.fillRect(left + 50, mid - height, 40, height);
+        ctx.fillRect(left + 50 + 40 + gap, mid - height, 40, height);
+      }
+
+      if (state.showEnergy) {
+        const eY = mid - (state.E / state.V0) * height;
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.beginPath(); ctx.moveTo(80, eY); ctx.lineTo(canvas.width - 80, eY); ctx.stroke();
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('E', 60, eY - 4);
+      }
+    }
+
+    function drawWave() {
+      const mid = canvas.height / 2;
+      const left = 240;
+      const right = left + 220;
+      const amp = 28;
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      for (let x = 80; x < left; x++) {
+        const y = mid + Math.sin((x - 80) * 0.08) * amp;
+        if (x === 80) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let x = left; x < right; x++) {
+        const decay = Math.exp(-(x - left) / 50);
+        const y = mid + Math.sin((x - left) * 0.08) * amp * decay;
+        if (x === left) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let x = right; x < canvas.width - 80; x++) {
+        const y = mid + Math.sin((x - right) * 0.08) * amp * 0.6;
+        if (x === right) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      if (state.showProb) {
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        for (let x = 80; x < canvas.width - 80; x += 2) {
+          let density = 0.2;
+          if (x < left) density = 0.7;
+          if (x >= left && x <= right) density = 0.7 * Math.exp(-(x-left)/40);
+          if (x > right) density = 0.4;
+          const h = density * 80;
+          ctx.fillRect(x, mid - h/2, 2, h);
+        }
+      }
+    }
+
+    function fireParticle() {
+      const T = transmission();
+      const tunneled = Math.random() < T;
+      state.hits.push({ x: 100, y: canvas.height/2 + (Math.random()-0.5)*40, v: 4, tunneled });
+    }
+
+    function updateParticles() {
+      if (!state.showParticles) return;
+      const left = 240;
+      const right = left + 220;
+      for (const p of state.hits) {
+        if (!p.tunneled && p.x >= left) { p.v = -p.v; }
+        p.x += p.v;
+        if (p.x > canvas.width - 80 || p.x < 60) p.dead = true;
+      }
+      state.hits = state.hits.filter(p => !p.dead);
+    }
+
+    function drawParticles() {
+      if (!state.showParticles) return;
+      ctx.fillStyle = '#f6c76b';
+      for (const p of state.hits) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function updateReadout() {
+      const T = transmission();
+      const R = 1 - T;
+      const text = `QUANTUM TUNNELING\n` +
+        `-------------------------\n` +
+        `PARTICLE\n` +
+        `Type: ${state.particle}\n` +
+        `Energy E: ${state.E.toFixed(2)} eV\n` +
+        `\nBARRIER\n` +
+        `Height V0: ${state.V0.toFixed(2)} eV\n` +
+        `Width a: ${state.width.toFixed(2)} nm\n` +
+        `\nRESULTS\n` +
+        `Transmission T: ${T.toFixed(3)}\n` +
+        `Reflection R: ${R.toFixed(3)}\n` +
+        `E < V0: ${state.E < state.V0 ? 'YES' : 'NO'}\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function draw() {
+      drawBackground();
+      drawPotential();
+      if (state.showWave) drawWave();
+      drawParticles();
+    }
+
+    function tick() {
+      if (state.auto) fireParticle();
+      updateParticles();
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+      });
+    });
+    document.getElementById('particle').addEventListener('change', e => state.particle = e.target.value);
+    document.getElementById('energy').addEventListener('input', e => {
+      state.E = parseFloat(e.target.value);
+      document.getElementById('energyVal').textContent = state.E.toFixed(0);
+    });
+    document.getElementById('height').addEventListener('input', e => {
+      state.V0 = parseFloat(e.target.value);
+      document.getElementById('heightVal').textContent = state.V0.toFixed(0);
+    });
+    document.getElementById('width').addEventListener('input', e => {
+      state.width = parseFloat(e.target.value);
+      document.getElementById('widthVal').textContent = state.width.toFixed(1);
+    });
+
+    document.getElementById('showWave').addEventListener('change', e => state.showWave = e.target.checked);
+    document.getElementById('showProb').addEventListener('change', e => state.showProb = e.target.checked);
+    document.getElementById('showEnergy').addEventListener('change', e => state.showEnergy = e.target.checked);
+    document.getElementById('showParticles').addEventListener('change', e => state.showParticles = e.target.checked);
+    document.getElementById('showTR').addEventListener('change', e => state.showTR = e.target.checked);
+
+    document.getElementById('fire').addEventListener('click', fireParticle);
+    document.getElementById('auto').addEventListener('click', () => state.auto = !state.auto);
+    document.getElementById('reset').addEventListener('click', () => { state.hits = []; state.auto = false; });
+
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Muscle Physics</title>
+  <style>
+    :root {
+      --bg: #0a0c12;
+      --bg-2: #101824;
+      --panel: rgba(16, 20, 30, 0.88);
+      --panel-2: rgba(10, 14, 22, 0.92);
+      --text: #f2f3f5;
+      --muted: #b9c0cc;
+      --line: rgba(255, 255, 255, 0.08);
+      --muscle: #e87474;
+      --bone: #d9d2c6;
+      --load: #ffb15c;
+      --force: #7bc4ff;
+      --accent: #f6c76b;
+      --glow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 600px at 12% 5%, rgba(255, 140, 90, 0.12), transparent 60%),
+        radial-gradient(900px 600px at 88% 10%, rgba(123, 196, 255, 0.12), transparent 60%),
+        linear-gradient(140deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: "Sora", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px); background: rgba(8, 10, 16, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 30px 20px 10px; }
+    header.hero h1 { margin: 0 0 8px; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: 0.04em; }
+    header.hero p { margin: 0; color: var(--muted); }
+
+    .layout {
+      display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+      gap: 20px; padding: 14px 28px 8px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--glow);
+      padding: 16px 18px;
+    }
+    canvas {
+      width: 100%; height: 460px; border-radius: 16px;
+      background: rgba(6, 8, 12, 0.75); border: 1px solid var(--line);
+    }
+    .controls { display: grid; gap: 16px; }
+    .control-group {
+      display: grid; gap: 10px; padding: 12px; border-radius: 14px;
+      background: linear-gradient(160deg, rgba(20, 30, 60, 0.75), rgba(12, 16, 26, 0.9));
+      border: 1px solid rgba(120, 170, 230, 0.2);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.35);
+    }
+    label { font-size: 0.9rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    input[type="range"] { accent-color: #7bc4ff; }
+    .toggles {
+      display: grid; gap: 10px; color: var(--muted); font-size: 0.9rem;
+      background: linear-gradient(160deg, rgba(20, 30, 60, 0.75), rgba(12, 16, 26, 0.9));
+      border: 1px solid rgba(120, 170, 230, 0.2);
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.35);
+    }
+    .toggles label { justify-content: flex-start; gap: 10px; align-items: center; }
+    .toggles input[type="checkbox"] {
+      appearance: none;
+      width: 18px; height: 18px; border-radius: 6px;
+      border: 1px solid rgba(120, 170, 230, 0.45);
+      background: rgba(8, 12, 20, 0.9);
+      display: grid; place-items: center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .toggles input[type="checkbox"]::after {
+      content: \"\";
+      width: 8px; height: 8px; border-radius: 3px;
+      background: linear-gradient(160deg, #9ad2ff, #4aa0ff);
+      transform: scale(0);
+      transition: transform 0.15s ease;
+    }
+    .toggles input[type="checkbox"]:checked::after { transform: scale(1); }
+    .toggles input[type="checkbox"]:checked {
+      background: rgba(30, 90, 160, 0.65);
+      border-color: rgba(120, 190, 255, 0.75);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 2px rgba(90, 160, 255, 0.15);
+    }
+
+    .strip {
+      margin: 12px 28px 24px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
+    }
+    .strip .card {
+      background:
+        linear-gradient(160deg, rgba(90, 150, 220, 0.18), rgba(20, 30, 60, 0.85));
+      border: 1px solid rgba(120, 170, 230, 0.35);
+      border-radius: 16px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      min-height: 92px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 24px rgba(5, 10, 20, 0.35);
+      backdrop-filter: blur(8px);
+    }
+    .strip .card strong { display: block; margin-bottom: 6px; color: var(--text); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 360px; }
+      .strip { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a><span>Biomechanics Lab</span></div>
+    <header class="hero">
+      <h1>Muscle Physics</h1>
+      <p>Lever mechanics of the biceps — forces and torques at the elbow.</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="muscleCanvas" width="980" height="560" aria-label="Muscle lever"></canvas>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="load">Load Weight <strong id="loadLabel">98 N</strong></label>
+          <input type="range" id="load" min="20" max="200" step="1" value="98" />
+        </div>
+        <div class="control-group">
+          <label for="forearm">Forearm Length <strong id="armLabel">0.32 m</strong></label>
+          <input type="range" id="forearm" min="0.20" max="0.45" step="0.01" value="0.32" />
+        </div>
+        <div class="control-group">
+          <label for="insertion">Tendon Insertion <strong id="insLabel">0.04 m</strong></label>
+          <input type="range" id="insertion" min="0.02" max="0.08" step="0.005" value="0.04" />
+        </div>
+        <div class="control-group">
+          <label for="angle">Muscle Angle <strong id="angleLabel">15°</strong></label>
+          <input type="range" id="angle" min="5" max="35" step="1" value="15" />
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="showFBD" checked /> Show free‑body diagram</label>
+          <label><input type="checkbox" id="showLabels" checked /> Show labels</label>
+          <label><input type="checkbox" id="showEq" checked /> Show torque equation</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="card"><strong>Muscle Force</strong><span id="fmReadout">0 N</span></div>
+      <div class="card"><strong>Load Torque</strong><span id="tauLoad">0 N·m</span></div>
+      <div class="card"><strong>Muscle Torque</strong><span id="tauMuscle">0 N·m</span></div>
+      <div class="card"><strong>Net Torque</strong><span id="tauNet">0 N·m</span></div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('muscleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const loadInput = document.getElementById('load');
+    const forearmInput = document.getElementById('forearm');
+    const insertionInput = document.getElementById('insertion');
+    const angleInput = document.getElementById('angle');
+
+    const loadLabel = document.getElementById('loadLabel');
+    const armLabel = document.getElementById('armLabel');
+    const insLabel = document.getElementById('insLabel');
+    const angleLabel = document.getElementById('angleLabel');
+
+    const showFBD = document.getElementById('showFBD');
+    const showLabels = document.getElementById('showLabels');
+    const showEq = document.getElementById('showEq');
+
+    const fmReadout = document.getElementById('fmReadout');
+    const tauLoad = document.getElementById('tauLoad');
+    const tauMuscle = document.getElementById('tauMuscle');
+    const tauNet = document.getElementById('tauNet');
+
+    const state = {
+      load: 98,
+      forearm: 0.32,
+      insertion: 0.04,
+      angle: 15,
+      time: 0,
+      offsetX: 0,
+      offsetY: 0,
+      dragging: false,
+      dragStartX: 0,
+      dragStartY: 0
+    };
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function updateInputs() {
+      state.load = parseFloat(loadInput.value);
+      state.forearm = parseFloat(forearmInput.value);
+      state.insertion = parseFloat(insertionInput.value);
+      state.angle = parseFloat(angleInput.value);
+
+      loadLabel.textContent = `${state.load.toFixed(0)} N`;
+      armLabel.textContent = `${state.forearm.toFixed(2)} m`;
+      insLabel.textContent = `${state.insertion.toFixed(2)} m`;
+      angleLabel.textContent = `${state.angle.toFixed(0)}°`;
+    }
+
+    function calcForces() {
+      const rLoad = state.forearm;
+      const rMuscle = state.insertion * Math.sin((state.angle * Math.PI) / 180);
+      const tauL = state.load * rLoad;
+      const fm = rMuscle > 0 ? tauL / rMuscle : 0;
+      const tauM = fm * rMuscle;
+      return { fm, tauL, tauM, net: tauM - tauL, rMuscle };
+    }
+
+    function drawArrow(x1, y1, x2, y2, color, width) {
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 10 * Math.cos(angle - 0.4), y2 - 10 * Math.sin(angle - 0.4));
+      ctx.lineTo(x2 - 10 * Math.cos(angle + 0.4), y2 - 10 * Math.sin(angle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawMuscleShape(start, end) {
+      const dx = end.x - start.x;
+      const dy = end.y - start.y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+      const belly = 16 + Math.sin(state.time * 1.2) * 1.2;
+
+      const muscleGrad = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+      muscleGrad.addColorStop(0, 'rgba(255, 170, 170, 0.95)');
+      muscleGrad.addColorStop(0.5, 'rgba(200, 80, 80, 0.95)');
+      muscleGrad.addColorStop(1, 'rgba(140, 50, 50, 0.95)');
+
+      ctx.fillStyle = muscleGrad;
+      ctx.beginPath();
+      ctx.moveTo(start.x + nx * 6, start.y + ny * 6);
+      ctx.quadraticCurveTo(mid.x + nx * belly, mid.y + ny * belly, end.x + nx * 3, end.y + ny * 3);
+      ctx.lineTo(end.x - nx * 3, end.y - ny * 3);
+      ctx.quadraticCurveTo(mid.x - nx * belly, mid.y - ny * belly, start.x - nx * 6, start.y - ny * 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,220,220,0.35)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 5; i++) {
+        const t = 0.15 + i * 0.17;
+        const fx = start.x + dx * t;
+        const fy = start.y + dy * t;
+        ctx.beginPath();
+        ctx.moveTo(fx + nx * 2, fy + ny * 2);
+        ctx.lineTo(fx - nx * 2, fy - ny * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawScene() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.translate(state.offsetX, state.offsetY);
+
+      const elbow = { x: w * 0.22, y: h * 0.55 };
+      const scale = w * 0.5;
+      const forearmLen = state.forearm * scale;
+      const hand = { x: elbow.x + forearmLen, y: elbow.y - forearmLen * 0.05 };
+      const forearmDir = {
+        x: (hand.x - elbow.x) / forearmLen,
+        y: (hand.y - elbow.y) / forearmLen
+      };
+
+      const boneGrad = ctx.createLinearGradient(elbow.x, elbow.y - 40, elbow.x, elbow.y + 40);
+      boneGrad.addColorStop(0, '#f0ece5');
+      boneGrad.addColorStop(1, '#bdb4a6');
+      ctx.strokeStyle = boneGrad;
+      ctx.lineWidth = 18;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(elbow.x - 60, elbow.y - 30);
+      ctx.lineTo(elbow.x, elbow.y);
+      ctx.lineTo(hand.x, hand.y);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(220, 210, 200, 0.9)';
+      ctx.beginPath();
+      ctx.arc(elbow.x, elbow.y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const insertionX = elbow.x + forearmDir.x * state.insertion * scale;
+      const insertionY = elbow.y + forearmDir.y * state.insertion * scale;
+      const angleRad = (-state.angle * Math.PI) / 180;
+      const rotated = {
+        x: forearmDir.x * Math.cos(angleRad) - forearmDir.y * Math.sin(angleRad),
+        y: forearmDir.x * Math.sin(angleRad) + forearmDir.y * Math.cos(angleRad)
+      };
+      const muscleLen = scale * 0.22;
+      const muscleStart = {
+        x: insertionX + rotated.x * muscleLen,
+        y: insertionY + rotated.y * muscleLen
+      };
+      const { fm, tauL, tauM, net, rMuscle } = calcForces();
+      drawMuscleShape(muscleStart, { x: insertionX, y: insertionY });
+
+      const tendonGrad = ctx.createLinearGradient(insertionX, insertionY, insertionX + forearmDir.x * 20, insertionY + forearmDir.y * 20);
+      tendonGrad.addColorStop(0, 'rgba(240, 220, 200, 0.9)');
+      tendonGrad.addColorStop(1, 'rgba(200, 180, 160, 0.9)');
+      ctx.strokeStyle = tendonGrad;
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(insertionX - forearmDir.x * 6, insertionY - forearmDir.y * 6);
+      ctx.lineTo(insertionX + forearmDir.x * 14, insertionY + forearmDir.y * 14);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255, 177, 92, 0.95)';
+      ctx.fillRect(hand.x - 10, hand.y + 10, 24, 20);
+      const loadWidth = Math.max(2, Math.min(6, state.load / 40));
+      drawArrow(hand.x, hand.y + 12, hand.x, hand.y + 80, 'rgba(255, 177, 92, 0.95)', loadWidth);
+
+      if (showFBD.checked) {
+        const muscleWidth = Math.max(2, Math.min(7, fm / 250));
+        drawArrow(insertionX, insertionY, insertionX - 20, insertionY - 60, 'rgba(123,196,255,0.9)', muscleWidth);
+      }
+
+      if (showLabels.checked) {
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = '14px Sora, sans-serif';
+        ctx.fillText('Biceps', muscleStart.x - 10, muscleStart.y - 12);
+        ctx.fillStyle = 'rgba(123,196,255,0.9)';
+        ctx.fillText(`θ = ${state.angle.toFixed(0)}°`, (muscleStart.x + insertionX) / 2 + 6, (muscleStart.y + insertionY) / 2 - 8);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText('Load', hand.x - 12, hand.y + 98);
+        ctx.fillText('Elbow Joint', elbow.x - 30, elbow.y + 36);
+        ctx.fillText(`r = ${state.forearm.toFixed(2)} m`, elbow.x + forearmLen * 0.5, elbow.y + 26);
+        ctx.fillText(`rᵢ = ${state.insertion.toFixed(2)} m`, elbow.x + state.insertion * scale * 0.4, elbow.y - 24);
+      }
+
+      if (showEq.checked) {
+        ctx.fillStyle = 'rgba(246,199,107,0.9)';
+        ctx.font = '16px Sora, sans-serif';
+        ctx.fillText('τ = F × r', w * 0.62, h * 0.2);
+      }
+
+      fmReadout.textContent = `${fm.toFixed(0)} N`;
+      tauLoad.textContent = `${tauL.toFixed(2)} N·m`;
+      tauMuscle.textContent = `${tauM.toFixed(2)} N·m`;
+      tauNet.textContent = `${net.toFixed(2)} N·m`;
+      ctx.restore();
+    }
+
+    function loop() {
+      drawScene();
+      state.time += 0.01;
+      requestAnimationFrame(loop);
+    }
+
+    loadInput.addEventListener('input', updateInputs);
+    forearmInput.addEventListener('input', updateInputs);
+    insertionInput.addEventListener('input', updateInputs);
+    angleInput.addEventListener('input', updateInputs);
+    showFBD.addEventListener('change', () => {});
+    showLabels.addEventListener('change', () => {});
+    showEq.addEventListener('change', () => {});
+
+    window.addEventListener('resize', resizeCanvas);
+    canvas.addEventListener('pointerdown', (e) => {
+      state.dragging = true;
+      canvas.setPointerCapture(e.pointerId);
+      state.dragStartX = e.clientX - state.offsetX;
+      state.dragStartY = e.clientY - state.offsetY;
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!state.dragging) return;
+      state.offsetX = e.clientX - state.dragStartX;
+      state.offsetY = e.clientY - state.dragStartY;
+    });
+    canvas.addEventListener('pointerup', (e) => {
+      state.dragging = false;
+      canvas.releasePointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointerleave', () => {
+      state.dragging = false;
+    });
+
+    resizeCanvas();
+    updateInputs();
+    loop();
+  </script>
+</body>
+</html>

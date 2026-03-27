@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hall Effect</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6ad7ff;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #f6c76b;
+      --electron: #6ad7ff;
+      --hole: #f6c76b;
+      
+      --bg-deep: #0a1628;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 22, 40, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before { content: '←'; }
+    .topbar a:hover { color: var(--primary); background: rgba(106, 215, 255, 0.1); }
+
+    header.hero { text-align: center; padding: 30px 20px 20px; }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      font-weight: 800;
+    }
+
+    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .canvas-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+    canvas {
+      width: 100%;
+      height: 360px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(106, 215, 255, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-indicator .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+    }
+
+    .status-indicator.inactive {
+      background: linear-gradient(135deg, rgba(100, 100, 100, 0.25), rgba(50, 50, 50, 0.1));
+      border-color: var(--text-dim);
+    }
+
+    .status-indicator.inactive .status-text {
+      color: var(--text-dim);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 25, 40, 0.9);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    select:hover, select:focus { border-color: var(--primary); outline: none; }
+    select option { background: #0f1f35; color: var(--text); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .radio-group { display: flex; gap: 8px; }
+
+    .radio-group label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .radio-group label:hover { background: rgba(255, 255, 255, 0.08); }
+    .radio-group input[type="radio"] { display: none; }
+    .radio-group input[type="radio"]:checked + span { color: var(--primary); }
+    .radio-group label:has(input[type="radio"]:checked) {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--primary);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
+    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .data-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: #f87171; }
+
+    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
+
+    .theme-selector {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .theme-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .theme-btn:hover { background: rgba(255, 255, 255, 0.1); }
+    .theme-btn.active { background: rgba(106, 215, 255, 0.2); border-color: var(--primary); color: var(--primary); }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .btn-row button {
+      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-row button:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(129, 140, 248, 0.15)); }
+    .btn-row button:active { transform: scale(0.97); }
+    .btn-row button.active { background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(129, 140, 248, 0.25)); border-color: var(--primary); }
+
+    .help-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: var(--bg-deep);
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(106, 215, 255, 0.3);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .help-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(106, 215, 255, 0.5); }
+
+    .tooltip {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(20, 35, 55, 0.98), rgba(10, 20, 35, 0.95));
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 320px;
+      color: var(--text);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+
+    .tooltip.show { display: block; animation: fadeIn 0.3s ease; }
+
+    .tooltip h4 { margin: 0 0 10px; color: var(--primary); font-size: 1rem; }
+    .tooltip p { margin: 0 0 8px; color: var(--text-muted); }
+    .tooltip .close-tooltip {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .polarity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    .polarity-badge.positive { background: rgba(246, 199, 107, 0.2); color: #f6c76b; }
+    .polarity-badge.negative { background: rgba(106, 215, 255, 0.2); color: #6ad7ff; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+      .data-grid { grid-template-columns: repeat(2, 1fr); }
+      .tooltip { right: 10px; left: 10px; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Hall Effect</h1>
+      <p>Transverse voltage from charge deflection in magnetic fields</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="hallCanvas" width="960" height="360"></canvas>
+        
+        <div class="btn-row">
+          <button id="playPause"><span>▶</span> Play</button>
+          <button id="reset"><span>↺</span> Reset</button>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-text" id="statusText">ACTIVE</span>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Hall Voltage</span>
+            <span class="data-value blue" id="vhValue">0.000 <small>mV</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Hall Coefficient</span>
+            <span class="data-value green" id="rhValue">0.00 <small>m³/C</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Carrier Density</span>
+            <span class="data-value yellow" id="nValue">0.00e28 <small>m⁻³</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Electric Field</span>
+            <span class="data-value blue" id="eFieldValue">0.0 <small>V/m</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Lorentz Force</span>
+            <span class="data-value red" id="forceValue">0.0 <small>N</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Drift Velocity</span>
+            <span class="data-value green" id="driftValue">0.0 <small>m/s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Polarity</span>
+            <span class="data-value yellow" id="polarityValue">Positive</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">V<sub>H</sub> = IB / (n e d)</div>
+          <div class="formula-desc">Hall Voltage = Current × B / (carrier density × charge × width)</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="control-group">
+          <label>Current (I) <strong id="currentLabel">5.0 A</strong></label>
+          <input type="range" id="current" min="0" max="10" step="0.1" value="5">
+        </div>
+
+        <div class="control-group">
+          <label>Magnetic Field (B) <strong id="fieldLabel">0.50 T</strong></label>
+          <input type="range" id="field" min="0" max="2" step="0.01" value="0.5">
+        </div>
+
+        <div class="control-group">
+          <label>Conductor Width (d) <strong id="widthLabel">5.0 mm</strong></label>
+          <input type="range" id="width" min="1" max="10" step="0.1" value="5">
+        </div>
+
+        <div class="control-group">
+          <label>Material</label>
+          <select id="material">
+            <option value="copper">Copper (8.5×10²⁸)</option>
+            <option value="silver">Silver (5.8×10²⁸)</option>
+            <option value="gold">Gold (5.9×10²⁸)</option>
+            <option value="aluminum">Aluminum (6.0×10²⁸)</option>
+            <option value="silicon">Silicon (2.5×10²²)</option>
+            <option value="germanium">Germanium (1.0×10²³)</option>
+            <option value="gaas">GaAs (1.0×10²²)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Temperature <strong id="tempLabel">300 K</strong></label>
+          <input type="range" id="temperature" min="100" max="500" step="10" value="300">
+        </div>
+
+        <div class="control-group">
+          <label>Carrier Type</label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="carrier" value="electron" checked>
+              <span>Electrons</span>
+            </label>
+            <label>
+              <input type="radio" name="carrier" value="hole">
+              <span>Holes</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Background Theme</label>
+          <div class="theme-selector">
+            <button class="theme-btn active" data-theme="lab">Lab</button>
+            <button class="theme-btn" data-theme="quantum">Quantum</button>
+            <button class="theme-btn" data-theme="tech">Tech</button>
+            <button class="theme-btn" data-theme="classical">Classical</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showCarriers" checked> Show Carriers</label>
+            <label><input type="checkbox" id="showVoltage" checked> Show Hall Voltage</label>
+            <label><input type="checkbox" id="showField" checked> Show Field Lines</label>
+            <label><input type="checkbox" id="showTrails" checked> Show Particle Trails</label>
+            <label><input type="checkbox" id="showVelocity" checked> Show Velocity Vectors</label>
+            <label><input type="checkbox" id="showForce" checked> Show Lorentz Force</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <button class="help-btn" id="helpBtn">?</button>
+    <div class="tooltip" id="tooltip">
+      <button class="close-tooltip" id="closeTooltip">×</button>
+      <h4>Hall Effect</h4>
+      <p>When a current-carrying conductor is placed in a perpendicular magnetic field, a voltage develops across the conductor - this is the Hall Effect.</p>
+      <p><strong>Key Physics:</strong></p>
+      <p>• Electrons deflect due to Lorentz force F = qv×B</p>
+      <p>• This creates a transverse Hall voltage</p>
+      <p>• The Hall voltage polarity reveals carrier type (+ for holes, - for electrons)</p>
+      <p>• Used in sensors, car ignition, and semiconductor analysis</p>
+    </div>
+  </div>
+
+  <script>
+    const eCharge = 1.602e-19;
+    const materials = {
+      copper: { n: 8.5e28, label: 'Copper', type: 'metal' },
+      silver: { n: 5.8e28, label: 'Silver', type: 'metal' },
+      gold: { n: 5.9e28, label: 'Gold', type: 'metal' },
+      aluminum: { n: 6.0e28, label: 'Aluminum', type: 'metal' },
+      silicon: { n: 2.5e22, label: 'Silicon', type: 'semiconductor' },
+      germanium: { n: 1.0e23, label: 'Germanium', type: 'semiconductor' },
+      gaas: { n: 1.0e22, label: 'GaAs', type: 'semiconductor' }
+    };
+
+    const state = {
+      current: 5,
+      magneticField: 0.5,
+      material: 'copper',
+      carrier: 'electron',
+      width: 0.005,
+      temperature: 300,
+      showCarriers: true,
+      showVoltage: true,
+      showField: true,
+      showTrails: true,
+      showVelocity: true,
+      showForce: true,
+      theme: 'lab',
+      time: 0,
+      particles: [],
+      playing: true
+    };
+
+    const canvas = document.getElementById('hallCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function hallVoltage() {
+      const n = getCarrierDensity();
+      const d = state.width;
+      const sign = state.carrier === 'electron' ? -1 : 1;
+      return sign * (state.current * state.magneticField) / (n * eCharge * d);
+    }
+
+    function getCarrierDensity() {
+      let n = materials[state.material].n;
+      if (materials[state.material].type === 'semiconductor') {
+        const tempRatio = state.temperature / 300;
+        n = n * Math.pow(tempRatio, 1.5);
+      }
+      return n;
+    }
+
+    function hallCoefficient() {
+      const n = getCarrierDensity();
+      return 1 / (n * eCharge);
+    }
+
+    function electricField() {
+      return hallVoltage() / state.width;
+    }
+
+    function lorentzForce() {
+      return state.current * state.magneticField / getCarrierDensity() / eCharge / 1e28;
+    }
+
+    function driftVelocity() {
+      const n = getCarrierDensity();
+      const area = state.width * 0.01;
+      return state.current / (n * eCharge * area);
+    }
+
+    function drawVelocityVectors() {
+      if (!state.showVelocity) return;
+      if (state.current === 0) return;
+
+      const stripX = 90;
+      const stripY = 130;
+      const stripW = canvas.width - 180;
+      const stripH = 100;
+      const midY = stripY + stripH / 2;
+      const particleColor = state.carrier === 'electron' ? '#6ad7ff' : '#f6c76b';
+
+      state.particles.forEach(p => {
+        if (p.x > stripX + 30 && p.x < stripX + stripW - 30) {
+          const vLen = state.current * 4;
+          
+          ctx.strokeStyle = particleColor;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x + vLen, p.y);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(p.x + vLen, p.y);
+          ctx.lineTo(p.x + vLen - 6, p.y - 4);
+          ctx.moveTo(p.x + vLen, p.y);
+          ctx.lineTo(p.x + vLen - 6, p.y + 4);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawLorentzForce() {
+      if (!state.showForce) return;
+      if (state.magneticField === 0 || state.current === 0) return;
+
+      const stripX = 90;
+      const stripY = 130;
+      const stripW = canvas.width - 180;
+      const stripH = 100;
+      const midY = stripY + stripH / 2;
+      
+      const forceDir = state.carrier === 'electron' ? -1 : 1;
+      const forceLen = Math.min(state.magneticField * 50, 40) * forceDir;
+      const forceColor = forceLen > 0 ? '#f87171' : '#34d399';
+
+      const startX = stripX + stripW / 2;
+      const endY = midY + forceLen;
+
+      ctx.strokeStyle = forceColor;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(startX, midY);
+      ctx.lineTo(startX, endY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(startX, endY);
+      ctx.lineTo(startX - 6, endY - forceLen * 0.3 - forceLen * 0.15);
+      ctx.moveTo(startX, endY);
+      ctx.lineTo(startX + 6, endY - forceLen * 0.3 - forceLen * 0.15);
+      ctx.stroke();
+
+      ctx.fillStyle = forceColor;
+      ctx.font = 'bold 11px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('F_B', startX, endY + (forceLen > 0 ? 15 : -10));
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const time = state.time;
+
+      if (state.theme === 'lab') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0f1f35');
+        grad.addColorStop(1, '#0a1425');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+      } else if (state.theme === 'quantum') {
+        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w);
+        grad.addColorStop(0, '#1a0a2e');
+        grad.addColorStop(1, '#0a0a1e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+        for (let i = 0; i < 50; i++) {
+          const x = (i * 137 + time * 0.5) % w;
+          const y = (i * 89) % h;
+          const size = 1 + (i % 3);
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (state.theme === 'tech') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0a1a15');
+        grad.addColorStop(1, '#050a08');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(52, 211, 153, 0.1)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 50) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 50) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = 'rgba(52, 211, 153, 0.2)';
+        ctx.fillRect(20, 20, 30, 30);
+        ctx.fillRect(w - 50, 20, 30, 30);
+        ctx.fillRect(20, h - 50, 30, 30);
+        ctx.fillRect(w - 50, h - 50, 30, 30);
+      } else if (state.theme === 'classical') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#1f1a0e');
+        grad.addColorStop(1, '#0f0a05');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = 'rgba(246, 199, 107, 0.03)';
+        for (let i = 0; i < 20; i++) {
+          const x = (i * 73) % w;
+          const y = (i * 47) % h;
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawMagnets() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const stripY = 130;
+      const stripH = 100;
+
+      const northGrad = ctx.createLinearGradient(30, 40, 30, 100);
+      northGrad.addColorStop(0, '#ff4444');
+      northGrad.addColorStop(1, '#aa2222');
+      ctx.fillStyle = northGrad;
+      ctx.beginPath();
+      ctx.roundRect(20, 40, 50, 80, 8);
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px Outfit';
+      ctx.textAlign = 'center';
+      ctx.fillText('N', 45, 85);
+
+      const southGrad = ctx.createLinearGradient(w - 70, 40, w - 70, 100);
+      southGrad.addColorStop(0, '#4444ff');
+      southGrad.addColorStop(1, '#2222aa');
+      ctx.fillStyle = southGrad;
+      ctx.beginPath();
+      ctx.roundRect(w - 70, 40, 50, 80, 8);
+      ctx.fill();
+      
+      ctx.fillStyle = '#fff';
+      ctx.fillText('S', w - 45, 85);
+
+      if (state.showField && state.magneticField > 0) {
+        ctx.strokeStyle = `rgba(106, 215, 255, ${0.3 * state.magneticField})`;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([8, 8]);
+        
+        const flowOffset = (state.time * 30) % 16;
+        
+        for (let y = 60; y <= stripY + stripH + 30; y += 30) {
+          ctx.beginPath();
+          ctx.moveTo(70, y);
+          ctx.lineTo(w - 70, y);
+          ctx.stroke();
+        }
+        
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = `rgba(106, 215, 255, ${0.5 * state.magneticField})`;
+        for (let y = 60; y <= stripY + stripH + 30; y += 30) {
+          for (let x = 70 + flowOffset; x < w - 70; x += 50) {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - 6, y - 3);
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - 6, y + 3);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function drawConductor() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const stripX = 90;
+      const stripY = 130;
+      const stripW = w - 180;
+      const stripH = 100;
+
+      const condGrad = ctx.createLinearGradient(stripX, stripY, stripX, stripY + stripH);
+      condGrad.addColorStop(0, '#1a2a4a');
+      condGrad.addColorStop(0.5, '#152238');
+      condGrad.addColorStop(1, '#1a2a4a');
+      ctx.fillStyle = condGrad;
+      ctx.beginPath();
+      ctx.roundRect(stripX, stripY, stripW, stripH, 8);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.6)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(stripX, stripY, stripW, stripH, 8);
+      ctx.stroke();
+
+      ctx.shadowColor = 'rgba(106, 215, 255, 0.4)';
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(stripX - 2, stripY - 2, stripW + 4, stripH + 4, 10);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      const arrowY = stripY + stripH + 25;
+      const arrowLen = 40;
+      const arrowX = stripX + 50;
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '14px Space Grotesk';
+      ctx.fillText('I →', arrowX, arrowY + 5);
+
+      if (state.current > 0) {
+        const flowOffset = (state.time * 40 * state.current) % 30;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        for (let x = arrowX + 30; x < arrowX + arrowLen; x += 15) {
+          const ax = (x + flowOffset) % (arrowX + arrowLen) + arrowX;
+          ctx.beginPath();
+          ctx.moveTo(ax, arrowY);
+          ctx.lineTo(ax - 8, arrowY - 4);
+          ctx.moveTo(ax, arrowY);
+          ctx.lineTo(ax - 8, arrowY + 4);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function spawnParticles() {
+      if (!state.showCarriers) return;
+      if (state.particles.length > 30) return;
+      if (state.current === 0) return;
+
+      const stripX = 90;
+      const stripY = 130;
+      const stripW = canvas.width - 180;
+      const stripH = 100;
+      const deflection = state.magneticField * 25 * (state.carrier === 'electron' ? 1 : -1);
+
+      for (let i = 0; i < 2; i++) {
+        state.particles.push({
+          x: stripX + 20,
+          y: stripY + stripH / 2 + (Math.random() - 0.5) * 60,
+          baseY: stripY + stripH / 2,
+          deflection: deflection * (0.5 + Math.random() * 0.5),
+          trail: []
+        });
+      }
+    }
+
+    function updateParticles() {
+      const speed = state.current * 3;
+      
+      state.particles.forEach(p => {
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 20) p.trail.shift();
+
+        p.x += speed;
+        
+        const progress = (p.x - 90) / (canvas.width - 180);
+        p.y = p.baseY + progress * p.deflection;
+      });
+
+      state.particles = state.particles.filter(p => p.x < canvas.width - 90);
+    }
+
+    function drawParticles() {
+      if (!state.showCarriers) return;
+      if (state.current === 0) return;
+
+      const particleColor = state.carrier === 'electron' ? '#6ad7ff' : '#f6c76b';
+
+      state.particles.forEach(p => {
+        if (state.showTrails && p.trail.length > 1) {
+          ctx.beginPath();
+          ctx.moveTo(p.trail[0].x, p.trail[0].y);
+          for (let i = 1; i < p.trail.length; i++) {
+            ctx.lineTo(p.trail[i].x, p.trail[i].y);
+          }
+          ctx.strokeStyle = particleColor + '40';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        ctx.shadowColor = particleColor;
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = particleColor;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    function drawVoltageIndicator(vh) {
+      if (!state.showVoltage) return;
+      if (Math.abs(vh) < 0.0001) return;
+
+      const stripY = 130;
+      const stripH = 100;
+      const x = canvas.width - 75;
+      const y = stripY + 20;
+
+      const positiveColor = '#f6c76b';
+      const negativeColor = '#6ad7ff';
+
+      ctx.fillStyle = 'rgba(20, 30, 50, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(x, stripY - 10, 55, stripH + 20, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = vh > 0 ? positiveColor : negativeColor;
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(vh > 0 ? '+' : '-', x + 27, stripY + 15);
+
+      ctx.fillStyle = vh > 0 ? negativeColor : positiveColor;
+      ctx.fillText(vh > 0 ? '-' : '+', x + 27, stripY + stripH - 5);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '10px Space Grotesk';
+      ctx.fillText('V_H', x + 27, stripY + stripH / 2 + 4);
+
+      ctx.fillStyle = vh > 0 ? positiveColor : negativeColor;
+      ctx.font = 'bold 11px Space Grotesk';
+      ctx.fillText(`${Math.abs(vh * 1000).toFixed(2)}mV`, x + 27, stripY + stripH + 8);
+    }
+
+    function draw() {
+      if (!state.playing) {
+        requestAnimationFrame(tick);
+        return;
+      }
+      
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawBackground();
+      drawMagnets();
+      drawConductor();
+      
+      if (state.magneticField > 0) {
+        updateParticles();
+        spawnParticles();
+        drawParticles();
+        drawVelocityVectors();
+        drawLorentzForce();
+      }
+      
+      const vh = hallVoltage();
+      drawVoltageIndicator(vh);
+
+      updateDataCards();
+    }
+
+    function updateDataCards() {
+      const vh = hallVoltage();
+      const rh = hallCoefficient();
+      const n = getCarrierDensity();
+      const eField = electricField();
+      const force = lorentzForce();
+      const drift = driftVelocity();
+      const polarity = vh >= 0 ? 'Positive' : 'Negative';
+
+      document.getElementById('vhValue').innerHTML = `${Math.abs(vh * 1000).toFixed(3)} <small>mV</small>`;
+      document.getElementById('rhValue').innerHTML = `${rh.toFixed(2)} <small>m³/C</small>`;
+      document.getElementById('nValue').innerHTML = `${(n / 1e28).toFixed(2)}×10²⁸ <small>m⁻³</small>`;
+      document.getElementById('eFieldValue').innerHTML = `${Math.abs(eField).toFixed(1)} <small>V/m</small>`;
+      document.getElementById('forceValue').innerHTML = `${force.toExponential(2)} <small>N</small>`;
+      document.getElementById('driftValue').innerHTML = `${drift.toFixed(2)} <small>m/s</small>`;
+      document.getElementById('polarityValue').innerHTML = polarity;
+
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      if (state.magneticField > 0 && state.current > 0 && state.playing) {
+        statusIndicator.classList.remove('inactive');
+        statusText.textContent = 'ACTIVE';
+      } else if (!state.playing) {
+        statusIndicator.classList.add('inactive');
+        statusText.textContent = 'PAUSED';
+      } else {
+        statusIndicator.classList.add('inactive');
+        statusText.textContent = state.magneticField === 0 ? 'NO FIELD' : 'NO CURRENT';
+      }
+    }
+
+    function updateLabels() {
+      document.getElementById('currentLabel').textContent = `${state.current.toFixed(1)} A`;
+      document.getElementById('fieldLabel').textContent = `${state.magneticField.toFixed(2)} T`;
+      document.getElementById('widthLabel').textContent = `${(state.width * 1000).toFixed(1)} mm`;
+      document.getElementById('tempLabel').textContent = `${state.temperature} K`;
+    }
+
+    function tick() {
+      state.time += 0.016;
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    const currentInput = document.getElementById('current');
+    const fieldInput = document.getElementById('field');
+    const widthInput = document.getElementById('width');
+    const materialSelect = document.getElementById('material');
+    const tempInput = document.getElementById('temperature');
+    const showCarriersCb = document.getElementById('showCarriers');
+    const showVoltageCb = document.getElementById('showVoltage');
+    const showFieldCb = document.getElementById('showField');
+    const showTrailsCb = document.getElementById('showTrails');
+    const showVelocityCb = document.getElementById('showVelocity');
+    const showForceCb = document.getElementById('showForce');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const helpBtn = document.getElementById('helpBtn');
+    const closeTooltipBtn = document.getElementById('closeTooltip');
+
+    currentInput.addEventListener('input', () => {
+      state.current = Number(currentInput.value);
+      updateLabels();
+    });
+
+    fieldInput.addEventListener('input', () => {
+      state.magneticField = Number(fieldInput.value);
+      updateLabels();
+    });
+
+    widthInput.addEventListener('input', () => {
+      state.width = Number(widthInput.value) / 1000;
+      updateLabels();
+    });
+
+    tempInput.addEventListener('input', () => {
+      state.temperature = Number(tempInput.value);
+      updateLabels();
+    });
+
+    materialSelect.addEventListener('change', () => {
+      state.material = materialSelect.value;
+    });
+
+    document.querySelectorAll('input[name="carrier"]').forEach(r => {
+      r.addEventListener('change', (e) => {
+        state.carrier = e.target.value;
+        state.particles = [];
+      });
+    });
+
+    showCarriersCb.addEventListener('change', () => {
+      state.showCarriers = showCarriersCb.checked;
+    });
+
+    showVoltageCb.addEventListener('change', () => {
+      state.showVoltage = showVoltageCb.checked;
+    });
+
+    showFieldCb.addEventListener('change', () => {
+      state.showField = showFieldCb.checked;
+    });
+
+    showTrailsCb.addEventListener('change', () => {
+      state.showTrails = showTrailsCb.checked;
+    });
+
+    showVelocityCb.addEventListener('change', () => {
+      state.showVelocity = showVelocityCb.checked;
+    });
+
+    showForceCb.addEventListener('change', () => {
+      state.showForce = showForceCb.checked;
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      if (!state.playing) {
+        statusIndicator.classList.add('inactive');
+        statusText.textContent = 'PAUSED';
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.particles = [];
+      state.current = 5;
+      state.magneticField = 0.5;
+      state.width = 0.005;
+      state.temperature = 300;
+      state.material = 'copper';
+      state.carrier = 'electron';
+      currentInput.value = 5;
+      fieldInput.value = 0.5;
+      widthInput.value = 5;
+      tempInput.value = 300;
+      materialSelect.value = 'copper';
+      document.querySelector('input[name="carrier"][value="electron"]').checked = true;
+      updateLabels();
+    });
+
+    helpBtn.addEventListener('click', () => {
+      document.getElementById('tooltip').classList.toggle('show');
+    });
+
+    closeTooltipBtn.addEventListener('click', () => {
+      document.getElementById('tooltip').classList.remove('show');
+    });
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.theme = btn.dataset.theme;
+      });
+    });
+
+    updateLabels();
+    tick();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

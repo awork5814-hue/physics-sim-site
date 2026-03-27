@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Millikan Oil Drop Experiment</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0a1628;
+      --primary: #6ad7ff;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #f6c76b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 22, 40, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before { content: '←'; }
+    .topbar a:hover { color: var(--primary); background: rgba(106, 215, 255, 0.1); }
+
+    header.hero { text-align: center; padding: 30px 20px 20px; }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      font-weight: 800;
+    }
+
+    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .canvas-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+    canvas {
+      width: 100%;
+      height: 400px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(129, 140, 248, 0.15)); }
+    button:active { transform: scale(0.97); }
+    button.active { background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(129, 140, 248, 0.25)); border-color: var(--primary); }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(106, 215, 255, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-indicator .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+    }
+
+    .status-indicator.inactive {
+      background: linear-gradient(135deg, rgba(100, 100, 100, 0.25), rgba(50, 50, 50, 0.1));
+      border-color: var(--text-dim);
+    }
+
+    .status-indicator.inactive .status-text {
+      color: var(--text-dim);
+    }
+
+    .status-indicator.balanced {
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(52, 211, 153, 0.1));
+      border-color: var(--accent);
+    }
+
+    .status-indicator.balanced .status-text {
+      color: var(--accent);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 25, 40, 0.9);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    select:hover, select:focus { border-color: var(--primary); outline: none; }
+    select option { background: #0f1f35; color: var(--text); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
+    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .data-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: #f87171; }
+
+    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
+
+    .theme-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+    .theme-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-btn:hover { background: rgba(255, 255, 255, 0.1); }
+    .theme-btn.active { background: rgba(106, 215, 255, 0.2); border-color: var(--primary); color: var(--primary); }
+
+    .histogram-container {
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .histogram-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .help-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: var(--bg-deep);
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(106, 215, 255, 0.3);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    .help-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(106, 215, 255, 0.5); }
+
+    .tooltip {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(20, 35, 55, 0.98), rgba(10, 20, 35, 0.95));
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 320px;
+      color: var(--text);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+    .tooltip.show { display: block; animation: fadeIn 0.3s ease; }
+    .tooltip h4 { margin: 0 0 10px; color: var(--primary); font-size: 1rem; }
+    .tooltip p { margin: 0 0 8px; color: var(--text-muted); }
+    .tooltip .close-tooltip { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+      .data-grid { grid-template-columns: repeat(2, 1fr); }
+      .tooltip { right: 10px; left: 10px; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Millikan Oil Drop</h1>
+      <p>Measuring the elementary charge through force balance</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="scene" width="960" height="400"></canvas>
+        
+        <div class="btn-row">
+          <button id="newDrop"><span>💧</span> New Droplet</button>
+          <button id="measure"><span>📊</span> Measure</button>
+          <button id="resetData"><span>↺</span> Reset</button>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-text" id="statusText">MOVING</span>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Radius</span>
+            <span class="data-value blue" id="radiusVal">2.00 <small>μm</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Charge</span>
+            <span class="data-value yellow" id="chargeVal">0.00e <small>C</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Electrons</span>
+            <span class="data-value green" id="electronsVal">0</span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Electric Field</span>
+            <span class="data-value blue" id="eFieldVal">0.00 <small>V/m</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Net Force</span>
+            <span class="data-value red" id="netForceVal">0.00e <small>N</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Calculated e</span>
+            <span class="data-value yellow" id="calcEVal">0.00e <small>C</small></span>
+          </div>
+        </div>
+        
+        <div class="histogram-container">
+          <div class="histogram-title">Charge Histogram (measured e values)</div>
+          <canvas id="histogram" width="400" height="80"></canvas>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">q = (mg - 6πηrv) / E</div>
+          <div class="formula-desc">Charge from force balance</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="control-group">
+          <label>Plate Voltage <strong id="voltageLabel">0 V</strong></label>
+          <input type="range" id="voltage" min="-500" max="500" step="5" value="0">
+        </div>
+
+        <div class="control-group">
+          <label>Plate Direction</label>
+          <select id="direction">
+            <option value="up">Top (+), Bottom (-)</option>
+            <option value="down">Top (-), Bottom (+)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Oil Density <strong id="rhoLabel">875 kg/m³</strong></label>
+          <input type="range" id="rho" min="700" max="1200" step="5" value="875">
+        </div>
+
+        <div class="control-group">
+          <label>Droplet Radius <strong id="dropRadiusLabel">2.0 μm</strong></label>
+          <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2">
+        </div>
+
+        <div class="control-group">
+          <label>Air Viscosity <strong id="etaLabel">1.81e-5 Pa·s</strong></label>
+          <input type="range" id="eta" min="1.5" max="3" step="0.1" value="1.81">
+        </div>
+
+        <div class="control-group">
+          <label>Background Theme</label>
+          <div class="theme-selector">
+            <button class="theme-btn active" data-theme="lab">Lab</button>
+            <button class="theme-btn" data-theme="dark">Dark</button>
+            <button class="theme-btn" data-theme="blue">Blue</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showForces" checked> Force Arrows</label>
+            <label><input type="checkbox" id="showGrid" checked> Microscope Grid</label>
+            <label><input type="checkbox" id="showHistogram" checked> Histogram</label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <button class="help-btn" id="helpBtn">?</button>
+  <div class="tooltip" id="tooltip">
+    <button class="close-tooltip" id="closeTooltip">×</button>
+    <h4>Millikan Oil Drop Experiment</h4>
+    <p>Robert Millikan measured the charge of single electrons using suspended oil droplets.</p>
+    <p><strong>How it works:</strong></p>
+    <p>• Oil droplets are sprayed between parallel plates</p>
+    <p>• An electric field opposes gravity</p>
+    <p>• When balanced, qE = mg</p>
+    <p>• Measure charge by timing droplet motion</p>
+    <p><strong>Goal:</strong> Find the greatest common divisor of measured charges to determine e</p>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const histCanvas = document.getElementById('histogram');
+    const histCtx = histCanvas.getContext('2d');
+
+    const eCharge = 1.602e-19;
+    const g = 9.81;
+    const airDensity = 1.204;
+
+    const state = {
+      voltage: 0,
+      direction: 'up',
+      plateSeparation: 0.006,
+      oilDensity: 875,
+      viscosity: 1.81e-5,
+      dropletRadius: 2e-6,
+      dropletCharge: 0,
+      position: 0.12,
+      velocity: 0,
+      measuredCharges: [],
+      showForces: true,
+      showGrid: true,
+      showHistogram: true,
+      theme: 'lab',
+      time: 0,
+      lastTime: 0
+    };
+
+    function generateDropletCharge() {
+      const n = Math.floor(Math.random() * 6) + 1;
+      const error = 0.05 * (Math.random() - 0.5);
+      return n * eCharge * (1 + error) * (Math.random() < 0.5 ? -1 : 1);
+    }
+
+    function forces() {
+      const r = state.dropletRadius;
+      const volume = (4/3) * Math.PI * r * r * r;
+      const Fg = state.oilDensity * volume * g;
+      const Fb = airDensity * volume * g;
+      const E = state.voltage / state.plateSeparation;
+      const Fe = state.dropletCharge * E * (state.direction === 'up' ? 1 : -1);
+      const Fd = 6 * Math.PI * state.viscosity * r * Math.abs(state.velocity);
+      const FdDir = state.velocity > 0 ? -1 : 1;
+      const net = Fg - Fb - Fe - Fd * FdDir;
+      return { Fg, Fb, Fe, Fd, net, E };
+    }
+
+    function update(dt) {
+      const r = state.dropletRadius;
+      const volume = (4/3) * Math.PI * r * r * r;
+      const mass = state.oilDensity * volume;
+      const { net } = forces();
+      const a = net / mass;
+      state.velocity += a * dt;
+      state.position += state.velocity * dt;
+      state.position = Math.max(0.02, Math.min(0.22, state.position));
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      if (state.theme === 'lab') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0a1526');
+        grad.addColorStop(1, '#05070f');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        for (let x = 0; x < w; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+      } else if (state.theme === 'dark') {
+        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(1, '#0a0a15');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      } else if (state.theme === 'blue') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0a1a2e');
+        grad.addColorStop(1, '#050a15');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+    }
+
+    function drawChamber() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const left = 100, right = w - 100, top = 60, bottom = h - 120;
+
+      ctx.strokeStyle = 'rgba(248,250,252,0.6)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left, top, right - left, bottom - top);
+
+      const plateGradTop = ctx.createLinearGradient(left, top - 20, right, top - 20);
+      plateGradTop.addColorStop(0, '#f6c76b');
+      plateGradTop.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = plateGradTop;
+      ctx.fillRect(left, top - 18, right - left, 10);
+
+      const plateGradBot = ctx.createLinearGradient(left, bottom + 8, right, bottom + 8);
+      plateGradBot.addColorStop(0, '#60a5fa');
+      plateGradBot.addColorStop(1, '#6ad7ff');
+      ctx.fillStyle = plateGradBot;
+      ctx.fillRect(left, bottom + 8, right - left, 10);
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = 'bold 14px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(state.direction === 'up' ? '+' : '-', left - 25, top - 5);
+      ctx.fillText(state.direction === 'up' ? '-' : '+', left - 25, bottom + 22);
+
+      if (state.showGrid) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+        ctx.lineWidth = 1;
+        for (let x = left; x <= right; x += 35) {
+          ctx.beginPath(); ctx.moveTo(x, top); ctx.lineTo(x, bottom); ctx.stroke();
+        }
+        for (let y = top; y <= bottom; y += 25) {
+          ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(right, y); ctx.stroke();
+        }
+      }
+    }
+
+    function drawDroplet() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const left = 100, right = w - 100, top = 60, bottom = h - 120;
+      const y = bottom - (state.position / 0.22) * (bottom - top);
+      const x = (left + right) / 2;
+      const radius = Math.max(6, state.dropletRadius * 1.5e6);
+
+      const glow = ctx.createRadialGradient(x, y, 0, x, y, radius * 3);
+      glow.addColorStop(0, 'rgba(106,215,255,0.4)');
+      glow.addColorStop(1, 'rgba(106,215,255,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, radius * 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      const dropGrad = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.3, radius * 0.2, x, y, radius);
+      dropGrad.addColorStop(0, state.dropletCharge >= 0 ? '#ffe2a8' : '#ffc1c1');
+      dropGrad.addColorStop(1, state.dropletCharge >= 0 ? '#f59e0b' : '#fb7185');
+      ctx.fillStyle = dropGrad;
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.showForces) {
+        const { Fg, Fb, Fe, Fd } = forces();
+        const scale = 25000;
+        const { Fg: fg, Fb: fb, Fe: fe, Fd: fd } = { Fg: Fg * scale, Fb: Fb * scale, Fe: Fe * scale, Fd: fd * scale };
+        drawArrow(x, y, x, y + fg, '#f6c76b', 'Fg');
+        drawArrow(x, y, x, y - fb, '#6ad7ff', 'Fb');
+        drawArrow(x, y, x, y - fe, '#e2e8f0', 'Fe');
+        drawArrow(x, y, x, y - fd, '#94a3b8', 'Fd');
+      }
+    }
+
+    function drawArrow(x1, y1, x2, y2, color, label) {
+      if (Math.abs(y2 - y1) < 5) return;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI/6), y2 - 8 * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI/6), y2 - 8 * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fill();
+
+      if (label) {
+        ctx.font = 'bold 10px Outfit, sans-serif';
+        ctx.fillText(label, x1 + 15, (y1 + y2) / 2);
+      }
+    }
+
+    function drawHistogram() {
+      if (!state.showHistogram) return;
+      const w = histCanvas.width;
+      const h = histCanvas.height;
+      
+      histCtx.clearRect(0, 0, w, h);
+      histCtx.fillStyle = 'rgba(255,255,255,0.05)';
+      histCtx.fillRect(0, 0, w, h);
+      
+      histCtx.strokeStyle = 'rgba(255,255,255,0.2)';
+      histCtx.strokeRect(5, 5, w - 10, h - 10);
+      
+      if (state.measuredCharges.length === 0) {
+        histCtx.fillStyle = '#64748b';
+        histCtx.font = '10px Outfit, sans-serif';
+        histCtx.textAlign = 'center';
+        histCtx.fillText('Measure charges to see histogram', w/2, h/2 + 4);
+        return;
+      }
+      
+      const bins = new Array(8).fill(0);
+      state.measuredCharges.forEach(q => {
+        const n = Math.min(7, Math.max(0, Math.round(Math.abs(q / eCharge))));
+        bins[n] += 1;
+      });
+      const max = Math.max(...bins);
+      
+      for (let i = 0; i < bins.length; i++) {
+        const bh = max > 0 ? (bins[i] / max) * (h - 15) : 0;
+        if (bh > 0) {
+          histCtx.fillStyle = '#6ad7ff';
+          histCtx.fillRect(10 + i * 45, h - 10 - bh, 35, bh);
+        }
+        histCtx.fillStyle = '#94a3b8';
+        histCtx.font = '10px Outfit, sans-serif';
+        histCtx.textAlign = 'center';
+        histCtx.fillText(i.toString(), 10 + i * 45 + 17, h - 2);
+      }
+    }
+
+    function calculateElementaryCharge() {
+      if (state.measuredCharges.length < 3) return 0;
+      const charges = state.measuredCharges.map(q => Math.abs(q));
+      charges.sort((a, b) => a - b);
+      
+      const ratios = [];
+      for (let i = 1; i < charges.length; i++) {
+        for (let j = 0; j < i; j++) {
+          const ratio = charges[i] / charges[j];
+          if (ratio > 1.5) {
+            const closestInt = Math.round(ratio);
+            if (Math.abs(ratio - closestInt) < 0.3) {
+              ratios.push(charges[j]);
+            }
+          }
+        }
+      }
+      
+      if (ratios.length === 0) return 0;
+      return ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    }
+
+    function updateDataCards() {
+      const { Fg, Fb, Fe, Fd, net, E } = forces();
+      const rMicrons = state.dropletRadius * 1e6;
+      const electrons = state.dropletCharge !== 0 ? Math.round(Math.abs(state.dropletCharge / eCharge)) : 0;
+      const balanced = Math.abs(net) < 1e-8;
+      const calculatedE = calculateElementaryCharge();
+
+      document.getElementById('radiusVal').innerHTML = `${rMicrons.toFixed(2)} <small>μm</small>`;
+      document.getElementById('chargeVal').innerHTML = `${state.dropletCharge.toExponential(2)} <small>C</small>`;
+      document.getElementById('electronsVal').textContent = electrons;
+      document.getElementById('eFieldVal').innerHTML = `${E.toExponential(2)} <small>V/m</small>`;
+      document.getElementById('netForceVal').innerHTML = `${net.toExponential(2)} <small>N</small>`;
+      document.getElementById('calcEVal').innerHTML = calculatedE > 0 ? `${calculatedE.toExponential(2)} <small>C</small>` : '---';
+
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      if (balanced) {
+        statusIndicator.classList.remove('inactive');
+        statusIndicator.classList.add('balanced');
+        statusText.textContent = 'BALANCED';
+      } else {
+        statusIndicator.classList.remove('balanced');
+        statusIndicator.classList.add('inactive');
+        statusText.textContent = state.velocity > 0 ? 'FALLING' : 'RISING';
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawChamber();
+      drawDroplet();
+      drawHistogram();
+      updateDataCards();
+    }
+
+    function tick(now) {
+      if (!state.lastTime) state.lastTime = now;
+      const dt = Math.min(0.05, (now - state.lastTime) / 1000);
+      state.lastTime = now;
+      state.time += dt;
+      update(dt);
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    function newDroplet() {
+      state.dropletCharge = generateDropletCharge();
+      state.position = 0.12;
+      state.velocity = 0;
+    }
+
+    function updateLabels() {
+      document.getElementById('voltageLabel').textContent = `${state.voltage.toFixed(0)} V`;
+      document.getElementById('rhoLabel').textContent = `${state.oilDensity} kg/m³`;
+      document.getElementById('dropRadiusLabel').textContent = `${(state.dropletRadius * 1e6).toFixed(1)} μm`;
+      document.getElementById('etaLabel').textContent = `${state.viscosity.toExponential(2)} Pa·s`;
+    }
+
+    const newDropBtn = document.getElementById('newDrop');
+    const measureBtn = document.getElementById('measure');
+    const resetBtn = document.getElementById('resetData');
+    const helpBtn = document.getElementById('helpBtn');
+    const closeTooltipBtn = document.getElementById('closeTooltip');
+
+    newDropBtn.addEventListener('click', newDroplet);
+    measureBtn.addEventListener('click', () => {
+      state.measuredCharges.push(state.dropletCharge);
+    });
+    resetBtn.addEventListener('click', () => {
+      state.measuredCharges = [];
+    });
+
+    document.getElementById('voltage').addEventListener('input', e => {
+      state.voltage = parseFloat(e.target.value);
+      updateLabels();
+    });
+    document.getElementById('direction').addEventListener('change', e => {
+      state.direction = e.target.value;
+    });
+    document.getElementById('rho').addEventListener('input', e => {
+      state.oilDensity = parseFloat(e.target.value);
+      updateLabels();
+    });
+    document.getElementById('radius').addEventListener('input', e => {
+      state.dropletRadius = parseFloat(e.target.value) * 1e-6;
+      updateLabels();
+    });
+    document.getElementById('eta').addEventListener('input', e => {
+      state.viscosity = parseFloat(e.target.value) * 1e-5;
+      updateLabels();
+    });
+
+    document.getElementById('showForces').addEventListener('change', e => state.showForces = e.target.checked);
+    document.getElementById('showGrid').addEventListener('change', e => state.showGrid = e.target.checked);
+    document.getElementById('showHistogram').addEventListener('change', e => state.showHistogram = e.target.checked);
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.theme = btn.dataset.theme;
+      });
+    });
+
+    helpBtn.addEventListener('click', () => {
+      document.getElementById('tooltip').classList.toggle('show');
+    });
+    closeTooltipBtn.addEventListener('click', () => {
+      document.getElementById('tooltip').classList.remove('show');
+    });
+
+    updateLabels();
+    newDroplet();
+    requestAnimationFrame(tick);
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

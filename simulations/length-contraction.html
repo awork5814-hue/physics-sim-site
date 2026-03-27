@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Length Contraction</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Relativity</span></div>
+    <header class="hero"><h1>Length Contraction</h1><p>L = L₀√(1-v²/c²) — Moving objects contract</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">L = L₀/γ</div>
+        <div class="control-group">
+          <label>Velocity (% of c)</label>
+          <input type="range" id="velSlider" min="0" max="99" value="0">
+        </div>
+        <div class="control-group">
+          <label>Rest Length (m)</label>
+          <input type="range" id="lenSlider" min="50" max="200" value="100">
+        </div>
+        <div class="data-panel">
+          <div>γ factor: <strong id="gammaVal">1.00</strong></div>
+          <div>Contracted: <strong id="lVal">100</strong> m</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const velSlider = document.getElementById('velSlider');
+    const lenSlider = document.getElementById('lenSlider');
+    let time = 0;
+    function update() {
+      const v = parseFloat(velSlider.value) / 100;
+      const L0 = parseFloat(lenSlider.value);
+      const gamma = 1 / Math.sqrt(1 - v * v);
+      const L = L0 / gamma;
+      document.getElementById('gammaVal').textContent = gamma.toFixed(2);
+      document.getElementById('lVal').textContent = L.toFixed(1);
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const v = parseFloat(velSlider.value) / 100;
+      const L0 = parseFloat(lenSlider.value);
+      const gamma = 1 / Math.sqrt(1 - v * v || 0.0001);
+      const L = L0 / gamma;
+      const objX = (time * v * 5) % w;
+      const drawWidth = L * 1.5;
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(objX - drawWidth/2, cy - 20, drawWidth, 40);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(objX - L0 * 1.5 / 2, cy + 30, L0 * 1.5, 10);
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Moving: L = ' + L.toFixed(1) + 'm', objX - 40, cy - 35);
+      ctx.fillText('Rest: L₀ = ' + L0 + 'm', objX - 40, cy + 55);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    velSlider.addEventListener('input', update);
+    lenSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

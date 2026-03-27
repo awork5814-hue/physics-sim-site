@@ -1,0 +1,2354 @@
+[
+  {
+    "id": "ohm-law",
+    "name": "Ohm's Law",
+    "category": "electricity",
+    "filename": "ohm-law.html",
+    "href": "simulations/ohm-law.html"
+  },
+  {
+    "id": "series-parallel",
+    "name": "Series vs Parallel",
+    "category": "electricity",
+    "filename": "series-parallel.html",
+    "href": "simulations/series-parallel.html"
+  },
+  {
+    "id": "pendulum",
+    "name": "Simple Pendulum",
+    "category": "mechanics",
+    "filename": "pendulum.html",
+    "href": "simulations/pendulum.html"
+  },
+  {
+    "id": "hooke",
+    "name": "Hooke's Law",
+    "category": "mechanics",
+    "filename": "hookes-law.html",
+    "href": "simulations/hookes-law.html"
+  },
+  {
+    "id": "boyle",
+    "name": "Boyle's Law",
+    "category": "thermal",
+    "filename": "boyle.html",
+    "href": "simulations/boyle.html"
+  },
+  {
+    "id": "refraction",
+    "name": "Refraction & Lenses",
+    "category": "waves",
+    "filename": "refraction.html",
+    "href": "simulations/refraction.html"
+  },
+  {
+    "id": "waves",
+    "name": "Wave Motion",
+    "category": "waves",
+    "filename": "waves.html",
+    "href": "simulations/waves.html"
+  },
+  {
+    "id": "moments",
+    "name": "Moments & Equilibrium",
+    "category": "mechanics",
+    "filename": "moments.html",
+    "href": "simulations/moments.html"
+  },
+  {
+    "id": "heat-capacity",
+    "name": "Specific Heat Capacity",
+    "category": "thermal",
+    "filename": "heat-capacity.html",
+    "href": "simulations/heat-capacity.html"
+  },
+  {
+    "id": "iv-curve",
+    "name": "I-V Characteristics",
+    "category": "electricity",
+    "filename": "iv-curve.html",
+    "href": "simulations/iv-curve.html"
+  },
+  {
+    "id": "shm",
+    "name": "Simple Harmonic Motion",
+    "category": "mechanics",
+    "filename": "shm.html",
+    "href": "simulations/shm.html"
+  },
+  {
+    "id": "projectile",
+    "name": "Projectile Motion",
+    "category": "mechanics",
+    "filename": "projectile.html",
+    "href": "simulations/projectile.html"
+  },
+  {
+    "id": "circular",
+    "name": "Uniform Circular Motion",
+    "category": "mechanics",
+    "filename": "circular.html",
+    "href": "simulations/circular.html"
+  },
+  {
+    "id": "double-slit",
+    "name": "Double Slit Experiment",
+    "category": "waves",
+    "filename": "double-slit.html",
+    "href": "simulations/double-slit.html"
+  },
+  {
+    "id": "rutherford",
+    "name": "Rutherford Gold Foil",
+    "category": "modern",
+    "filename": "rutherford.html",
+    "href": "simulations/rutherford.html"
+  },
+  {
+    "id": "michelson",
+    "name": "Michelson-Morley",
+    "category": "modern",
+    "filename": "michelson.html",
+    "href": "simulations/michelson.html"
+  },
+  {
+    "id": "acceleration",
+    "name": "Acceleration",
+    "category": "mechanics",
+    "filename": "acceleration.html",
+    "href": "simulations/acceleration.html"
+  },
+  {
+    "id": "momentum",
+    "name": "Conservation of Momentum",
+    "category": "mechanics",
+    "filename": "momentum.html",
+    "href": "simulations/momentum.html"
+  },
+  {
+    "id": "energy",
+    "name": "Conservation of Energy",
+    "category": "mechanics",
+    "filename": "energy.html",
+    "href": "simulations/energy.html"
+  },
+  {
+    "id": "gravity",
+    "name": "Gravitational Force",
+    "category": "mechanics",
+    "filename": "gravity.html",
+    "href": "simulations/gravity.html"
+  },
+  {
+    "id": "satellite",
+    "name": "Satellite Orbits",
+    "category": "mechanics",
+    "filename": "satellite.html",
+    "href": "simulations/satellite.html"
+  },
+  {
+    "id": "photoelectric",
+    "name": "Photoelectric Effect",
+    "category": "modern",
+    "filename": "photoelectric.html",
+    "href": "simulations/photoelectric.html"
+  },
+  {
+    "id": "bohr",
+    "name": "Bohr Model",
+    "category": "modern",
+    "filename": "bohr.html",
+    "href": "simulations/bohr.html"
+  },
+  {
+    "id": "capacitor",
+    "name": "Capacitors",
+    "category": "electricity",
+    "filename": "capacitor.html",
+    "href": "simulations/capacitor.html"
+  },
+  {
+    "id": "magnetic",
+    "name": "Magnetic Fields",
+    "category": "electricity",
+    "filename": "magnetic.html",
+    "href": "simulations/magnetic.html"
+  },
+  {
+    "id": "wave-particle",
+    "name": "Wave-Particle Duality",
+    "category": "quantum",
+    "filename": "wave-particle.html",
+    "href": "simulations/wave-particle.html"
+  },
+  {
+    "id": "tunneling",
+    "name": "Quantum Tunneling",
+    "category": "quantum",
+    "filename": "tunneling.html",
+    "href": "simulations/tunneling.html"
+  },
+  {
+    "id": "carnot",
+    "name": "Carnot Engine",
+    "category": "thermal",
+    "filename": "carnot.html",
+    "href": "simulations/carnot.html"
+  },
+  {
+    "id": "blackbody",
+    "name": "Blackbody Radiation",
+    "category": "modern",
+    "filename": "blackbody.html",
+    "href": "simulations/blackbody.html"
+  },
+  {
+    "id": "doppler",
+    "name": "Doppler Effect",
+    "category": "waves",
+    "filename": "doppler.html",
+    "href": "simulations/doppler.html"
+  },
+  {
+    "id": "standing",
+    "name": "Standing Waves",
+    "category": "waves",
+    "filename": "standing.html",
+    "href": "simulations/standing.html"
+  },
+  {
+    "id": "bernoulli",
+    "name": "Bernoulli's Principle",
+    "category": "fluids",
+    "filename": "bernoulli.html",
+    "href": "simulations/bernoulli.html"
+  },
+  {
+    "id": "archimedes",
+    "name": "Archimedes' Principle",
+    "category": "fluids",
+    "filename": "archimedes.html",
+    "href": "simulations/archimedes.html"
+  },
+  {
+    "id": "viscosity",
+    "name": "Viscosity",
+    "category": "fluids",
+    "filename": "viscosity.html",
+    "href": "simulations/viscosity.html"
+  },
+  {
+    "id": "polarization",
+    "name": "Polarization",
+    "category": "waves",
+    "filename": "polarization.html",
+    "href": "simulations/polarization.html"
+  },
+  {
+    "id": "millikan",
+    "name": "Millikan Oil Drop",
+    "category": "modern",
+    "filename": "millikan.html",
+    "href": "simulations/millikan.html"
+  },
+  {
+    "id": "friction",
+    "name": "Friction",
+    "category": "mechanics",
+    "filename": "friction.html",
+    "href": "simulations/friction.html"
+  },
+  {
+    "id": "kepler",
+    "name": "Kepler's Laws",
+    "category": "mechanics",
+    "filename": "kepler.html",
+    "href": "simulations/kepler.html"
+  },
+  {
+    "id": "escapevel",
+    "name": "Escape Velocity",
+    "category": "mechanics",
+    "filename": "escapevel.html",
+    "href": "simulations/escapevel.html"
+  },
+  {
+    "id": "ideal-gas",
+    "name": "Ideal Gas Law",
+    "category": "thermal",
+    "filename": "ideal-gas.html",
+    "href": "simulations/ideal-gas.html"
+  },
+  {
+    "id": "snell-law",
+    "name": "Snell's Law",
+    "category": "waves",
+    "filename": "snell-law.html",
+    "href": "simulations/snell-law.html"
+  },
+  {
+    "id": "coulomb",
+    "name": "Coulomb's Law",
+    "category": "electricity",
+    "filename": "coulomb.html",
+    "href": "simulations/coulomb.html"
+  },
+  {
+    "id": "oersted",
+    "name": "Oersted's Experiment",
+    "category": "electricity",
+    "filename": "oersted.html",
+    "href": "simulations/oersted.html"
+  },
+  {
+    "id": "wheatstone",
+    "name": "Wheatstone Bridge",
+    "category": "electricity",
+    "filename": "wheatstone.html",
+    "href": "simulations/wheatstone.html"
+  },
+  {
+    "id": "rc-circuit",
+    "name": "RC Circuits",
+    "category": "electricity",
+    "filename": "rc-circuit.html",
+    "href": "simulations/rc-circuit.html"
+  },
+  {
+    "id": "rl-circuit",
+    "name": "RL Circuits",
+    "category": "electricity",
+    "filename": "rl-circuit.html",
+    "href": "simulations/rl-circuit.html"
+  },
+  {
+    "id": "rlc-circuit",
+    "name": "RLC Circuits",
+    "category": "electricity",
+    "filename": "rlc-circuit.html",
+    "href": "simulations/rlc-circuit.html"
+  },
+  {
+    "id": "opamp",
+    "name": "Op-Amp Basics",
+    "category": "electronics",
+    "filename": "opamp.html",
+    "href": "simulations/opamp.html"
+  },
+  {
+    "id": "voltage-divider",
+    "name": "Voltage Dividers",
+    "category": "electricity",
+    "filename": "voltage-divider.html",
+    "href": "simulations/voltage-divider.html"
+  },
+  {
+    "id": "filters",
+    "name": "RC Filters",
+    "category": "electronics",
+    "filename": "filters.html",
+    "href": "simulations/filters.html"
+  },
+  {
+    "id": "transistor-amp",
+    "name": "Transistor Amplifier",
+    "category": "electronics",
+    "filename": "transistor-amp.html",
+    "href": "simulations/transistor-amp.html"
+  },
+  {
+    "id": "thermistor",
+    "name": "Thermistors",
+    "category": "electronics",
+    "filename": "thermistor.html",
+    "href": "simulations/thermistor.html"
+  },
+  {
+    "id": "led-photo",
+    "name": "LED & Photodiodes",
+    "category": "electronics",
+    "filename": "led-photo.html",
+    "href": "simulations/led-photo.html"
+  },
+  {
+    "id": "logic-gates",
+    "name": "Logic Gates",
+    "category": "electronics",
+    "filename": "logic-gates.html",
+    "href": "simulations/logic-gates.html"
+  },
+  {
+    "id": "galvanometer",
+    "name": "Galvanometer",
+    "category": "electricity",
+    "filename": "galvanometer.html",
+    "href": "simulations/galvanometer.html"
+  },
+  {
+    "id": "motor-force",
+    "name": "Motor Effect",
+    "category": "electricity",
+    "filename": "motor-force.html",
+    "href": "simulations/motor-force.html"
+  },
+  {
+    "id": "transformer",
+    "name": "Transformers",
+    "category": "electricity",
+    "filename": "transformer.html",
+    "href": "simulations/transformer.html"
+  },
+  {
+    "id": "ac-circuits",
+    "name": "AC Circuits",
+    "category": "electricity",
+    "filename": "ac-circuits.html",
+    "href": "simulations/ac-circuits.html"
+  },
+  {
+    "id": "generator",
+    "name": "Generators",
+    "category": "electricity",
+    "filename": "generator.html",
+    "href": "simulations/generator.html"
+  },
+  {
+    "id": "faraday",
+    "name": "Faraday's Law",
+    "category": "electricity",
+    "filename": "faraday.html",
+    "href": "simulations/faraday.html"
+  },
+  {
+    "id": "lenz",
+    "name": "Lenz's Law",
+    "category": "electricity",
+    "filename": "lenz.html",
+    "href": "simulations/lenz.html"
+  },
+  {
+    "id": "magnetic-field",
+    "name": "Magnetic Field Patterns",
+    "category": "electricity",
+    "filename": "magnetic-field.html",
+    "href": "simulations/magnetic-field.html"
+  },
+  {
+    "id": "coil-field",
+    "name": "Solenoid Field",
+    "category": "electricity",
+    "filename": "coil-field.html",
+    "href": "simulations/coil-field.html"
+  },
+  {
+    "id": "wire-field",
+    "name": "Wire Field",
+    "category": "electricity",
+    "filename": "wire-field.html",
+    "href": "simulations/wire-field.html"
+  },
+  {
+    "id": "hall",
+    "name": "Hall Effect",
+    "category": "electricity",
+    "filename": "hall.html",
+    "href": "simulations/hall.html"
+  },
+  {
+    "id": "emf-internal",
+    "name": "Internal Resistance",
+    "category": "electricity",
+    "filename": "emf-internal.html",
+    "href": "simulations/emf-internal.html"
+  },
+  {
+    "id": "resistivity",
+    "name": "Resistivity",
+    "category": "electricity",
+    "filename": "resistivity.html",
+    "href": "simulations/resistivity.html"
+  },
+  {
+    "id": "kirchhoff",
+    "name": "Kirchhoff's Laws",
+    "category": "electricity",
+    "filename": "kirchhoff.html",
+    "href": "simulations/kirchhoff.html"
+  },
+  {
+    "id": "electrostatic",
+    "name": "Electrostatics",
+    "category": "electricity",
+    "filename": "electrostatic.html",
+    "href": "simulations/electrostatic.html"
+  },
+  {
+    "id": "beat-frequency",
+    "name": "Beat Frequency",
+    "category": "waves",
+    "filename": "beat-frequency.html",
+    "href": "simulations/beat-frequency.html"
+  },
+  {
+    "id": "echo-sound",
+    "name": "Sound Echoes",
+    "category": "waves",
+    "filename": "echo-sound.html",
+    "href": "simulations/echo-sound.html"
+  },
+  {
+    "id": "sound-speed",
+    "name": "Speed of Sound",
+    "category": "waves",
+    "filename": "sound-speed.html",
+    "href": "simulations/sound-speed.html"
+  },
+  {
+    "id": "sound-frequency",
+    "name": "Sound Frequency",
+    "category": "waves",
+    "filename": "sound-frequency.html",
+    "href": "simulations/sound-frequency.html"
+  },
+  {
+    "id": "sound-intensity",
+    "name": "Sound Intensity",
+    "category": "waves",
+    "filename": "sound-intensity.html",
+    "href": "simulations/sound-intensity.html"
+  },
+  {
+    "id": "hearing",
+    "name": "Human Hearing",
+    "category": "waves",
+    "filename": "hearing.html",
+    "href": "simulations/hearing.html"
+  },
+  {
+    "id": "ultrasound",
+    "name": "Ultrasound",
+    "category": "waves",
+    "filename": "ultrasound.html",
+    "href": "simulations/ultrasound.html"
+  },
+  {
+    "id": "diffraction-grating",
+    "name": "Diffraction Grating",
+    "category": "waves",
+    "filename": "diffraction-grating.html",
+    "href": "simulations/diffraction-grating.html"
+  },
+  {
+    "id": "vibrating-string",
+    "name": "Vibrating String",
+    "category": "waves",
+    "filename": "vibrating-string.html",
+    "href": "simulations/vibrating-string.html"
+  },
+  {
+    "id": "standing-string",
+    "name": "Standing Waves on Strings",
+    "category": "waves",
+    "filename": "standing-string.html",
+    "href": "simulations/standing-string.html"
+  },
+  {
+    "id": "standing-pipe",
+    "name": "Standing Waves in Pipes",
+    "category": "waves",
+    "filename": "standing-pipe.html",
+    "href": "simulations/standing-pipe.html"
+  },
+  {
+    "id": "superposition",
+    "name": "Wave Superposition",
+    "category": "waves",
+    "filename": "superposition.html",
+    "href": "simulations/superposition.html"
+  },
+  {
+    "id": "waveguides",
+    "name": "Waveguides",
+    "category": "communications",
+    "filename": "waveguides.html",
+    "href": "simulations/waveguides.html"
+  },
+  {
+    "id": "fiber-optics",
+    "name": "Fiber Optics",
+    "category": "communications",
+    "filename": "fiber-optics.html",
+    "href": "simulations/fiber-optics.html"
+  },
+  {
+    "id": "antennas",
+    "name": "Antennas",
+    "category": "communications",
+    "filename": "antennas.html",
+    "href": "simulations/antennas.html"
+  },
+  {
+    "id": "signal-encoding",
+    "name": "Signal Encoding",
+    "category": "communications",
+    "filename": "signal-encoding.html",
+    "href": "simulations/signal-encoding.html"
+  },
+  {
+    "id": "signal-propagation",
+    "name": "Signal Propagation",
+    "category": "communications",
+    "filename": "signal-propagation.html",
+    "href": "simulations/signal-propagation.html"
+  },
+  {
+    "id": "signal-superposition",
+    "name": "Signal Superposition",
+    "category": "communications",
+    "filename": "signal-superposition.html",
+    "href": "simulations/signal-superposition.html"
+  },
+  {
+    "id": "am-modulation",
+    "name": "AM Modulation",
+    "category": "communications",
+    "filename": "am-modulation.html",
+    "href": "simulations/am-modulation.html"
+  },
+  {
+    "id": "fm-modulation",
+    "name": "FM Modulation",
+    "category": "communications",
+    "filename": "fm-modulation.html",
+    "href": "simulations/fm-modulation.html"
+  },
+  {
+    "id": "shannon",
+    "name": "Shannon Capacity",
+    "category": "communications",
+    "filename": "shannon.html",
+    "href": "simulations/shannon.html"
+  },
+  {
+    "id": "thermal-transfer",
+    "name": "Heat Transfer",
+    "category": "thermal",
+    "filename": "thermal-transfer.html",
+    "href": "simulations/thermal-transfer.html"
+  },
+  {
+    "id": "latent-heat",
+    "name": "Latent Heat",
+    "category": "thermal",
+    "filename": "latent-heat.html",
+    "href": "simulations/latent-heat.html"
+  },
+  {
+    "id": "thermal-expansion",
+    "name": "Thermal Expansion",
+    "category": "thermal",
+    "filename": "thermal-expansion.html",
+    "href": "simulations/thermal-expansion.html"
+  },
+  {
+    "id": "thermometer-calibration",
+    "name": "Thermometer Calibration",
+    "category": "measurement",
+    "filename": "thermometer-calibration.html",
+    "href": "simulations/thermometer-calibration.html"
+  },
+  {
+    "id": "joule",
+    "name": "Joule's Law",
+    "category": "thermal",
+    "filename": "joule.html",
+    "href": "simulations/joule.html"
+  },
+  {
+    "id": "thermoelectric",
+    "name": "Thermoelectric Effect",
+    "category": "thermal",
+    "filename": "thermoelectric.html",
+    "href": "simulations/thermoelectric.html"
+  },
+  {
+    "id": "heatengine",
+    "name": "Heat Engines",
+    "category": "thermal",
+    "filename": "heatengine.html",
+    "href": "simulations/heatengine.html"
+  },
+  {
+    "id": "brownian",
+    "name": "Brownian Motion",
+    "category": "modern",
+    "filename": "brownian.html",
+    "href": "simulations/brownian.html"
+  },
+  {
+    "id": "spectra",
+    "name": "Atomic Spectra",
+    "category": "modern",
+    "filename": "spectra.html",
+    "href": "simulations/spectra.html"
+  },
+  {
+    "id": "compton",
+    "name": "Compton Scattering",
+    "category": "modern",
+    "filename": "compton.html",
+    "href": "simulations/compton.html"
+  },
+  {
+    "id": "laser",
+    "name": "Laser Physics",
+    "category": "quantum",
+    "filename": "laser.html",
+    "href": "simulations/laser.html"
+  },
+  {
+    "id": "transistor",
+    "name": "Transistors",
+    "category": "electronics",
+    "filename": "transistor.html",
+    "href": "simulations/transistor.html"
+  },
+  {
+    "id": "accelerator",
+    "name": "Particle Accelerators",
+    "category": "modern",
+    "filename": "accelerator.html",
+    "href": "simulations/accelerator.html"
+  },
+  {
+    "id": "fission",
+    "name": "Nuclear Fission",
+    "category": "modern",
+    "filename": "fission.html",
+    "href": "simulations/fission.html"
+  },
+  {
+    "id": "fusion",
+    "name": "Nuclear Fusion",
+    "category": "modern",
+    "filename": "fusion.html",
+    "href": "simulations/fusion.html"
+  },
+  {
+    "id": "fission-chain",
+    "name": "Chain Reaction",
+    "category": "modern",
+    "filename": "fission-chain.html",
+    "href": "simulations/fission-chain.html"
+  },
+  {
+    "id": "shielding",
+    "name": "Radiation Shielding",
+    "category": "modern",
+    "filename": "shielding.html",
+    "href": "simulations/shielding.html"
+  },
+  {
+    "id": "geiger",
+    "name": "Geiger Counter",
+    "category": "modern",
+    "filename": "geiger.html",
+    "href": "simulations/geiger.html"
+  },
+  {
+    "id": "radiation-penetration",
+    "name": "Radiation Penetration",
+    "category": "modern",
+    "filename": "radiation-penetration.html",
+    "href": "simulations/radiation-penetration.html"
+  },
+  {
+    "id": "halflife",
+    "name": "Half-Life",
+    "category": "modern",
+    "filename": "halflife.html",
+    "href": "simulations/halflife.html"
+  },
+  {
+    "id": "radioactive",
+    "name": "Radioactive Decay",
+    "category": "modern",
+    "filename": "radioactive.html",
+    "href": "simulations/radioactive.html"
+  },
+  {
+    "id": "binding",
+    "name": "Binding Energy",
+    "category": "modern",
+    "filename": "binding.html",
+    "href": "simulations/binding.html"
+  },
+  {
+    "id": "schrodinger",
+    "name": "Schrödinger Equation",
+    "category": "quantum",
+    "filename": "schrodinger.html",
+    "href": "simulations/schrodinger.html"
+  },
+  {
+    "id": "heisenberg",
+    "name": "Heisenberg Uncertainty",
+    "category": "quantum",
+    "filename": "heisenberg.html",
+    "href": "simulations/heisenberg.html"
+  },
+  {
+    "id": "debroglie",
+    "name": "de Broglie Wavelength",
+    "category": "quantum",
+    "filename": "debroglie.html",
+    "href": "simulations/debroglie.html"
+  },
+  {
+    "id": "frank-hertz",
+    "name": "Franck-Hertz Experiment",
+    "category": "quantum",
+    "filename": "frank-hertz.html",
+    "href": "simulations/frank-hertz.html"
+  },
+  {
+    "id": "zeeman",
+    "name": "Zeeman Effect",
+    "category": "quantum",
+    "filename": "zeeman.html",
+    "href": "simulations/zeeman.html"
+  },
+  {
+    "id": "quantumhamiltonian",
+    "name": "Quantum Hamiltonian",
+    "category": "quantum",
+    "filename": "quantumhamiltonian.html",
+    "href": "simulations/quantumhamiltonian.html"
+  },
+  {
+    "id": "quantumnumbers",
+    "name": "Quantum Numbers",
+    "category": "quantum",
+    "filename": "quantumnumbers.html",
+    "href": "simulations/quantumnumbers.html"
+  },
+  {
+    "id": "spin",
+    "name": "Electron Spin",
+    "category": "quantum",
+    "filename": "spin.html",
+    "href": "simulations/spin.html"
+  },
+  {
+    "id": "entanglement",
+    "name": "Quantum Entanglement",
+    "category": "quantum",
+    "filename": "entanglement.html",
+    "href": "simulations/entanglement.html"
+  },
+  {
+    "id": "freefall",
+    "name": "Free Fall",
+    "category": "mechanics",
+    "filename": "freefall.html",
+    "href": "simulations/freefall.html"
+  },
+  {
+    "id": "pulley",
+    "name": "Pulley Systems",
+    "category": "mechanics",
+    "filename": "pulley.html",
+    "href": "simulations/pulley.html"
+  },
+  {
+    "id": "relative",
+    "name": "Relative Motion",
+    "category": "mechanics",
+    "filename": "relative.html",
+    "href": "simulations/relative.html"
+  },
+  {
+    "id": "range",
+    "name": "Projectile Range",
+    "category": "mechanics",
+    "filename": "range.html",
+    "href": "simulations/range.html"
+  },
+  {
+    "id": "orbitalvel",
+    "name": "Orbital Velocity",
+    "category": "mechanics",
+    "filename": "orbitalvel.html",
+    "href": "simulations/orbitalvel.html"
+  },
+  {
+    "id": "levers",
+    "name": "Simple Machines",
+    "category": "mechanics",
+    "filename": "levers.html",
+    "href": "simulations/levers.html"
+  },
+  {
+    "id": "equilibrium",
+    "name": "Static Equilibrium",
+    "category": "mechanics",
+    "filename": "equilibrium.html",
+    "href": "simulations/equilibrium.html"
+  },
+  {
+    "id": "collisions",
+    "name": "Elastic & Inelastic Collisions",
+    "category": "mechanics",
+    "filename": "collisions.html",
+    "href": "simulations/collisions.html"
+  },
+  {
+    "id": "impulse",
+    "name": "Impulse & Momentum",
+    "category": "mechanics",
+    "filename": "impulse.html",
+    "href": "simulations/impulse.html"
+  },
+  {
+    "id": "resonance-mass",
+    "name": "Mass on Spring Resonance",
+    "category": "mechanics",
+    "filename": "resonance-mass.html",
+    "href": "simulations/resonance-mass.html"
+  },
+  {
+    "id": "mech-resonance",
+    "name": "Mechanical Resonance",
+    "category": "mechanics",
+    "filename": "mech-resonance.html",
+    "href": "simulations/mech-resonance.html"
+  },
+  {
+    "id": "motion",
+    "name": "Motion Graphs",
+    "category": "mechanics",
+    "filename": "motion.html",
+    "href": "simulations/motion.html"
+  },
+  {
+    "id": "young-modulus",
+    "name": "Young's Modulus",
+    "category": "mechanics",
+    "filename": "young-modulus.html",
+    "href": "simulations/young-modulus.html"
+  },
+  {
+    "id": "stressstrain",
+    "name": "Stress & Strain",
+    "category": "materials",
+    "filename": "stressstrain.html",
+    "href": "simulations/stressstrain.html"
+  },
+  {
+    "id": "elasticity",
+    "name": "Elastic Deformation",
+    "category": "materials",
+    "filename": "elasticity.html",
+    "href": "simulations/elasticity.html"
+  },
+  {
+    "id": "plastic",
+    "name": "Plastic Deformation",
+    "category": "materials",
+    "filename": "plastic.html",
+    "href": "simulations/plastic.html"
+  },
+  {
+    "id": "hardness",
+    "name": "Material Hardness",
+    "category": "materials",
+    "filename": "hardness.html",
+    "href": "simulations/hardness.html"
+  },
+  {
+    "id": "fatigue",
+    "name": "Fatigue Failure",
+    "category": "materials",
+    "filename": "fatigue.html",
+    "href": "simulations/fatigue.html"
+  },
+  {
+    "id": "creep",
+    "name": "Creep Deformation",
+    "category": "materials",
+    "filename": "creep.html",
+    "href": "simulations/creep.html"
+  },
+  {
+    "id": "shear",
+    "name": "Shear Stress",
+    "category": "materials",
+    "filename": "shear.html",
+    "href": "simulations/shear.html"
+  },
+  {
+    "id": "poisson",
+    "name": "Poisson Ratio",
+    "category": "materials",
+    "filename": "poisson.html",
+    "href": "simulations/poisson.html"
+  },
+  {
+    "id": "surface",
+    "name": "Surface Tension",
+    "category": "fluids",
+    "filename": "surface.html",
+    "href": "simulations/surface.html"
+  },
+  {
+    "id": "capillary",
+    "name": "Capillary Action",
+    "category": "fluids",
+    "filename": "capillary.html",
+    "href": "simulations/capillary.html"
+  },
+  {
+    "id": "laminar",
+    "name": "Laminar vs Turbulent",
+    "category": "fluids",
+    "filename": "laminar.html",
+    "href": "simulations/laminar.html"
+  },
+  {
+    "id": "venturi",
+    "name": "Venturi Effect",
+    "category": "fluids",
+    "filename": "venturi.html",
+    "href": "simulations/venturi.html"
+  },
+  {
+    "id": "pascal",
+    "name": "Pascal's Principle",
+    "category": "fluids",
+    "filename": "pascal.html",
+    "href": "simulations/pascal.html"
+  },
+  {
+    "id": "pressure",
+    "name": "Pressure",
+    "category": "fluids",
+    "filename": "pressure.html",
+    "href": "simulations/pressure.html"
+  },
+  {
+    "id": "flow",
+    "name": "Fluid Flow",
+    "category": "fluids",
+    "filename": "flow.html",
+    "href": "simulations/flow.html"
+  },
+  {
+    "id": "bloodflow",
+    "name": "Blood Flow",
+    "category": "fluids",
+    "filename": "bloodflow.html",
+    "href": "simulations/bloodflow.html"
+  },
+  {
+    "id": "wave-type",
+    "name": "Wave Types",
+    "category": "waves",
+    "filename": "wave-type.html",
+    "href": "simulations/wave-type.html"
+  },
+  {
+    "id": "stellar",
+    "name": "Stellar Properties",
+    "category": "astrophysics",
+    "filename": "stellar.html",
+    "href": "simulations/stellar.html"
+  },
+  {
+    "id": "hrdiagram",
+    "name": "H-R Diagram",
+    "category": "astrophysics",
+    "filename": "hrdiagram.html",
+    "href": "simulations/hrdiagram.html"
+  },
+  {
+    "id": "blackhole",
+    "name": "Black Holes",
+    "category": "astrophysics",
+    "filename": "blackhole.html",
+    "href": "simulations/blackhole.html"
+  },
+  {
+    "id": "orbital",
+    "name": "Orbital Mechanics",
+    "category": "astrophysics",
+    "filename": "orbital.html",
+    "href": "simulations/orbital.html"
+  },
+  {
+    "id": "tidal",
+    "name": "Tidal Forces",
+    "category": "astrophysics",
+    "filename": "tidal.html",
+    "href": "simulations/tidal.html"
+  },
+  {
+    "id": "solarscale",
+    "name": "Solar System Scale",
+    "category": "astrophysics",
+    "filename": "solarscale.html",
+    "href": "simulations/solarscale.html"
+  },
+  {
+    "id": "neutron-star",
+    "name": "Neutron Stars",
+    "category": "astrophysics",
+    "filename": "neutron-star.html",
+    "href": "simulations/neutron-star.html"
+  },
+  {
+    "id": "dark-matter",
+    "name": "Dark Matter",
+    "category": "astrophysics",
+    "filename": "dark-matter.html",
+    "href": "simulations/dark-matter.html"
+  },
+  {
+    "id": "big-bang",
+    "name": "Big Bang Theory",
+    "category": "astrophysics",
+    "filename": "big-bang.html",
+    "href": "simulations/big-bang.html"
+  },
+  {
+    "id": "eclipse",
+    "name": "Solar & Lunar Eclipses",
+    "category": "astrophysics",
+    "filename": "eclipse.html",
+    "href": "simulations/eclipse.html"
+  },
+  {
+    "id": "seismic",
+    "name": "Seismic Waves",
+    "category": "geophysics",
+    "filename": "seismic.html",
+    "href": "simulations/seismic.html"
+  },
+  {
+    "id": "earthquake",
+    "name": "Earthquake Physics",
+    "category": "geophysics",
+    "filename": "earthquake.html",
+    "href": "simulations/earthquake.html"
+  },
+  {
+    "id": "mantle",
+    "name": "Mantle Convection",
+    "category": "geophysics",
+    "filename": "mantle.html",
+    "href": "simulations/mantle.html"
+  },
+  {
+    "id": "plate",
+    "name": "Plate Tectonics",
+    "category": "geophysics",
+    "filename": "plate.html",
+    "href": "simulations/plate.html"
+  },
+  {
+    "id": "tides",
+    "name": "Ocean Tides",
+    "category": "geophysics",
+    "filename": "tides.html",
+    "href": "simulations/tides.html"
+  },
+  {
+    "id": "erosion",
+    "name": "Erosion",
+    "category": "geophysics",
+    "filename": "erosion.html",
+    "href": "simulations/erosion.html"
+  },
+  {
+    "id": "weathering",
+    "name": "Weathering",
+    "category": "geophysics",
+    "filename": "weathering.html",
+    "href": "simulations/weathering.html"
+  },
+  {
+    "id": "geothermal",
+    "name": "Geothermal Energy",
+    "category": "geophysics",
+    "filename": "geothermal.html",
+    "href": "simulations/geothermal.html"
+  },
+  {
+    "id": "parallax",
+    "name": "Stellar Parallax",
+    "category": "measurement",
+    "filename": "parallax.html",
+    "href": "simulations/parallax.html"
+  },
+  {
+    "id": "zero-error",
+    "name": "Zero Error",
+    "category": "measurement",
+    "filename": "zero-error.html",
+    "href": "simulations/zero-error.html"
+  },
+  {
+    "id": "best-fit",
+    "name": "Best Fit Lines",
+    "category": "measurement",
+    "filename": "best-fit.html",
+    "href": "simulations/best-fit.html"
+  },
+  {
+    "id": "sheet-thickness",
+    "name": "Sheet Thickness",
+    "category": "measurement",
+    "filename": "sheet-thickness.html",
+    "href": "simulations/sheet-thickness.html"
+  },
+  {
+    "id": "sig-figs",
+    "name": "Significant Figures",
+    "category": "measurement",
+    "filename": "sig-figs.html",
+    "href": "simulations/sig-figs.html"
+  },
+  {
+    "id": "area-graph",
+    "name": "Area under Graphs",
+    "category": "measurement",
+    "filename": "area-graph.html",
+    "href": "simulations/area-graph.html"
+  },
+  {
+    "id": "stats-mean",
+    "name": "Statistical Analysis",
+    "category": "measurement",
+    "filename": "stats-mean.html",
+    "href": "simulations/stats-mean.html"
+  },
+  {
+    "id": "error-types",
+    "name": "Error Analysis",
+    "category": "measurement",
+    "filename": "error-types.html",
+    "href": "simulations/error-types.html"
+  },
+  {
+    "id": "meter-calibration",
+    "name": "Meter Calibration",
+    "category": "measurement",
+    "filename": "meter-calibration.html",
+    "href": "simulations/meter-calibration.html"
+  },
+  {
+    "id": "micrometer",
+    "name": "Micrometer Screw Gauge",
+    "category": "measurement",
+    "filename": "micrometer.html",
+    "href": "simulations/micrometer.html"
+  },
+  {
+    "id": "vernier",
+    "name": "Vernier Calipers",
+    "category": "measurement",
+    "filename": "vernier.html",
+    "href": "simulations/vernier.html"
+  },
+  {
+    "id": "reaction-time",
+    "name": "Reaction Time",
+    "category": "measurement",
+    "filename": "reaction-time.html",
+    "href": "simulations/reaction-time.html"
+  },
+  {
+    "id": "medical",
+    "name": "Medical Physics",
+    "category": "medical",
+    "filename": "medical.html",
+    "href": "simulations/medical.html"
+  },
+  {
+    "id": "biomech",
+    "name": "Biomechanics",
+    "category": "medical",
+    "filename": "biomech.html",
+    "href": "simulations/biomech.html"
+  },
+  {
+    "id": "muscle",
+    "name": "Muscle Physics",
+    "category": "medical",
+    "filename": "muscle.html",
+    "href": "simulations/muscle.html"
+  },
+  {
+    "id": "nerve",
+    "name": "Nerve Impulses",
+    "category": "medical",
+    "filename": "nerve.html",
+    "href": "simulations/nerve.html"
+  },
+  {
+    "id": "membrane",
+    "name": "Cell Membranes",
+    "category": "medical",
+    "filename": "membrane.html",
+    "href": "simulations/membrane.html"
+  },
+  {
+    "id": "vision",
+    "name": "Vision Physics",
+    "category": "medical",
+    "filename": "vision.html",
+    "href": "simulations/vision.html"
+  },
+  {
+    "id": "osmosis",
+    "name": "Osmosis",
+    "category": "fluids",
+    "filename": "osmosis.html",
+    "href": "simulations/osmosis.html"
+  },
+  {
+    "id": "diffusion",
+    "name": "Diffusion",
+    "category": "fluids",
+    "filename": "diffusion.html",
+    "href": "simulations/diffusion.html"
+  },
+  {
+    "id": "acoustic-impedance",
+    "name": "Acoustic Impedance",
+    "category": "waves",
+    "filename": "acoustic-impedance.html",
+    "href": "simulations/acoustic-impedance.html"
+  },
+  {
+    "id": "cloud",
+    "name": "Cloud Formation",
+    "category": "thermal",
+    "filename": "cloud.html",
+    "href": "simulations/cloud.html"
+  },
+  {
+    "id": "carbon",
+    "name": "Carbon Dating",
+    "category": "modern",
+    "filename": "carbon.html",
+    "href": "simulations/carbon.html"
+  },
+  {
+    "id": "relativity",
+    "name": "Special Relativity",
+    "category": "modern",
+    "filename": "relativity.html",
+    "href": "simulations/relativity.html"
+  },
+  {
+    "id": "mass-energy",
+    "name": "Mass-Energy Equivalence",
+    "category": "modern",
+    "filename": "mass-energy.html",
+    "href": "simulations/mass-energy.html"
+  },
+  {
+    "id": "length-contraction",
+    "name": "Length Contraction",
+    "category": "modern",
+    "filename": "length-contraction.html",
+    "href": "simulations/length-contraction.html"
+  },
+  {
+    "id": "time-dilation",
+    "name": "Time Dilation",
+    "category": "modern",
+    "filename": "time-dilation.html",
+    "href": "simulations/time-dilation.html"
+  },
+  {
+    "id": "waveform",
+    "name": "Waveform Analysis",
+    "category": "waves",
+    "filename": "waveform.html",
+    "href": "simulations/waveform.html"
+  },
+  {
+    "id": "interference",
+    "name": "Interference Patterns",
+    "category": "waves",
+    "filename": "interference.html",
+    "href": "simulations/interference.html"
+  },
+  {
+    "id": "thomson",
+    "name": "Thomson Experiment",
+    "category": "modern",
+    "filename": "thomson.html",
+    "href": "simulations/thomson.html"
+  },
+  {
+    "id": "phases",
+    "name": "Phase Transitions",
+    "category": "thermal",
+    "filename": "phases.html",
+    "href": "simulations/phases.html"
+  },
+  {
+    "id": "thermodynamics",
+    "name": "Laws of Thermodynamics",
+    "category": "thermal",
+    "filename": "thermodynamics.html",
+    "href": "simulations/thermodynamics.html"
+  },
+  {
+    "id": "entropy",
+    "name": "Entropy",
+    "category": "thermal",
+    "filename": "entropy.html",
+    "href": "simulations/entropy.html"
+  },
+  {
+    "id": "ideal-efficiency",
+    "name": "Maximum Efficiency",
+    "category": "thermal",
+    "filename": "ideal-efficiency.html",
+    "href": "simulations/ideal-efficiency.html"
+  },
+  {
+    "id": "refrigerator",
+    "name": "Refrigerators",
+    "category": "thermal",
+    "filename": "refrigerator.html",
+    "href": "simulations/refrigerator.html"
+  },
+  {
+    "id": "wave-energy",
+    "name": "Wave Power",
+    "category": "waves",
+    "filename": "wave-energy.html",
+    "href": "simulations/wave-energy.html"
+  },
+  {
+    "id": "tidal-energy",
+    "name": "Tidal Energy",
+    "category": "energy",
+    "filename": "tidal-energy.html",
+    "href": "simulations/tidal-energy.html"
+  },
+  {
+    "id": "wind-energy",
+    "name": "Wind Energy",
+    "category": "energy",
+    "filename": "wind-energy.html",
+    "href": "simulations/wind-energy.html"
+  },
+  {
+    "id": "solar-panel",
+    "name": "Solar Cells",
+    "category": "energy",
+    "filename": "solar-panel.html",
+    "href": "simulations/solar-panel.html"
+  },
+  {
+    "id": "nuclear-reactor",
+    "name": "Nuclear Reactors",
+    "category": "energy",
+    "filename": "nuclear-reactor.html",
+    "href": "simulations/nuclear-reactor.html"
+  },
+  {
+    "id": "pendulum-energy",
+    "name": "Pendulum Energy",
+    "category": "energy",
+    "filename": "pendulum-energy.html",
+    "href": "simulations/pendulum-energy.html"
+  },
+  {
+    "id": "spring-energy",
+    "name": "Spring Potential Energy",
+    "category": "energy",
+    "filename": "spring-energy.html",
+    "href": "simulations/spring-energy.html"
+  },
+  {
+    "id": "rotational",
+    "name": "Rotational Kinetic Energy",
+    "category": "mechanics",
+    "filename": "rotational.html",
+    "href": "simulations/rotational.html"
+  },
+  {
+    "id": "angular-momentum",
+    "name": "Angular Momentum",
+    "category": "mechanics",
+    "filename": "angular-momentum.html",
+    "href": "simulations/angular-momentum.html"
+  },
+  {
+    "id": "torque",
+    "name": "Torque",
+    "category": "mechanics",
+    "filename": "torque.html",
+    "href": "simulations/torque.html"
+  },
+  {
+    "id": "moment-inertia",
+    "name": "Moment of Inertia",
+    "category": "mechanics",
+    "filename": "moment-inertia.html",
+    "href": "simulations/moment-inertia.html"
+  },
+  {
+    "id": "precession",
+    "name": "Precession",
+    "category": "mechanics",
+    "filename": "precession.html",
+    "href": "simulations/precession.html"
+  },
+  {
+    "id": "gyroscope",
+    "name": "Gyroscopes",
+    "category": "mechanics",
+    "filename": "gyroscope.html",
+    "href": "simulations/gyroscope.html"
+  },
+  {
+    "id": "center-mass",
+    "name": "Center of Mass",
+    "category": "mechanics",
+    "filename": "center-mass.html",
+    "href": "simulations/center-mass.html"
+  },
+  {
+    "id": "rocket",
+    "name": "Rocket Physics",
+    "category": "mechanics",
+    "filename": "rocket.html",
+    "href": "simulations/rocket.html"
+  },
+  {
+    "id": "collision-2d",
+    "name": "2D Collisions",
+    "category": "mechanics",
+    "filename": "collision-2d.html",
+    "href": "simulations/collision-2d.html"
+  },
+  {
+    "id": "ballistic",
+    "name": "Ballistic Pendulum",
+    "category": "mechanics",
+    "filename": "ballistic.html",
+    "href": "simulations/ballistic.html"
+  },
+  {
+    "id": "terminal-vel",
+    "name": "Terminal Velocity",
+    "category": "mechanics",
+    "filename": "terminal-vel.html",
+    "href": "simulations/terminal-vel.html"
+  },
+  {
+    "id": "drag",
+    "name": "Drag Force",
+    "category": "mechanics",
+    "filename": "drag.html",
+    "href": "simulations/drag.html"
+  },
+  {
+    "id": "lift",
+    "name": "Lift Force",
+    "category": "mechanics",
+    "filename": "lift.html",
+    "href": "simulations/lift.html"
+  },
+  {
+    "id": "center-pressure",
+    "name": "Center of Pressure",
+    "category": "fluids",
+    "filename": "center-pressure.html",
+    "href": "simulations/center-pressure.html"
+  },
+  {
+    "id": "manometer",
+    "name": "Manometers",
+    "category": "fluids",
+    "filename": "manometer.html",
+    "href": "simulations/manometer.html"
+  },
+  {
+    "id": "barometer",
+    "name": "Barometers",
+    "category": "fluids",
+    "filename": "barometer.html",
+    "href": "simulations/barometer.html"
+  },
+  {
+    "id": "hydraulic",
+    "name": "Hydraulic Systems",
+    "category": "fluids",
+    "filename": "hydraulic.html",
+    "href": "simulations/hydraulic.html"
+  },
+  {
+    "id": "rarefaction",
+    "name": "Sound Rarefaction",
+    "category": "waves",
+    "filename": "rarefaction.html",
+    "href": "simulations/rarefaction.html"
+  },
+  {
+    "id": "ultrasound-imaging",
+    "name": "Ultrasound Imaging",
+    "category": "medical",
+    "filename": "ultrasound-imaging.html",
+    "href": "simulations/ultrasound-imaging.html"
+  },
+  {
+    "id": "xray",
+    "name": "X-Ray Physics",
+    "category": "medical",
+    "filename": "xray.html",
+    "href": "simulations/xray.html"
+  },
+  {
+    "id": "mri",
+    "name": "MRI Physics",
+    "category": "medical",
+    "filename": "mri.html",
+    "href": "simulations/mri.html"
+  },
+  {
+    "id": "pet",
+    "name": "PET Scanning",
+    "category": "medical",
+    "filename": "pet.html",
+    "href": "simulations/pet.html"
+  },
+  {
+    "id": "radiotherapy",
+    "name": "Radiation Therapy",
+    "category": "medical",
+    "filename": "radiotherapy.html",
+    "href": "simulations/radiotherapy.html"
+  },
+  {
+    "id": "spect",
+    "name": "SPECT Imaging",
+    "category": "medical",
+    "filename": "spect.html",
+    "href": "simulations/spect.html"
+  },
+  {
+    "id": "dosimetry",
+    "name": "Radiation Dosimetry",
+    "category": "medical",
+    "filename": "dosimetry.html",
+    "href": "simulations/dosimetry.html"
+  },
+  {
+    "id": "wavefunction",
+    "name": "Wavefunctions",
+    "category": "quantum",
+    "filename": "wavefunction.html",
+    "href": "simulations/wavefunction.html"
+  },
+  {
+    "id": "tunneling-prob",
+    "name": "Tunneling Probability",
+    "category": "quantum",
+    "filename": "tunneling-prob.html",
+    "href": "simulations/tunneling-prob.html"
+  },
+  {
+    "id": "quantum-well",
+    "name": "Quantum Wells",
+    "category": "quantum",
+    "filename": "quantum-well.html",
+    "href": "simulations/quantum-well.html"
+  },
+  {
+    "id": "band-theory",
+    "name": "Band Theory",
+    "category": "quantum",
+    "filename": "band-theory.html",
+    "href": "simulations/band-theory.html"
+  },
+  {
+    "id": "semiconductor",
+    "name": "Semiconductors",
+    "category": "quantum",
+    "filename": "semiconductor.html",
+    "href": "simulations/semiconductor.html"
+  },
+  {
+    "id": "doping",
+    "name": "Semiconductor Doping",
+    "category": "quantum",
+    "filename": "doping.html",
+    "href": "simulations/doping.html"
+  },
+  {
+    "id": "pn-junction",
+    "name": "PN Junction",
+    "category": "electronics",
+    "filename": "pn-junction.html",
+    "href": "simulations/pn-junction.html"
+  },
+  {
+    "id": "capacitor-para",
+    "name": "Parallel Plate Capacitor",
+    "category": "electricity",
+    "filename": "capacitor-para.html",
+    "href": "simulations/capacitor-para.html"
+  },
+  {
+    "id": "energy-density",
+    "name": "Energy Density",
+    "category": "electricity",
+    "filename": "energy-density.html",
+    "href": "simulations/energy-density.html"
+  },
+  {
+    "id": "time-constant",
+    "name": "RC Time Constant",
+    "category": "electricity",
+    "filename": "time-constant.html",
+    "href": "simulations/time-constant.html"
+  },
+  {
+    "id": "inductor",
+    "name": "Inductors",
+    "category": "electricity",
+    "filename": "inductor.html",
+    "href": "simulations/inductor.html"
+  },
+  {
+    "id": "lr-time",
+    "name": "LR Time Constant",
+    "category": "electricity",
+    "filename": "lr-time.html",
+    "href": "simulations/lr-time.html"
+  },
+  {
+    "id": "resonance-elec",
+    "name": "Electrical Resonance",
+    "category": "electricity",
+    "filename": "resonance-elec.html",
+    "href": "simulations/resonance-elec.html"
+  },
+  {
+    "id": "power-factor",
+    "name": "Power Factor",
+    "category": "electricity",
+    "filename": "power-factor.html",
+    "href": "simulations/power-factor.html"
+  },
+  {
+    "id": "impedance",
+    "name": "Impedance",
+    "category": "electricity",
+    "filename": "impedance.html",
+    "href": "simulations/impedance.html"
+  },
+  {
+    "id": "phase-angle",
+    "name": "Phase Angle",
+    "category": "electricity",
+    "filename": "phase-angle.html",
+    "href": "simulations/phase-angle.html"
+  },
+  {
+    "id": "induction-cook",
+    "name": "Induction Cooking",
+    "category": "electricity",
+    "filename": "induction-cook.html",
+    "href": "simulations/induction-cook.html"
+  },
+  {
+    "id": "faraday-law",
+    "name": "Faraday's Law Applications",
+    "category": "electricity",
+    "filename": "faraday-law.html",
+    "href": "simulations/faraday-law.html"
+  },
+  {
+    "id": "lenz-law",
+    "name": "Lenz's Law",
+    "category": "electricity",
+    "filename": "lenz-law.html",
+    "href": "simulations/lenz-law.html"
+  },
+  {
+    "id": "magnetic-energy",
+    "name": "Magnetic Energy",
+    "category": "electricity",
+    "filename": "magnetic-energy.html",
+    "href": "simulations/magnetic-energy.html"
+  },
+  {
+    "id": "biot-savart",
+    "name": "Biot-Savart Law",
+    "category": "electricity",
+    "filename": "biot-savart.html",
+    "href": "simulations/biot-savart.html"
+  },
+  {
+    "id": "ampere-law",
+    "name": "Ampere's Law",
+    "category": "electricity",
+    "filename": "ampere-law.html",
+    "href": "simulations/ampere-law.html"
+  },
+  {
+    "id": "maxwell",
+    "name": "Maxwell's Equations",
+    "category": "electricity",
+    "filename": "maxwell.html",
+    "href": "simulations/maxwell.html"
+  },
+  {
+    "id": "electromagnetic",
+    "name": "EM Waves",
+    "category": "electricity",
+    "filename": "electromagnetic.html",
+    "href": "simulations/electromagnetic.html"
+  },
+  {
+    "id": "wave-intensity",
+    "name": "Wave Intensity",
+    "category": "waves",
+    "filename": "wave-intensity.html",
+    "href": "simulations/wave-intensity.html"
+  },
+  {
+    "id": "inverse-square",
+    "name": "Inverse Square Law",
+    "category": "waves",
+    "filename": "inverse-square.html",
+    "href": "simulations/inverse-square.html"
+  },
+  {
+    "id": "total-internal",
+    "name": "Total Internal Reflection",
+    "category": "waves",
+    "filename": "total-internal.html",
+    "href": "simulations/total-internal.html"
+  },
+  {
+    "id": "critical-angle",
+    "name": "Critical Angle",
+    "category": "waves",
+    "filename": "critical-angle.html",
+    "href": "simulations/critical-angle.html"
+  },
+  {
+    "id": "magnification",
+    "name": "Magnification",
+    "category": "waves",
+    "filename": "magnification.html",
+    "href": "simulations/magnification.html"
+  },
+  {
+    "id": "telescope",
+    "name": "Telescopes",
+    "category": "waves",
+    "filename": "telescope.html",
+    "href": "simulations/telescope.html"
+  },
+  {
+    "id": "microscope",
+    "name": "Microscopes",
+    "category": "waves",
+    "filename": "microscope.html",
+    "href": "simulations/microscope.html"
+  },
+  {
+    "id": "eye",
+    "name": "Human Eye",
+    "category": "waves",
+    "filename": "eye.html",
+    "href": "simulations/eye.html"
+  },
+  {
+    "id": "camera",
+    "name": "Cameras",
+    "category": "waves",
+    "filename": "camera.html",
+    "href": "simulations/camera.html"
+  },
+  {
+    "id": "diffraction",
+    "name": "Diffraction",
+    "category": "waves",
+    "filename": "diffraction.html",
+    "href": "simulations/diffraction.html"
+  },
+  {
+    "id": "single-slit",
+    "name": "Single Slit Diffraction",
+    "category": "waves",
+    "filename": "single-slit.html",
+    "href": "simulations/single-slit.html"
+  },
+  {
+    "id": "resolution",
+    "name": "Optical Resolution",
+    "category": "waves",
+    "filename": "resolution.html",
+    "href": "simulations/resolution.html"
+  },
+  {
+    "id": "rayleigh",
+    "name": "Rayleigh Criterion",
+    "category": "waves",
+    "filename": "rayleigh.html",
+    "href": "simulations/rayleigh.html"
+  },
+  {
+    "id": "holography",
+    "name": "Holography",
+    "category": "waves",
+    "filename": "holography.html",
+    "href": "simulations/holography.html"
+  },
+  {
+    "id": "interferometer",
+    "name": "Interferometers",
+    "category": "waves",
+    "filename": "interferometer.html",
+    "href": "simulations/interferometer.html"
+  },
+  {
+    "id": "newton-rings",
+    "name": "Newton's Rings",
+    "category": "waves",
+    "filename": "newton-rings.html",
+    "href": "simulations/newton-rings.html"
+  },
+  {
+    "id": "thin-film",
+    "name": "Thin Film Interference",
+    "category": "waves",
+    "filename": "thin-film.html",
+    "href": "simulations/thin-film.html"
+  },
+  {
+    "id": "colour",
+    "name": "Colour Vision",
+    "category": "waves",
+    "filename": "colour.html",
+    "href": "simulations/colour.html"
+  },
+  {
+    "id": "additive",
+    "name": "Additive Colour",
+    "category": "waves",
+    "filename": "additive.html",
+    "href": "simulations/additive.html"
+  },
+  {
+    "id": "subtractive",
+    "name": "Subtractive Colour",
+    "category": "waves",
+    "filename": "subtractive.html",
+    "href": "simulations/subtractive.html"
+  },
+  {
+    "id": "spectral-lines",
+    "name": "Spectral Lines",
+    "category": "waves",
+    "filename": "spectral-lines.html",
+    "href": "simulations/spectral-lines.html"
+  },
+  {
+    "id": "balmer",
+    "name": "Balmer Series",
+    "category": "modern",
+    "filename": "balmer.html",
+    "href": "simulations/balmer.html"
+  },
+  {
+    "id": "wien",
+    "name": "Wien's Law",
+    "category": "thermal",
+    "filename": "wien.html",
+    "href": "simulations/wien.html"
+  },
+  {
+    "id": "stefan",
+    "name": "Stefan-Boltzmann Law",
+    "category": "thermal",
+    "filename": "stefan.html",
+    "href": "simulations/stefan.html"
+  },
+  {
+    "id": "planck",
+    "name": "Planck's Law",
+    "category": "modern",
+    "filename": "planck.html",
+    "href": "simulations/planck.html"
+  },
+  {
+    "id": "photon-energy",
+    "name": "Photon Energy",
+    "category": "quantum",
+    "filename": "photon-energy.html",
+    "href": "simulations/photon-energy.html"
+  },
+  {
+    "id": "photoelectric-kinetic",
+    "name": "Photoelectron KE",
+    "category": "quantum",
+    "filename": "photoelectric-kinetic.html",
+    "href": "simulations/photoelectric-kinetic.html"
+  },
+  {
+    "id": "threshold",
+    "name": "Threshold Frequency",
+    "category": "quantum",
+    "filename": "threshold.html",
+    "href": "simulations/threshold.html"
+  },
+  {
+    "id": "work-function",
+    "name": "Work Function",
+    "category": "quantum",
+    "filename": "work-function.html",
+    "href": "simulations/work-function.html"
+  },
+  {
+    "id": "de-broglie",
+    "name": "Matter Waves",
+    "category": "quantum",
+    "filename": "de-broglie.html",
+    "href": "simulations/de-broglie.html"
+  },
+  {
+    "id": "electron-diffraction",
+    "name": "Electron Diffraction",
+    "category": "quantum",
+    "filename": "electron-diffraction.html",
+    "href": "simulations/electron-diffraction.html"
+  },
+  {
+    "id": "uncertainty-position",
+    "name": "Position Uncertainty",
+    "category": "quantum",
+    "filename": "uncertainty-position.html",
+    "href": "simulations/uncertainty-position.html"
+  },
+  {
+    "id": "uncertainty-energy",
+    "name": "Energy-Time Uncertainty",
+    "category": "quantum",
+    "filename": "uncertainty-energy.html",
+    "href": "simulations/uncertainty-energy.html"
+  },
+  {
+    "id": "quantum-states",
+    "name": "Quantum States",
+    "category": "quantum",
+    "filename": "quantum-states.html",
+    "href": "simulations/quantum-states.html"
+  },
+  {
+    "id": "probability",
+    "name": "Quantum Probability",
+    "category": "quantum",
+    "filename": "probability.html",
+    "href": "simulations/probability.html"
+  },
+  {
+    "id": "measurement",
+    "name": "Quantum Measurement",
+    "category": "quantum",
+    "filename": "measurement.html",
+    "href": "simulations/measurement.html"
+  },
+  {
+    "id": "operators",
+    "name": "Quantum Operators",
+    "category": "quantum",
+    "filename": "operators.html",
+    "href": "simulations/operators.html"
+  },
+  {
+    "id": "hamiltonian",
+    "name": "Hamiltonian",
+    "category": "quantum",
+    "filename": "hamiltonian.html",
+    "href": "simulations/hamiltonian.html"
+  },
+  {
+    "id": "particle-box",
+    "name": "Particle in a Box",
+    "category": "quantum",
+    "filename": "particle-box.html",
+    "href": "simulations/particle-box.html"
+  },
+  {
+    "id": "hydrogen-wave",
+    "name": "Hydrogen Wavefunctions",
+    "category": "quantum",
+    "filename": "hydrogen-wave.html",
+    "href": "simulations/hydrogen-wave.html"
+  },
+  {
+    "id": "orbital-shape",
+    "name": "Orbital Shapes",
+    "category": "quantum",
+    "filename": "orbital-shape.html",
+    "href": "simulations/orbital-shape.html"
+  },
+  {
+    "id": "electron-configuration",
+    "name": "Electron Configuration",
+    "category": "quantum",
+    "filename": "electron-configuration.html",
+    "href": "simulations/electron-configuration.html"
+  },
+  {
+    "id": "pauli",
+    "name": "Pauli Exclusion Principle",
+    "category": "quantum",
+    "filename": "pauli.html",
+    "href": "simulations/pauli.html"
+  },
+  {
+    "id": "zeeman-splitting",
+    "name": "Zeeman Splitting",
+    "category": "quantum",
+    "filename": "zeeman-splitting.html",
+    "href": "simulations/zeeman-splitting.html"
+  },
+  {
+    "id": "stark",
+    "name": "Stark Effect",
+    "category": "quantum",
+    "filename": "stark.html",
+    "href": "simulations/stark.html"
+  },
+  {
+    "id": "selection-rules",
+    "name": "Selection Rules",
+    "category": "quantum",
+    "filename": "selection-rules.html",
+    "href": "simulations/selection-rules.html"
+  },
+  {
+    "id": "spontaneous",
+    "name": "Spontaneous Emission",
+    "category": "quantum",
+    "filename": "spontaneous.html",
+    "href": "simulations/spontaneous.html"
+  },
+  {
+    "id": "stimulated",
+    "name": "Stimulated Emission",
+    "category": "quantum",
+    "filename": "stimulated.html",
+    "href": "simulations/stimulated.html"
+  },
+  {
+    "id": "population",
+    "name": "Population Inversion",
+    "category": "quantum",
+    "filename": "population.html",
+    "href": "simulations/population.html"
+  },
+  {
+    "id": "absorption",
+    "name": "Light Absorption",
+    "category": "quantum",
+    "filename": "absorption.html",
+    "href": "simulations/absorption.html"
+  },
+  {
+    "id": "fluorescence",
+    "name": "Fluorescence",
+    "category": "quantum",
+    "filename": "fluorescence.html",
+    "href": "simulations/fluorescence.html"
+  },
+  {
+    "id": "phosphorescence",
+    "name": "Phosphorescence",
+    "category": "quantum",
+    "filename": "phosphorescence.html",
+    "href": "simulations/phosphorescence.html"
+  },
+  {
+    "id": "stimulated-radiation",
+    "name": "Stimulated Radiation",
+    "category": "quantum",
+    "filename": "stimulated-radiation.html",
+    "href": "simulations/stimulated-radiation.html"
+  },
+  {
+    "id": "helium-neon",
+    "name": "HeNe Laser",
+    "category": "quantum",
+    "filename": "helium-neon.html",
+    "href": "simulations/helium-neon.html"
+  },
+  {
+    "id": "quantum-cascade",
+    "name": "Quantum Cascade Lasers",
+    "category": "quantum",
+    "filename": "quantum-cascade.html",
+    "href": "simulations/quantum-cascade.html"
+  },
+  {
+    "id": "spin-flip",
+    "name": "Spin Flip",
+    "category": "quantum",
+    "filename": "spin-flip.html",
+    "href": "simulations/spin-flip.html"
+  },
+  {
+    "id": "orbital-angular",
+    "name": "Orbital Angular Momentum",
+    "category": "quantum",
+    "filename": "orbital-angular.html",
+    "href": "simulations/orbital-angular.html"
+  },
+  {
+    "id": "spin-angular",
+    "name": "Spin Angular Momentum",
+    "category": "quantum",
+    "filename": "spin-angular.html",
+    "href": "simulations/spin-angular.html"
+  },
+  {
+    "id": "total-angular",
+    "name": "Total Angular Momentum",
+    "category": "quantum",
+    "filename": "total-angular.html",
+    "href": "simulations/total-angular.html"
+  },
+  {
+    "id": "fine-structure",
+    "name": "Fine Structure",
+    "category": "quantum",
+    "filename": "fine-structure.html",
+    "href": "simulations/fine-structure.html"
+  },
+  {
+    "id": "hyperfine",
+    "name": "Hyperfine Structure",
+    "category": "quantum",
+    "filename": "hyperfine.html",
+    "href": "simulations/hyperfine.html"
+  },
+  {
+    "id": "zeeman-effect",
+    "name": "Normal Zeeman Effect",
+    "category": "quantum",
+    "filename": "zeeman-effect.html",
+    "href": "simulations/zeeman-effect.html"
+  },
+  {
+    "id": "anomalous-zeeman",
+    "name": "Anomalous Zeeman Effect",
+    "category": "quantum",
+    "filename": "anomalous-zeeman.html",
+    "href": "simulations/anomalous-zeeman.html"
+  },
+  {
+    "id": "ls-coupling",
+    "name": "LS Coupling",
+    "category": "quantum",
+    "filename": "ls-coupling.html",
+    "href": "simulations/ls-coupling.html"
+  },
+  {
+    "id": "jj-coupling",
+    "name": "jj Coupling",
+    "category": "quantum",
+    "filename": "jj-coupling.html",
+    "href": "simulations/jj-coupling.html"
+  },
+  {
+    "id": "spectroscopic",
+    "name": "Spectroscopic Notation",
+    "category": "quantum",
+    "filename": "spectroscopic.html",
+    "href": "simulations/spectroscopic.html"
+  },
+  {
+    "id": "term-symbols",
+    "name": "Term Symbols",
+    "category": "quantum",
+    "filename": "term-symbols.html",
+    "href": "simulations/term-symbols.html"
+  },
+  {
+    "id": "hund-rules",
+    "name": "Hund's Rules",
+    "category": "quantum",
+    "filename": "hund-rules.html",
+    "href": "simulations/hund-rules.html"
+  },
+  {
+    "id": "selection",
+    "name": "Selection Rules",
+    "category": "quantum",
+    "filename": "selection.html",
+    "href": "simulations/selection.html"
+  },
+  {
+    "id": "transition-prob",
+    "name": "Transition Probability",
+    "category": "quantum",
+    "filename": "transition-prob.html",
+    "href": "simulations/transition-prob.html"
+  },
+  {
+    "id": "lifetime",
+    "name": "Excited State Lifetime",
+    "category": "quantum",
+    "filename": "lifetime.html",
+    "href": "simulations/lifetime.html"
+  },
+  {
+    "id": "natural-width",
+    "name": "Natural Linewidth",
+    "category": "quantum",
+    "filename": "natural-width.html",
+    "href": "simulations/natural-width.html"
+  },
+  {
+    "id": "doppler-broadening",
+    "name": "Doppler Broadening",
+    "category": "thermal",
+    "filename": "doppler-broadening.html",
+    "href": "simulations/doppler-broadening.html"
+  },
+  {
+    "id": "pressure-broadening",
+    "name": "Pressure Broadening",
+    "category": "thermal",
+    "filename": "pressure-broadening.html",
+    "href": "simulations/pressure-broadening.html"
+  },
+  {
+    "id": "lorentzian",
+    "name": "Lorentzian Profile",
+    "category": "waves",
+    "filename": "lorentzian.html",
+    "href": "simulations/lorentzian.html"
+  },
+  {
+    "id": "gaussian",
+    "name": "Gaussian Profile",
+    "category": "waves",
+    "filename": "gaussian.html",
+    "href": "simulations/gaussian.html"
+  }
+]

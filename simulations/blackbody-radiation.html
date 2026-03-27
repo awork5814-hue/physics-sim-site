@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blackbody Radiation</title>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --panel: #121a25;
+      --ink: #e7f2ff;
+      --muted: #9fb3c8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --good: #6bff6b;
+      --danger: #ff6b6b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2230 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre;
+      min-height: 140px;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Blackbody Radiation</h1>
+    <div class="subtitle">Planck spectrum, Wien peak, and Stefan-Boltzmann power</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+      <div style="margin-top: 10px;" class="buttons">
+        <button class="btn" data-temp="300">300K</button>
+        <button class="btn" data-temp="1500">1500K</button>
+        <button class="btn" data-temp="2500">2500K</button>
+        <button class="btn" data-temp="5800">5800K</button>
+        <button class="btn" data-temp="10000">10000K</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Temperature (K)</label>
+          <input id="temp" type="range" min="300" max="20000" step="50" value="5800" />
+          <div class="row"><span>300</span><span id="tempVal">5800 K</span><span>20000</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showSpectrum" type="checkbox" checked /> Spectrum graph</label>
+            <label><input id="showVisible" type="checkbox" checked /> Visible range</label>
+            <label><input id="showPeak" type="checkbox" checked /> Peak marker</label>
+            <label><input id="animateGlow" type="checkbox" checked /> Glow animation</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Wien: λ_max = b/T. Stefan-Boltzmann: P = σT⁴. Planck law generates the spectral curve.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const h = 6.626e-34;
+    const c = 3e8;
+    const k = 1.381e-23;
+    const b = 2.898e-3;
+    const sigma = 5.67e-8;
+
+    const state = {
+      T: 5800,
+      showSpectrum: true,
+      showVisible: true,
+      showPeak: true,
+      animateGlow: true,
+      t: 0
+    };
+
+    function planck(lambda, T) {
+      const a = 2 * h * c * c / Math.pow(lambda, 5);
+      const exponent = h * c / (lambda * k * T);
+      const denom = Math.exp(Math.min(700, exponent)) - 1;
+      return a / denom;
+    }
+
+    function temperatureColor(T) {
+      const t = clamp(T, 1000, 12000);
+      const x = t / 100;
+      let r, g, bcol;
+      if (x <= 66) {
+        r = 255;
+        g = 99.47 * Math.log(x) - 161.12;
+        bcol = x <= 19 ? 0 : 138.52 * Math.log(x - 10) - 305.04;
+      } else {
+        r = 329.7 * Math.pow(x - 60, -0.133);
+        g = 288.1 * Math.pow(x - 60, -0.0755);
+        bcol = 255;
+      }
+      return `rgb(${clamp(r,0,255)},${clamp(g,0,255)},${clamp(bcol,0,255)})`;
+    }
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function drawGlow() {
+      const color = temperatureColor(state.T);
+      const cx = 220, cy = 200;
+      const glow = state.animateGlow ? 20 + 6 * Math.sin(state.t) : 20;
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, 130 + glow);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 140, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 60, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.fillText(`T = ${state.T.toFixed(0)} K`, cx - 40, cy + 90);
+    }
+
+    function drawSpectrum() {
+      const left = 420, top = 60, w = 460, h = 260;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(left, top, w, h);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Intensity', left - 50, top + 10);
+      ctx.fillText('Wavelength (nm)', left + 140, top + h + 25);
+
+      if (state.showVisible) {
+        const visStart = left + (400 - 200) / (3000 - 200) * w;
+        const visEnd = left + (700 - 200) / (3000 - 200) * w;
+        ctx.fillStyle = 'rgba(106,215,255,0.08)';
+        ctx.fillRect(visStart, top, visEnd - visStart, h);
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('Visible', visStart + 10, top + 20);
+      }
+
+      const samples = [];
+      for (let i = 0; i <= 200; i++) {
+        const nm = 200 + (3000 - 200) * (i / 200);
+        const lambda = nm * 1e-9;
+        const val = planck(lambda, state.T);
+        samples.push({ nm, val });
+      }
+      const maxVal = Math.max(...samples.map(s => s.val));
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      samples.forEach((s, i) => {
+        const x = left + (s.nm - 200) / (3000 - 200) * w;
+        const y = top + h - (s.val / maxVal) * (h - 10);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      if (state.showPeak) {
+        const lambdaMax = b / state.T;
+        const peakNm = lambdaMax * 1e9;
+        const x = left + (peakNm - 200) / (3000 - 200) * w;
+        ctx.strokeStyle = '#6bff6b';
+        ctx.beginPath();
+        ctx.moveTo(x, top); ctx.lineTo(x, top + h);
+        ctx.stroke();
+        ctx.fillStyle = '#6bff6b';
+        ctx.fillText(`λmax ${peakNm.toFixed(0)} nm`, x - 30, top + h + 15);
+      }
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawGlow();
+      if (state.showSpectrum) drawSpectrum();
+    }
+
+    function updateReadout() {
+      const lambdaMax = b / state.T;
+      const power = sigma * Math.pow(state.T, 4);
+      const peakNm = lambdaMax * 1e9;
+      const color = temperatureColor(state.T);
+      const text = `BLACKBODY RADIATION\n` +
+        `---------------------\n` +
+        `Temperature T: ${state.T.toFixed(0)} K\n` +
+        `Color RGB: ${color}\n` +
+        `\nRADIATION DATA\n` +
+        `Peak λ_max: ${peakNm.toFixed(0)} nm\n` +
+        `Total Power: ${power.toExponential(2)} W/m^2\n` +
+        `\nWIEN CHECK\n` +
+        `λ_max = b/T = ${(b * 1e9).toFixed(0)}/${state.T.toFixed(0)} nm\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      state.t += 0.04;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('temp').addEventListener('input', e => {
+      state.T = parseFloat(e.target.value);
+      document.getElementById('tempVal').textContent = `${state.T.toFixed(0)} K`;
+    });
+
+    document.getElementById('showSpectrum').addEventListener('change', e => state.showSpectrum = e.target.checked);
+    document.getElementById('showVisible').addEventListener('change', e => state.showVisible = e.target.checked);
+    document.getElementById('showPeak').addEventListener('change', e => state.showPeak = e.target.checked);
+    document.getElementById('animateGlow').addEventListener('change', e => state.animateGlow = e.target.checked);
+
+    document.querySelectorAll('.btn[data-temp]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.T = parseFloat(btn.dataset.temp);
+        document.getElementById('temp').value = state.T;
+        document.getElementById('tempVal').textContent = `${state.T.toFixed(0)} K`;
+      });
+    });
+
+    tick();
+  </script>
+</body>
+</html>

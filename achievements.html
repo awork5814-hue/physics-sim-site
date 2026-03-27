@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Achievements - Physics Experiments Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+<link rel="stylesheet" href="simulation-theme.css" />
+  <script>!function(){var t=localStorage.getItem('physicsSimTheme')||'dark';document.documentElement.setAttribute('data-theme',t)}();
+  </script>
+</head>
+<body data-paged="false">
+  <div class="background">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <a href="index.html" class="brand-link">
+        <span class="brand-mark">λ</span>
+        <div>
+          <div class="brand-title">Physics Experiments Lab</div>
+          <div class="brand-subtitle">Interactive simulations for fundamental discoveries</div>
+        </div>
+      </a>
+    </div>
+    <nav class="nav">
+      <div class="nav-dropdown">
+        <a href="index.html" class="nav-trigger">Experiments ▾</a>
+        <div class="nav-menu">
+          <div class="nav-section">
+            <h4>Mechanics</h4>
+            <a href="index.html#pendulum">Simple Pendulum</a>
+            <a href="index.html#hooke">Hooke's Law</a>
+            <a href="index.html#projectile">Projectile Motion</a>
+          </div>
+          <div class="nav-section">
+            <h4>More Physics</h4>
+            <a href="index.html#wave">Waves</a>
+            <a href="index.html#quantum">Quantum</a>
+            <a href="index.html#electric">Electricity</a>
+          </div>
+        </div>
+      </div>
+      <a href="questions.html">Question Bank</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="global-toggle">
+      <button class="achievements-trigger active" id="achievementsBtn" onclick="BadgeUI.showDropdown()">
+        🏆 <span class="badge-count" id="badgeCount">0</span>
+      </button>
+      <label class="theme-toggle">
+        <input type="checkbox" id="themeToggle" />
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </label>
+    </div>
+  </header>
+
+  <main class="achievements-page">
+    <div class="achievements-hero">
+      <h1>🏆 Achievements</h1>
+      <p>Complete challenges, master topics, and earn exclusive badges</p>
+      
+      <div class="achievements-stats-grid" id="statsGrid">
+        <div class="achievement-stat-card">
+          <div class="stat-value" id="totalEarned">0</div>
+          <div class="stat-label">Badges Earned</div>
+        </div>
+        <div class="achievement-stat-card">
+          <div class="stat-value" id="totalPossible">0</div>
+          <div class="stat-label">Total Available</div>
+        </div>
+        <div class="achievement-stat-card">
+          <div class="stat-value" id="currentStreak">0</div>
+          <div class="stat-label">Day Streak 🔥</div>
+        </div>
+        <div class="achievement-stat-card">
+          <div class="stat-value" id="questionsAnswered">0</div>
+          <div class="stat-label">Questions</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="achievement-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="bronze">Bronze</button>
+      <button class="filter-btn" data-filter="silver">Silver</button>
+      <button class="filter-btn" data-filter="gold">Gold</button>
+      <button class="filter-btn" data-filter="diamond">Diamond</button>
+      <button class="filter-btn" data-filter="master">Master</button>
+      <button class="filter-btn" data-filter="earned">Earned</button>
+    </div>
+
+    <!-- Achievement Categories -->
+    <div id="achievementsContainer">
+      <!-- Categories will be populated by JavaScript -->
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <span>© 2026 Physics Experiments Lab · Built for interactive learning</span>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/physicsexperimentslab/" target="_blank" rel="noopener" class="social-link" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="https://x.com/physicsexplab" target="_blank" rel="noopener" class="social-link" title="X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.reddit.com/user/physicsexplab/" target="_blank" rel="noopener" class="social-link" title="Reddit">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.965-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="achievements.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      BadgeUI.updateHeaderBadgeIcon();
+      renderAchievementsPage();
+      initFilters();
+    });
+
+    function renderAchievementsPage() {
+      const stats = UserStats.load();
+      const counts = AchievementTracker.getBadgeCounts();
+      const allBadges = AchievementTracker.getAllBadgesWithStatus();
+      
+      // Update stats
+      document.getElementById('totalEarned').textContent = counts.total;
+      document.getElementById('totalPossible').textContent = counts.totalPossible;
+      document.getElementById('currentStreak').textContent = stats.currentStreak;
+      document.getElementById('questionsAnswered').textContent = stats.totalQuestionsAnswered;
+
+      // Group badges by category
+      const categories = {};
+      allBadges.forEach(badge => {
+        // Only show earned badges' categories, hide locked badge categories
+        const cat = badge.earned ? (badge.category || 'Other') : 'Locked';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(badge);
+      });
+
+      // Render categories
+      const container = document.getElementById('achievementsContainer');
+      container.innerHTML = '';
+
+      for (const [category, badges] of Object.entries(categories)) {
+        const earnedCount = badges.filter(b => b.earned).length;
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'achievement-category';
+        categoryDiv.dataset.rarity = badges[0]?.rarity || 'bronze';
+        
+        // Get icon for category
+        let icon = '🏆';
+        const icons = {
+          'Streak Master': '🔥',
+          'Question Crusher': '📝',
+          'Perfectionist': '💯',
+          'Accuracy Expert': '🎯',
+          'Topic Master': '📚',
+          'Dedicated Learner': '🔑',
+          'Time Investor': '⏰',
+          'Simulation Explorer': '🔬',
+          'Speed Demon': '⚡',
+          'Combo King': '🔥',
+          'First Steps': '🏁',
+          'Challenge Seeker': '💪',
+          'Early Bird': '🐦',
+          'Night Owl': '🦉',
+          'Weekend Warrior': '🎉',
+          'Secret': '❓'
+        };
+        icon = icons[category] || '🏆';
+
+        categoryDiv.innerHTML = `
+          <div class="category-header">
+            <span class="category-icon">${icon}</span>
+            <h3 class="category-title">${category}</h3>
+            <span class="category-progress">${earnedCount}/${badges.length}</span>
+          </div>
+          <div class="badges-grid">
+            ${badges.map(badge => BadgeUI.createBadgeElement(badge)).join('')}
+          </div>
+        `;
+        
+        container.appendChild(categoryDiv);
+      }
+    }
+
+    function initFilters() {
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const filter = btn.dataset.filter;
+          const categories = document.querySelectorAll('.achievement-category');
+          
+          categories.forEach(cat => {
+            if (filter === 'all') {
+              cat.style.display = 'block';
+            } else if (filter === 'earned') {
+              const hasEarned = cat.querySelector('.achievement-badge.earned');
+              cat.style.display = hasEarned ? 'block' : 'none';
+            } else {
+              const badges = cat.querySelectorAll('.achievement-badge');
+              const hasRarity = Array.from(badges).some(b => b.dataset.rarity === filter);
+              cat.style.display = hasRarity ? 'block' : 'none';
+            }
+          });
+        });
+      });
+    }
+  </script>
+
+  <style>
+    .achievement-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 30px;
+      padding: 16px;
+      background: var(--bg-2);
+      border-radius: 12px;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      background: var(--bg-3);
+      border-color: var(--accent);
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: var(--bg-0);
+      border-color: var(--accent);
+    }
+
+    .brand-link {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+  </style>
+</body>
+</html>

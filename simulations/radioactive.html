@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nuclear Decay</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #22c55e;
+      --accent-2: #f59e0b;
+      --sim-bg: #0b1020;
+      --sim-text: #f8fafc;
+      --sim-muted: #94a3b8;
+      --sim-border: rgba(255, 255, 255, 0.08);
+      --panel: rgba(15, 23, 42, 0.72);
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --mono: "JetBrains Mono", monospace;
+      --glow: 0 0 18px rgba(34, 197, 94, 0.25);
+    }
+
+    body.light {
+      --sim-bg: #f5f7fa;
+      --sim-text: #0f172a;
+      --sim-muted: #475569;
+      --sim-border: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255, 255, 255, 0.85);
+    }
+
+    body {
+      margin: 0;
+      background: var(--sim-bg);
+      color: var(--sim-text);
+      font-family: "Inter", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(34, 197, 94, 0.5); box-shadow: var(--glow); }
+
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; backdrop-filter: blur(12px); }
+    .canvas-wrap { display: grid; gap: 10px; }
+    canvas { width: 100%; height: clamp(320px, 45vh, 480px); background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    button:hover { transform: translateY(-1px); border-color: rgba(34, 197, 94, 0.5); box-shadow: var(--glow); }
+
+    .data-panel { padding: 0; background: transparent; border: none; box-shadow: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--sim-border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sim-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.green { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.blue { color: #38bdf8; }
+
+    details { border: 1px solid var(--sim-border); border-radius: 14px; background: rgba(12, 18, 28, 0.8); padding: 12px 16px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--accent); list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: clamp(280px, 42vh, 400px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="nuclear-decay">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Nuclear Decay</h1>
+      <p>Half-life, decay curves, and radiation types</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="decayCanvas" width="900" height="520" aria-label="Nuclear decay simulation"></canvas>
+        <div class="btn-row">
+          <button id="playPause">Play</button>
+          <button id="reset">Reset</button>
+        </div>
+        <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+      </div>
+
+      <div class="panel controls">
+        <div class="control-group">
+          <label for="n0">Initial Nuclei <strong id="n0Label">500</strong></label>
+          <input type="range" id="n0" min="100" max="1200" step="50" value="500" />
+        </div>
+        <div class="control-group">
+          <label for="halfLife">Half-life (s) <strong id="halfLifeLabel">6.0</strong></label>
+          <input type="range" id="halfLife" min="1" max="20" step="0.5" value="6" />
+        </div>
+        <div class="control-group">
+          <label for="speed">Simulation Speed <strong id="speedLabel">1.00x</strong></label>
+          <input type="range" id="speed" min="0.25" max="5" step="0.25" value="1" />
+        </div>
+        <div class="control-group">
+          <label>Radiation Types</label>
+          <label><input type="checkbox" id="showAlpha" checked /> Alpha</label>
+          <label><input type="checkbox" id="showBeta" checked /> Beta</label>
+          <label><input type="checkbox" id="showGamma" checked /> Gamma</label>
+        </div>
+        <div class="control-group">
+          <label>Detector & Shielding</label>
+          <label><input type="checkbox" id="soundOn" checked /> Detector clicker</label>
+          <label><input type="checkbox" id="showShield" /> Show shielding</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <details open>
+        <summary>Decay Curve</summary>
+        <canvas id="decayGraph" width="900" height="220" aria-label="Decay curve"></canvas>
+      </details>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <details>
+        <summary>Histogram of Decays</summary>
+        <canvas id="histGraph" width="900" height="220" aria-label="Decay histogram"></canvas>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('decayCanvas');
+    const ctx = canvas.getContext('2d');
+    const graph = document.getElementById('decayGraph');
+    const gctx = graph.getContext('2d');
+    const hist = document.getElementById('histGraph');
+    const hctx = hist.getContext('2d');
+
+    const n0Input = document.getElementById('n0');
+    const halfLifeInput = document.getElementById('halfLife');
+    const speedInput = document.getElementById('speed');
+    const n0Label = document.getElementById('n0Label');
+    const halfLifeLabel = document.getElementById('halfLifeLabel');
+    const speedLabel = document.getElementById('speedLabel');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const showAlpha = document.getElementById('showAlpha');
+    const showBeta = document.getElementById('showBeta');
+    const showGamma = document.getElementById('showGamma');
+    const soundOn = document.getElementById('soundOn');
+    const showShield = document.getElementById('showShield');
+    const dataPanel = document.getElementById('dataPanel');
+
+    let state = {
+      n0: 500,
+      remaining: 500,
+      decayed: 0,
+      halfLife: 6,
+      time: 0,
+      playing: false,
+      speed: 1,
+      particles: [],
+      curve: [],
+      decayEvents: [],
+      hist: new Array(30).fill(0)
+    };
+
+    let audioCtx = null;
+
+    function reset() {
+      state = {
+        ...state,
+        n0: parseFloat(n0Input.value),
+        remaining: parseFloat(n0Input.value),
+        decayed: 0,
+        halfLife: parseFloat(halfLifeInput.value),
+        time: 0,
+        speed: parseFloat(speedInput.value),
+        particles: [],
+        curve: [],
+        decayEvents: [],
+        hist: new Array(30).fill(0)
+      };
+      updateLabels();
+    }
+
+    function updateLabels() {
+      n0Label.textContent = `${state.n0.toFixed(0)}`;
+      halfLifeLabel.textContent = `${state.halfLife.toFixed(1)}`;
+      speedLabel.textContent = `${state.speed.toFixed(2)}x`;
+    }
+
+    function step(dt) {
+      if (!state.playing) return;
+      const lambda = Math.log(2) / state.halfLife;
+      const p = 1 - Math.exp(-lambda * dt);
+      let decays = 0;
+      for (let i = 0; i < state.remaining; i++) {
+        if (Math.random() < p) decays++;
+      }
+      state.remaining = Math.max(0, state.remaining - decays);
+      state.decayed += decays;
+      state.time += dt;
+      spawnParticles(decays);
+      if (decays > 0) {
+        state.decayEvents.push({ t: state.time, c: decays });
+        const bin = Math.min(state.hist.length - 1, Math.floor((state.time % 30) ));
+        state.hist[bin] += decays;
+        playClick(decays);
+      }
+      state.curve.push({ t: state.time, n: state.remaining });
+      if (state.curve.length > 300) state.curve.shift();
+    }
+
+    function playClick(decays) {
+      if (!soundOn.checked) return;
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = 1200;
+      gain.gain.value = Math.min(0.2, 0.02 + decays * 0.002);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.02);
+    }
+
+    function spawnParticles(count) {
+      for (let i = 0; i < count; i++) {
+        const type = Math.random();
+        let kind = 'alpha';
+        if (type > 0.66) kind = 'gamma';
+        else if (type > 0.33) kind = 'beta';
+        const angle = Math.random() * Math.PI * 2;
+        const speed = kind === 'alpha' ? 40 : kind === 'beta' ? 60 : 80;
+        state.particles.push({
+          x: canvas.width / 2,
+          y: canvas.height / 2,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.0,
+          kind
+        });
+      }
+      if (state.particles.length > 200) state.particles.splice(0, state.particles.length - 200);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawNucleus();
+      drawParticles();
+    }
+
+    function drawBackground() {
+      const g = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, 40, canvas.width / 2, canvas.height / 2, canvas.width);
+      g.addColorStop(0, 'rgba(34, 197, 94, 0.08)');
+      g.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function drawNucleus() {
+      const r = 40 + Math.sqrt(state.remaining) * 0.8;
+      const grad = ctx.createRadialGradient(canvas.width / 2 - 12, canvas.height / 2 - 12, 8, canvas.width / 2, canvas.height / 2, r);
+      grad.addColorStop(0, '#86efac');
+      grad.addColorStop(1, '#166534');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // lens flare
+      const flare = ctx.createRadialGradient(canvas.width / 2 - r * 0.3, canvas.height / 2 - r * 0.3, 2, canvas.width / 2, canvas.height / 2, r * 1.2);
+      flare.addColorStop(0, 'rgba(255,255,255,0.35)');
+      flare.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = flare;
+      ctx.fillRect(canvas.width / 2 - r * 1.2, canvas.height / 2 - r * 1.2, r * 2.4, r * 2.4);
+
+      if (showShield.checked) {
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(canvas.width / 2 - r * 1.5, canvas.height / 2 - r * 1.5, r * 3, r * 3);
+      }
+    }
+
+    function drawParticles() {
+      state.particles.forEach((p) => {
+        if (p.kind === 'alpha' && !showAlpha.checked) return;
+        if (p.kind === 'beta' && !showBeta.checked) return;
+        if (p.kind === 'gamma' && !showGamma.checked) return;
+        const color = p.kind === 'alpha' ? 'rgba(245, 158, 11, 0.9)' : p.kind === 'beta' ? 'rgba(56, 189, 248, 0.9)' : 'rgba(168, 85, 247, 0.7)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * 0.2, p.y - p.vy * 0.2);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.kind === 'gamma' ? 2 : 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+      state.particles = state.particles.map((p) => ({ ...p, x: p.x + p.vx * 0.02, y: p.y + p.vy * 0.02, life: p.life - 0.02 }))
+        .filter((p) => p.life > 0);
+    }
+
+    function updateDataPanel() {
+      const lambda = Math.log(2) / state.halfLife;
+      const expected = state.n0 * Math.exp(-lambda * state.time);
+      const recent = state.decayEvents.filter((e) => state.time - e.t <= 1);
+      const countRate = recent.reduce((sum, e) => sum + e.c, 0);
+      dataPanel.innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Remaining N</span><span class="data-value green">${state.remaining.toFixed(0)}</span></div>
+          <div class="data-card"><span class="data-label">Decayed</span><span class="data-value orange">${state.decayed.toFixed(0)}</span></div>
+          <div class="data-card"><span class="data-label">Time</span><span class="data-value blue">${state.time.toFixed(2)} s</span></div>
+          <div class="data-card"><span class="data-label">Expected N</span><span class="data-value blue">${expected.toFixed(0)}</span></div>
+          <div class="data-card"><span class="data-label">Count rate</span><span class="data-value orange">${countRate.toFixed(0)} /s</span></div>
+        </div>
+      `;
+    }
+
+    function drawGraph() {
+      gctx.clearRect(0, 0, graph.width, graph.height);
+      gctx.fillStyle = 'rgba(10, 15, 25, 0.8)';
+      gctx.fillRect(0, 0, graph.width, graph.height);
+      if (state.curve.length < 2) return;
+      const padding = 30;
+      const w = graph.width - padding * 2;
+      const h = graph.height - padding * 2;
+      gctx.strokeStyle = 'rgba(248, 250, 252, 0.2)';
+      gctx.strokeRect(padding, padding, w, h);
+      const t0 = state.curve[0].t;
+      const t1 = state.curve[state.curve.length - 1].t;
+      gctx.strokeStyle = 'rgba(34, 197, 94, 0.9)';
+      gctx.beginPath();
+      state.curve.forEach((p, i) => {
+        const x = padding + ((p.t - t0) / (t1 - t0)) * w;
+        const y = padding + h - (p.n / state.n0) * h;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+    }
+
+    function drawHistogram() {
+      hctx.clearRect(0, 0, hist.width, hist.height);
+      hctx.fillStyle = 'rgba(10, 15, 25, 0.8)';
+      hctx.fillRect(0, 0, hist.width, hist.height);
+      const padding = 30;
+      const w = hist.width - padding * 2;
+      const h = hist.height - padding * 2;
+      const max = Math.max(...state.hist, 1);
+      const barW = w / state.hist.length;
+      state.hist.forEach((v, i) => {
+        const barH = (v / max) * h;
+        hctx.fillStyle = 'rgba(34, 197, 94, 0.8)';
+        hctx.fillRect(padding + i * barW, padding + h - barH, barW - 2, barH);
+      });
+    }
+
+    function loop() {
+      const dt = 1 / 60 * state.speed;
+      step(dt);
+      draw();
+      updateDataPanel();
+      drawGraph();
+      drawHistogram();
+      requestAnimationFrame(loop);
+    }
+
+    n0Input.addEventListener('input', () => { state.n0 = parseFloat(n0Input.value); reset(); });
+    halfLifeInput.addEventListener('input', () => { state.halfLife = parseFloat(halfLifeInput.value); updateLabels(); });
+    speedInput.addEventListener('input', () => { state.speed = parseFloat(speedInput.value); updateLabels(); });
+    playPauseBtn.addEventListener('click', () => { state.playing = !state.playing; playPauseBtn.textContent = state.playing ? 'Pause' : 'Play'; });
+    resetBtn.addEventListener('click', reset);
+    document.getElementById('themeToggle').addEventListener('click', () => document.body.classList.toggle('light'));
+
+    reset();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thermoelectric Effect</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --hot: #ff6b6b;
+      --cold: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Thermoelectric Effect</h1>
+        <p>Seebeck, Peltier, and Thomson effects</p>
+      </div>
+      <div class="pill">V = SΔT · Q = ΠI · Π = S·T</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Thermoelectric Junction</h2>
+        <canvas id="teCanvas" width="640" height="260"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Mode</label>
+            <select id="mode">
+              <option value="seebeck" selected>Seebeck (Generator)</option>
+              <option value="peltier">Peltier (Cooler)</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Material Pair</label>
+            <select id="pair">
+              <option value="typek" selected>Chromel–Alumel (Type-K)</option>
+              <option value="typej">Iron–Constantan (Type-J)</option>
+              <option value="typet">Copper–Constantan (Type-T)</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Hot Temperature (°C)</label>
+            <input type="range" id="hot" min="20" max="200" step="1" value="100" />
+            <div class="row"><span class="muted">Tₕ</span><span class="value" id="hotValue">100°C</span></div>
+          </div>
+          <div class="control">
+            <label>Cold Temperature (°C)</label>
+            <input type="range" id="cold" min="-20" max="100" step="1" value="20" />
+            <div class="row"><span class="muted">T𝑐</span><span class="value" id="coldValue">20°C</span></div>
+          </div>
+          <div class="control">
+            <label>Current (A)</label>
+            <input type="range" id="current" min="0" max="5" step="0.1" value="1" />
+            <div class="row"><span class="muted">I</span><span class="value" id="currentValue">1.0 A</span></div>
+          </div>
+          <div class="control">
+            <label>Show Effects</label>
+            <div class="toggle">
+              <input type="checkbox" id="showEffects" checked />
+              <span>Flow arrows</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>ΔT</span><span class="value" id="dtValue">80°C</span></div>
+            <div class="row"><span>Voltage</span><span class="value" id="voltageValue">3.2 mV</span></div>
+            <div class="row"><span>Qₚₑₗₜᵢₑᵣ</span><span class="value" id="peltierValue">0 W</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Material</div>
+            <div class="row"><span>Seebeck S</span><span class="value" id="sValue">41 μV/K</span></div>
+            <div class="row"><span>ZT</span><span class="value" id="ztValue">0.8</span></div>
+            <div class="row"><span>Effect</span><span class="value" id="effectValue">Seebeck</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Seebeck generates voltage from ΔT; Peltier pumps heat with current.</div>
+  </div>
+
+  <script>
+    const pairs = {
+      typek: { name: 'Type-K', S: 41e-6, ZT: 0.8 },
+      typej: { name: 'Type-J', S: 55e-6, ZT: 0.7 },
+      typet: { name: 'Type-T', S: 43e-6, ZT: 0.6 }
+    };
+
+    const state = {
+      mode: 'seebeck',
+      pair: 'typek',
+      hot: 100,
+      cold: 20,
+      current: 1,
+      showEffects: true
+    };
+
+    const dom = {
+      mode: document.getElementById('mode'),
+      pair: document.getElementById('pair'),
+      hot: document.getElementById('hot'),
+      cold: document.getElementById('cold'),
+      current: document.getElementById('current'),
+      showEffects: document.getElementById('showEffects'),
+      hotValue: document.getElementById('hotValue'),
+      coldValue: document.getElementById('coldValue'),
+      currentValue: document.getElementById('currentValue'),
+      dtValue: document.getElementById('dtValue'),
+      voltageValue: document.getElementById('voltageValue'),
+      peltierValue: document.getElementById('peltierValue'),
+      sValue: document.getElementById('sValue'),
+      ztValue: document.getElementById('ztValue'),
+      effectValue: document.getElementById('effectValue'),
+      teCanvas: document.getElementById('teCanvas')
+    };
+
+    const ctx = dom.teCanvas.getContext('2d');
+
+    function calcVoltage() {
+      const S = pairs[state.pair].S;
+      return S * (state.hot - state.cold);
+    }
+
+    function calcPeltier() {
+      const S = pairs[state.pair].S;
+      const T = (state.hot + state.cold) / 2 + 273.15;
+      return S * T * state.current;
+    }
+
+    function updateReadouts() {
+      dom.hotValue.textContent = `${state.hot}°C`;
+      dom.coldValue.textContent = `${state.cold}°C`;
+      dom.currentValue.textContent = `${state.current.toFixed(1)} A`;
+      dom.dtValue.textContent = `${(state.hot - state.cold).toFixed(0)}°C`;
+      dom.voltageValue.textContent = `${(calcVoltage() * 1000).toFixed(2)} mV`;
+      dom.peltierValue.textContent = `${calcPeltier().toFixed(2)} W`;
+      dom.sValue.textContent = `${(pairs[state.pair].S * 1e6).toFixed(0)} μV/K`;
+      dom.ztValue.textContent = pairs[state.pair].ZT.toFixed(1);
+      dom.effectValue.textContent = state.mode === 'seebeck' ? 'Seebeck' : 'Peltier';
+    }
+
+    function drawTE() {
+      const w = dom.teCanvas.width;
+      const h = dom.teCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(60, h / 2 - 40, 180, 80);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(w - 240, h / 2 - 40, 180, 80);
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText(`Hot ${state.hot}°C`, 80, h / 2 - 50);
+      ctx.fillText(`Cold ${state.cold}°C`, w - 220, h / 2 - 50);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(w / 2 - 40, h / 2 - 20, 80, 40);
+      if (state.showEffects) {
+        ctx.strokeStyle = '#f6c76b';
+        ctx.beginPath();
+        ctx.moveTo(120, h / 2 + 60);
+        ctx.lineTo(w - 120, h / 2 + 60);
+        ctx.stroke();
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText('e⁻ flow', w / 2 - 15, h / 2 + 80);
+      }
+    }
+
+    function render() {
+      updateReadouts();
+      drawTE();
+    }
+
+    function bind() {
+      dom.mode.addEventListener('change', () => { state.mode = dom.mode.value; render(); });
+      dom.pair.addEventListener('change', () => { state.pair = dom.pair.value; render(); });
+      dom.hot.addEventListener('input', () => { state.hot = Number(dom.hot.value); render(); });
+      dom.cold.addEventListener('input', () => { state.cold = Number(dom.cold.value); render(); });
+      dom.current.addEventListener('input', () => { state.current = Number(dom.current.value); render(); });
+      dom.showEffects.addEventListener('change', () => { state.showEffects = dom.showEffects.checked; render(); });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

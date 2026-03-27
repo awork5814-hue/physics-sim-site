@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Collisions</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Mechanics</span></div>
+    <header class="hero"><h1>Collisions</h1><p>Conservation of momentum and energy</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="control-group">
+          <label>Ball 1 Mass (kg)</label>
+          <input type="range" id="m1Slider" min="1" max="10" value="2">
+        </div>
+        <div class="control-group">
+          <label>Ball 2 Mass (kg)</label>
+          <input type="range" id="m2Slider" min="1" max="10" value="4">
+        </div>
+        <div class="control-group">
+          <label>Initial Velocity (m/s)</label>
+          <input type="range" id="vSlider" min="1" max="20" value="10">
+        </div>
+        <div class="control-group">
+          <label>Collision Type</label>
+          <select id="colType" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="elastic">Elastic</option>
+            <option value="inelastic">Inelastic</option>
+          </select>
+        </div>
+        <button id="resetBtn">Reset / Fire</button>
+        <div class="data-panel">
+          <div>p₁ initial: <strong id="p1Init">20</strong> kg·m/s</div>
+          <div>p₂ initial: <strong id="p2Init">0</strong> kg·m/s</div>
+          <div>p₁ final: <strong id="p1Final">20</strong> kg·m/s</div>
+          <div>p₂ final: <strong id="p2Final">0</strong> kg·m/s</div>
+          <div>KE conserved: <strong id="keCons">Yes</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const m1Slider = document.getElementById('m1Slider');
+    const m2Slider = document.getElementById('m2Slider');
+    const vSlider = document.getElementById('vSlider');
+    const colType = document.getElementById('colType');
+    const resetBtn = document.getElementById('resetBtn');
+    let balls = [];
+    let collided = false;
+    function init() {
+      balls = [];
+      const m1 = parseFloat(m1Slider.value);
+      const m2 = parseFloat(m2Slider.value);
+      const v0 = parseFloat(vSlider.value);
+      balls.push({ x: 80, y: canvas.offsetHeight / 2, vx: v0, m: m1, r: m1 * 10 + 10, color: '#6ad7ff' });
+      balls.push({ x: canvas.offsetWidth - 80, y: canvas.offsetHeight / 2, vx: 0, m: m2, r: m2 * 10 + 10, color: '#f6c76b' });
+      collided = false;
+      updateData();
+    }
+    function updateData() {
+      const m1 = parseFloat(m1Slider.value);
+      const m2 = parseFloat(m2Slider.value);
+      const v0 = parseFloat(vSlider.value);
+      const elastic = colType.value === 'elastic';
+      if (!collided) {
+        document.getElementById('p1Init').textContent = (m1 * v0).toFixed(1);
+        document.getElementById('p2Init').textContent = '0';
+        document.getElementById('p1Final').textContent = (m1 * v0).toFixed(1);
+        document.getElementById('p2Final').textContent = '0';
+      } else {
+        const v1f = elastic ? (m1 - m2) / (m1 + m2) * v0 : 0;
+        const v2f = elastic ? 2 * m1 / (m1 + m2) * v0 : m1 * v0 / (m2 + m1);
+        document.getElementById('p1Init').textContent = (m1 * v0).toFixed(1);
+        document.getElementById('p2Init').textContent = '0';
+        document.getElementById('p1Final').textContent = (m1 * v1f).toFixed(1);
+        document.getElementById('p2Final').textContent = (m2 * v2f).toFixed(1);
+      }
+      document.getElementById('keCons').textContent = colType.value === 'elastic' ? 'Yes' : 'No';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(0, h/2 - 1); ctx.lineTo(w, h/2 - 1); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, h/2 + 1); ctx.lineTo(w, h/2 + 1); ctx.stroke();
+      balls.forEach(b => {
+        b.x += b.vx;
+        if (b.x < b.r) { b.x = b.r; b.vx *= -1; }
+        if (b.x > w - b.r) { b.x = w - b.r; b.vx *= -1; }
+        const grad = ctx.createRadialGradient(b.x - b.r/3, b.y - b.r/3, 0, b.x, b.y, b.r);
+        grad.addColorStop(0, b.color);
+        grad.addColorStop(1, b.color.replace('ff', '66'));
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText(b.m + 'kg', b.x, b.y + 5);
+      });
+      if (balls.length === 2 && !collided) {
+        const d = balls[1].x - balls[0].x;
+        if (d < balls[0].r + balls[1].r) {
+          collided = true;
+          const m1 = balls[0].m, m2 = balls[1].m;
+          const v0 = balls[0].vx;
+          const elastic = colType.value === 'elastic';
+          if (elastic) {
+            balls[0].vx = (m1 - m2) / (m1 + m2) * v0;
+            balls[1].vx = 2 * m1 / (m1 + m2) * v0;
+          } else {
+            const v2f = m1 * v0 / (m1 + m2);
+            balls[0].vx = v2f;
+            balls[1].vx = v2f;
+          }
+          updateData();
+        }
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Ball 1: ' + balls[0]?.m + 'kg, v=' + (balls[0]?.vx || 0).toFixed(1) + 'm/s', 20, 30);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('Ball 2: ' + balls[1]?.m + 'kg, v=' + (balls[1]?.vx || 0).toFixed(1) + 'm/s', 20, 50);
+      requestAnimationFrame(draw);
+    }
+    resetBtn.addEventListener('click', init);
+    m1Slider.addEventListener('input', init);
+    m2Slider.addEventListener('input', init);
+    vSlider.addEventListener('input', init);
+    colType.addEventListener('change', init);
+    init(); draw();
+  </script>
+</body>
+</html>

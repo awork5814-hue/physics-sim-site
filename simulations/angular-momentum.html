@@ -1,0 +1,1313 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Angular Momentum</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #f472b6;
+      --secondary: #a78bfa;
+      --accent: #34d399;
+      --accent-2: #fbbf24;
+      --velocity: #34d399;
+      --position: #f472b6;
+      --momentum: #fbbf24;
+      --inertia: #a78bfa;
+      --energy: #60a5fa;
+      
+      --bg-deep: #0c0e17;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0c0e17 0%, #1a1d2e 50%, #0c0e17 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(12, 14, 23, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before {
+      content: '←';
+      transition: transform 0.3s;
+    }
+
+    .topbar a:hover {
+      color: var(--primary);
+      background: rgba(244, 114, 182, 0.1);
+    }
+
+    .topbar a:hover::before {
+      transform: translateX(-4px);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 40px 20px 24px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(2rem, 4vw, 3rem);
+      margin: 0 0 12px;
+      color: var(--text);
+      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    header.hero p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(30, 35, 50, 0.95), rgba(15, 18, 28, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+    }
+
+    .canvas-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 300px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #graphCanvas {
+      width: 100%;
+      height: 130px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, rgba(40, 45, 65, 0.95), rgba(25, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, rgba(244, 114, 182, 0.15), rgba(167, 139, 250, 0.15));
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button.active {
+      background: linear-gradient(135deg, rgba(244, 114, 182, 0.25), rgba(167, 139, 250, 0.25));
+      border-color: var(--primary);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #fff, #e2e8f0);
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23f472b6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:hover, select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    select option {
+      background: #1a1d2e;
+      color: var(--text);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0c0e17;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(167, 139, 250, 0.05));
+      border: 1px solid rgba(244, 114, 182, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(244, 114, 182, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(244, 114, 182, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .formula-box .formula-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .data-label {
+      font-size: 0.55rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .data-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .data-value.cyan { color: var(--position); }
+    .data-value.gold { color: var(--momentum); }
+    .data-value.green { color: var(--velocity); }
+    .data-value.purple { color: var(--inertia); }
+    .data-value.blue { color: var(--energy); }
+
+    .data-value small {
+      font-size: 0.5rem;
+      opacity: 0.7;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .graph-header h3 {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .graph-legend {
+      display: flex;
+      gap: 10px;
+      font-size: 0.7rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--text-dim);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.omega { background: var(--velocity); }
+    .legend-dot.momentum { background: var(--momentum); }
+
+    .graph-explanation {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 6px;
+      line-height: 1.5;
+    }
+
+    .graph-explanation strong {
+      color: var(--text-muted);
+    }
+
+    .graph-explanation .omega-exp { color: var(--velocity); }
+    .graph-explanation .l-exp { color: var(--momentum); }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas, #graphCanvas {
+        height: 240px;
+      }
+      #graphCanvas {
+        height: 110px;
+      }
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Angular Momentum</h1>
+      <p>L = Iω — Conservation of rotational momentum</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="simCanvas" width="900" height="340"></canvas>
+        
+        <div class="btn-row">
+          <button id="playPause"><span>▶</span> Play</button>
+          <button id="reset"><span>↺</span> Reset</button>
+          <button id="pullBtn" class="active">Pull In</button>
+          <button id="pushBtn">Push Out</button>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Moment of Inertia</span>
+            <span class="data-value purple" id="iVal">0 <small>kg·m²</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Angular Velocity</span>
+            <span class="data-value green" id="wVal">0 <small>rad/s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Angular Momentum</span>
+            <span class="data-value gold" id="lVal">0 <small>kg·m²/s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Kinetic Energy</span>
+            <span class="data-value blue" id="keVal">0 <small>J</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">L = I × ω</div>
+          <div class="formula-desc">Angular Momentum = Inertia × Velocity</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="control-group">
+          <label>Spinner Style</label>
+          <select id="spinnerStyle">
+            <option value="trispinner">Tri-Spinner (3)</option>
+            <option value="quadspinner">Quad-Spinner (4)</option>
+            <option value="classic">Classic Arms (4)</option>
+            <option value="fidget">Fidget Spinner (3)</option>
+            <option value="gyroscope">Gyroscope</option>
+            <option value="disk">Spinning Disk</option>
+            <option value="woosah">Woosah Ohana ⭐</option>
+            <option value="rotabblade">Rotablade Stubby ⚡</option>
+            <option value="acedc">Acedc Premium 🔥</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Angular Velocity <strong id="omegaLabel">20 rad/s</strong></label>
+          <input type="range" id="omegaSlider" min="1" max="60" value="20">
+        </div>
+
+        <div class="control-group">
+          <label>Radius / Arm Length <strong id="radiusLabel">50 cm</strong></label>
+          <input type="range" id="radiusSlider" min="20" max="100" value="50">
+        </div>
+
+        <div class="control-group">
+          <label>Mass per Weight <strong id="massLabel">5 kg</strong></label>
+          <input type="range" id="massSlider" min="1" max="15" value="5">
+        </div>
+
+        <div class="control-group">
+          <label>Background Theme</label>
+          <select id="bgTheme">
+            <option value="nebula">Nebula</option>
+            <option value="aurora">Aurora</option>
+            <option value="particles">Particle Field</option>
+            <option value="grid">Digital Grid</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showVector" checked /> Show L vector</label>
+            <label><input type="checkbox" id="showTrail" checked /> Show trail</label>
+            <label><input type="checkbox" id="showGraph" checked /> Show graph</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout" id="graphSection" style="padding-top: 0;">
+      <div class="panel" style="width: 100%;">
+        <div class="graph-header">
+          <h3>Angular Velocity vs Time</h3>
+          <div class="graph-legend">
+            <span class="legend-item"><span class="legend-dot omega"></span> ω(t)</span>
+            <span class="legend-item"><span class="legend-dot momentum"></span> L(t)</span>
+          </div>
+        </div>
+        <canvas id="graphCanvas" width="900" height="130"></canvas>
+        <div class="graph-explanation">
+          <strong>Understanding the Graph:</strong> The <span class="omega-exp">green line</span> shows angular velocity (ω) changing over time. When you pull weights inward, ω increases to conserve angular momentum. The <span class="l-exp">gold line</span> shows angular momentum (L = I×ω) — notice it stays nearly constant when pulling, demonstrating conservation!
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const spinnerStyleSelect = document.getElementById('spinnerStyle');
+    const omegaSlider = document.getElementById('omegaSlider');
+    const radiusSlider = document.getElementById('radiusSlider');
+    const massSlider = document.getElementById('massSlider');
+    const bgThemeSelect = document.getElementById('bgTheme');
+    const showVectorCheck = document.getElementById('showVector');
+    const showTrailCheck = document.getElementById('showTrail');
+    const showGraphCheck = document.getElementById('showGraph');
+    const pullBtn = document.getElementById('pullBtn');
+    const pushBtn = document.getElementById('pushBtn');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    const spinnerArms = {
+      trispinner: 3,
+      quadspinner: 4,
+      classic: 4,
+      fidget: 3,
+      gyroscope: 0,
+      disk: 0,
+      woosah: 3,
+      rotabblade: 3,
+      acedc: 3
+    };
+
+    const state = {
+      angle: 0,
+      omega: 20,
+      r: 50,
+      m: 5,
+      pulling: false,
+      pushing: false,
+      playing: true,
+      omegaTarget: 20,
+      trail: [],
+      graphData: [],
+      bgTheme: 'nebula',
+      spinnerStyle: 'trispinner'
+    };
+
+    function updateLabels() {
+      document.getElementById('omegaLabel').textContent = `${omegaSlider.value} rad/s`;
+      document.getElementById('radiusLabel').textContent = `${radiusSlider.value} cm`;
+      document.getElementById('massLabel').textContent = `${massSlider.value} kg`;
+    }
+
+    function getMomentOfInertia() {
+      const m = state.m;
+      const r = state.r;
+      const arms = spinnerArms[state.spinnerStyle] || 4;
+      const baseI = m * r * r * 0.01;
+      
+      switch(state.spinnerStyle) {
+        case 'disk':
+          return 0.5 * m * r * r * 0.01 * 3;
+        case 'gyroscope':
+          return baseI * 2;
+        case 'woosah':
+          return baseI * 1.2;
+        case 'rotabblade':
+          return baseI * 0.9;
+        case 'acedc':
+          return baseI * 1.1;
+        default:
+          return baseI * arms / 4;
+      }
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const time = Date.now() / 1000;
+
+      if (state.bgTheme === 'nebula') {
+        const grad = ctx.createRadialGradient(w * 0.3, h * 0.3, 0, w * 0.5, h * 0.5, w * 0.8);
+        grad.addColorStop(0, '#1e1b4b');
+        grad.addColorStop(0.5, '#0c0e17');
+        grad.addColorStop(1, '#050508');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        const cloud1 = ctx.createRadialGradient(w * 0.2, h * 0.3, 0, w * 0.2, h * 0.3, 250);
+        cloud1.addColorStop(0, 'rgba(244, 114, 182, 0.12)');
+        cloud1.addColorStop(0.5, 'rgba(167, 139, 250, 0.05)');
+        cloud1.addColorStop(1, 'transparent');
+        ctx.fillStyle = cloud1;
+        ctx.fillRect(0, 0, w, h);
+
+        const cloud2 = ctx.createRadialGradient(w * 0.8, h * 0.7, 0, w * 0.8, h * 0.7, 200);
+        cloud2.addColorStop(0, 'rgba(52, 211, 153, 0.1)');
+        cloud2.addColorStop(1, 'transparent');
+        ctx.fillStyle = cloud2;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 80; i++) {
+          const x = (i * 97 + time * 3) % w;
+          const y = (i * 73) % h;
+          const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(time * 3 + i));
+          ctx.beginPath();
+          ctx.arc(x, y, 0.5 + (i % 3) * 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.8})`;
+          ctx.fill();
+        }
+      } else if (state.bgTheme === 'aurora') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(0.3, '#1e1b4b');
+        grad.addColorStop(0.6, '#134e4a');
+        grad.addColorStop(1, '#0c0e17');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 5; i++) {
+          const y = h * 0.2 + i * 30 + Math.sin(time + i) * 20;
+          const auroraGrad = ctx.createLinearGradient(0, y - 40, 0, y + 40);
+          auroraGrad.addColorStop(0, 'transparent');
+          auroraGrad.addColorStop(0.5, `rgba(52, 211, 153, ${0.08 - i * 0.015})`);
+          auroraGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = auroraGrad;
+          ctx.fillRect(0, y - 40, w, 80);
+        }
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        for (let i = 0; i < 50; i++) {
+          ctx.beginPath();
+          ctx.arc((i * 73) % w, (i * 59) % h, 0.5 + (i % 2) * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (state.bgTheme === 'particles') {
+        ctx.fillStyle = '#0c0e17';
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 60; i++) {
+          const x = (i * 53 + time * (10 + i % 20)) % w;
+          const y = (i * 67 + Math.sin(time + i) * 30) % h;
+          const size = 1 + (i % 4);
+          
+          const pGrad = ctx.createRadialGradient(x, y, 0, x, y, size * 2);
+          const hue = (i * 15) % 360;
+          pGrad.addColorStop(0, `hsla(${hue}, 70%, 60%, 0.8)`);
+          pGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = pGrad;
+          ctx.beginPath();
+          ctx.arc(x, y, size * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (state.bgTheme === 'grid') {
+        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w);
+        grad.addColorStop(0, '#1a1d2e');
+        grad.addColorStop(1, '#0c0e17');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(244, 114, 182, 0.15)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        
+        for (let x = 0; x <= w; x += gridSize) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y <= h; y += gridSize) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+
+        const pulse = 0.3 + Math.sin(time * 2) * 0.1;
+        ctx.strokeStyle = `rgba(244, 114, 182, ${pulse})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(20, 20, w - 40, h - 40);
+      }
+
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 50) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 50) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+    }
+
+    function drawSpinner() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const armLen = state.r;
+      const arms = spinnerArms[state.spinnerStyle] || 4;
+
+      if (showTrailCheck.checked && state.trail.length > 1) {
+        state.trail.forEach((t, i) => {
+          const alpha = (i / state.trail.length) * 0.35;
+          const size = 4 + (i / state.trail.length) * 8;
+          ctx.beginPath();
+          ctx.arc(cx + t.x, cy + t.y, size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(244, 114, 182, ${alpha})`;
+          ctx.fill();
+        });
+      }
+
+      const drawArm = (angle, length) => {
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle) * length, cy + Math.sin(angle) * length);
+        ctx.stroke();
+      };
+
+      const drawWeight = (angle, length) => {
+        const x = cx + Math.cos(angle) * length;
+        const y = cy + Math.sin(angle) * length;
+        const wGrad = ctx.createRadialGradient(x - 3, y - 3, 0, x, y, 14 + state.m * 0.5);
+        wGrad.addColorStop(0, '#fbbf24');
+        wGrad.addColorStop(1, '#d97706');
+        ctx.fillStyle = wGrad;
+        ctx.beginPath();
+        ctx.arc(x, y, 10 + state.m * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      };
+
+      if (state.spinnerStyle === 'trispinner' || state.spinnerStyle === 'fidget') {
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          drawArm(a, armLen);
+        }
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          drawWeight(a, armLen);
+        }
+      } else if (state.spinnerStyle === 'quadspinner') {
+        // Quad-Spinner: Angular industrial look with square weights
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          // Thicker angular arms
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * armLen, cy + Math.sin(a) * armLen);
+          ctx.stroke();
+        }
+        // Square weights
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          const x = cx + Math.cos(a) * armLen;
+          const y = cy + Math.sin(a) * armLen;
+          
+          const size = 14 + state.m * 0.6;
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(a);
+          
+          const sqGrad = ctx.createLinearGradient(-size/2, -size/2, size/2, size/2);
+          sqGrad.addColorStop(0, '#64748b');
+          sqGrad.addColorStop(0.5, '#94a3b8');
+          sqGrad.addColorStop(1, '#475569');
+          ctx.fillStyle = sqGrad;
+          ctx.fillRect(-size/2, -size/2, size, size);
+          
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(-size/2, -size/2, size, size);
+          ctx.restore();
+        }
+      } else if (state.spinnerStyle === 'classic') {
+        // Classic Arms: Elegant thin arms with round weights
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          // Thin elegant arms
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * armLen, cy + Math.sin(a) * armLen);
+          ctx.stroke();
+        }
+        // Round weights with gradient
+        for (let i = 0; i < arms; i++) {
+          const a = state.angle + (i * 2 * Math.PI / arms);
+          const x = cx + Math.cos(a) * armLen;
+          const y = cy + Math.sin(a) * armLen;
+          
+          const wGrad = ctx.createRadialGradient(x - 3, y - 3, 0, x, y, 12 + state.m * 0.5);
+          wGrad.addColorStop(0, '#fef3c7');
+          wGrad.addColorStop(0.5, '#fbbf24');
+          wGrad.addColorStop(1, '#d97706');
+          ctx.fillStyle = wGrad;
+          ctx.beginPath();
+          ctx.arc(x, y, 10 + state.m * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (state.spinnerStyle === 'disk') {
+        const diskGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, armLen + 15);
+        diskGrad.addColorStop(0, '#3b82f6');
+        diskGrad.addColorStop(0.7, '#1d4ed8');
+        diskGrad.addColorStop(1, '#1e3a8a');
+        ctx.fillStyle = diskGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, armLen + 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = 1;
+        for (let r = 15; r < armLen + 15; r += 15) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else if (state.spinnerStyle === 'gyroscope') {
+        ctx.strokeStyle = 'rgba(167, 139, 250, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, armLen + 10, armLen * 0.35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, armLen + 10, armLen * 0.35, Math.PI / 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, armLen + 10, armLen * 0.35, -Math.PI / 2.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const ringGrad = ctx.createRadialGradient(cx, cy, 15, cx, cy, armLen + 10);
+        ringGrad.addColorStop(0, '#6d28d9');
+        ringGrad.addColorStop(1, '#4c1d95');
+        ctx.fillStyle = ringGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (state.spinnerStyle === 'woosah') {
+        // Woosah Ohana - Premium rounded tri-spinner
+        const bodyGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, armLen + 20);
+        bodyGrad.addColorStop(0, '#1e3a5f');
+        bodyGrad.addColorStop(0.7, '#0c1929');
+        bodyGrad.addColorStop(1, '#050a12');
+        ctx.fillStyle = bodyGrad;
+        
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const a1 = state.angle + (i * 2 * Math.PI / 3) - 0.3;
+          const a2 = state.angle + (i * 2 * Math.PI / 3) + 0.3;
+          const px = cx + Math.cos(state.angle + i * 2 * Math.PI / 3) * armLen;
+          const py = cy + Math.sin(state.angle + i * 2 * Math.PI / 3) * armLen;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Chrome rings
+        ctx.strokeStyle = 'rgba(200, 200, 220, 0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, armLen - 5, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Premium bearing
+        const bearGrad = ctx.createRadialGradient(cx - 3, cy - 3, 0, cx, cy, 16);
+        bearGrad.addColorStop(0, '#e2e8f0');
+        bearGrad.addColorStop(0.5, '#94a3b8');
+        bearGrad.addColorStop(1, '#475569');
+        ctx.fillStyle = bearGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (state.spinnerStyle === 'rotabblade') {
+        // Rotablade Stubby - Compact and aggressive
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(cx, cy, armLen * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Aggressive edges
+        ctx.strokeStyle = '#f472b6';
+        ctx.lineWidth = 4;
+        for (let i = 0; i < 3; i++) {
+          const a = state.angle + (i * 2 * Math.PI / 3);
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15);
+          ctx.lineTo(cx + Math.cos(a) * armLen * 0.85, cy + Math.sin(a) * armLen * 0.85);
+          ctx.stroke();
+        }
+
+        // Weight pockets
+        for (let i = 0; i < 3; i++) {
+          const a = state.angle + (i * 2 * Math.PI / 3);
+          const px = cx + Math.cos(a) * armLen * 0.8;
+          const py = cy + Math.sin(a) * armLen * 0.8;
+          
+          const wGrad = ctx.createRadialGradient(px, py, 0, px, py, 12);
+          wGrad.addColorStop(0, '#fbbf24');
+          wGrad.addColorStop(1, '#b45309');
+          ctx.fillStyle = wGrad;
+          ctx.beginPath();
+          ctx.arc(px, py, 10, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Center cap
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (state.spinnerStyle === 'acedc') {
+        // Acedc - Fire design
+        const flameGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, armLen + 15);
+        flameGrad.addColorStop(0, '#7c2d12');
+        flameGrad.addColorStop(0.5, '#1e1b4b');
+        flameGrad.addColorStop(1, '#0c0e17');
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, armLen + 15, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let i = 0; i < 3; i++) {
+          const a = state.angle + (i * 2 * Math.PI / 3);
+          
+          // Arm
+          ctx.strokeStyle = '#f97316';
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(a) * armLen, cy + Math.sin(a) * armLen);
+          ctx.stroke();
+
+          // Weight with glow
+          const px = cx + Math.cos(a) * armLen;
+          const py = cy + Math.sin(a) * armLen;
+          
+          ctx.shadowColor = '#f97316';
+          ctx.shadowBlur = 20;
+          const wGrad = ctx.createRadialGradient(px, py, 0, px, py, 14);
+          wGrad.addColorStop(0, '#fbbf24');
+          wGrad.addColorStop(1, '#dc2626');
+          ctx.fillStyle = wGrad;
+          ctx.beginPath();
+          ctx.arc(px, py, 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+
+        // Center
+        ctx.fillStyle = '#1e1b4b';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+      }
+
+      const hubGrad = ctx.createRadialGradient(cx - 4, cy - 4, 0, cx, cy, 14);
+      hubGrad.addColorStop(0, '#a78bfa');
+      hubGrad.addColorStop(1, '#6d28d9');
+      ctx.fillStyle = hubGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 8px Space Grotesk';
+      ctx.textAlign = 'center';
+      const styleNames = {
+        disk: 'DISK', gyroscope: 'GYRO', woosah: 'WOO', rotabblade: 'RTB', acedc: 'ACE'
+      };
+      const label = styleNames[state.spinnerStyle] || arms;
+      ctx.fillText(label, cx, cy + 3);
+
+      if (showVectorCheck.checked) {
+        const I = getMomentOfInertia();
+        const L = I * state.omega;
+        const vecLength = Math.min(70, L * 0.4);
+        
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 15;
+        
+        const vecGrad = ctx.createLinearGradient(cx + 20, cy, cx + 20 + vecLength, cy);
+        vecGrad.addColorStop(0, '#fbbf24');
+        vecGrad.addColorStop(1, '#f59e0b');
+        
+        ctx.strokeStyle = vecGrad;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(cx + 20, cy);
+        ctx.lineTo(cx + 20 + vecLength, cy);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(cx + 20 + vecLength, cy);
+        ctx.lineTo(cx + 20 + vecLength - 10, cy - 6);
+        ctx.lineTo(cx + 20 + vecLength - 10, cy + 6);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+
+        ctx.font = 'bold 10px Space Grotesk';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText('L', cx + 30 + vecLength, cy - 8);
+      }
+    }
+
+    function drawGraph() {
+      if (!showGraphCheck.checked) {
+        document.getElementById('graphSection').style.display = 'none';
+        return;
+      }
+      document.getElementById('graphSection').style.display = 'block';
+      
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(12, 14, 23, 0.9)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 25;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      gctx.lineWidth = 1;
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      if (state.graphData.length < 2) return;
+
+      const maxOmega = 70;
+      const maxL = 400;
+
+      gctx.strokeStyle = '#34d399';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      state.graphData.forEach((p, i) => {
+        const x = padding + (i / (state.graphData.length - 1)) * width;
+        const y = padding + height - (p.omega / maxOmega) * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+
+      gctx.strokeStyle = '#fbbf24';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      state.graphData.forEach((p, i) => {
+        const x = padding + (i / (state.graphData.length - 1)) * width;
+        const y = padding + height - (p.L / maxL) * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawBackground();
+      
+      if (state.playing) {
+        if (state.pulling && state.r > 25) {
+          state.r -= 0.4;
+          
+          const Iinitial = getMomentOfInertia();
+          state.omegaTarget = Iinitial * parseFloat(omegaSlider.value) / getMomentOfInertia();
+        } else if (state.pushing && state.r < parseFloat(radiusSlider.value)) {
+          state.r += 0.4;
+          
+          const Iinitial = getMomentOfInertia();
+          state.omegaTarget = Iinitial * parseFloat(omegaSlider.value) / getMomentOfInertia();
+        }
+        
+        state.omega += (state.omegaTarget - state.omega) * 0.05;
+        state.angle += state.omega * 0.015;
+        
+        const arms = spinnerArms[state.spinnerStyle] || 4;
+        if (showTrailCheck.checked) {
+          for (let i = 0; i < arms; i++) {
+            const a = state.angle + (i * 2 * Math.PI / arms);
+            state.trail.push({
+              x: Math.cos(a) * state.r,
+              y: Math.sin(a) * state.r
+            });
+          }
+          if (state.trail.length > 60) state.trail.splice(0, arms);
+        }
+
+        const I = getMomentOfInertia();
+        const L = I * state.omega;
+        state.graphData.push({ omega: state.omega, L: L });
+        if (state.graphData.length > 180) state.graphData.shift();
+      }
+      
+      drawSpinner();
+      
+      const I = getMomentOfInertia();
+      const L = I * state.omega;
+      const KE = 0.5 * I * state.omega * state.omega;
+      
+      document.getElementById('iVal').innerHTML = `${I.toFixed(2)} <small>kg·m²</small>`;
+      document.getElementById('wVal').innerHTML = `${state.omega.toFixed(1)} <small>rad/s</small>`;
+      document.getElementById('lVal').innerHTML = `${L.toFixed(1)} <small>kg·m²/s</small>`;
+      document.getElementById('keVal').innerHTML = `${KE.toFixed(1)} <small>J</small>`;
+      
+      drawGraph();
+      
+      requestAnimationFrame(draw);
+    }
+
+    spinnerStyleSelect.addEventListener('change', (e) => {
+      state.spinnerStyle = e.target.value;
+      state.trail = [];
+    });
+
+    pullBtn.addEventListener('mousedown', () => { 
+      state.pulling = true; 
+      state.pushing = false;
+      pullBtn.classList.add('active');
+      pushBtn.classList.remove('active');
+    });
+    pullBtn.addEventListener('mouseup', () => { state.pulling = false; });
+    pullBtn.addEventListener('mouseleave', () => { state.pulling = false; });
+
+    pushBtn.addEventListener('mousedown', () => { 
+      state.pushing = true;
+      state.pulling = false;
+      pushBtn.classList.add('active');
+      pullBtn.classList.remove('active');
+    });
+    pushBtn.addEventListener('mouseup', () => { state.pushing = false; });
+    pushBtn.addEventListener('mouseleave', () => { state.pushing = false; });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.angle = 0;
+      state.omega = parseFloat(omegaSlider.value);
+      state.r = parseFloat(radiusSlider.value);
+      state.trail = [];
+      state.graphData = [];
+      state.playing = true;
+      state.omegaTarget = state.omega;
+      state.pulling = false;
+      state.pushing = false;
+      pullBtn.classList.add('active');
+      pushBtn.classList.remove('active');
+      playPauseBtn.innerHTML = '<span>⏸</span> Pause';
+    });
+
+    omegaSlider.addEventListener('input', () => {
+      state.omega = parseFloat(omegaSlider.value);
+      state.omegaTarget = state.omega;
+      updateLabels();
+    });
+
+    radiusSlider.addEventListener('input', () => {
+      state.r = parseFloat(radiusSlider.value);
+      updateLabels();
+    });
+
+    massSlider.addEventListener('input', () => {
+      state.m = parseFloat(massSlider.value);
+      updateLabels();
+    });
+
+    bgThemeSelect.addEventListener('change', (e) => {
+      state.bgTheme = e.target.value;
+    });
+
+    updateLabels();
+    draw();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

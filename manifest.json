@@ -1,0 +1,22 @@
+{
+  "name": "Physics Experiments Lab",
+  "short_name": "Physics Lab",
+  "description": "Interactive physics simulations for learning and exploration",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0a0f16",
+  "theme_color": "#0a0f16",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

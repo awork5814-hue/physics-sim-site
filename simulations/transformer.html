@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transformer</title>
+  <style>
+    :root {
+      --bg1: #0a0c12;
+      --bg2: #101824;
+      --panel: rgba(16, 20, 30, 0.88);
+      --panel-2: rgba(10, 14, 22, 0.92);
+      --text: #f2f3f5;
+      --muted: #b9c0cc;
+      --line: rgba(255, 255, 255, 0.08);
+      --accent: #7bc4ff;
+      --accent-2: #f6c76b;
+      --copper: #d28b4b;
+      --steel: #8b939f;
+      --flux: #ff6aa6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Sora", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 650px at 15% 8%, rgba(123, 196, 255, 0.14), transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, rgba(246, 199, 107, 0.12), transparent 60%),
+        linear-gradient(140deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1240px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid var(--line);
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.6px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: rgba(12, 18, 28, 0.7); border: 1px solid var(--line);
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; padding: 16px;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 380px; background: rgba(6, 8, 12, 0.75); border: 1px solid var(--line); border-radius: 14px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control {
+      background: linear-gradient(160deg, rgba(20, 30, 60, 0.7), rgba(12, 16, 26, 0.9));
+      border: 1px solid rgba(120, 170, 230, 0.2); border-radius: 14px; padding: 10px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 10px 24px rgba(0,0,0,0.35);
+    }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .toggle {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px;
+    }
+    .toggle input[type="checkbox"] {
+      appearance: none; width: 18px; height: 18px; border-radius: 6px;
+      border: 1px solid rgba(120, 170, 230, 0.45); background: rgba(8, 12, 20, 0.9);
+      display: grid; place-items: center; cursor: pointer;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .toggle input[type="checkbox"]::after {
+      content: ""; width: 8px; height: 8px; border-radius: 3px;
+      background: linear-gradient(160deg, #9ad2ff, #4aa0ff); transform: scale(0);
+      transition: transform 0.15s ease;
+    }
+    .toggle input[type="checkbox"]:checked::after { transform: scale(1); }
+    .toggle input[type="checkbox"]:checked {
+      background: rgba(30, 90, 160, 0.65);
+      border-color: rgba(120, 190, 255, 0.75);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08), 0 0 0 2px rgba(90, 160, 255, 0.15);
+    }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout {
+      background: linear-gradient(160deg, rgba(90, 150, 220, 0.18), rgba(20, 30, 60, 0.85));
+      border: 1px solid rgba(120, 170, 230, 0.35); border-radius: 16px; padding: 10px 12px;
+      display: grid; gap: 6px; font-size: 13px; color: var(--muted);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06), 0 10px 24px rgba(5, 10, 20, 0.35);
+    }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula { 
+      font-family: "Consolas", "Courier New", monospace; 
+      color: #c3d1e5; 
+      font-size: 12px; 
+      line-height: 1.6; 
+      padding-right: 50px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .formula .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Transformer</h1>
+        <p>Voltage transformation via electromagnetic induction</p>
+      </div>
+      <div class="pill">Vp/Vs = Np/Ns · power · efficiency</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Transformer Diagram</h2>
+        <canvas id="tCanvas" width="720" height="380" aria-label="Transformer"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Primary Turns (Np)</label>
+            <input type="range" id="np" min="100" max="1000" step="10" value="200" />
+            <div class="row"><span class="muted">Np</span><span class="value" id="npValue">200</span></div>
+          </div>
+          <div class="control">
+            <label>Secondary Turns (Ns)</label>
+            <input type="range" id="ns" min="100" max="1000" step="10" value="200" />
+            <div class="row"><span class="muted">Ns</span><span class="value" id="nsValue">200</span></div>
+          </div>
+          <div class="control">
+            <label>Primary Voltage (Vp)</label>
+            <input type="range" id="vp" min="1" max="240" step="1" value="120" />
+            <div class="row"><span class="muted">Vp</span><span class="value" id="vpValue">120 V</span></div>
+          </div>
+          <div class="control">
+            <label>Input Frequency (Hz)</label>
+            <input type="range" id="freq" min="50" max="60" step="1" value="50" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">50 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Load Resistance (Ω)</label>
+            <input type="range" id="rl" min="10" max="1000" step="10" value="100" />
+            <div class="row"><span class="muted">RL</span><span class="value" id="rlValue">100 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Efficiency (%)</label>
+            <input type="range" id="eff" min="50" max="100" step="1" value="95" />
+            <div class="row"><span class="muted">η</span><span class="value" id="effValue">95%</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showFlux" checked> Show flux</label>
+            <label class="toggle"><input type="checkbox" id="showPower" checked> Show power</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Turns Ratio</div>
+            <div class="row"><span>Ratio Np/Ns</span><span class="value" id="ratioValue">1.00</span></div>
+            <div class="row"><span>Type</span><span class="value" id="typeValue">1:1</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Primary</div>
+            <div class="row"><span>Vp</span><span class="value" id="vpRead">120 V</span></div>
+            <div class="row"><span>Ip</span><span class="value" id="ipRead">0.00 A</span></div>
+            <div class="row"><span>Pp</span><span class="value" id="ppRead">0.0 W</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Secondary</div>
+            <div class="row"><span>Vs</span><span class="value" id="vsRead">120 V</span></div>
+            <div class="row"><span>Is</span><span class="value" id="isRead">0.00 A</span></div>
+            <div class="row"><span>Ps</span><span class="value" id="psRead">0.0 W</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula" onclick="copyFormula(this)">
+              Vp/Vs = Np/Ns
+              <br>Ip/Is = Ns/Np
+              <br>Pout = η × Pin
+              <button class="copy-btn" title="Copy formulas">📋</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">This simulation uses ideal transformer equations with efficiency applied to power transfer.</div>
+  </div>
+
+  <script>
+    const state = {
+      primaryTurns: 200,
+      secondaryTurns: 200,
+      primaryVoltage: 120,
+      inputFrequency: 50,
+      loadResistance: 100,
+      efficiency: 0.95,
+      showFlux: true,
+      showPower: true,
+      phase: 0
+    };
+
+    const dom = {
+      np: document.getElementById('np'),
+      ns: document.getElementById('ns'),
+      vp: document.getElementById('vp'),
+      freq: document.getElementById('freq'),
+      rl: document.getElementById('rl'),
+      eff: document.getElementById('eff'),
+      showFlux: document.getElementById('showFlux'),
+      showPower: document.getElementById('showPower'),
+      npValue: document.getElementById('npValue'),
+      nsValue: document.getElementById('nsValue'),
+      vpValue: document.getElementById('vpValue'),
+      freqValue: document.getElementById('freqValue'),
+      rlValue: document.getElementById('rlValue'),
+      effValue: document.getElementById('effValue'),
+      ratioValue: document.getElementById('ratioValue'),
+      typeValue: document.getElementById('typeValue'),
+      vpRead: document.getElementById('vpRead'),
+      ipRead: document.getElementById('ipRead'),
+      ppRead: document.getElementById('ppRead'),
+      vsRead: document.getElementById('vsRead'),
+      isRead: document.getElementById('isRead'),
+      psRead: document.getElementById('psRead')
+    };
+
+    const canvas = document.getElementById('tCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function calculateTransformer() {
+      const Np = state.primaryTurns;
+      const Ns = state.secondaryTurns;
+      const Vp = state.primaryVoltage;
+      const RL = state.loadResistance;
+      const eff = state.efficiency;
+
+      const Vs = Vp * (Ns / Np);
+      const IsIdeal = Vs / RL;
+      const IpIdeal = IsIdeal * (Ns / Np);
+      const Ip = IpIdeal / eff;
+      const Is = IsIdeal * eff;
+      const Pp = Vp * Ip;
+      const Ps = Vs * Is;
+      return {
+        Vs, Ip, Is, Pp, Ps,
+        turnsRatio: Np / Ns,
+        type: Ns > Np ? 'STEP-UP' : (Ns < Np ? 'STEP-DOWN' : '1:1')
+      };
+    }
+
+    function drawTransformer() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const bg = ctx.createLinearGradient(0, 0, 0, h);
+      bg.addColorStop(0, '#0b111b');
+      bg.addColorStop(1, '#070a12');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      const coreX = w * 0.27;
+      const coreY = h * 0.15;
+      const coreW = w * 0.46;
+      const coreH = h * 0.7;
+
+      const steelGrad = ctx.createLinearGradient(coreX, coreY, coreX + coreW, coreY + coreH);
+      steelGrad.addColorStop(0, '#c3c8d0');
+      steelGrad.addColorStop(0.5, '#88919c');
+      steelGrad.addColorStop(1, '#5b636d');
+      ctx.fillStyle = steelGrad;
+      ctx.fillRect(coreX, coreY, coreW, coreH);
+
+      const gap = 70;
+      ctx.clearRect(coreX + gap, coreY + gap, coreW - 2 * gap, coreH - 2 * gap);
+      ctx.fillStyle = '#0a0f18';
+      ctx.fillRect(coreX + gap, coreY + gap, coreW - 2 * gap, coreH - 2 * gap);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+      for (let i = 0; i < 8; i++) {
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(coreX + i * (coreW / 8), coreY);
+        ctx.lineTo(coreX + i * (coreW / 8), coreY + coreH);
+        ctx.stroke();
+      }
+
+      const leftX = coreX - 40;
+      const rightX = coreX + coreW + 40;
+      const topY = coreY + 40;
+      const coilH = coreH - 80;
+
+      const turnsScaleL = Math.max(6, Math.min(14, state.primaryTurns / 80));
+      const turnsScaleR = Math.max(6, Math.min(14, state.secondaryTurns / 80));
+
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 8; i++) {
+        const y = topY + i * (coilH / 7);
+        const coilGrad = ctx.createLinearGradient(leftX - 18, y - 12, leftX + 18, y + 12);
+        coilGrad.addColorStop(0, '#f3c37a');
+        coilGrad.addColorStop(0.5, '#c87532');
+        coilGrad.addColorStop(1, '#7e401a');
+        ctx.strokeStyle = coilGrad;
+        ctx.beginPath();
+        ctx.arc(leftX, y, turnsScaleL, Math.PI / 2, -Math.PI / 2, true);
+        ctx.stroke();
+      }
+
+      for (let i = 0; i < 8; i++) {
+        const y = topY + i * (coilH / 7);
+        const coilGrad = ctx.createLinearGradient(rightX - 18, y - 12, rightX + 18, y + 12);
+        coilGrad.addColorStop(0, '#f3c37a');
+        coilGrad.addColorStop(0.5, '#c87532');
+        coilGrad.addColorStop(1, '#7e401a');
+        ctx.strokeStyle = coilGrad;
+        ctx.beginPath();
+        ctx.arc(rightX, y, turnsScaleR, Math.PI / 2, -Math.PI / 2, false);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = '14px Sora, sans-serif';
+      ctx.fillText(`Np ${state.primaryTurns}`, leftX - 30, coreY - 14);
+      ctx.fillText(`Ns ${state.secondaryTurns}`, rightX - 26, coreY - 14);
+
+      if (state.showFlux) {
+        ctx.strokeStyle = `rgba(255,106,166,${0.35 + 0.2 * Math.sin(state.phase)})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(coreX + 26, coreY + 40);
+        ctx.lineTo(coreX + coreW - 26, coreY + 40);
+        ctx.lineTo(coreX + coreW - 26, coreY + coreH - 40);
+        ctx.lineTo(coreX + 26, coreY + coreH - 40);
+        ctx.closePath();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#7bc4ff';
+      ctx.fillText('Vp', leftX - 38, coreY + coreH * 0.5);
+      ctx.fillStyle = '#ffb15c';
+      ctx.fillText('Vs', rightX + 14, coreY + coreH * 0.5);
+    }
+
+    function updateReadouts() {
+      const data = calculateTransformer();
+      dom.npValue.textContent = state.primaryTurns;
+      dom.nsValue.textContent = state.secondaryTurns;
+      dom.vpValue.textContent = `${state.primaryVoltage.toFixed(0)} V`;
+      dom.freqValue.textContent = `${state.inputFrequency} Hz`;
+      dom.rlValue.textContent = `${state.loadResistance} Ω`;
+      dom.effValue.textContent = `${Math.round(state.efficiency * 100)}%`;
+      dom.ratioValue.textContent = `${data.turnsRatio.toFixed(2)}`;
+      dom.typeValue.textContent = data.type;
+      dom.vpRead.textContent = `${state.primaryVoltage.toFixed(1)} V`;
+      dom.vsRead.textContent = `${data.Vs.toFixed(1)} V`;
+      dom.ipRead.textContent = `${data.Ip.toFixed(2)} A`;
+      dom.isRead.textContent = `${data.Is.toFixed(2)} A`;
+      dom.ppRead.textContent = `${data.Pp.toFixed(1)} W`;
+      dom.psRead.textContent = `${data.Ps.toFixed(1)} W`;
+    }
+
+    function update() {
+      drawTransformer();
+      updateReadouts();
+    }
+
+    function bind() {
+      dom.np.addEventListener('input', () => { state.primaryTurns = Number(dom.np.value); update(); });
+      dom.ns.addEventListener('input', () => { state.secondaryTurns = Number(dom.ns.value); update(); });
+      dom.vp.addEventListener('input', () => { state.primaryVoltage = Number(dom.vp.value); update(); });
+      dom.freq.addEventListener('input', () => { state.inputFrequency = Number(dom.freq.value); update(); });
+      dom.rl.addEventListener('input', () => { state.loadResistance = Number(dom.rl.value); update(); });
+      dom.eff.addEventListener('input', () => { state.efficiency = Number(dom.eff.value) / 100; update(); });
+      dom.showFlux.addEventListener('change', () => { state.showFlux = dom.showFlux.checked; update(); });
+      dom.showPower.addEventListener('change', () => { state.showPower = dom.showPower.checked; update(); });
+    }
+
+    function loop() {
+      state.phase += (state.inputFrequency / 60) * 0.04;
+      update();
+      requestAnimationFrame(loop);
+    }
+
+    bind();
+    loop();
+  </script>
+</body>
+</html>

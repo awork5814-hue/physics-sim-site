@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Faraday's Law</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --blue: #6ad7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Faraday's Law</h1>
+        <p>Induced EMF from changing magnetic flux: ε = -N dΦ/dt</p>
+      </div>
+      <div class="pill">Flux change · Lenz's law · Galvanometer</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Experimental Setup</h2>
+        <canvas id="fCanvas" width="560" height="320" aria-label="Faraday setup"></canvas>
+        <canvas id="emfCanvas" width="560" height="180" aria-label="EMF graph" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Magnet Velocity (m/s)</label>
+            <input type="range" id="velocity" min="-20" max="20" step="0.5" value="5" />
+            <div class="row"><span class="muted">v</span><span class="value" id="velValue">5.0 m/s</span></div>
+          </div>
+          <div class="control">
+            <label>Magnet Position (cm)</label>
+            <input type="range" id="position" min="-20" max="20" step="0.5" value="-10" />
+            <div class="row"><span class="muted">x</span><span class="value" id="posValue">-10.0 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Turns (N)</label>
+            <input type="range" id="turns" min="10" max="500" step="10" value="100" />
+            <div class="row"><span class="muted">N</span><span class="value" id="turnsValue">100</span></div>
+          </div>
+          <div class="control">
+            <label>Coil Area (m²)</label>
+            <input type="range" id="area" min="0.001" max="0.1" step="0.001" value="0.01" />
+            <div class="row"><span class="muted">A</span><span class="value" id="areaValue">0.010 m²</span></div>
+          </div>
+          <div class="control">
+            <label>Magnet Strength (T)</label>
+            <input type="range" id="field" min="0.1" max="2" step="0.01" value="0.5" />
+            <div class="row"><span class="muted">B</span><span class="value" id="fieldValue">0.50 T</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showFlux" checked> Show flux lines</label>
+            <label class="toggle"><input type="checkbox" id="showCoil" checked> Show coil detail</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Induced EMF</div>
+            <div class="row"><span>ε</span><span class="value" id="emfValue">0.00 V</span></div>
+            <div class="row"><span>dΦ/dt</span><span class="value" id="dphiValue">0.00 Wb/s</span></div>
+            <div class="row"><span>Lenz's Law</span><span class="value" id="lenzValue">Opposes change</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Magnetic Flux</div>
+            <div class="row"><span>Φ</span><span class="value" id="phiValue">0.000 Wb</span></div>
+            <div class="row"><span>Φ_max</span><span class="value" id="phiMaxValue">0.000 Wb</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              ε = -N dΦ/dt
+              <br>Φ = B A cos(θ)
+              <br>Direction opposes change
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Drag the magnet by changing position or velocity; EMF follows the rate of flux change.</div>
+  </div>
+
+  <script>
+    const state = {
+      velocity: 5,
+      position: -10,
+      turns: 100,
+      area: 0.01,
+      field: 0.5,
+      showFlux: true,
+      showCoil: true,
+      time: 0,
+      history: []
+    };
+
+    const dom = {
+      velocity: document.getElementById('velocity'),
+      position: document.getElementById('position'),
+      turns: document.getElementById('turns'),
+      area: document.getElementById('area'),
+      field: document.getElementById('field'),
+      showFlux: document.getElementById('showFlux'),
+      showCoil: document.getElementById('showCoil'),
+      velValue: document.getElementById('velValue'),
+      posValue: document.getElementById('posValue'),
+      turnsValue: document.getElementById('turnsValue'),
+      areaValue: document.getElementById('areaValue'),
+      fieldValue: document.getElementById('fieldValue'),
+      emfValue: document.getElementById('emfValue'),
+      dphiValue: document.getElementById('dphiValue'),
+      lenzValue: document.getElementById('lenzValue'),
+      phiValue: document.getElementById('phiValue'),
+      phiMaxValue: document.getElementById('phiMaxValue')
+    };
+
+    const canvas = document.getElementById('fCanvas');
+    const ctx = canvas.getContext('2d');
+    const emfCanvas = document.getElementById('emfCanvas');
+    const emfCtx = emfCanvas.getContext('2d');
+
+    function fluxAt(positionCm) {
+      const x = positionCm / 10;
+      const spread = 0.08;
+      const field = state.field * Math.exp(-(x * x) / spread);
+      return field * state.area;
+    }
+
+    function updatePhysics(dt) {
+      state.position += state.velocity * dt;
+      if (state.position > 20) state.position = -20;
+      if (state.position < -20) state.position = 20;
+
+      const phi = fluxAt(state.position) * state.turns;
+      const phiPrev = fluxAt(state.position - state.velocity * dt) * state.turns;
+      const dphi = (phi - phiPrev) / dt;
+      const emf = -dphi;
+      return { phi, dphi, emf };
+    }
+
+    function drawSetup(phi) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#2a3f59';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(w / 2 - 80, 90, 160, 140);
+
+      if (state.showCoil) {
+        ctx.strokeStyle = '#f6c76b';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.arc(w / 2 - 70 + i * 25, 160, 12, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      const magnetX = (state.position + 20) / 40 * (w - 80) + 40;
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(magnetX - 20, 60, 40, 60);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(magnetX - 20, 120, 40, 60);
+      ctx.fillStyle = '#f5f8fd';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText('N', magnetX - 6, 95);
+      ctx.fillText('S', magnetX - 6, 150);
+
+      if (state.showFlux) {
+        ctx.strokeStyle = '#2d8dd6';
+        ctx.lineWidth = 1.5;
+        for (let y = 90; y <= 230; y += 20) {
+          ctx.beginPath();
+          ctx.moveTo(magnetX + 30, y);
+          ctx.lineTo(w / 2 - 90, y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText(`Flux: ${phi.toFixed(3)} Wb`, 20, h - 20);
+    }
+
+    function drawEmfGraph() {
+      const w = emfCanvas.width;
+      const h = emfCanvas.height;
+      emfCtx.clearRect(0, 0, w, h);
+      emfCtx.fillStyle = '#0b1420';
+      emfCtx.fillRect(0, 0, w, h);
+
+      emfCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 40) {
+        emfCtx.beginPath();
+        emfCtx.moveTo(x, 0);
+        emfCtx.lineTo(x, h);
+        emfCtx.stroke();
+      }
+      for (let y = 0; y <= h; y += 40) {
+        emfCtx.beginPath();
+        emfCtx.moveTo(0, y);
+        emfCtx.lineTo(w, y);
+        emfCtx.stroke();
+      }
+
+      if (state.history.length < 2) return;
+      emfCtx.strokeStyle = '#6ad7ff';
+      emfCtx.lineWidth = 2;
+      emfCtx.beginPath();
+      state.history.forEach((v, i) => {
+        const x = (i / (state.history.length - 1)) * w;
+        const y = h / 2 - v * 10;
+        if (i === 0) emfCtx.moveTo(x, y); else emfCtx.lineTo(x, y);
+      });
+      emfCtx.stroke();
+    }
+
+    function updateReadouts(phi, dphi, emf) {
+      dom.velValue.textContent = `${state.velocity.toFixed(1)} m/s`;
+      dom.posValue.textContent = `${state.position.toFixed(1)} cm`;
+      dom.turnsValue.textContent = `${state.turns}`;
+      dom.areaValue.textContent = `${state.area.toFixed(3)} m²`;
+      dom.fieldValue.textContent = `${state.field.toFixed(2)} T`;
+      dom.emfValue.textContent = `${emf.toFixed(2)} V`;
+      dom.dphiValue.textContent = `${dphi.toFixed(3)} Wb/s`;
+      dom.phiValue.textContent = `${phi.toFixed(3)} Wb`;
+      dom.phiMaxValue.textContent = `${(state.turns * state.field * state.area).toFixed(3)} Wb`;
+      dom.lenzValue.textContent = emf > 0 ? 'Opposes decrease' : (emf < 0 ? 'Opposes increase' : 'No change');
+    }
+
+    function tick() {
+      const dt = 0.02;
+      const { phi, dphi, emf } = updatePhysics(dt);
+      state.history.push(emf);
+      if (state.history.length > 200) state.history.shift();
+
+      updateReadouts(phi, dphi, emf);
+      drawSetup(phi);
+      drawEmfGraph();
+
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.velocity.addEventListener('input', () => {
+        state.velocity = Number(dom.velocity.value);
+      });
+      dom.position.addEventListener('input', () => {
+        state.position = Number(dom.position.value);
+      });
+      dom.turns.addEventListener('input', () => {
+        state.turns = Number(dom.turns.value);
+      });
+      dom.area.addEventListener('input', () => {
+        state.area = Number(dom.area.value);
+      });
+      dom.field.addEventListener('input', () => {
+        state.field = Number(dom.field.value);
+      });
+      dom.showFlux.addEventListener('change', () => {
+        state.showFlux = dom.showFlux.checked;
+      });
+      dom.showCoil.addEventListener('change', () => {
+        state.showCoil = dom.showCoil.checked;
+      });
+    }
+
+    bind();
+    tick();
+  </script>
+</body>
+</html>

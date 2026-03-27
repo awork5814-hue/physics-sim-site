@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conservation of Energy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1d;
+      --panel: rgba(12, 18, 30, 0.86);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --ke: #6ad7ff;
+      --pe: #f6c76b;
+      --total: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --panel: rgba(255,255,255,0.92);
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 22px 20px 8px; display: flex; gap: 12px; align-items: baseline; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .tab.active { color: var(--ink); border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(106,215,255,0.3); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .energy-bars { display: grid; gap: 8px; margin-top: 8px; }
+    .bar { height: 10px; border-radius: 999px; background: rgba(120, 150, 190, 0.2); overflow: hidden; }
+    .bar span { display: block; height: 100%; border-radius: 999px; transition: width 0.2s ease; }
+
+    .formula {
+      margin-top: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(14, 20, 32, 0.9), rgba(12, 18, 30, 0.7));
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .formula .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .formula strong { color: var(--ink); }
+
+    .graph-panel { margin-top: 12px; }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Conservation of Energy</h1>
+    <div class="subtitle">Energy transforms, never disappears</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="free">Free Fall</button>
+        <button class="tab" data-mode="skate">Skate Park</button>
+        <button class="tab" data-mode="pendulum">Pendulum</button>
+        <button class="tab" data-mode="spring">Spring</button>
+        <button class="tab" data-mode="pipe">Half Pipe</button>
+      </div>
+      <div class="canvas-wrap" style="margin-top: 10px;">
+        <canvas id="energyCanvas" width="960" height="460"></canvas>
+      </div>
+      <div class="button-row">
+        <button class="btn" id="playPause">Play</button>
+        <button class="btn" id="reset">Reset</button>
+        <select id="speed" class="btn">
+          <option value="0.25">0.25x</option>
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+        </select>
+      </div>
+      <div class="data-panel" id="dataPanel" style="margin-top: 10px;"></div>
+      <div class="energy-bars" id="energyBars">
+        <div>KE</div>
+        <div class="bar"><span id="keBar" style="background: var(--ke); width: 0%;"></span></div>
+        <div>PE</div>
+        <div class="bar"><span id="peBar" style="background: var(--pe); width: 0%;"></span></div>
+        <div>Total</div>
+        <div class="bar"><span id="totalBar" style="background: var(--total); width: 100%;"></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Mass <span id="massLabel">1.0 kg</span></label>
+          <input type="range" id="mass" min="0.5" max="10" step="0.1" value="1" />
+        </div>
+        <div class="control">
+          <label>Initial Height <span id="heightLabel">5.0 m</span></label>
+          <input type="range" id="height" min="1" max="20" step="0.5" value="5" />
+        </div>
+        <div class="control">
+          <label>Initial Velocity <span id="velocityLabel">0.0 m/s</span></label>
+          <input type="range" id="velocity" min="0" max="10" step="0.5" value="0" />
+        </div>
+        <div class="control">
+          <label>Gravity <span id="gravityLabel">9.81 m/s²</span></label>
+          <input type="range" id="gravity" min="1" max="25" step="0.01" value="9.81" />
+        </div>
+        <div class="control">
+          <label>Environment</label>
+          <div class="checks">
+            <label><input type="checkbox" id="friction" /> Friction</label>
+            <label><input type="checkbox" id="air" /> Air Resistance</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input type="checkbox" id="showBars" checked /> Energy bars</label>
+            <label><input type="checkbox" id="showGraph" checked /> E vs time graph</label>
+            <label><input type="checkbox" id="showTrail" checked /> Trail</label>
+            <label><input type="checkbox" id="showVelocity" checked /> Velocity vector</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="graph-panel" id="graphPanel">
+        <canvas id="graphCanvas" width="900" height="240" aria-label="Energy graph"></canvas>
+      </div>
+
+      <div class="formula" onclick="copyFormula(this)">
+        <strong>Energy Balance</strong><br>
+        KE = ½mv² · PE = mgh · Total = KE + PE (constant without losses)
+        <button class="copy-btn" title="Copy formula">📋</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Toggle friction/air resistance to see mechanical energy decay.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('energyCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const massInput = document.getElementById('mass');
+    const heightInput = document.getElementById('height');
+    const velocityInput = document.getElementById('velocity');
+    const gravityInput = document.getElementById('gravity');
+    const frictionInput = document.getElementById('friction');
+    const airInput = document.getElementById('air');
+
+    const massLabel = document.getElementById('massLabel');
+    const heightLabel = document.getElementById('heightLabel');
+    const velocityLabel = document.getElementById('velocityLabel');
+    const gravityLabel = document.getElementById('gravityLabel');
+
+    const showBars = document.getElementById('showBars');
+    const showGraph = document.getElementById('showGraph');
+    const showTrail = document.getElementById('showTrail');
+    const showVelocity = document.getElementById('showVelocity');
+
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const speedSelect = document.getElementById('speed');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+    const keBar = document.getElementById('keBar');
+    const peBar = document.getElementById('peBar');
+    const totalBar = document.getElementById('totalBar');
+    const energyBars = document.getElementById('energyBars');
+
+    const state = {
+      mode: 'free',
+      mass: 1,
+      height: 5,
+      velocity: 0,
+      gravity: 9.81,
+      time: 0,
+      position: 5,
+      playing: false,
+      speed: 1,
+      trail: [],
+      energyHistory: [],
+      angle: 0,
+      angularVelocity: 0,
+      springX: 0
+    };
+
+    function updateLabels() {
+      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
+      heightLabel.textContent = `${state.height.toFixed(1)} m`;
+      velocityLabel.textContent = `${state.velocity.toFixed(1)} m/s`;
+      gravityLabel.textContent = `${state.gravity.toFixed(2)} m/s²`;
+    }
+
+    function dampingFactor() {
+      return (frictionInput.checked ? 0.02 : 0) + (airInput.checked ? 0.015 : 0);
+    }
+
+    function updateEnergy(PE, KE) {
+      const total = KE + PE;
+      return { KE, PE, total };
+    }
+
+    function updatePhysics(dt) {
+      if (!state.playing) return;
+      const damp = dampingFactor();
+      if (state.mode === 'free') {
+        state.velocity += state.gravity * dt;
+        state.velocity *= Math.max(0, 1 - damp);
+        state.position = Math.max(0, state.position - state.velocity * dt);
+        if (state.position === 0) state.velocity *= -0.6;
+      } else if (state.mode === 'skate' || state.mode === 'pipe') {
+        const g = state.gravity;
+        const R = state.mode === 'pipe' ? 6.5 : 9.5;
+        const theta = state.angle;
+        const accel = -(g / R) * Math.sin(theta);
+        state.angularVelocity += accel * dt;
+        state.angularVelocity *= Math.max(0, 1 - damp * 1.2);
+        state.angle += state.angularVelocity * dt;
+      } else if (state.mode === 'pendulum') {
+        const L = Math.max(2, state.height);
+        const accel = -(state.gravity / L) * Math.sin(state.angle);
+        state.angularVelocity += accel * dt;
+        state.angularVelocity *= Math.max(0, 1 - damp * 1.2);
+        state.angle += state.angularVelocity * dt;
+      } else if (state.mode === 'spring') {
+        const k = 6;
+        const accel = -(k / state.mass) * state.springX;
+        state.velocity += accel * dt;
+        state.velocity *= Math.max(0, 1 - damp * 1.1);
+        state.springX += state.velocity * dt;
+      }
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < canvas.width; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+    }
+
+    function drawFreeFall() {
+      const groundY = canvas.height * 0.82;
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(40, groundY);
+      ctx.lineTo(canvas.width - 40, groundY);
+      ctx.stroke();
+
+      const x = canvas.width * 0.28;
+      const scale = 18;
+      const y = groundY - state.position * scale;
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showTrail.checked) {
+        state.trail.push({ x, y, alpha: 1 });
+        if (state.trail.length > 90) state.trail.shift();
+        for (const t of state.trail) {
+          ctx.fillStyle = `rgba(106,215,255,${t.alpha})`;
+          ctx.fillRect(t.x - 1, t.y - 1, 2, 2);
+          t.alpha *= 0.96;
+        }
+      }
+
+      if (showVelocity.checked) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + state.velocity * 4, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawSkatePark() {
+      const midY = canvas.height * 0.7;
+      const leftX = 120;
+      const rightX = canvas.width - 120;
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(leftX, midY);
+      ctx.quadraticCurveTo(canvas.width * 0.45, midY - 160, canvas.width * 0.5, midY - 20);
+      ctx.quadraticCurveTo(canvas.width * 0.55, midY + 120, rightX, midY);
+      ctx.stroke();
+
+      const R = 9.5;
+      const theta = state.angle;
+      const x = canvas.width * 0.5 + Math.sin(theta) * 160;
+      const y = midY - Math.cos(theta) * 120;
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showTrail.checked) {
+        state.trail.push({ x, y, alpha: 1 });
+        if (state.trail.length > 90) state.trail.shift();
+        for (const t of state.trail) {
+          ctx.fillStyle = `rgba(106,215,255,${t.alpha})`;
+          ctx.fillRect(t.x - 1, t.y - 1, 2, 2);
+          t.alpha *= 0.96;
+        }
+      }
+
+      if (showVelocity.checked) {
+        const vx = state.angularVelocity * R * Math.cos(theta) * 20;
+        const vy = state.angularVelocity * R * Math.sin(theta) * 20;
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + vx, y + vy);
+        ctx.stroke();
+      }
+    }
+
+    function drawPendulum() {
+      const pivotX = canvas.width * 0.5;
+      const pivotY = canvas.height * 0.18;
+      const L = Math.max(2, state.height) * 20;
+      const x = pivotX + Math.sin(state.angle) * L;
+      const y = pivotY + Math.cos(state.angle) * L;
+
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(pivotX, pivotY);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showVelocity.checked) {
+        const vx = state.angularVelocity * L * Math.cos(state.angle) * 0.6;
+        const vy = -state.angularVelocity * L * Math.sin(state.angle) * 0.6;
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + vx, y + vy);
+        ctx.stroke();
+      }
+    }
+
+    function drawSpring() {
+      const anchorX = canvas.width * 0.5;
+      const anchorY = canvas.height * 0.18;
+      const baseLen = 140;
+      const scale = 18;
+      const y = anchorY + baseLen + state.springX * scale;
+
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(anchorX, anchorY);
+      ctx.lineTo(anchorX, anchorY + 20);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      const coils = 12;
+      const coilHeight = (y - (anchorY + 20)) / coils;
+      ctx.beginPath();
+      ctx.moveTo(anchorX, anchorY + 20);
+      for (let i = 1; i <= coils; i++) {
+        const dx = i % 2 === 0 ? -18 : 18;
+        ctx.lineTo(anchorX + dx, anchorY + 20 + coilHeight * i);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(anchorX, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showVelocity.checked) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(anchorX, y);
+        ctx.lineTo(anchorX, y + state.velocity * 30);
+        ctx.stroke();
+      }
+    }
+
+    function drawHalfPipe() {
+      const centerX = canvas.width * 0.5;
+      const centerY = canvas.height * 0.72;
+      const R = 160;
+      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, R, Math.PI, 0);
+      ctx.stroke();
+
+      const theta = state.angle;
+      const x = centerX + Math.sin(theta) * R;
+      const y = centerY - Math.cos(theta) * R;
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x, y, 14, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showVelocity.checked) {
+        const vx = state.angularVelocity * R * Math.cos(theta) * 0.6;
+        const vy = state.angularVelocity * R * Math.sin(theta) * 0.6;
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + vx, y + vy);
+        ctx.stroke();
+      }
+    }
+
+    function drawScene() {
+      drawBackground();
+      if (state.mode === 'free') drawFreeFall();
+      if (state.mode === 'skate') drawSkatePark();
+      if (state.mode === 'pendulum') drawPendulum();
+      if (state.mode === 'spring') drawSpring();
+      if (state.mode === 'pipe') drawHalfPipe();
+    }
+
+    function computeEnergy() {
+      if (state.mode === 'free') {
+        const PE = state.mass * state.gravity * state.position;
+        const KE = 0.5 * state.mass * state.velocity * state.velocity;
+        return updateEnergy(PE, KE);
+      }
+      if (state.mode === 'skate' || state.mode === 'pipe') {
+        const R = state.mode === 'pipe' ? 6.5 : 9.5;
+        const height = R * (1 - Math.cos(state.angle));
+        const PE = state.mass * state.gravity * height;
+        const v = Math.abs(state.angularVelocity * R);
+        const KE = 0.5 * state.mass * v * v;
+        return updateEnergy(PE, KE);
+      }
+      if (state.mode === 'pendulum') {
+        const L = Math.max(2, state.height);
+        const height = L * (1 - Math.cos(state.angle));
+        const PE = state.mass * state.gravity * height;
+        const v = Math.abs(state.angularVelocity * L);
+        const KE = 0.5 * state.mass * v * v;
+        return updateEnergy(PE, KE);
+      }
+      const k = 6;
+      const PE = 0.5 * k * state.springX * state.springX;
+      const KE = 0.5 * state.mass * state.velocity * state.velocity;
+      return updateEnergy(PE, KE);
+    }
+
+    function updateBars(KE, PE, total) {
+      const maxE = Math.max(total, 0.001);
+      keBar.style.width = `${(KE / maxE) * 100}%`;
+      peBar.style.width = `${(PE / maxE) * 100}%`;
+      totalBar.style.width = '100%';
+      energyBars.style.display = showBars.checked ? 'grid' : 'none';
+    }
+
+    function drawGraph(KE, PE, total) {
+      if (!showGraph.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      gctx.clearRect(0, 0, w, h);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, w, h);
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.strokeRect(30, 30, w - 60, h - 60);
+
+      state.energyHistory.push({ KE, PE, total });
+      if (state.energyHistory.length > 180) state.energyHistory.shift();
+
+      const maxE = Math.max(...state.energyHistory.map(e => e.total), 0.001);
+      const plot = (key, color) => {
+        gctx.strokeStyle = color;
+        gctx.lineWidth = 2;
+        gctx.beginPath();
+        state.energyHistory.forEach((e, i) => {
+          const x = 30 + (i / (state.energyHistory.length - 1 || 1)) * (w - 60);
+          const y = h - 30 - (e[key] / maxE) * (h - 60);
+          if (i === 0) gctx.moveTo(x, y); else gctx.lineTo(x, y);
+        });
+        gctx.stroke();
+      };
+
+      plot('KE', getComputedStyle(document.documentElement).getPropertyValue('--ke').trim());
+      plot('PE', getComputedStyle(document.documentElement).getPropertyValue('--pe').trim());
+      plot('total', getComputedStyle(document.documentElement).getPropertyValue('--total').trim());
+    }
+
+    function updateDataPanel(KE, PE, total) {
+      const velocity = state.mode === 'free' || state.mode === 'spring'
+        ? state.velocity
+        : Math.abs(state.angularVelocity * (state.mode === 'pendulum' ? Math.max(2, state.height) : (state.mode === 'pipe' ? 6.5 : 9.5)));
+
+      const height = state.mode === 'free' ? state.position : (state.mode === 'spring' ? Math.abs(state.springX) : Math.abs(state.angle));
+
+      dataPanel.innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Mode</span><span class="data-value blue">${state.mode}</span></div>
+          <div class="data-card"><span class="data-label">Position/Angle</span><span class="data-value orange">${height.toFixed(2)}</span></div>
+          <div class="data-card"><span class="data-label">Speed</span><span class="data-value blue">${velocity.toFixed(2)}</span></div>
+          <div class="data-card"><span class="data-label">KE</span><span class="data-value blue">${KE.toFixed(2)} J</span></div>
+          <div class="data-card"><span class="data-label">PE</span><span class="data-value orange">${PE.toFixed(2)} J</span></div>
+          <div class="data-card"><span class="data-label">Total</span><span class="data-value green">${total.toFixed(2)} J</span></div>
+        </div>
+      `;
+    }
+
+    function loop() {
+      updatePhysics((1 / 60) * state.speed);
+      drawScene();
+      const { KE, PE, total } = computeEnergy();
+      updateBars(KE, PE, total);
+      drawGraph(KE, PE, total);
+      updateDataPanel(KE, PE, total);
+      requestAnimationFrame(loop);
+    }
+
+    function resetMode() {
+      state.trail = [];
+      state.energyHistory = [];
+      state.velocity = 0;
+      state.angularVelocity = 0;
+      state.position = state.height;
+      state.springX = 0.5;
+      state.angle = 0.6;
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+        resetMode();
+      });
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+    heightInput.addEventListener('input', (e) => {
+      state.height = parseFloat(e.target.value);
+      state.position = state.height;
+      updateLabels();
+    });
+    velocityInput.addEventListener('input', (e) => {
+      state.velocity = parseFloat(e.target.value);
+      updateLabels();
+    });
+    gravityInput.addEventListener('input', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      updateLabels();
+    });
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
+    });
+    resetBtn.addEventListener('click', () => {
+      state.playing = false;
+      playPauseBtn.textContent = 'Play';
+      resetMode();
+    });
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    resetMode();
+    requestAnimationFrame(loop);
+
+    function copyFormula(el) {
+      const text = el.textContent.replace('📋', '').replace('✓ Copied!', '').trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

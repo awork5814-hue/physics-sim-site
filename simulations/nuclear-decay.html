@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nuclear Decay</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    .toggle { display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px; border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8); cursor: pointer; color: var(--sim-text); }
+
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+
+    .canvas-wrap { display: grid; gap: 16px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+
+    .graph-panel { margin: 0 28px 18px; }
+
+    .accordion { display: grid; gap: 12px; margin: 0 28px 40px; }
+    details { border: 1px solid var(--sim-border); border-radius: 14px; background: rgba(12, 18, 28, 0.8); padding: 12px 16px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--accent); list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details p, details li { color: var(--sim-muted); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="nuclear-decay">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Nuclear Decay</h1>
+      <p>Exponential decay & half-life</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="decayCanvas" width="900" height="520" aria-label="Nuclear decay"></canvas>
+        <div class="btn-row">
+          <button id="start">Start</button>
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="isotope">Isotope</label>
+          <select id="isotope">
+            <option value="5730" selected>Carbon-14 (5730 y)</option>
+            <option value="4.5e9">Uranium-238 (4.5e9 y)</option>
+            <option value="1600">Radium-226 (1600 y)</option>
+            <option value="0.25">Technetium-99m (6 h)</option>
+            <option value="5.2e-5">Polonium-214 (164 μs)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="n0">Initial N <strong id="n0Label">1000</strong></label>
+          <input type="range" id="n0" min="10" max="1000" step="10" value="1000" />
+        </div>
+
+        <div class="control-group">
+          <label for="time">Time <strong id="timeLabel">0</strong></label>
+          <input type="range" id="time" min="0" max="10" step="0.1" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showGrid" checked /> Show nuclei grid</label>
+          <label><input type="checkbox" id="showParticles" checked /> Show particles</label>
+          <label><input type="checkbox" id="showGraph" checked /> Show N vs t graph</label>
+          <label><input type="checkbox" id="logScale" /> Log scale</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Decay graph"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>N = N₀ e^(−λt), λ = ln2 / t½. Half-life is the time for half of the nuclei to decay.</p>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('decayCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const isotopeInput = document.getElementById('isotope');
+    const n0Input = document.getElementById('n0');
+    const timeInput = document.getElementById('time');
+
+    const n0Label = document.getElementById('n0Label');
+    const timeLabel = document.getElementById('timeLabel');
+
+    const showGrid = document.getElementById('showGrid');
+    const showParticles = document.getElementById('showParticles');
+    const showGraph = document.getElementById('showGraph');
+    const logScale = document.getElementById('logScale');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const state = {
+      n0: 1000,
+      tHalf: 5730,
+      time: 0,
+      running: false
+    };
+
+    function updateLabels() {
+      n0Label.textContent = state.n0.toFixed(0);
+      timeLabel.textContent = state.time.toFixed(1);
+    }
+
+    function calculate() {
+      const lambda = Math.log(2) / state.tHalf;
+      const N = state.n0 * Math.exp(-lambda * state.time);
+      const activity = lambda * N;
+      return { lambda, N, activity };
+    }
+
+    function drawGrid() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { N } = calculate();
+      const total = state.n0;
+      const cols = 25;
+      const rows = Math.ceil(total / cols);
+      const size = 12;
+      let count = 0;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (count >= total) break;
+          const x = 40 + c * size;
+          const y = 40 + r * size;
+          ctx.fillStyle = count < N ? '#6ad7ff' : 'rgba(255,255,255,0.2)';
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+          count++;
+        }
+      }
+    }
+
+    function updateDataPanel() {
+      const { lambda, N, activity } = calculate();
+      dataPanel.innerHTML = `
+        <div><strong>Initial N₀:</strong> ${state.n0.toFixed(0)}</div>
+        <div><strong>Current N:</strong> ${N.toFixed(0)}</div>
+        <div><strong>Half-life:</strong> ${state.tHalf} (units)</div>
+        <div><strong>Decay constant:</strong> ${lambda.toExponential(2)}</div>
+        <div><strong>Activity:</strong> ${activity.toExponential(2)} (units)</div>
+      `;
+    }
+
+    function drawGraph() {
+      if (!showGraph.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+    }
+
+    function loop() {
+      if (state.running) {
+        state.time += 0.05;
+        timeInput.value = state.time;
+        updateLabels();
+      }
+      drawGrid();
+      updateDataPanel();
+      drawGraph();
+      requestAnimationFrame(loop);
+    }
+
+    isotopeInput.addEventListener('change', (e) => {
+      state.tHalf = parseFloat(e.target.value);
+    });
+
+    n0Input.addEventListener('input', (e) => {
+      state.n0 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    timeInput.addEventListener('input', (e) => {
+      state.time = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('start').addEventListener('click', () => {
+      state.running = !state.running;
+      document.getElementById('start').textContent = state.running ? 'Pause' : 'Start';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.time = 0;
+      state.running = false;
+      document.getElementById('start').textContent = 'Start';
+      updateLabels();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

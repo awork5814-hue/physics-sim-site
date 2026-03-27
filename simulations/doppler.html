@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doppler Effect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Doppler Effect</h1>
+    <div class="subtitle">Frequency shift from moving source and observer</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Animation Speed</label>
+          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
+          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
+        </div>
+        <div class="control">
+          <label>Source Frequency (Hz)</label>
+          <input id="freq" type="range" min="100" max="1000" step="10" value="500" />
+          <div class="row"><span>100</span><span id="freqVal" class="value">500 Hz</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Source Velocity (m/s)</label>
+          <input id="vs" type="range" min="-100" max="100" step="1" value="30" />
+          <div class="row"><span>-100</span><span id="vsVal" class="value">30 m/s</span><span>100</span></div>
+        </div>
+        <div class="control">
+          <label>Observer Velocity (m/s)</label>
+          <input id="vo" type="range" min="-100" max="100" step="1" value="0" />
+          <div class="row"><span>-100</span><span id="voVal" class="value">0 m/s</span><span>100</span></div>
+        </div>
+        <div class="control">
+          <label>Speed of Sound (m/s)</label>
+          <input id="vSound" type="range" min="300" max="360" step="1" value="340" />
+          <div class="row"><span>300</span><span id="vSoundVal" class="value">340 m/s</span><span>360</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showWaves" type="checkbox" checked /> Wavefronts</label>
+            <label><input id="showFreq" type="checkbox" checked /> Frequency display</label>
+            <label><input id="showVectors" type="checkbox" checked /> Velocity vectors</label>
+            <label><input id="showMach" type="checkbox" checked /> Mach cone</label>
+            <label><input id="showPitch" type="checkbox" checked /> Pitch meter</label>
+            <label><input id="showSpacing" type="checkbox" /> Wavelength spacing</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Audio</label>
+          <div class="checks">
+            <label><input id="audioToggle" type="checkbox" /> Siren audio</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Doppler (sound):</strong> <span style="font-family: var(--mono);">f' = f (v + v_o)/(v - v_s)</span></div>
+            <div><strong>Mach:</strong> <span style="font-family: var(--mono);">M = v_s / v</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Tip: Same direction motion increases frequency ahead of the source and lowers it behind.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      f: 500,
+      vs: 30,
+      vo: 0,
+      v: 340,
+      showWaves: true,
+      showFreq: true,
+      showVectors: true,
+      showMach: true,
+      showPitch: true,
+      showSpacing: false,
+      audioOn: false,
+      time: 0,
+      running: true,
+      speed: 1,
+      waves: [],
+      sourceX: 220,
+      observerX: 700,
+      sourceY: 220,
+      observerY: 240
+    };
+
+    let audioCtx = null;
+    let osc = null;
+    let gain = null;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function spawnWave() {
+      state.waves.push({ x: state.sourceX, y: state.sourceY, r: 0 });
+    }
+
+    function update() {
+      if (!state.running) return;
+      state.time += 0.016 * state.speed;
+      if (Math.floor(state.time * state.f) % 20 === 0) spawnWave();
+
+      state.sourceX += state.vs * 0.016 * state.speed;
+      state.observerX += state.vo * 0.016 * state.speed;
+
+      if (state.sourceX < 100) state.sourceX = 100;
+      if (state.sourceX > 860) state.sourceX = 860;
+      if (state.observerX < 100) state.observerX = 100;
+      if (state.observerX > 860) state.observerX = 860;
+
+      for (const w of state.waves) w.r += state.v * 0.016 * state.speed;
+      state.waves = state.waves.filter(w => w.r < 1400);
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.55, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.6, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.clientWidth; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.clientHeight; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+      }
+    }
+
+    function drawArrow(x1, y1, x2, y2, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 9 * Math.cos(angle - Math.PI / 6), y2 - 9 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - 9 * Math.cos(angle + Math.PI / 6), y2 - 9 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawPitchMeter(fPrime) {
+      if (!state.showPitch) return;
+      const x = 40;
+      const y = 40;
+      const w = 240;
+      const h = 16;
+      const minF = 100;
+      const maxF = 1000;
+      const norm = Math.max(0, Math.min(1, (fPrime - minF) / (maxF - minF)));
+      ctx.fillStyle = 'rgba(8,12,20,0.7)';
+      ctx.fillRect(x, y, w, h);
+      const grad = ctx.createLinearGradient(x, 0, x + w, 0);
+      grad.addColorStop(0, '#6ad7ff');
+      grad.addColorStop(0.5, '#f6c76b');
+      grad.addColorStop(1, '#ff6b6b');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x, y, w * norm, h);
+      ctx.strokeStyle = 'rgba(148,163,184,0.4)';
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(`Pitch: ${fPrime.toFixed(0)} Hz`, x, y - 6);
+    }
+
+    function drawSpacingGuide() {
+      if (!state.showSpacing || !state.showWaves) return;
+      const ahead = state.observerX > state.sourceX;
+      const spacing = state.v / state.f;
+      const scale = 2.2;
+      const pixels = spacing * scale;
+      const x0 = ahead ? state.sourceX + 20 : state.sourceX - 20 - pixels;
+      const y0 = state.sourceY - 40;
+      ctx.strokeStyle = 'rgba(106,215,255,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x0 + pixels, y0);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x0, y0 - 4);
+      ctx.lineTo(x0, y0 + 4);
+      ctx.moveTo(x0 + pixels, y0 - 4);
+      ctx.lineTo(x0 + pixels, y0 + 4);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText('λ', x0 + pixels / 2 - 3, y0 - 8);
+    }
+
+    function draw() {
+      drawBackground();
+      const fPrime = observedFrequency();
+
+      if (state.showWaves) {
+        for (const w of state.waves) {
+          const color = w.x < state.sourceX ? 'rgba(255,120,120,0.35)' : 'rgba(120,180,255,0.35)';
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(w.x, w.y, w.r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      // source
+      const sourceGlow = ctx.createRadialGradient(state.sourceX, state.sourceY, 4, state.sourceX, state.sourceY, 22);
+      sourceGlow.addColorStop(0, '#f6c76b');
+      sourceGlow.addColorStop(1, 'rgba(246,199,107,0)');
+      ctx.fillStyle = sourceGlow;
+      ctx.beginPath(); ctx.arc(state.sourceX, state.sourceY, 22, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath(); ctx.arc(state.sourceX, state.sourceY, 10, 0, Math.PI * 2); ctx.fill();
+      if (state.showFreq) {
+        ctx.fillStyle = 'rgba(248,250,252,0.9)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillText('Source', state.sourceX - 18, state.sourceY - 20);
+      }
+
+      // observer
+      const obsGlow = ctx.createRadialGradient(state.observerX, state.observerY, 4, state.observerX, state.observerY, 18);
+      obsGlow.addColorStop(0, '#22c55e');
+      obsGlow.addColorStop(1, 'rgba(34,197,94,0)');
+      ctx.fillStyle = obsGlow;
+      ctx.beginPath(); ctx.arc(state.observerX, state.observerY, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath(); ctx.arc(state.observerX, state.observerY, 8, 0, Math.PI * 2); ctx.fill();
+      if (state.showFreq) {
+        ctx.fillStyle = 'rgba(248,250,252,0.9)';
+        ctx.fillText('Observer', state.observerX - 24, state.observerY + 24);
+      }
+
+      if (state.showVectors) {
+        drawArrow(state.sourceX, state.sourceY, state.sourceX + state.vs, state.sourceY, '#f6c76b');
+        drawArrow(state.observerX, state.observerY, state.observerX + state.vo, state.observerY, '#22c55e');
+      }
+
+      if (state.showMach && Math.abs(state.vs) > state.v) {
+        const angle = Math.asin(state.v / Math.abs(state.vs));
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(state.sourceX, state.sourceY);
+        ctx.lineTo(state.sourceX - 240 * Math.cos(angle), state.sourceY - 240 * Math.sin(angle));
+        ctx.moveTo(state.sourceX, state.sourceY);
+        ctx.lineTo(state.sourceX - 240 * Math.cos(angle), state.sourceY + 240 * Math.sin(angle));
+        ctx.stroke();
+      }
+
+      drawPitchMeter(fPrime);
+      drawSpacingGuide();
+    }
+
+    function observedFrequency() {
+      const approaching = state.observerX > state.sourceX;
+      const signVo = approaching ? state.vo : -state.vo;
+      const signVs = approaching ? state.vs : -state.vs;
+      return state.f * (state.v + signVo) / (state.v - signVs);
+    }
+
+    function updateReadout() {
+      const fPrime = observedFrequency();
+      const df = fPrime - state.f;
+      const mach = Math.abs(state.vs) / state.v;
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Source f</span><span class="data-value orange">${state.f.toFixed(0)} Hz</span></div>
+          <div class="data-card"><span class="data-label">Observed f'</span><span class="data-value blue">${fPrime.toFixed(0)} Hz</span></div>
+          <div class="data-card"><span class="data-label">Shift Δf</span><span class="data-value green">${df.toFixed(1)} Hz</span></div>
+          <div class="data-card"><span class="data-label">Source v_s</span><span class="data-value orange">${state.vs.toFixed(1)} m/s</span></div>
+          <div class="data-card"><span class="data-label">Observer v_o</span><span class="data-value green">${state.vo.toFixed(1)} m/s</span></div>
+          <div class="data-card"><span class="data-label">Mach</span><span class="data-value blue">${mach.toFixed(2)}</span></div>
+        </div>
+      `;
+      if (state.audioOn && osc && gain) {
+        const target = Math.max(80, Math.min(1200, fPrime));
+        osc.frequency.setTargetAtTime(target, audioCtx.currentTime, 0.05);
+        gain.gain.setTargetAtTime(0.02, audioCtx.currentTime, 0.05);
+      }
+    }
+
+    function tick() {
+      update();
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('freq').addEventListener('input', e => {
+      state.f = parseFloat(e.target.value);
+      document.getElementById('freqVal').textContent = `${state.f.toFixed(0)} Hz`;
+    });
+    document.getElementById('vs').addEventListener('input', e => {
+      state.vs = parseFloat(e.target.value);
+      document.getElementById('vsVal').textContent = `${state.vs.toFixed(0)} m/s`;
+    });
+    document.getElementById('vo').addEventListener('input', e => {
+      state.vo = parseFloat(e.target.value);
+      document.getElementById('voVal').textContent = `${state.vo.toFixed(0)} m/s`;
+    });
+    document.getElementById('vSound').addEventListener('input', e => {
+      state.v = parseFloat(e.target.value);
+      document.getElementById('vSoundVal').textContent = `${state.v.toFixed(0)} m/s`;
+    });
+
+    document.getElementById('showWaves').addEventListener('change', e => state.showWaves = e.target.checked);
+    document.getElementById('showFreq').addEventListener('change', e => state.showFreq = e.target.checked);
+    document.getElementById('showVectors').addEventListener('change', e => state.showVectors = e.target.checked);
+    document.getElementById('showMach').addEventListener('change', e => state.showMach = e.target.checked);
+    document.getElementById('showPitch').addEventListener('change', e => state.showPitch = e.target.checked);
+    document.getElementById('showSpacing').addEventListener('change', e => state.showSpacing = e.target.checked);
+
+    document.getElementById('audioToggle').addEventListener('change', e => {
+      state.audioOn = e.target.checked;
+      if (state.audioOn) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (!osc) {
+          osc = audioCtx.createOscillator();
+          gain = audioCtx.createGain();
+          osc.type = 'sine';
+          gain.gain.value = 0.02;
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start();
+        }
+      } else if (gain) {
+        gain.gain.value = 0;
+      }
+    });
+
+    document.getElementById('speed').addEventListener('input', e => {
+      state.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      state.running = !state.running;
+      e.target.textContent = state.running ? 'Pause' : 'Play';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.sourceX = 220;
+      state.observerX = 700;
+      state.waves = [];
+      state.time = 0;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    tick();
+  </script>
+</body>
+</html>

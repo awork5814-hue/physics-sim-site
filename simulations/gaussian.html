@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gaussian Distribution</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --secondary: #818cf8;
+      --accent: #fbbf24;
+      --accent-2: #34d399;
+      --glow: rgba(56, 189, 248, 0.5);
+      --glow-2: rgba(251, 191, 36, 0.4);
+      
+      --bg-deep: #080d1a;
+      --bg-panel: rgba(12, 20, 36, 0.95);
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(56, 189, 248, 0.3);
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #080d1a 0%, #0a1628 50%, #06101f 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    body.light {
+      --bg-deep: #f1f5f9;
+      --bg-panel: rgba(255, 255, 255, 0.95);
+      --text: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --border: rgba(0, 0, 0, 0.08);
+    }
+
+    * { scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(8, 13, 26, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 8px 16px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .topbar a:hover { background: var(--border); }
+
+    .topbar .brand { font-size: 1.1rem; font-weight: 700; color: var(--primary); letter-spacing: 0.5px; }
+    .topbar .right-controls { display: flex; gap: 12px; align-items: center; }
+
+    .theme-toggle {
+      width: 44px;
+      height: 24px;
+      background: var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.3s;
+    }
+
+    body.light .theme-toggle::after { transform: translateX(20px); }
+
+    header {
+      text-align: center;
+      padding: 30px 20px 20px;
+    }
+
+    header h1 {
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      margin: 0 0 10px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 0.5px;
+    }
+
+    header p { color: var(--text-muted); margin: 0; font-size: 1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 20px clamp(16px, 3vw, 40px) 30px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .layout.with-controls {
+      grid-template-columns: 1fr 320px;
+    }
+
+    @media (max-width: 900px) { .layout, .layout.with-controls { grid-template-columns: 1fr; } }
+
+    .canvas-container {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .canvas-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    }
+
+    .canvas-row { display: flex; gap: 16px; flex-direction: column; }
+
+    .canvas-row + .canvas-row { margin-top: 16px; }
+
+    canvas {
+      width: 100%;
+      height: 400px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: border-color 0.3s;
+    }
+
+    .panel:hover { border-color: var(--border-hover); }
+
+    .panel h3 {
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .control-group { margin-bottom: 18px; }
+    .control-group:last-child { margin-bottom: 0; }
+
+    .control-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .control-group label span.value {
+      font-family: 'Space Grotesk', monospace;
+      color: var(--primary);
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: var(--border);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--glow);
+      transition: transform 0.2s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    button {
+      flex: 1;
+      min-width: 100px;
+      padding: 12px 16px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #000;
+      border: none;
+    }
+
+    button.primary:hover { box-shadow: 0 4px 20px var(--glow); }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .data-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .data-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      transition: all 0.2s;
+    }
+
+    .data-card:hover { border-color: var(--border-hover); }
+
+    .data-card .label {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .data-card .value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', monospace;
+      color: var(--primary);
+    }
+
+    .data-card .unit {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .formula-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      padding-right: 40px;
+      text-align: center;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-top: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .formula-box:hover {
+      border-color: var(--primary);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--primary);
+      border: none;
+      border-radius: 6px;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: var(--secondary);
+    }
+
+    .formula-box.copied {
+      border-color: var(--accent-2);
+    }
+
+    .formula-box.copied::after {
+      content: 'Copied!';
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.7rem;
+      color: var(--accent-2);
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .help-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border: none;
+      color: #000;
+      font-size: 1.4rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px var(--glow);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .help-btn:hover { transform: scale(1.1); }
+
+    .tooltip {
+      position: fixed;
+      bottom: 80px;
+      right: 24px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 320px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .tooltip h4 {
+      margin: 0 0 10px;
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--accent-2);
+      margin-top: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-2);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.9); }
+    }
+
+    .confidence-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/">← Physics Lab</a>
+      <span class="brand">GAUSSIAN DISTRIBUTION</span>
+      <div class="right-controls">
+        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme"></div>
+      </div>
+    </div>
+
+    <header>
+      <h1>Gaussian (Normal) Distribution</h1>
+      <p>Explore the bell curve with interactive parameters</p>
+    </header>
+
+    <div class="layout">
+      <div class="canvas-container">
+        <canvas id="mainCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="layout with-controls">
+      <div class="controls-panel">
+        <div class="panel">
+          <h3>Parameters</h3>
+          <div class="control-group">
+            <label>Mean (μ) <span class="value" id="meanValue">0</span></label>
+            <input type="range" id="meanSlider" min="-3" max="3" step="0.1" value="0">
+          </div>
+          <div class="control-group">
+            <label>Standard Deviation (σ) <span class="value" id="stdValue">1.0</span></label>
+            <input type="range" id="stdSlider" min="0.3" max="2.5" step="0.1" value="1">
+          </div>
+          <div class="control-group">
+            <label>Sample Size <span class="value" id="sampleValue">500</span></label>
+            <input type="range" id="sampleSlider" min="100" max="2000" step="100" value="500">
+          </div>
+          <div class="btn-row">
+            <button class="primary" id="generateBtn">Generate Samples</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Display Options</h3>
+          <div class="checkbox-group">
+            <input type="checkbox" id="show68" checked>
+            <label for="show68">Show 68% (±1σ)</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="show95">
+            <label for="show95">Show 95% (±2σ)</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="show997">
+            <label for="show997">Show 99.7% (±3σ)</label>
+          </div>
+          <div class="checkbox-group">
+            <input type="checkbox" id="showParticles" checked>
+            <label for="showParticles">Animate Sampling</label>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Statistics</h3>
+          <div class="data-cards">
+            <div class="data-card">
+              <div class="label">Sample Mean</div>
+              <div class="value" id="sampleMean">0.00</div>
+            </div>
+            <div class="data-card">
+              <div class="label">Sample Std</div>
+              <div class="value" id="sampleStd">1.00</div>
+            </div>
+            <div class="data-card">
+              <div class="label">Min</div>
+              <div class="value" id="sampleMin">0.00</div>
+            </div>
+            <div class="data-card">
+              <div class="label">Max</div>
+              <div class="value" id="sampleMax">0.00</div>
+            </div>
+          </div>
+          <div class="formula-box" onclick="copyFormula(this)">f(x) = (1/σ√2π) × e<sup>-(x-μ)²/2σ²</sup><button class="copy-btn" title="Copy formula">📋</button></div>
+        </div>
+
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Ready to sample</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="help-btn" onclick="toggleHelp()">?</button>
+    <div class="tooltip" id="helpTooltip">
+      <h4>Gaussian Distribution</h4>
+      <p>The Gaussian (Normal) distribution is one of the most important probability distributions in statistics. It describes how values are distributed around a mean.</p>
+      <p><strong>Key features:</strong></p>
+      <p>• 68% of data falls within 1σ of mean<br>• 95% within 2σ<br>• 99.7% within 3σ</p>
+      <p>Adjust the sliders to see how mean and standard deviation affect the curve shape!</p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let state = {
+      mean: 0,
+      std: 1,
+      sampleSize: 500,
+      samples: [],
+      show68: true,
+      show95: false,
+      show997: false,
+      animateParticles: true,
+      animationTime: 0
+    };
+
+    function initCanvases() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    function gaussian(x, mu, sigma) {
+      const coefficient = 1 / (sigma * Math.sqrt(2 * Math.PI));
+      const exponent = -Math.pow(x - mu, 2) / (2 * Math.pow(sigma, 2));
+      return coefficient * Math.exp(exponent);
+    }
+
+    function boxMuller() {
+      let u = 0, v = 0;
+      while (u === 0) u = Math.random();
+      while (v === 0) v = Math.random();
+      return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+    }
+
+    function generateSamples() {
+      state.samples = [];
+      for (let i = 0; i < state.sampleSize; i++) {
+        state.samples.push(boxMuller() * state.std + state.mean);
+      }
+      state.samples.sort((a, b) => a - b);
+      updateStats();
+    }
+
+    function updateStats() {
+      if (state.samples.length === 0) return;
+      const sum = state.samples.reduce((a, b) => a + b, 0);
+      const mean = sum / state.samples.length;
+      const sqDiffs = state.samples.map(x => Math.pow(x - mean, 2));
+      const variance = sqDiffs.reduce((a, b) => a + b, 0) / state.samples.length;
+      const std = Math.sqrt(variance);
+      document.getElementById('sampleMean').textContent = mean.toFixed(2);
+      document.getElementById('sampleStd').textContent = std.toFixed(2);
+      document.getElementById('sampleMin').textContent = state.samples[0].toFixed(2);
+      document.getElementById('sampleMax').textContent = state.samples[state.samples.length - 1].toFixed(2);
+    }
+
+    function draw() {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      
+      ctx.clearRect(0, 0, width, height);
+
+      const padding = { top: 30, bottom: 30, left: 50, right: 30 };
+      const curveHeight = (height - padding.top - padding.bottom) * 0.55;
+      const histHeight = (height - padding.top - padding.bottom) * 0.35;
+      const plotWidth = width - padding.left - padding.right;
+
+      const xMin = -5, xMax = 5;
+      const xScale = plotWidth / (xMax - xMin);
+
+      // === GAUSSIAN CURVE (TOP) ===
+      const curveTop = padding.top;
+      const curveBottom = curveTop + curveHeight;
+      const yMax = gaussian(state.mean, state.mean, state.std);
+      const yScale = curveHeight / yMax * 0.85;
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+      ctx.lineWidth = 1;
+      for (let x = -4; x <= 4; x++) {
+        ctx.beginPath();
+        ctx.moveTo(padding.left + (x - xMin) * xScale, curveTop);
+        ctx.lineTo(padding.left + (x - xMin) * xScale, curveBottom);
+        ctx.stroke();
+      }
+
+      // Confidence regions
+      const drawRegion = (stdDevs, color, alpha) => {
+        if (stdDevs === 1 && !state.show68) return;
+        if (stdDevs === 2 && !state.show95) return;
+        if (stdDevs === 3 && !state.show997) return;
+        const x1 = state.mean - stdDevs * state.std;
+        const x2 = state.mean + stdDevs * state.std;
+        ctx.beginPath();
+        ctx.moveTo(padding.left + (x1 - xMin) * xScale, curveBottom);
+        for (let x = x1; x <= x2; x += 0.05) {
+          const y = gaussian(x, state.mean, state.std);
+          ctx.lineTo(padding.left + (x - xMin) * xScale, curveBottom - y * yScale);
+        }
+        ctx.lineTo(padding.left + (x2 - xMin) * xScale, curveBottom);
+        ctx.closePath();
+        ctx.fillStyle = color.replace('ALPHA', alpha);
+        ctx.fill();
+      };
+
+      drawRegion(3, 'rgba(251, 191, 36, ALPHA)', 0.12);
+      drawRegion(2, 'rgba(129, 140, 248, ALPHA)', 0.15);
+      drawRegion(1, 'rgba(56, 189, 248, ALPHA)', 0.2);
+
+      // Gaussian curve
+      const gradient = ctx.createLinearGradient(0, curveTop, 0, curveBottom);
+      gradient.addColorStop(0, 'rgba(56, 189, 248, 1)');
+      gradient.addColorStop(0.5, 'rgba(129, 140, 248, 1)');
+      gradient.addColorStop(1, 'rgba(52, 211, 153, 1)');
+
+      ctx.beginPath();
+      ctx.moveTo(padding.left + (-5 - xMin) * xScale, curveBottom);
+      for (let x = -5; x <= 5; x += 0.02) {
+        const y = gaussian(x, state.mean, state.std);
+        ctx.lineTo(padding.left + (x - xMin) * xScale, curveBottom - y * yScale);
+      }
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+      ctx.shadowBlur = 15;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // X-axis labels
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px Space Grotesk';
+      ctx.textAlign = 'center';
+      for (let x = -4; x <= 4; x += 1) {
+        ctx.fillText(x, padding.left + (x - xMin) * xScale, curveBottom + 18);
+      }
+
+      // === HISTOGRAM (BOTTOM) ===
+      const histTop = curveBottom + 25;
+      const histBottom = histTop + histHeight;
+
+      if (state.samples.length === 0) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.font = '13px Outfit';
+        ctx.textAlign = 'center';
+        ctx.fillText('Click "Generate Samples" to see histogram', width / 2, histTop + histHeight / 2);
+      } else {
+        const numBins = Math.min(25, Math.ceil(state.sampleSize / 25));
+        const minVal = state.samples[0];
+        const maxVal = state.samples[state.samples.length - 1];
+        const binWidth = (maxVal - minVal) / numBins || 1;
+        
+        const bins = new Array(numBins).fill(0);
+        state.samples.forEach(s => {
+          const binIndex = Math.min(Math.floor((s - minVal) / binWidth), numBins - 1);
+          bins[binIndex]++;
+        });
+
+        const maxBin = Math.max(...bins);
+        const barWidth = plotWidth / numBins - 2;
+
+        const histGradient = ctx.createLinearGradient(0, histTop, 0, histBottom);
+        histGradient.addColorStop(0, 'rgba(56, 189, 248, 0.8)');
+        histGradient.addColorStop(1, 'rgba(52, 211, 153, 0.5)');
+
+        bins.forEach((count, i) => {
+          const barHeight = (count / maxBin) * histHeight;
+          const x = padding.left + i * (plotWidth / numBins) + 1;
+          const y = histBottom - barHeight;
+          
+          ctx.fillStyle = histGradient;
+          ctx.fillRect(x, y, barWidth, barHeight);
+        });
+      }
+
+      // Labels
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillText('x', width - 12, curveBottom + 4);
+      ctx.fillText('f(x)', 12, curveTop + 15);
+      ctx.fillText('Frequency', 12, histTop + 15);
+
+      state.animationTime++;
+      requestAnimationFrame(draw);
+    }
+
+    // Event listeners
+    document.getElementById('meanSlider').addEventListener('input', (e) => {
+      state.mean = parseFloat(e.target.value);
+      document.getElementById('meanValue').textContent = state.mean.toFixed(1);
+      generateSamples();
+    });
+
+    document.getElementById('stdSlider').addEventListener('input', (e) => {
+      state.std = parseFloat(e.target.value);
+      document.getElementById('stdValue').textContent = state.std.toFixed(1);
+      generateSamples();
+    });
+
+    document.getElementById('sampleSlider').addEventListener('input', (e) => {
+      state.sampleSize = parseInt(e.target.value);
+      document.getElementById('sampleValue').textContent = state.sampleSize;
+      generateSamples();
+    });
+
+    document.getElementById('generateBtn').addEventListener('click', generateSamples);
+    document.getElementById('show68').addEventListener('change', (e) => { state.show68 = e.target.checked; });
+    document.getElementById('show95').addEventListener('change', (e) => { state.show95 = e.target.checked; });
+    document.getElementById('show997').addEventListener('change', (e) => { state.show997 = e.target.checked; });
+    document.getElementById('showParticles').addEventListener('change', (e) => { state.animateParticles = e.target.checked; });
+
+    function toggleHelp() {
+      document.getElementById('helpTooltip').classList.toggle('visible');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+
+    function copyFormula(el) {
+      const text = el.textContent.replace('📋', '').replace('Copied!', '').trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      initCanvases();
+    });
+
+    initCanvases();
+    generateSamples();
+    draw();
+  </script>
+</body>
+</html>

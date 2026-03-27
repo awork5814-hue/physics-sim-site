@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bohr Model</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --secondary: #a78bfa;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --sim-bg: #0b1020;
+      --sim-text: #f8fafc;
+      --sim-muted: #94a3b8;
+      --sim-border: rgba(255, 255, 255, 0.08);
+      --panel: rgba(15, 23, 42, 0.72);
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --mono: "JetBrains Mono", monospace;
+      --orbit: rgba(56, 189, 248, 0.3);
+      --electron: #38bdf8;
+      --nucleus: #f59e0b;
+    }
+
+    body.light {
+      --sim-bg: #f5f7fa;
+      --sim-text: #0f172a;
+      --sim-muted: #475569;
+      --sim-border: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255, 255, 255, 0.85);
+      --orbit: rgba(15, 23, 42, 0.15);
+    }
+
+    body {
+      margin: 0;
+      background: var(--sim-bg);
+      color: var(--sim-text);
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(56, 189, 248, 0.5); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .tabs { display: flex; gap: 10px; padding: 0 28px 10px; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--sim-border); border-radius: 999px; padding: 8px 14px; cursor: pointer; background: rgba(12, 18, 28, 0.8); color: var(--sim-text); font-weight: 600; }
+    .tab.active { border-color: var(--accent); color: var(--accent); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; padding: 12px 28px 18px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    .panel { backdrop-filter: blur(12px); }
+
+    .canvas-wrap { display: grid; gap: 16px; }
+    canvas { width: 100%; height: clamp(320px, 45vh, 480px); background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+    input[type="range"] { accent-color: var(--primary); }
+    select { background: rgba(10, 16, 26, 0.85); color: var(--sim-text); border: 1px solid var(--sim-border); border-radius: 10px; padding: 8px 10px; font-family: "Inter", "Segoe UI", sans-serif; }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    button:hover { transform: translateY(-1px); border-color: rgba(56, 189, 248, 0.5); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+
+    .data-panel { padding: 0; background: transparent; border: none; box-shadow: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04)); border: 1px solid var(--sim-border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sim-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); line-height: 1.2; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.purple { color: var(--secondary); }
+    .data-value.orange { color: var(--accent-2); }
+
+    .bg-toggle {
+      display: inline-flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .bg-toggle button {
+      padding: 6px 10px;
+      font-size: 0.85rem;
+    }
+
+    .bg-toggle button.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25);
+    }
+
+    .accordion { display: grid; gap: 12px; margin: 0 28px 40px; }
+
+    details { border: 1px solid var(--sim-border); border-radius: 14px; background: rgba(12, 18, 28, 0.8); padding: 12px 16px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--accent); list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details p, details li { color: var(--sim-muted); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: clamp(280px, 42vh, 400px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="bohr-model">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Bohr Model</h1>
+      <p>Quantized orbits & energy levels</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="particle">Particle View</button>
+      <button class="tab" data-mode="energy">Energy Diagram</button>
+      <button class="tab" data-mode="spectrum">Spectrum</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="bohrCanvas" width="900" height="520" aria-label="Bohr model"></canvas>
+        <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="level">Energy Level n <strong id="levelLabel">3</strong></label>
+          <input type="range" id="level" min="1" max="10" step="1" value="3" />
+        </div>
+
+        <div class="control-group">
+          <label>Transitions</label>
+          <div class="btn-row">
+            <button id="excite">Excite</button>
+            <button id="deexcite">De-excite</button>
+            <button id="reset">Reset to n=1</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showRadii" checked /> Show orbital radii</label>
+          <label><input type="checkbox" id="showEnergy" checked /> Show energy values</label>
+          <label><input type="checkbox" id="showPhoton" checked /> Show photon emission</label>
+          <label><input type="checkbox" id="showSpectrum" checked /> Show spectrum</label>
+          <label>Background Style</label>
+          <div class="bg-toggle">
+            <button type="button" data-bg="calm" class="active">Calm Scientific</button>
+            <button type="button" data-bg="scifi">Cinematic Sci‑Fi</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Bohr model: electrons occupy discrete orbits. Energy levels: E_n = -13.6 / n² eV.</p>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Orbits are quantized.</li>
+          <li>Photons emitted/absorbed on transitions.</li>
+          <li>Lyman, Balmer, Paschen series.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('bohrCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const tabs = document.querySelectorAll('.tab');
+    const levelInput = document.getElementById('level');
+    const levelLabel = document.getElementById('levelLabel');
+
+    const showRadii = document.getElementById('showRadii');
+    const showEnergy = document.getElementById('showEnergy');
+    const showPhoton = document.getElementById('showPhoton');
+    const showSpectrum = document.getElementById('showSpectrum');
+    const bgButtons = document.querySelectorAll('[data-bg]');
+
+    const dataPanel = document.getElementById('dataPanel');
+
+    const a0 = 5.29e-11;
+
+    const state = {
+      n: 3,
+      photon: null,
+      spectrum: [],
+      mode: 'particle',
+      bg: 'calm',
+      electronAngle: 0
+    };
+
+    function energy(n) {
+      return -13.6 / (n * n);
+    }
+
+    function radius(n) {
+      return n * n * a0;
+    }
+
+    function wavelengthFromDelta(delta) {
+      if (!delta || delta <= 0) return null;
+      return 1240 / delta;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+      drawBackground(center);
+
+      if (state.mode === 'energy') {
+        drawEnergyDiagram(center);
+        return;
+      }
+      if (state.mode === 'spectrum') {
+        drawSpectrum(true);
+        return;
+      }
+
+      const nucleusGrad = ctx.createRadialGradient(center.x - 6, center.y - 6, 4, center.x, center.y, 16);
+      nucleusGrad.addColorStop(0, '#fde68a');
+      nucleusGrad.addColorStop(1, '#f59e0b');
+      ctx.fillStyle = nucleusGrad;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showRadii.checked) {
+        for (let i = 1; i <= 5; i++) {
+          const r = 40 + i * 30;
+          const glow = ctx.createRadialGradient(center.x, center.y, r - 1, center.x, center.y, r + 1);
+          glow.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
+          glow.addColorStop(1, 'rgba(56, 189, 248, 0)');
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.strokeStyle = glow;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      const r = 40 + state.n * 30;
+      const ex = center.x + r * Math.cos(state.electronAngle);
+      const ey = center.y + r * Math.sin(state.electronAngle);
+      ctx.fillStyle = 'var(--electron)';
+      ctx.beginPath();
+      ctx.arc(ex, ey, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showPhoton.checked && state.photon) {
+        const t = (performance.now() - state.photon.t0) / state.photon.duration;
+        if (t < 1) {
+          const pr = 40 + state.photon.from * 30;
+          const nr = 40 + state.photon.to * 30;
+          const px = center.x + pr;
+          const nx = center.x + nr;
+          const x = px + (nx - px) * t;
+          ctx.strokeStyle = state.photon.color;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(px, center.y);
+          ctx.lineTo(nx, center.y);
+          ctx.stroke();
+          ctx.fillStyle = state.photon.color;
+          ctx.beginPath();
+          ctx.arc(x, center.y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          state.photon = null;
+        }
+      }
+
+      if (showSpectrum.checked) drawSpectrum();
+    }
+
+    function drawEnergyDiagram(center) {
+      ctx.fillStyle = 'rgba(8, 12, 22, 0.85)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const left = 120;
+      const right = canvas.width - 120;
+      const top = 60;
+      const bottom = canvas.height - 60;
+      const levels = 6;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+      ctx.lineWidth = 2;
+      for (let i = 1; i <= levels; i++) {
+        const y = top + ((i - 1) / (levels - 1)) * (bottom - top);
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(248, 250, 252, 0.8)';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillText(`n=${i}`, left - 36, y + 4);
+      }
+
+      const from = Math.min(6, Math.max(1, state.n));
+      const to = Math.max(1, from - 1);
+      const yFrom = top + ((from - 1) / (levels - 1)) * (bottom - top);
+      const yTo = top + ((to - 1) / (levels - 1)) * (bottom - top);
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.9)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(center.x, yFrom);
+      ctx.lineTo(center.x, yTo);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(center.x, yTo);
+      ctx.lineTo(center.x - 6, yTo + 10);
+      ctx.lineTo(center.x + 6, yTo + 10);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
+      ctx.fill();
+    }
+
+    function updateDataPanel() {
+      const En = energy(state.n);
+      const rn = radius(state.n);
+      const last = state.spectrum[state.spectrum.length - 1];
+      const lambda = last ? wavelengthFromDelta(last.delta) : null;
+      dataPanel.innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Level n</span><span class="data-value blue">${state.n}</span></div>
+          <div class="data-card"><span class="data-label">Radius</span><span class="data-value purple">${rn.toExponential(2)} m</span></div>
+          <div class="data-card"><span class="data-label">Energy</span><span class="data-value orange">${En.toFixed(2)} eV</span></div>
+          <div class="data-card"><span class="data-label">Last ΔE</span><span class="data-value orange">${last ? last.delta.toFixed(2) : '—'} eV</span></div>
+          <div class="data-card"><span class="data-label">λ</span><span class="data-value purple">${lambda ? lambda.toFixed(1) : '—'} nm</span></div>
+        </div>
+      `;
+    }
+
+    function drawBackground(center) {
+      if (state.bg === 'calm') {
+        const grad = ctx.createRadialGradient(center.x, center.y, 20, center.x, center.y, canvas.width * 0.6);
+        grad.addColorStop(0, 'rgba(56, 189, 248, 0.1)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+        for (let r = 80; r < Math.min(canvas.width, canvas.height) / 2; r += 80) {
+          ctx.beginPath();
+          ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      } else {
+        const grad = ctx.createRadialGradient(center.x * 0.7, center.y * 0.6, 20, center.x, center.y, canvas.width);
+        grad.addColorStop(0, 'rgba(167, 139, 250, 0.18)');
+        grad.addColorStop(0.6, 'rgba(56, 189, 248, 0.08)');
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const starAlpha = document.body.classList.contains('light') ? 0.25 : 0.7;
+        for (let i = 0; i < 80; i++) {
+          const x = (i * 73) % canvas.width;
+          const y = (i * 41) % canvas.height;
+          ctx.fillStyle = `rgba(255,255,255,${starAlpha})`;
+          ctx.fillRect(x, y, 1, 1);
+        }
+        ctx.fillStyle = 'rgba(167, 139, 250, 0.08)';
+        ctx.beginPath();
+        ctx.arc(center.x * 1.1, center.y * 0.4, 120, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSpectrum(full) {
+      const baseY = full ? canvas.height / 2 : canvas.height - 40;
+      const height = full ? 120 : 24;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+      ctx.fillRect(40, baseY, canvas.width - 80, height);
+      const lines = state.spectrum.slice(-8);
+      lines.forEach((line, i) => {
+        const x = 60 + i * (full ? 60 : 40);
+        ctx.strokeStyle = line.color;
+        ctx.beginPath();
+        ctx.moveTo(x, baseY);
+        ctx.lineTo(x, baseY + height);
+        ctx.stroke();
+        if (full) {
+          ctx.fillStyle = 'rgba(248, 250, 252, 0.7)';
+          ctx.font = '11px JetBrains Mono, monospace';
+          const label = line.lambda ? `${line.lambda.toFixed(0)} nm` : '—';
+          ctx.fillText(label, x - 12, baseY + height + 14);
+        }
+      });
+    }
+
+    function loop() {
+      const baseSpeed = state.bg === 'calm' ? 0.006 : 0.012;
+      state.electronAngle += baseSpeed + state.n * 0.002;
+      draw();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    levelInput.addEventListener('input', (e) => {
+      state.n = parseInt(e.target.value, 10);
+      levelLabel.textContent = state.n;
+    });
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+      });
+    });
+
+    document.getElementById('excite').addEventListener('click', () => {
+      const prev = state.n;
+      state.n = Math.min(10, state.n + 1);
+      levelInput.value = state.n;
+      levelLabel.textContent = state.n;
+      registerTransition(prev, state.n);
+    });
+
+    document.getElementById('deexcite').addEventListener('click', () => {
+      const prev = state.n;
+      state.n = Math.max(1, state.n - 1);
+      levelInput.value = state.n;
+      levelLabel.textContent = state.n;
+      registerTransition(prev, state.n);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.n = 1;
+      levelInput.value = 1;
+      levelLabel.textContent = 1;
+      state.spectrum = [];
+      state.photon = null;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    bgButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        bgButtons.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.bg = btn.dataset.bg;
+      });
+    });
+
+    function registerTransition(from, to) {
+      if (from === to) return;
+      const delta = Math.abs(energy(to) - energy(from));
+      const lambda = wavelengthFromDelta(delta);
+      const color = delta > 5 ? '#f59e0b' : delta > 2 ? '#38bdf8' : '#a78bfa';
+      state.photon = { from, to, delta, color, t0: performance.now(), duration: 800 };
+      state.spectrum.push({ delta, color, lambda });
+      if (state.spectrum.length > 10) state.spectrum.shift();
+    }
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

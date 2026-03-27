@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Speed of Sound</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --blue: #6ad7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas {
+      width: 100%; height: 300px; background: #0b1420;
+      border: 1px solid #20324a; border-radius: 10px;
+    }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px;
+    }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px;
+      padding: 10px 12px; display: grid; gap: 6px; font-size: 13px;
+    }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Speed of Sound</h1>
+        <p>Temperature, medium, and altitude effects on sound speed</p>
+      </div>
+      <div class="pill">Mach · Travel time · Medium comparison</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Wave Visualization</h2>
+        <canvas id="sceneCanvas" width="600" height="300"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Temperature (°C)</label>
+            <input type="range" id="temp" min="-50" max="50" step="1" value="20" />
+            <div class="row"><span class="muted">T</span><span class="value" id="tempValue">20 °C</span></div>
+          </div>
+          <div class="control">
+            <label>Humidity (%)</label>
+            <input type="range" id="humidity" min="0" max="100" step="1" value="50" />
+            <div class="row"><span class="muted">RH</span><span class="value" id="humValue">50%</span></div>
+          </div>
+          <div class="control">
+            <label>Altitude (m)</label>
+            <input type="range" id="altitude" min="0" max="15000" step="100" value="0" />
+            <div class="row"><span class="muted">h</span><span class="value" id="altValue">0 m</span></div>
+          </div>
+          <div class="control">
+            <label>Medium</label>
+            <select id="medium">
+              <option value="air">Air</option>
+              <option value="helium">Helium</option>
+              <option value="co2">CO₂</option>
+              <option value="hydrogen">Hydrogen</option>
+              <option value="water">Water vapor</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Planet</label>
+            <select id="planet">
+              <option value="earth">Earth</option>
+              <option value="mars">Mars</option>
+              <option value="venus">Venus</option>
+              <option value="jupiter">Jupiter</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Distance (m)</label>
+            <input type="range" id="distance" min="10" max="1000" step="10" value="340" />
+            <div class="row"><span class="muted">d</span><span class="value" id="distValue">340 m</span></div>
+          </div>
+          <div class="control">
+            <label>Units</label>
+            <div class="toggle"><input type="checkbox" id="unitToggle" checked> m/s (off = km/h)</div>
+          </div>
+          <div class="control">
+            <label>Play Pulse</label>
+            <button id="play">Emit Pulse</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>Speed</span><span class="value" id="speedValue">343 m/s</span></div>
+            <div class="row"><span>Mach</span><span class="value" id="machValue">1.00</span></div>
+            <div class="row"><span>Time</span><span class="value" id="timeValue">0.99 s</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Equation</div>
+            <div class="row"><span>c ≈ 331.5 + 0.6T</span><span class="value" id="eqValue">343 m/s</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Speed depends mainly on temperature; humidity provides a smaller increase.</div>
+  </div>
+
+  <script>
+    const media = {
+      air: { base: 1.0 },
+      helium: { base: 2.9 },
+      co2: { base: 0.8 },
+      hydrogen: { base: 3.8 },
+      water: { base: 1.2 }
+    };
+
+    const planets = {
+      earth: { tempOffset: 0 },
+      mars: { tempOffset: -40 },
+      venus: { tempOffset: 60 },
+      jupiter: { tempOffset: -80 }
+    };
+
+    const state = {
+      temp: 20,
+      humidity: 50,
+      altitude: 0,
+      medium: 'air',
+      planet: 'earth',
+      distance: 340,
+      useMS: true,
+      pulseTime: null
+    };
+
+    const dom = {
+      temp: document.getElementById('temp'),
+      humidity: document.getElementById('humidity'),
+      altitude: document.getElementById('altitude'),
+      medium: document.getElementById('medium'),
+      planet: document.getElementById('planet'),
+      distance: document.getElementById('distance'),
+      unitToggle: document.getElementById('unitToggle'),
+      play: document.getElementById('play'),
+      tempValue: document.getElementById('tempValue'),
+      humValue: document.getElementById('humValue'),
+      altValue: document.getElementById('altValue'),
+      distValue: document.getElementById('distValue'),
+      speedValue: document.getElementById('speedValue'),
+      machValue: document.getElementById('machValue'),
+      timeValue: document.getElementById('timeValue'),
+      eqValue: document.getElementById('eqValue')
+    };
+
+    const sceneCanvas = document.getElementById('sceneCanvas');
+    const sceneCtx = sceneCanvas.getContext('2d');
+
+    function speedOfSound() {
+      const baseTemp = state.temp + planets[state.planet].tempOffset - 0.0065 * state.altitude / 1000 * 1000;
+      const c = 331.5 + 0.6 * baseTemp;
+      const humFactor = 1 + state.humidity / 1000;
+      return c * media[state.medium].base * humFactor;
+    }
+
+    function updateReadouts() {
+      const c = speedOfSound();
+      const t = state.distance / c;
+      dom.tempValue.textContent = `${state.temp} °C`;
+      dom.humValue.textContent = `${state.humidity}%`;
+      dom.altValue.textContent = `${state.altitude} m`;
+      dom.distValue.textContent = `${state.distance} m`;
+      dom.speedValue.textContent = state.useMS ? `${c.toFixed(1)} m/s` : `${(c * 3.6).toFixed(1)} km/h`;
+      dom.machValue.textContent = `${(c / 343).toFixed(2)}`;
+      dom.timeValue.textContent = `${t.toFixed(2)} s`;
+      dom.eqValue.textContent = `${c.toFixed(1)} m/s`;
+    }
+
+    function drawScene(t) {
+      const w = sceneCanvas.width;
+      const h = sceneCanvas.height;
+      sceneCtx.clearRect(0, 0, w, h);
+      sceneCtx.fillStyle = '#0b1420';
+      sceneCtx.fillRect(0, 0, w, h);
+
+      sceneCtx.fillStyle = '#6ad7ff';
+      sceneCtx.beginPath();
+      sceneCtx.arc(80, h / 2, 10, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.fillStyle = '#8aa0b8';
+      sceneCtx.fillText('Source', 60, h / 2 - 20);
+
+      sceneCtx.fillStyle = '#f6c76b';
+      sceneCtx.beginPath();
+      sceneCtx.arc(w - 80, h / 2, 8, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.fillStyle = '#8aa0b8';
+      sceneCtx.fillText('Listener', w - 100, h / 2 - 20);
+
+      if (state.pulseTime !== null) {
+        const elapsed = t - state.pulseTime;
+        const radius = elapsed * speedOfSound();
+        sceneCtx.strokeStyle = 'rgba(106,215,255,0.6)';
+        sceneCtx.lineWidth = 2;
+        sceneCtx.beginPath();
+        sceneCtx.arc(80, h / 2, radius, 0, Math.PI * 2);
+        sceneCtx.stroke();
+      }
+    }
+
+    function update() {
+      updateReadouts();
+      drawScene(performance.now()/1000);
+    }
+
+    function tick() {
+      drawScene(performance.now()/1000);
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.temp.addEventListener('input', () => { state.temp = Number(dom.temp.value); update(); });
+      dom.humidity.addEventListener('input', () => { state.humidity = Number(dom.humidity.value); update(); });
+      dom.altitude.addEventListener('input', () => { state.altitude = Number(dom.altitude.value); update(); });
+      dom.medium.addEventListener('change', () => { state.medium = dom.medium.value; update(); });
+      dom.planet.addEventListener('change', () => { state.planet = dom.planet.value; update(); });
+      dom.distance.addEventListener('input', () => { state.distance = Number(dom.distance.value); update(); });
+      dom.unitToggle.addEventListener('change', () => { state.useMS = dom.unitToggle.checked; update(); });
+      dom.play.addEventListener('click', () => { state.pulseTime = performance.now()/1000; });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heat Engines</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --hot: #ff6b6b;
+      --cold: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Heat Engines</h1>
+        <p>Cycles, PV diagrams, and efficiency</p>
+      </div>
+      <div class="pill">η = 1 - Tc/Th · Otto · Diesel</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Piston & Cycle</h2>
+        <canvas id="pistonCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">PV Diagram</h2>
+            <canvas id="pvCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Energy Flow</h2>
+            <canvas id="energyCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Cycle Type</label>
+            <select id="cycle">
+              <option value="carnot" selected>Carnot</option>
+              <option value="otto">Otto</option>
+              <option value="diesel">Diesel</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Hot Temperature (K)</label>
+            <input type="range" id="th" min="400" max="1200" step="10" value="600" />
+            <div class="row"><span class="muted">Th</span><span class="value" id="thValue">600 K</span></div>
+          </div>
+          <div class="control">
+            <label>Cold Temperature (K)</label>
+            <input type="range" id="tc" min="200" max="600" step="10" value="300" />
+            <div class="row"><span class="muted">Tc</span><span class="value" id="tcValue">300 K</span></div>
+          </div>
+          <div class="control">
+            <label>Compression Ratio (r)</label>
+            <input type="range" id="cr" min="5" max="20" step="1" value="8" />
+            <div class="row"><span class="muted">r</span><span class="value" id="crValue">8</span></div>
+          </div>
+          <div class="control">
+            <label>Cutoff Ratio (rc)</label>
+            <input type="range" id="rc" min="1.2" max="3" step="0.1" value="2" />
+            <div class="row"><span class="muted">rc</span><span class="value" id="rcValue">2.0</span></div>
+          </div>
+          <div class="control">
+            <label>Animation Speed</label>
+            <input type="range" id="speed" min="0.5" max="2.5" step="0.1" value="1" />
+            <div class="row"><span class="muted">Rate</span><span class="value" id="speedValue">1.0×</span></div>
+          </div>
+          <div class="control">
+            <label>Show PV Diagram</label>
+            <div class="toggle">
+              <input type="checkbox" id="showPV" checked />
+              <span>PV curve</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Energy Flow</label>
+            <div class="toggle">
+              <input type="checkbox" id="showEnergy" checked />
+              <span>Heat in/out</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Efficiency</div>
+            <div class="row"><span>η</span><span class="value" id="effValue">0.50</span></div>
+            <div class="row"><span>Work</span><span class="value" id="workValue">50 kJ</span></div>
+            <div class="row"><span>Cycle</span><span class="value" id="cycleValue">Carnot</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span id="noteValue">Carnot is the maximum possible efficiency.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">PV diagram area equals work output. Carnot sets the upper efficiency bound.</div>
+  </div>
+
+  <script>
+    const state = {
+      cycle: 'carnot',
+      th: 600,
+      tc: 300,
+      cr: 8,
+      rc: 2,
+      speed: 1,
+      showPV: true,
+      showEnergy: true,
+      time: 0
+    };
+
+    const dom = {
+      cycle: document.getElementById('cycle'),
+      th: document.getElementById('th'),
+      tc: document.getElementById('tc'),
+      cr: document.getElementById('cr'),
+      rc: document.getElementById('rc'),
+      speed: document.getElementById('speed'),
+      showPV: document.getElementById('showPV'),
+      showEnergy: document.getElementById('showEnergy'),
+      thValue: document.getElementById('thValue'),
+      tcValue: document.getElementById('tcValue'),
+      crValue: document.getElementById('crValue'),
+      rcValue: document.getElementById('rcValue'),
+      speedValue: document.getElementById('speedValue'),
+      effValue: document.getElementById('effValue'),
+      workValue: document.getElementById('workValue'),
+      cycleValue: document.getElementById('cycleValue'),
+      noteValue: document.getElementById('noteValue'),
+      pistonCanvas: document.getElementById('pistonCanvas'),
+      pvCanvas: document.getElementById('pvCanvas'),
+      energyCanvas: document.getElementById('energyCanvas')
+    };
+
+    const pistonCtx = dom.pistonCanvas.getContext('2d');
+    const pvCtx = dom.pvCanvas.getContext('2d');
+    const energyCtx = dom.energyCanvas.getContext('2d');
+
+    function efficiency() {
+      const gamma = 1.4;
+      if (state.cycle === 'carnot') return 1 - state.tc / state.th;
+      if (state.cycle === 'otto') return 1 - 1 / Math.pow(state.cr, gamma - 1);
+      const r = state.cr;
+      const rc = state.rc;
+      return 1 - (1 / Math.pow(r, gamma - 1)) * (Math.pow(rc, gamma) - 1) / (gamma * (rc - 1));
+    }
+
+    function updateReadouts() {
+      dom.thValue.textContent = `${state.th} K`;
+      dom.tcValue.textContent = `${state.tc} K`;
+      dom.crValue.textContent = state.cr;
+      dom.rcValue.textContent = state.rc.toFixed(1);
+      dom.speedValue.textContent = `${state.speed.toFixed(1)}×`;
+      dom.effValue.textContent = efficiency().toFixed(2);
+      dom.workValue.textContent = `${(efficiency() * 100).toFixed(0)} kJ`;
+      dom.cycleValue.textContent = state.cycle;
+      dom.noteValue.textContent = state.cycle === 'carnot'
+        ? 'Carnot is the maximum possible efficiency.'
+        : state.cycle === 'otto'
+        ? 'Otto cycle efficiency depends on compression ratio.'
+        : 'Diesel cycle uses cutoff ratio during heat addition.';
+    }
+
+    function drawPiston() {
+      const w = dom.pistonCanvas.width;
+      const h = dom.pistonCanvas.height;
+      pistonCtx.clearRect(0, 0, w, h);
+      pistonCtx.fillStyle = '#0b1420';
+      pistonCtx.fillRect(0, 0, w, h);
+      const mid = w / 2;
+      const pistonY = 60 + Math.sin(state.time) * 40;
+      pistonCtx.strokeStyle = '#6ad7ff';
+      pistonCtx.lineWidth = 4;
+      pistonCtx.strokeRect(mid - 60, 40, 120, 180);
+      pistonCtx.fillStyle = '#f6c76b';
+      pistonCtx.fillRect(mid - 50, pistonY, 100, 20);
+      pistonCtx.fillStyle = '#8aa0b8';
+      pistonCtx.fillText('Piston', mid - 20, pistonY - 10);
+    }
+
+    function drawPV() {
+      const w = dom.pvCanvas.width;
+      const h = dom.pvCanvas.height;
+      pvCtx.clearRect(0, 0, w, h);
+      pvCtx.fillStyle = '#0b1420';
+      pvCtx.fillRect(0, 0, w, h);
+      if (!state.showPV) return;
+      pvCtx.strokeStyle = '#6ad7ff';
+      pvCtx.beginPath();
+      pvCtx.moveTo(40, h - 40);
+      pvCtx.lineTo(w / 2, 40);
+      pvCtx.lineTo(w - 40, h - 40);
+      pvCtx.lineTo(40, h - 40);
+      pvCtx.stroke();
+    }
+
+    function drawEnergy() {
+      const w = dom.energyCanvas.width;
+      const h = dom.energyCanvas.height;
+      energyCtx.clearRect(0, 0, w, h);
+      energyCtx.fillStyle = '#0b1420';
+      energyCtx.fillRect(0, 0, w, h);
+      if (!state.showEnergy) return;
+      energyCtx.fillStyle = '#f6c76b';
+      energyCtx.fillRect(40, h / 2 - 20, 80, 40);
+      energyCtx.fillRect(w - 120, h / 2 - 20, 80, 40);
+      energyCtx.fillStyle = '#8aa0b8';
+      energyCtx.fillText('Q_in', 50, h / 2 - 30);
+      energyCtx.fillText('Q_out', w - 120, h / 2 - 30);
+    }
+
+    function render() {
+      updateReadouts();
+      drawPiston();
+      drawPV();
+      drawEnergy();
+    }
+
+    function tick() {
+      state.time += 0.02 * state.speed;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.cycle.addEventListener('change', () => { state.cycle = dom.cycle.value; render(); });
+      dom.th.addEventListener('input', () => { state.th = Number(dom.th.value); render(); });
+      dom.tc.addEventListener('input', () => { state.tc = Number(dom.tc.value); render(); });
+      dom.cr.addEventListener('input', () => { state.cr = Number(dom.cr.value); render(); });
+      dom.rc.addEventListener('input', () => { state.rc = Number(dom.rc.value); render(); });
+      dom.speed.addEventListener('input', () => { state.speed = Number(dom.speed.value); render(); });
+      dom.showPV.addEventListener('change', () => { state.showPV = dom.showPV.checked; render(); });
+      dom.showEnergy.addEventListener('change', () => { state.showEnergy = dom.showEnergy.checked; render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

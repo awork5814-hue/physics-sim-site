@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simple Pendulum</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #3b82f6;
+      --accent-2: #60a5fa;
+      --energy-ke: #3b82f6;
+      --energy-pe: #f59e0b;
+      --string-color: #f8fafc;
+      --trail-color: rgba(59, 130, 246, 0.35);
+      --grid-color: rgba(148, 163, 184, 0.12);
+      --sim-bg: #0a0a0f;
+      --sim-text: #f8fafc;
+      --sim-muted: #94a3b8;
+      --sim-border: rgba(255, 255, 255, 0.08);
+      --panel: rgba(17, 24, 39, 0.72);
+      --graph-line: #3b82f6;
+      --graph-bg: rgba(10, 15, 25, 0.9);
+      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      --mono: "JetBrains Mono", monospace;
+    }
+
+    body.light {
+      --sim-bg: #f5f7fa;
+      --sim-text: #0f172a;
+      --sim-muted: #475569;
+      --sim-border: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255, 255, 255, 0.85);
+      --graph-bg: rgba(248, 250, 252, 0.9);
+      --grid-color: rgba(15, 23, 42, 0.08);
+    }
+
+    body {
+      margin: 0;
+      background: var(--sim-bg);
+      color: var(--sim-text);
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(12px);
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 10px;
+    }
+
+    canvas {
+      width: 100%;
+      height: clamp(360px, 55vh, 520px);
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select, input[type="number"] {
+      width: 100%;
+    }
+
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .inline > * {
+      flex: 1;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(106, 215, 255, 0.2);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(59, 130, 246, 0.5);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+    }
+
+    .data-panel {
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 6px;
+    }
+
+    .data-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .data-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--sim-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .data-label::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .data-value {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      line-height: 1.2;
+    }
+
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: #f59e0b; }
+    .data-value.green { color: #22c55e; }
+    .data-value.red { color: #ef4444; }
+    .data-value.gray { color: var(--sim-text); }
+
+    .energy-bars {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(120, 150, 190, 0.2);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .graph-panel {
+      margin: 0 28px 20px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: clamp(300px, 45vh, 420px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="pendulum">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>The Simple Pendulum</h1>
+      <p>Period depends on length and gravity, not mass</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="pendulumCanvas" width="900" height="520" aria-label="Pendulum simulation"></canvas>
+        <div style="color: var(--sim-muted); font-size: 0.85rem;">
+          Tip: if you pause and want motion again, press Play or drag the bob slightly and release.
+        </div>
+        <div class="btn-row">
+          <button id="playPause">Play</button>
+          <button id="reset">Reset</button>
+          <button id="setVertical">Set Vertical</button>
+          <button id="stepBack">Step ◀</button>
+          <button id="stepForward">Step ▶</button>
+        </div>
+        <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+        <div class="energy-bars" id="energyBars">
+          <div>KE</div>
+          <div class="bar"><span id="keBar" style="background: var(--energy-ke); width: 0%;"></span></div>
+          <div>PE</div>
+          <div class="bar"><span id="peBar" style="background: var(--energy-pe); width: 0%;"></span></div>
+          <div>Total</div>
+          <div class="bar"><span id="totalBar" style="background: linear-gradient(90deg, var(--energy-ke), var(--energy-pe)); width: 100%;"></span></div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <h3 style="margin: 0 0 10px;">Pendulum Parameters</h3>
+        <div class="control-group">
+          <label for="length">Length <strong id="lengthLabel">1.00 m</strong></label>
+          <input type="range" id="length" min="0.5" max="3.0" step="0.01" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label for="mass">Mass <strong id="massLabel">1.0 kg</strong></label>
+          <input type="range" id="mass" min="0.5" max="5.0" step="0.1" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label>Gravity Presets</label>
+          <div class="btn-row" id="gravityPresets">
+            <button type="button" data-g="9.81">Earth</button>
+            <button type="button" data-g="1.62">Moon</button>
+            <button type="button" data-g="3.71">Mars</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="gravity">Gravity <strong id="gravityLabel">9.81 m/s²</strong></label>
+          <input type="range" id="gravity" min="0" max="20" step="0.01" value="9.81" />
+        </div>
+
+        <div class="control-group">
+          <label class="toggle"><input type="checkbox" id="dampingToggle" /> Air Resistance</label>
+          <div id="dampingWrap" class="hidden">
+            <label for="damping">Damping <strong id="dampingLabel">0.00</strong></label>
+            <input type="range" id="damping" min="0" max="0.2" step="0.005" value="0" />
+          </div>
+        </div>
+
+        <h3 style="margin: 10px 0 0;">Simulation Controls</h3>
+        <div class="control-group">
+          <label for="angle">Initial Angle <strong id="angleLabel">30°</strong></label>
+          <input type="range" id="angle" min="-180" max="180" step="1" value="30" />
+        </div>
+
+        <div class="control-group">
+          <div class="inline">
+            <label for="angleInput">Angle</label>
+            <input type="number" id="angleInput" value="30" />
+            <select id="angleUnit">
+              <option value="deg" selected>°</option>
+              <option value="rad">rad</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label class="toggle"><input type="checkbox" id="dragMode" checked /> Drag to set angle</label>
+        </div>
+
+        <div class="control-group">
+          <label for="speed">Simulation Speed <strong id="speedLabel">1.00x</strong></label>
+          <input type="range" id="speed" min="0.25" max="2" step="0.05" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showGrid" checked /> Grid overlay</label>
+          <label><input type="checkbox" id="showAngle" checked /> Angle protractor</label>
+          <label><input type="checkbox" id="showVelocity" checked /> Velocity vector</label>
+          <label><input type="checkbox" id="showCOM" checked /> Center of mass</label>
+          <label><input type="checkbox" id="showEnergy" checked /> Energy bars</label>
+          <label><input type="checkbox" id="showPhase" checked /> Phase space overlay</label>
+          <label><input type="checkbox" id="showReadout" checked /> Numerical readouts</label>
+          <label><input type="checkbox" id="showTrail" checked /> Motion trail</label>
+          <label><input type="checkbox" id="rodMode" /> Rigid rod</label>
+          <label><input type="checkbox" id="precisionMode" /> Precision mode</label>
+        </div>
+
+        <div class="control-group">
+          <label>Units</label>
+          <select id="unitToggle">
+            <option value="metric" selected>Metric</option>
+            <option value="imperial">Imperial</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel graph-panel">
+      <details open>
+        <summary>Angle vs Time</summary>
+        <canvas id="angleCanvas" width="900" height="220" aria-label="Angle graph"></canvas>
+      </details>
+      <details>
+        <summary>Energy Over Time</summary>
+        <canvas id="energyCanvas" width="900" height="220" aria-label="Energy graph"></canvas>
+      </details>
+      <details>
+        <summary>Phase Space</summary>
+        <canvas id="phaseCanvas" width="900" height="220" aria-label="Phase space graph"></canvas>
+      </details>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>A simple pendulum is a mass (bob) attached to a fixed pivot by a massless string. For small angles, the period depends only on length and gravity.</p>
+        <p><strong>Formula:</strong> T = 2π√(L/g)</p>
+        <p>Longer length means a longer period, and stronger gravity means a shorter period. Mass does not affect the period.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Keep g = 9.81 and θ₀ = 30°. Change L from 0.5 m to 2 m. What happens to the period?</li>
+          <li>Keep L = 1 m. Compare the period on Earth vs Moon. Which is longer and why?</li>
+          <li>Change mass from 0.5 kg to 5 kg with same L and g. Does period change?</li>
+          <li>Small angle (10°) vs large angle (60°): Is the formula accurate for both?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Period formula: T = 2π√(L/g)</li>
+          <li>Independent of mass for small angles.</li>
+          <li>Useful for measuring gravity.</li>
+          <li>Best accuracy for angles below ~15°.</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>🎯 Mini-Challenge</summary>
+        <p>Set L and g so that T = 2 seconds (like a grandfather clock). Hint: L ≈ g/π².</p>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('pendulumCanvas');
+    const ctx = canvas.getContext('2d');
+    const angleCanvas = document.getElementById('angleCanvas');
+    const energyCanvas = document.getElementById('energyCanvas');
+    const phaseCanvas = document.getElementById('phaseCanvas');
+    const angleCtx = angleCanvas.getContext('2d');
+    const energyCtx = energyCanvas.getContext('2d');
+    const phaseCtx = phaseCanvas.getContext('2d');
+
+    const lengthInput = document.getElementById('length');
+    const angleInput = document.getElementById('angle');
+    const massInput = document.getElementById('mass');
+    const gravityInput = document.getElementById('gravity');
+    const dampingInput = document.getElementById('damping');
+    const dampingToggle = document.getElementById('dampingToggle');
+    const dampingWrap = document.getElementById('dampingWrap');
+    const speedInput = document.getElementById('speed');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const setVerticalBtn = document.getElementById('setVertical');
+    const stepBackBtn = document.getElementById('stepBack');
+    const stepForwardBtn = document.getElementById('stepForward');
+    const angleInputField = document.getElementById('angleInput');
+    const angleUnit = document.getElementById('angleUnit');
+    const dragMode = document.getElementById('dragMode');
+    const unitToggle = document.getElementById('unitToggle');
+    const gravityPresets = document.getElementById('gravityPresets');
+
+    const lengthLabel = document.getElementById('lengthLabel');
+    const angleLabel = document.getElementById('angleLabel');
+    const massLabel = document.getElementById('massLabel');
+    const gravityLabel = document.getElementById('gravityLabel');
+    const dampingLabel = document.getElementById('dampingLabel');
+    const speedLabel = document.getElementById('speedLabel');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const keBar = document.getElementById('keBar');
+    const peBar = document.getElementById('peBar');
+    const totalBar = document.getElementById('totalBar');
+    const energyBars = document.getElementById('energyBars');
+
+    const showGrid = document.getElementById('showGrid');
+    const showAngle = document.getElementById('showAngle');
+    const showVelocity = document.getElementById('showVelocity');
+    const showCOM = document.getElementById('showCOM');
+    const showEnergy = document.getElementById('showEnergy');
+    const showPhase = document.getElementById('showPhase');
+    const showReadout = document.getElementById('showReadout');
+    const showTrail = document.getElementById('showTrail');
+    const rodMode = document.getElementById('rodMode');
+    const precisionMode = document.getElementById('precisionMode');
+
+    const state = {
+      length: 1,
+      mass: 1,
+      gravity: 9.81,
+      initialAngle: 30,
+      angle: toRad(30),
+      angularVelocity: 0,
+      damping: 0,
+      time: 0,
+      playing: false,
+      speed: 1,
+      trail: [],
+      unit: 'metric',
+      dragEnabled: true,
+      energy0: null
+    };
+
+    const graphData = {
+      angle: [],
+      omega: [],
+      ke: [],
+      pe: [],
+      total: []
+    };
+
+    const maxGraphPoints = 240;
+
+    function toRad(deg) {
+      return (deg * Math.PI) / 180;
+    }
+
+    function toDeg(rad) {
+      return (rad * 180) / Math.PI;
+    }
+
+    function cssVar(name, fallback) {
+      const value = getComputedStyle(document.body).getPropertyValue(name).trim();
+      return value || fallback;
+    }
+
+    function mToFt(m) {
+      return m * 3.28084;
+    }
+
+    function kgToLb(kg) {
+      return kg * 2.20462;
+    }
+
+    function jToFtLb(j) {
+      return j * 0.737562;
+    }
+
+    function gToImperial(g) {
+      return g * 3.28084;
+    }
+
+    function updateLabels() {
+      const lengthValue = state.unit === 'metric' ? state.length : mToFt(state.length);
+      const lengthUnit = state.unit === 'metric' ? 'm' : 'ft';
+      lengthLabel.textContent = `${lengthValue.toFixed(2)} ${lengthUnit}`;
+      angleLabel.textContent = `${state.initialAngle.toFixed(0)}°`;
+      const massValue = state.unit === 'metric' ? state.mass : kgToLb(state.mass);
+      const massUnit = state.unit === 'metric' ? 'kg' : 'lb';
+      massLabel.textContent = `${massValue.toFixed(1)} ${massUnit}`;
+      const gValue = state.unit === 'metric' ? state.gravity : gToImperial(state.gravity);
+      const gUnit = state.unit === 'metric' ? 'm/s²' : 'ft/s²';
+      gravityLabel.textContent = `${gValue.toFixed(2)} ${gUnit}`;
+      dampingLabel.textContent = state.damping.toFixed(2);
+      speedLabel.textContent = `${state.speed.toFixed(2)}x`;
+    }
+
+    function smallAnglePeriod() {
+      return 2 * Math.PI * Math.sqrt(state.length / state.gravity);
+    }
+
+    function computeEnergies() {
+      const v = state.length * state.angularVelocity;
+      const ke = 0.5 * state.mass * v * v;
+      const h = state.length * (1 - Math.cos(state.angle));
+      const pe = state.mass * state.gravity * h;
+      const total = ke + pe;
+      return { ke, pe, total, h, v };
+    }
+
+    function updatePhysics(dt) {
+      const b = state.damping;
+      const g = state.gravity;
+      const L = state.length;
+
+      const deriv = (theta, omega) => {
+        const domega = -(g / L) * Math.sin(theta) - b * omega;
+        return { dtheta: omega, domega };
+      };
+
+      const k1 = deriv(state.angle, state.angularVelocity);
+      const k2 = deriv(state.angle + k1.dtheta * dt / 2, state.angularVelocity + k1.domega * dt / 2);
+      const k3 = deriv(state.angle + k2.dtheta * dt / 2, state.angularVelocity + k2.domega * dt / 2);
+      const k4 = deriv(state.angle + k3.dtheta * dt, state.angularVelocity + k3.domega * dt);
+
+      state.angle += (dt / 6) * (k1.dtheta + 2 * k2.dtheta + 2 * k3.dtheta + k4.dtheta);
+      state.angularVelocity += (dt / 6) * (k1.domega + 2 * k2.domega + 2 * k3.domega + k4.domega);
+      state.time += dt;
+
+      const position = getBobPosition();
+      if (showTrail.checked) {
+        state.trail.push({ ...position, t: state.time });
+        const cutoff = state.time - 1.5;
+        state.trail = state.trail.filter((p) => p.t >= cutoff);
+      } else {
+        state.trail = [];
+      }
+    }
+
+    function resetPendulum() {
+      state.angle = toRad(state.initialAngle);
+      state.angularVelocity = 0;
+      state.time = 0;
+      state.trail = [];
+      state.energy0 = null;
+      Object.keys(graphData).forEach((key) => (graphData[key] = []));
+    }
+
+    function getBobPosition() {
+      const scale = Math.min(canvas.width, canvas.height) * 0.35;
+      const Lpix = scale * state.length;
+      const origin = { x: canvas.width / 2, y: canvas.height * 0.2 };
+      const x = origin.x + Lpix * Math.sin(state.angle);
+      const y = origin.y + Lpix * Math.cos(state.angle);
+      return { x, y, origin, Lpix };
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const { x, y, origin, Lpix } = getBobPosition();
+
+      if (showGrid.checked) drawGrid();
+      if (showAngle.checked) drawArcPath(origin, Lpix);
+
+      drawTrail();
+
+      const rodGrad = ctx.createLinearGradient(origin.x, origin.y, x, y);
+      rodGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+      rodGrad.addColorStop(1, 'rgba(148, 163, 184, 0.8)');
+      ctx.strokeStyle = rodMode.checked ? rodGrad : 'rgba(248, 250, 252, 0.7)';
+      ctx.lineWidth = rodMode.checked ? 3.2 : 2;
+      ctx.beginPath();
+      ctx.moveTo(origin.x, origin.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      drawShadow(origin, Lpix, x, y);
+
+      const gradient = ctx.createRadialGradient(x - 10, y - 10, 6, x, y, 22);
+      gradient.addColorStop(0, '#e2e8f0');
+      gradient.addColorStop(1, '#64748b');
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = 'rgba(59, 130, 246, 0.35)';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      if (showAngle.checked) drawAngleArc(origin, Lpix);
+      if (showVelocity.checked) drawVelocityVector(x, y);
+      drawCenterOfMass(origin, x, y);
+      if (showPhase.checked) drawPhaseOverlay();
+    }
+
+    function drawGrid() {
+      const step = 40;
+      ctx.strokeStyle = cssVar('--grid-color', 'rgba(148, 163, 184, 0.12)');
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= canvas.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= canvas.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawArcPath(origin, Lpix) {
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+      ctx.setLineDash([4, 6]);
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, Lpix, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawTrail() {
+      if (!showTrail.checked || state.trail.length < 2) return;
+      state.trail.forEach((p, i) => {
+        const alpha = (i / state.trail.length) * 0.6;
+        ctx.fillStyle = `rgba(59, 130, 246, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6 + i * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function drawAngleArc(origin, Lpix) {
+      const theta = state.angle;
+      const radius = Math.max(40, Lpix * 0.2);
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(origin.x, origin.y, radius, Math.PI / 2, Math.PI / 2 + theta, theta < 0);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(`θ = ${toDeg(theta).toFixed(1)}°`, origin.x + radius + 8, origin.y + 8);
+    }
+
+    function drawVelocityVector(x, y) {
+      const v = state.length * state.angularVelocity;
+      const scale = 14;
+      const dx = Math.cos(state.angle + Math.PI / 2) * v * scale;
+      const dy = Math.sin(state.angle + Math.PI / 2) * v * scale;
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.85)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+      ctx.stroke();
+    }
+
+    function drawCenterOfMass(origin, x, y) {
+      if (!showCOM.checked) return;
+      const cx = (origin.x + x) / 2;
+      const cy = (origin.y + y) / 2;
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawShadow(origin, Lpix, x, y) {
+      const groundY = origin.y + Lpix + 40;
+      const blur = 18;
+      const stretch = 1 + Math.abs(Math.sin(state.angle)) * 0.6;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(x, groundY, 24 * stretch, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = blur;
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 0;
+    }
+
+    function drawPhaseOverlay() {
+      const box = { x: canvas.width - 180, y: 20, w: 160, h: 120 };
+      ctx.fillStyle = 'rgba(10, 15, 25, 0.7)';
+      ctx.fillRect(box.x, box.y, box.w, box.h);
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+      ctx.strokeRect(box.x, box.y, box.w, box.h);
+      ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
+      ctx.beginPath();
+      graphData.omega.forEach((p, i) => {
+        const gx = box.x + box.w / 2 + (graphData.angle[i]?.v || 0) * 0.5;
+        const gy = box.y + box.h / 2 - p.v * 15;
+        if (i === 0) ctx.moveTo(gx, gy);
+        else ctx.lineTo(gx, gy);
+      });
+      ctx.stroke();
+    }
+
+    function updateDataPanel() {
+      const T = smallAnglePeriod();
+      const f = 1 / T;
+      const omega = Math.sqrt(state.gravity / state.length);
+      const { ke, pe, total, h, v } = computeEnergies();
+      if (state.energy0 === null) state.energy0 = total || 1;
+      const drift = Math.abs(total - state.energy0) / state.energy0;
+      const driftPct = (drift * 100).toFixed(2);
+      const driftClass = drift < 0.01 ? 'green' : drift < 0.03 ? 'orange' : 'red';
+
+      const energyUnit = state.unit === 'metric' ? 'J' : 'ft·lb';
+      const keDisplay = state.unit === 'metric' ? ke : jToFtLb(ke);
+      const peDisplay = state.unit === 'metric' ? pe : jToFtLb(pe);
+      const totalDisplay = state.unit === 'metric' ? total : jToFtLb(total);
+
+      dataPanel.innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Angle</span><span class="data-value blue">${toDeg(state.angle).toFixed(1)}°</span></div>
+          <div class="data-card"><span class="data-label">Angular Velocity</span><span class="data-value green">${state.angularVelocity.toFixed(2)} <small>rad/s</small></span></div>
+          <div class="data-card"><span class="data-label">Period</span><span class="data-value blue">${T.toFixed(2)} <small>s</small></span></div>
+          <div class="data-card"><span class="data-label">Frequency</span><span class="data-value blue">${f.toFixed(2)} <small>Hz</small></span></div>
+          <div class="data-card"><span class="data-label">Total Energy</span><span class="data-value orange">${totalDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
+          <div class="data-card"><span class="data-label">Kinetic</span><span class="data-value green">${keDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
+          <div class="data-card"><span class="data-label">Potential</span><span class="data-value orange">${peDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
+          <div class="data-card"><span class="data-label">Energy Drift</span><span class="data-value ${driftClass}">${driftPct}%</span></div>
+        </div>
+      `;
+
+      const maxE = Math.max(total, 0.001);
+      keBar.style.width = `${(ke / maxE) * 100}%`;
+      peBar.style.width = `${(pe / maxE) * 100}%`;
+      totalBar.style.width = '100%';
+      energyBars.style.display = showEnergy.checked ? 'grid' : 'none';
+    }
+
+    function updateGraphs() {
+      const t = state.time;
+      const { ke, pe, total } = computeEnergies();
+      graphData.angle.push({ t, v: toDeg(state.angle) });
+      graphData.omega.push({ t, v: state.angularVelocity });
+      graphData.ke.push({ t, v: ke });
+      graphData.pe.push({ t, v: pe });
+      graphData.total.push({ t, v: total });
+
+      Object.keys(graphData).forEach((key) => {
+        if (graphData[key].length > maxGraphPoints) graphData[key].shift();
+      });
+    }
+
+    function drawGraph() {
+      drawSeries(angleCtx, angleCanvas, graphData.angle, 'rgba(59, 130, 246, 0.9)');
+      drawEnergyGraph();
+      drawPhaseGraph();
+    }
+
+    function drawSeries(context, canvasEl, series, color) {
+      context.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      context.fillStyle = 'rgba(10, 15, 25, 0.8)';
+      context.fillRect(0, 0, canvasEl.width, canvasEl.height);
+
+      const padding = 30;
+      const width = canvasEl.width - padding * 2;
+      const height = canvasEl.height - padding * 2;
+
+      context.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      context.beginPath();
+      context.moveTo(padding, padding);
+      context.lineTo(padding, padding + height);
+      context.lineTo(padding + width, padding + height);
+      context.stroke();
+
+      drawLineSeries(context, series, padding, width, height, color);
+    }
+
+    function drawLineSeries(context, series, padding, width, height, color) {
+      if (series.length < 2) return;
+      const t0 = series[0].t;
+      const t1 = series[series.length - 1].t;
+      let minV = Infinity;
+      let maxV = -Infinity;
+      series.forEach((p) => {
+        minV = Math.min(minV, p.v);
+        maxV = Math.max(maxV, p.v);
+      });
+      if (Math.abs(maxV - minV) < 1e-6) {
+        maxV += 1;
+        minV -= 1;
+      }
+      series.forEach((p, i) => {
+        const x = padding + ((p.t - t0) / (t1 - t0)) * width;
+        const y = padding + height - ((p.v - minV) / (maxV - minV)) * height;
+        if (i === 0) {
+          context.beginPath();
+          context.moveTo(x, y);
+        } else {
+          context.lineTo(x, y);
+        }
+      });
+      context.strokeStyle = color;
+      context.lineWidth = 2;
+      context.stroke();
+    }
+
+    function drawEnergyGraph() {
+      energyCtx.clearRect(0, 0, energyCanvas.width, energyCanvas.height);
+      energyCtx.fillStyle = 'rgba(10, 15, 25, 0.8)';
+      energyCtx.fillRect(0, 0, energyCanvas.width, energyCanvas.height);
+      const padding = 30;
+      const width = energyCanvas.width - padding * 2;
+      const height = energyCanvas.height - padding * 2;
+      energyCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      energyCtx.beginPath();
+      energyCtx.moveTo(padding, padding);
+      energyCtx.lineTo(padding, padding + height);
+      energyCtx.lineTo(padding + width, padding + height);
+      energyCtx.stroke();
+      drawLineSeries(energyCtx, graphData.ke, padding, width, height, 'rgba(59, 130, 246, 0.9)');
+      drawLineSeries(energyCtx, graphData.pe, padding, width, height, 'rgba(245, 158, 11, 0.9)');
+      drawLineSeries(energyCtx, graphData.total, padding, width, height, 'rgba(226, 232, 240, 0.7)');
+    }
+
+    function drawPhaseGraph() {
+      phaseCtx.clearRect(0, 0, phaseCanvas.width, phaseCanvas.height);
+      phaseCtx.fillStyle = 'rgba(10, 15, 25, 0.8)';
+      phaseCtx.fillRect(0, 0, phaseCanvas.width, phaseCanvas.height);
+      const padding = 30;
+      const width = phaseCanvas.width - padding * 2;
+      const height = phaseCanvas.height - padding * 2;
+      phaseCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      phaseCtx.strokeRect(padding, padding, width, height);
+      phaseCtx.strokeStyle = 'rgba(59, 130, 246, 0.9)';
+      phaseCtx.beginPath();
+      graphData.omega.forEach((p, i) => {
+        const angle = graphData.angle[i]?.v || 0;
+        const x = padding + width / 2 + angle * 0.8;
+        const y = padding + height / 2 - p.v * 12;
+        if (i === 0) phaseCtx.moveTo(x, y);
+        else phaseCtx.lineTo(x, y);
+      });
+      phaseCtx.stroke();
+    }
+
+    function loop(timestamp) {
+      const dt = 1 / 60;
+      if (state.playing) {
+        const steps = precisionMode.checked ? 2 : 1;
+        for (let i = 0; i < steps; i++) {
+          updatePhysics((dt * state.speed) / steps);
+        }
+        updateGraphs();
+      }
+      draw();
+      updateDataPanel();
+      drawGraph();
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousedown', (event) => {
+      if (!dragMode.checked) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+      const pos = getBobPosition();
+      const dist = Math.hypot(x - pos.x, y - pos.y);
+      if (dist < 26) {
+        canvas.style.cursor = 'grabbing';
+        const wasPlaying = state.playing;
+        state.playing = false;
+        playPauseBtn.textContent = 'Play';
+        const onMove = (e) => {
+          const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+          const my = (e.clientY - rect.top) * (canvas.height / rect.height);
+          const dx = mx - pos.origin.x;
+          const dy = my - pos.origin.y;
+          const angle = Math.atan2(dx, dy);
+          state.angle = angle;
+          state.initialAngle = toDeg(angle);
+          angleInput.value = clamp(state.initialAngle, -180, 180);
+          angleInputField.value = angleUnit.value === 'rad' ? angle.toFixed(2) : state.initialAngle.toFixed(0);
+          updateLabels();
+        };
+        const onUp = () => {
+          canvas.style.cursor = 'default';
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+          state.playing = wasPlaying;
+          playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      }
+    });
+
+    lengthInput.addEventListener('input', (e) => {
+      state.length = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    gravityInput.addEventListener('input', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    gravityPresets.querySelectorAll('button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        state.gravity = parseFloat(btn.dataset.g);
+        gravityInput.value = state.gravity;
+        updateLabels();
+      });
+    });
+
+    dampingToggle.addEventListener('change', () => {
+      dampingWrap.classList.toggle('hidden', !dampingToggle.checked);
+      if (!dampingToggle.checked) state.damping = 0;
+      dampingInput.value = state.damping;
+      updateLabels();
+    });
+
+    dampingInput.addEventListener('input', (e) => {
+      state.damping = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedInput.addEventListener('input', (e) => {
+      state.speed = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
+    });
+
+    setVerticalBtn.addEventListener('click', () => {
+      state.initialAngle = 0;
+      state.angle = 0;
+      state.angularVelocity = 0;
+      angleInput.value = 0;
+      angleInputField.value = 0;
+      updateLabels();
+    });
+
+    stepForwardBtn.addEventListener('click', () => {
+      updatePhysics(1 / 60);
+      updateGraphs();
+    });
+
+    stepBackBtn.addEventListener('click', () => {
+      updatePhysics(-1 / 60);
+      updateGraphs();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetPendulum();
+    });
+
+    angleInputField.addEventListener('input', (e) => {
+      const raw = parseFloat(e.target.value);
+      if (Number.isNaN(raw)) return;
+      const angleDeg = angleUnit.value === 'rad' ? toDeg(raw) : raw;
+      state.initialAngle = clamp(angleDeg, -180, 180);
+      state.angle = toRad(state.initialAngle);
+      angleInput.value = state.initialAngle;
+      updateLabels();
+    });
+
+    angleUnit.addEventListener('change', () => {
+      const current = angleUnit.value === 'rad' ? toRad(state.initialAngle) : state.initialAngle;
+      angleInputField.value = angleUnit.value === 'rad' ? current.toFixed(2) : current.toFixed(0);
+    });
+
+    angleInput.addEventListener('input', (e) => {
+      state.initialAngle = parseFloat(e.target.value);
+      state.angle = toRad(state.initialAngle);
+      state.angularVelocity = 0;
+      angleInputField.value = state.initialAngle.toFixed(0);
+      updateLabels();
+    });
+
+    unitToggle.addEventListener('change', (e) => {
+      state.unit = e.target.value;
+      updateLabels();
+      updateDataPanel();
+    });
+
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+
+    updateLabels();
+    angleInputField.value = state.initialAngle.toFixed(0);
+    dampingWrap.classList.toggle('hidden', !dampingToggle.checked);
+    resetPendulum();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

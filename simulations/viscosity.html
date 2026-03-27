@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Viscosity</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #a78bfa;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #f6c76b;
+      --low-visc: #34d399;
+      --high-visc: #f87171;
+      
+      --bg-deep: #0a1628;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+      overflow-x: visible;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; overflow: visible; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+      overflow: visible;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before { content: '←'; }
+    .topbar a:hover { color: var(--primary); background: rgba(167, 139, 250, 0.1); }
+
+    header.hero { text-align: center; padding: 30px 20px 20px; }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      font-weight: 800;
+    }
+
+    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+      overflow: visible;
+    }
+
+    .canvas-wrap { display: flex; flex-direction: column; gap: 12px; overflow: visible; }
+
+    canvas {
+      width: 100%;
+      height: 300px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(167, 139, 250, 0.15), rgba(129, 140, 248, 0.15)); }
+    button:active { transform: scale(0.97); }
+    button.active { background: linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(129, 140, 248, 0.25)); border-color: var(--primary); }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #fff, #e2e8f0);
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:hover, select:focus { border-color: var(--primary); outline: none; }
+    select option { background: #0f1f35; color: var(--text); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(167, 139, 250, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(167, 139, 250, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
+    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+    .data-grid { 
+      display: grid; 
+      grid-template-columns: repeat(6, 1fr); 
+      gap: 8px; 
+      margin-top: 12px; 
+      min-width: 0;
+    }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; white-space: nowrap; }
+    .data-value { font-size: 0.95rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; white-space: nowrap; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: var(--high-visc); }
+
+    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.25), rgba(167, 139, 250, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-indicator .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 280px; }
+      .data-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Viscosity</h1>
+      <p>Resistance to flow in fluids</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="scene" width="960" height="300"></canvas>
+        
+        <div class="btn-row">
+          <button id="playPause"><span>▶</span> Play</button>
+          <button id="reset"><span>↺</span> Reset</button>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-text" id="statusText">FLOWING</span>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Velocity</span>
+            <span class="data-value blue" id="velVal">0 <small>m/s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Reynolds #</span>
+            <span class="data-value green" id="reVal">0</span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Viscosity</span>
+            <span class="data-value yellow" id="viscVal">0 <small>Pa·s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Pressure Drop</span>
+            <span class="data-value red" id="dPVal">0 <small>Pa</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Flow Type</span>
+            <span class="data-value green" id="flowTypeVal">Laminar</span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Shear Stress</span>
+            <span class="data-value yellow" id="shearVal">0 <small>Pa</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">τ = μ × (dv/dr)</div>
+          <div class="formula-desc">Shear Stress = Viscosity × Velocity Gradient</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="control-group">
+          <label>Fluid Type <strong id="fluidLabel">Water</strong></label>
+          <select id="fluidType">
+            <option value="water">Water (0.001 Pa·s)</option>
+            <option value="oil">Oil (0.05 Pa·s)</option>
+            <option value="honey">Honey (2.0 Pa·s)</option>
+            <option value="glycerin">Glycerin (1.4 Pa·s)</option>
+            <option value="air">Air (0.000018 Pa·s)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Pipe Radius <strong id="radiusLabel">5 cm</strong></label>
+          <input type="range" id="radius" min="1" max="10" step="0.5" value="5">
+        </div>
+
+        <div class="control-group">
+          <label>Pipe Length <strong id="lengthLabel">10 m</strong></label>
+          <input type="range" id="length" min="1" max="20" step="1" value="10">
+        </div>
+
+        <div class="control-group">
+          <label>Pressure Diff <strong id="pressureLabel">1000 Pa</strong></label>
+          <input type="range" id="pressure" min="100" max="5000" step="100" value="1000">
+        </div>
+
+        <div class="control-group">
+          <label>Background Theme</label>
+          <select id="bgTheme">
+            <option value="pipe">Industrial Pipe</option>
+            <option value="lab">Laboratory</option>
+            <option value="oil">Oil Pipeline</option>
+            <option value="water">Water System</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showParticles" checked> Particles</label>
+            <label><input type="checkbox" id="showProfile" checked> Velocity Profile</label>
+            <label><input type="checkbox" id="showGauges" checked> Pressure Gauges</label>
+            <label><input type="checkbox" id="showArrows"> Flow Arrows</label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const fluidProperties = {
+      water: { name: 'Water', viscosity: 0.001, color: '#38bdf8' },
+      oil: { name: 'Oil', viscosity: 0.05, color: '#854d0e' },
+      honey: { name: 'Honey', viscosity: 2.0, color: '#f59e0b' },
+      glycerin: { name: 'Glycerin', viscosity: 1.4, color: '#e879f9' },
+      air: { name: 'Air', viscosity: 0.000018, color: '#e2e8f0' }
+    };
+
+    const state = {
+      fluid: 'water',
+      pipeRadius: 5,
+      pipeLength: 10,
+      pressureDiff: 1000,
+      bgTheme: 'pipe',
+      showParticles: true,
+      showProfile: true,
+      showGauges: true,
+      showArrows: false,
+      playing: true,
+      particles: [],
+      time: 0
+    };
+
+    function getViscosity() {
+      return fluidProperties[state.fluid].viscosity;
+    }
+
+    function getDensity() {
+      if (state.fluid === 'air') return 1.2;
+      if (state.fluid === 'water') return 1000;
+      if (state.fluid === 'oil') return 900;
+      if (state.fluid === 'honey') return 1420;
+      return 1260;
+    }
+
+    function calculateVelocity() {
+      const r = state.pipeRadius / 100;
+      const L = state.pipeLength;
+      const dP = state.pressureDiff;
+      const mu = getViscosity();
+      return (dP * r * r) / (4 * mu * L);
+    }
+
+    function calculateReynolds() {
+      const v = calculateVelocity();
+      const r = state.pipeRadius / 100;
+      const rho = getDensity();
+      const mu = getViscosity();
+      return (rho * v * 2 * r) / mu;
+    }
+
+    function calculatePressureDrop() {
+      return state.pressureDiff;
+    }
+
+    function calculateShearStress() {
+      const r = state.pipeRadius / 100;
+      const v = calculateVelocity();
+      const mu = getViscosity();
+      return mu * v / r;
+    }
+
+    function getFlowType() {
+      const Re = calculateReynolds();
+      if (Re < 2300) return 'Laminar';
+      if (Re < 4000) return 'Transient';
+      return 'Turbulent';
+    }
+
+    function getFlowTypeColor() {
+      const type = getFlowType();
+      if (type === 'Laminar') return '#34d399';
+      if (type === 'Transient') return '#f6c76b';
+      return '#f87171';
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const time = Date.now() / 1000;
+
+      if (state.bgTheme === 'pipe') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(0.5, '#16213e');
+        grad.addColorStop(1, '#0f0f1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(167, 139, 250, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 15; i++) {
+          const x = (i * 70 + time * 10) % (w + 70) - 35;
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let i = 0; i < 10; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, i * 50);
+          ctx.lineTo(w, i * 50);
+          ctx.stroke();
+        }
+
+      } else if (state.bgTheme === 'lab') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#1e293b');
+        grad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        const flicker = 0.9 + 0.1 * Math.abs(Math.sin(time * 5));
+        ctx.fillStyle = `rgba(200, 220, 255, ${0.04 * flicker})`;
+        ctx.fillRect(0, 0, w, 30);
+
+      } else if (state.bgTheme === 'oil') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#451a03');
+        grad.addColorStop(0.5, '#292524');
+        grad.addColorStop(1, '#1c1917');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 5; i++) {
+          const y = h * 0.2 + i * 40;
+          const shimmerGrad = ctx.createLinearGradient(0, y, w, y);
+          shimmerGrad.addColorStop(0, 'transparent');
+          shimmerGrad.addColorStop(0.2, 'rgba(245, 158, 11, 0.05)');
+          shimmerGrad.addColorStop(0.4, 'transparent');
+          shimmerGrad.addColorStop(0.6, 'rgba(245, 158, 11, 0.03)');
+          shimmerGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = shimmerGrad;
+          ctx.fillRect(0, y - 10, w, 20);
+        }
+
+      } else if (state.bgTheme === 'water') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0c4a6e');
+        grad.addColorStop(0.5, '#0a1628');
+        grad.addColorStop(1, '#040d18');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 6; i++) {
+          const rayX = w * 0.1 + i * w * 0.15;
+          const rayGrad = ctx.createLinearGradient(rayX, 0, rayX + 40, h);
+          const alpha = 0.05 + 0.02 * Math.sin(time * 0.5 + i);
+          rayGrad.addColorStop(0, `rgba(200, 240, 255, ${alpha})`);
+          rayGrad.addColorStop(0.5, `rgba(200, 240, 255, ${alpha * 0.3})`);
+          rayGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = rayGrad;
+          ctx.beginPath();
+          ctx.moveTo(rayX, 0);
+          ctx.lineTo(rayX + 30, 0);
+          ctx.lineTo(rayX + 60, h);
+          ctx.lineTo(rayX - 10, h);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+    }
+
+    function drawPipe() {
+      const mid = canvas.height / 2;
+      const left = 80;
+      const right = canvas.width - 80;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.3)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, mid - pipeRadius);
+      ctx.lineTo(right, mid - pipeRadius);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(left, mid + pipeRadius);
+      ctx.lineTo(right, mid + pipeRadius);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([10, 5]);
+      ctx.beginPath();
+      ctx.moveTo(left, mid);
+      ctx.lineTo(right, mid);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function spawnParticles() {
+      if (!state.showParticles) return;
+      if (state.particles.length > 100) return;
+      
+      const left = 80;
+      const mid = canvas.height / 2;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+      const v = calculateVelocity();
+      const maxV = v * 1.5;
+      
+      for (let i = 0; i < 3; i++) {
+        const y = mid - pipeRadius + Math.random() * pipeRadius * 2;
+        state.particles.push({
+          x: left,
+          y: y,
+          baseY: y,
+          v: v * (1 - Math.pow((y - mid) / pipeRadius, 2)),
+          size: 2 + Math.random() * 2
+        });
+      }
+    }
+
+    function updateParticles() {
+      if (!state.showParticles) return;
+      const left = 80;
+      const right = canvas.width - 80;
+      const mid = canvas.height / 2;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+      const v = calculateVelocity();
+
+      state.particles.forEach(p => {
+        const distFromCenter = Math.abs(p.baseY - mid);
+        const vRatio = distFromCenter >= pipeRadius ? 0 : 1 - Math.pow(distFromCenter / pipeRadius, 2);
+        p.x += v * vRatio * 30 * 0.016;
+      });
+
+      state.particles = state.particles.filter(p => p.x < right);
+    }
+
+    function drawParticles() {
+      if (!state.showParticles) return;
+      const mid = canvas.height / 2;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+      const v = calculateVelocity();
+      const fluidColor = fluidProperties[state.fluid].color;
+
+      state.particles.forEach(p => {
+        const distFromCenter = Math.abs(p.baseY - mid);
+        const alpha = distFromCenter >= pipeRadius ? 0 : Math.max(0, 1 - distFromCenter / pipeRadius);
+        
+        if (alpha > 0) {
+          ctx.fillStyle = fluidColor + Math.round(alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.arc(p.x, p.baseY, p.size * alpha, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    function drawVelocityProfile() {
+      if (!state.showProfile) return;
+      const mid = canvas.height / 2;
+      const left = 100;
+      const right = canvas.width - 100;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+      const v = calculateVelocity();
+      const maxV = v * 1.5;
+
+      ctx.beginPath();
+      ctx.moveTo(left, mid - pipeRadius);
+      for (let y = mid - pipeRadius; y <= mid + pipeRadius; y += 2) {
+        const distFromCenter = Math.abs(y - mid);
+        const vRatio = distFromCenter >= pipeRadius ? 0 : 1 - Math.pow(distFromCenter / pipeRadius, 2);
+        const x = left + vRatio * 80;
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(left, mid + pipeRadius);
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(left, 0, left + 80, 0);
+      grad.addColorStop(0, 'rgba(167, 139, 250, 0.1)');
+      grad.addColorStop(1, 'rgba(167, 139, 250, 0.4)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function drawGauges() {
+      if (!state.showGauges) return;
+      const mid = canvas.height / 2;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 100);
+      const dP = calculatePressureDrop();
+      const v = calculateVelocity();
+      const gaugeHeight = 24;
+      const topMargin = 30;
+      const bottomMargin = canvas.height - gaugeHeight - 10;
+      
+      let gaugeY = mid - pipeRadius - 40;
+      gaugeY = Math.max(topMargin, Math.min(bottomMargin, gaugeY));
+      
+      ctx.fillStyle = 'rgba(20,30,50,0.9)';
+      ctx.fillRect(60, gaugeY - 12, 70, 24);
+      ctx.strokeStyle = '#a78bfa';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(60, gaugeY - 12, 70, 24);
+      
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = 'bold 9px Space Grotesk';
+      ctx.fillText(`P₁:${dP}Pa`, 63, gaugeY + 4);
+
+      ctx.fillStyle = 'rgba(20,30,50,0.9)';
+      ctx.fillRect(canvas.width - 130, gaugeY - 12, 70, 24);
+      ctx.strokeRect(canvas.width - 130, gaugeY - 12, 70, 24);
+      ctx.fillStyle = '#34d399';
+      ctx.fillText(`P₂:0Pa`, canvas.width - 127, gaugeY + 4);
+
+      let velY = mid + pipeRadius + 15;
+      velY = Math.max(topMargin, Math.min(bottomMargin, velY));
+      ctx.fillStyle = 'rgba(20,30,50,0.9)';
+      ctx.fillRect(canvas.width / 2 - 35, velY - 12, 70, 24);
+      ctx.strokeRect(canvas.width / 2 - 40, velY - 15, 80, 30);
+      ctx.fillStyle = '#a78bfa';
+      ctx.fillText(`v: ${v.toFixed(2)} m/s`, canvas.width / 2 - 35, velY + 5);
+    }
+
+    function drawFlowArrows() {
+      if (!state.showArrows) return;
+      const mid = canvas.height / 2;
+      const pipeRadius = Math.min(state.pipeRadius * 10, 80);
+      const time = Date.now() / 1000;
+
+      for (let i = 0; i < 5; i++) {
+        const x = 150 + i * 150 + (time * 100) % 150;
+        const arrowSize = 10;
+        
+        ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, mid);
+        ctx.lineTo(x + arrowSize, mid);
+        ctx.lineTo(x + arrowSize - 4, mid - 4);
+        ctx.moveTo(x + arrowSize, mid);
+        ctx.lineTo(x + arrowSize - 4, mid + 4);
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawPipe();
+      drawVelocityProfile();
+      drawFlowArrows();
+      drawParticles();
+      drawGauges();
+      updateDataCards();
+    }
+
+    function updateDataCards() {
+      const v = calculateVelocity();
+      const Re = calculateReynolds();
+      const visc = getViscosity();
+      const dP = calculatePressureDrop();
+      const shear = calculateShearStress();
+      const flowType = getFlowType();
+
+      document.getElementById('velVal').innerHTML = `${v.toFixed(3)} <small>m/s</small>`;
+      document.getElementById('reVal').innerHTML = Re.toFixed(0);
+      document.getElementById('viscVal').innerHTML = `${visc.toFixed(4)} <small>Pa·s</small>`;
+      document.getElementById('dPVal').innerHTML = `${dP.toFixed(0)} <small>Pa</small>`;
+      document.getElementById('shearVal').innerHTML = `${shear.toFixed(2)} <small>Pa</small>`;
+      
+      const flowTypeEl = document.getElementById('flowTypeVal');
+      flowTypeEl.textContent = flowType;
+      flowTypeEl.style.color = getFlowTypeColor();
+    }
+
+    function tick() {
+      state.time += 0.016;
+      if (state.playing) {
+        spawnParticles();
+        updateParticles();
+      }
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    const fluidSelect = document.getElementById('fluidType');
+    const radiusInput = document.getElementById('radius');
+    const lengthInput = document.getElementById('length');
+    const pressureInput = document.getElementById('pressure');
+    const bgSelect = document.getElementById('bgTheme');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    function updateLabels() {
+      document.getElementById('fluidLabel').textContent = fluidProperties[state.fluid].name;
+      document.getElementById('radiusLabel').textContent = state.pipeRadius + ' cm';
+      document.getElementById('lengthLabel').textContent = state.pipeLength + ' m';
+      document.getElementById('pressureLabel').textContent = state.pressureDiff + ' Pa';
+      updateDataCards();
+    }
+
+    fluidSelect.addEventListener('change', () => {
+      state.fluid = fluidSelect.value;
+      updateLabels();
+    });
+
+    radiusInput.addEventListener('input', () => {
+      state.pipeRadius = parseFloat(radiusInput.value);
+      updateLabels();
+    });
+
+    lengthInput.addEventListener('input', () => {
+      state.pipeLength = parseFloat(lengthInput.value);
+      updateLabels();
+    });
+
+    pressureInput.addEventListener('input', () => {
+      state.pressureDiff = parseFloat(pressureInput.value);
+      updateLabels();
+    });
+
+    bgSelect.addEventListener('change', () => {
+      state.bgTheme = bgSelect.value;
+    });
+
+    document.getElementById('showParticles').addEventListener('change', e => state.showParticles = e.target.checked);
+    document.getElementById('showProfile').addEventListener('change', e => state.showProfile = e.target.checked);
+    document.getElementById('showGauges').addEventListener('change', e => state.showGauges = e.target.checked);
+    document.getElementById('showArrows').addEventListener('change', e => state.showArrows = e.target.checked);
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.particles = [];
+      state.pipeRadius = 5;
+      state.pipeLength = 10;
+      state.pressureDiff = 1000;
+      state.fluid = 'water';
+      radiusInput.value = 5;
+      lengthInput.value = 10;
+      pressureInput.value = 1000;
+      fluidSelect.value = 'water';
+      updateLabels();
+    });
+
+    updateLabels();
+    tick();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

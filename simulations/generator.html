@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Electric Generators</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --blue: #6ad7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    .toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .toggles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Electric Generators</h1>
+        <p>Mechanical to electrical energy: ε = NBAω sin(ωt)</p>
+      </div>
+      <div class="pill">AC/DC · Faraday's law · Flux linkage</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Generator Diagram</h2>
+        <canvas id="gCanvas" width="560" height="320" aria-label="Generator"></canvas>
+        <canvas id="waveCanvas" width="560" height="200" aria-label="Output waveform" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Generator Type</label>
+            <div class="toggles">
+              <label class="toggle"><input type="radio" name="type" value="AC" checked> AC</label>
+              <label class="toggle"><input type="radio" name="type" value="DC"> DC</label>
+            </div>
+          </div>
+          <div class="control">
+            <label>Turns (N)</label>
+            <input type="range" id="turns" min="10" max="1000" step="10" value="100" />
+            <div class="row"><span class="muted">N</span><span class="value" id="turnsValue">100</span></div>
+          </div>
+          <div class="control">
+            <label>Magnetic Field (T)</label>
+            <input type="range" id="field" min="0.1" max="2" step="0.01" value="0.5" />
+            <div class="row"><span class="muted">B</span><span class="value" id="fieldValue">0.50 T</span></div>
+          </div>
+          <div class="control">
+            <label>Coil Area (m²)</label>
+            <input type="range" id="area" min="0.01" max="0.5" step="0.01" value="0.1" />
+            <div class="row"><span class="muted">A</span><span class="value" id="areaValue">0.10 m²</span></div>
+          </div>
+          <div class="control">
+            <label>Angular Velocity (rad/s)</label>
+            <input type="range" id="omega" min="10" max="500" step="5" value="100" />
+            <div class="row"><span class="muted">ω</span><span class="value" id="omegaValue">100 rad/s</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showFlux" checked> Show flux</label>
+            <label class="toggle"><input type="checkbox" id="showOutput" checked> Show output</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Induced EMF</div>
+            <div class="row"><span>Peak ε₀</span><span class="value" id="peakValue">0 V</span></div>
+            <div class="row"><span>RMS ε_rms</span><span class="value" id="rmsValue">0 V</span></div>
+            <div class="row"><span>Frequency</span><span class="value" id="freqValue">0 Hz</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Flux</div>
+            <div class="row"><span>Φ(t)</span><span class="value" id="fluxValue">0 Wb</span></div>
+            <div class="row"><span>Φ_max</span><span class="value" id="fluxMaxValue">0 Wb</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              ε = -N dΦ/dt
+              <br>Φ = NBA cos(ωt)
+              <br>ε₀ = NBAω
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">DC mode uses a simple absolute value to mimic commutator output.</div>
+  </div>
+
+  <script>
+    const state = {
+      generatorType: 'AC',
+      turns: 100,
+      magneticField: 0.5,
+      coilArea: 0.1,
+      angularVelocity: 100,
+      showFlux: true,
+      showOutput: true,
+      time: 0
+    };
+
+    const dom = {
+      turns: document.getElementById('turns'),
+      field: document.getElementById('field'),
+      area: document.getElementById('area'),
+      omega: document.getElementById('omega'),
+      showFlux: document.getElementById('showFlux'),
+      showOutput: document.getElementById('showOutput'),
+      turnsValue: document.getElementById('turnsValue'),
+      fieldValue: document.getElementById('fieldValue'),
+      areaValue: document.getElementById('areaValue'),
+      omegaValue: document.getElementById('omegaValue'),
+      peakValue: document.getElementById('peakValue'),
+      rmsValue: document.getElementById('rmsValue'),
+      freqValue: document.getElementById('freqValue'),
+      fluxValue: document.getElementById('fluxValue'),
+      fluxMaxValue: document.getElementById('fluxMaxValue')
+    };
+
+    const gCanvas = document.getElementById('gCanvas');
+    const gCtx = gCanvas.getContext('2d');
+    const waveCanvas = document.getElementById('waveCanvas');
+    const waveCtx = waveCanvas.getContext('2d');
+
+    function calculateEMF(t) {
+      const omega = state.angularVelocity;
+      const peak = state.turns * state.magneticField * state.coilArea * omega;
+      const emf = peak * Math.sin(omega * t);
+      return state.generatorType === 'DC' ? Math.abs(emf) : emf;
+    }
+
+    function calculatePeakEMF() {
+      return state.turns * state.magneticField * state.coilArea * state.angularVelocity;
+    }
+
+    function calculateFlux(t) {
+      return state.turns * state.magneticField * state.coilArea * Math.cos(state.angularVelocity * t);
+    }
+
+    function drawGenerator() {
+      const w = gCanvas.width;
+      const h = gCanvas.height;
+      gCtx.clearRect(0, 0, w, h);
+      gCtx.fillStyle = '#0b1420';
+      gCtx.fillRect(0, 0, w, h);
+
+      gCtx.fillStyle = '#ff6b6b';
+      gCtx.fillRect(30, 80, 30, 160);
+      gCtx.fillStyle = '#6ad7ff';
+      gCtx.fillRect(w - 60, 80, 30, 160);
+      gCtx.fillStyle = '#f5f8fd';
+      gCtx.font = '14px Trebuchet MS';
+      gCtx.fillText('N', 36, 70);
+      gCtx.fillText('S', w - 52, 70);
+
+      if (state.showFlux) {
+        gCtx.strokeStyle = '#2d8dd6';
+        gCtx.lineWidth = 1.5;
+        for (let y = 100; y <= 220; y += 25) {
+          gCtx.beginPath();
+          gCtx.moveTo(70, y);
+          gCtx.lineTo(w - 70, y);
+          gCtx.stroke();
+        }
+      }
+
+      const cx = w / 2;
+      const cy = h / 2;
+      const angle = state.time * state.angularVelocity * 0.02;
+      const size = 70;
+
+      gCtx.save();
+      gCtx.translate(cx, cy);
+      gCtx.rotate(angle);
+      gCtx.strokeStyle = '#f6c76b';
+      gCtx.lineWidth = 4;
+      gCtx.strokeRect(-size, -size * 0.6, size * 2, size * 1.2);
+      gCtx.restore();
+
+      gCtx.fillStyle = '#f6c76b';
+      gCtx.beginPath();
+      gCtx.arc(cx - 90, cy + 90, 10, 0, Math.PI * 2);
+      gCtx.arc(cx + 90, cy + 90, 10, 0, Math.PI * 2);
+      gCtx.fill();
+
+      gCtx.fillStyle = '#8aa0b8';
+      gCtx.font = '12px Trebuchet MS';
+      gCtx.fillText(state.generatorType === 'AC' ? 'Slip rings' : 'Commutator', cx - 50, cy + 120);
+    }
+
+    function drawWave() {
+      const w = waveCanvas.width;
+      const h = waveCanvas.height;
+      waveCtx.clearRect(0, 0, w, h);
+      waveCtx.fillStyle = '#0b1420';
+      waveCtx.fillRect(0, 0, w, h);
+
+      if (!state.showOutput) {
+        waveCtx.fillStyle = '#7e91a8';
+        waveCtx.fillText('Output hidden', 20, 20);
+        return;
+      }
+
+      waveCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 40) {
+        waveCtx.beginPath();
+        waveCtx.moveTo(x, 0);
+        waveCtx.lineTo(x, h);
+        waveCtx.stroke();
+      }
+      waveCtx.strokeStyle = '#1c2c43';
+      for (let y = 0; y <= h; y += 40) {
+        waveCtx.beginPath();
+        waveCtx.moveTo(0, y);
+        waveCtx.lineTo(w, y);
+        waveCtx.stroke();
+      }
+
+      waveCtx.strokeStyle = '#6ad7ff';
+      waveCtx.lineWidth = 2;
+      const mid = h / 2;
+      const peak = calculatePeakEMF();
+      const scale = peak > 0 ? (h * 0.35) / peak : 1;
+
+      waveCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = (x / w) * 2 * Math.PI + state.time;
+        const y = mid - calculateEMF(t) * scale;
+        if (x === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+      }
+      waveCtx.stroke();
+    }
+
+    function updateReadouts() {
+      const peak = calculatePeakEMF();
+      const rms = peak / Math.sqrt(2);
+      const freq = state.angularVelocity / (2 * Math.PI);
+      const flux = calculateFlux(state.time);
+      const fluxMax = state.turns * state.magneticField * state.coilArea;
+
+      dom.turnsValue.textContent = state.turns;
+      dom.fieldValue.textContent = `${state.magneticField.toFixed(2)} T`;
+      dom.areaValue.textContent = `${state.coilArea.toFixed(2)} m²`;
+      dom.omegaValue.textContent = `${state.angularVelocity.toFixed(0)} rad/s`;
+      dom.peakValue.textContent = `${peak.toFixed(2)} V`;
+      dom.rmsValue.textContent = `${rms.toFixed(2)} V`;
+      dom.freqValue.textContent = `${freq.toFixed(2)} Hz`;
+      dom.fluxValue.textContent = `${flux.toFixed(3)} Wb`;
+      dom.fluxMaxValue.textContent = `${fluxMax.toFixed(3)} Wb`;
+    }
+
+    function update() {
+      updateReadouts();
+      drawGenerator();
+      drawWave();
+    }
+
+    function tick() {
+      state.time += 0.02;
+      drawGenerator();
+      drawWave();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      document.querySelectorAll('input[name="type"]').forEach(r => {
+        r.addEventListener('change', (e) => {
+          state.generatorType = e.target.value;
+          update();
+        });
+      });
+      dom.turns.addEventListener('input', () => {
+        state.turns = Number(dom.turns.value);
+        update();
+      });
+      dom.field.addEventListener('input', () => {
+        state.magneticField = Number(dom.field.value);
+        update();
+      });
+      dom.area.addEventListener('input', () => {
+        state.coilArea = Number(dom.area.value);
+        update();
+      });
+      dom.omega.addEventListener('input', () => {
+        state.angularVelocity = Number(dom.omega.value);
+        update();
+      });
+      dom.showFlux.addEventListener('change', () => {
+        state.showFlux = dom.showFlux.checked;
+        update();
+      });
+      dom.showOutput.addEventListener('change', () => {
+        state.showOutput = dom.showOutput.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

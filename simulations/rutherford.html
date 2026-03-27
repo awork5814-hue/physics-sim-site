@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rutherford Gold Foil Experiment</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --gold-foil: rgba(255, 215, 0, 0.3);
+      --nucleus-color: #f6c76b;
+      --electron-color: #6ad7ff;
+      --flash-color: #ffffff;
+      --trail-color: rgba(106, 215, 255, 0.5);
+      --positive-charge: #ff6b6b;
+      --negative-charge: #6ad7ff;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="rutherford">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Rutherford Gold Foil Experiment</h1>
+      <p>Discovery of the atomic nucleus</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="plum">Plum Pudding</button>
+      <button class="tab" data-mode="nuclear">Rutherford Model</button>
+      <button class="tab" data-mode="compare">Compare</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="rfCanvas" width="900" height="520" aria-label="Rutherford experiment"></canvas>
+        <div class="btn-row">
+          <button id="fire">Fire Single</button>
+          <button id="auto">Auto-Fire</button>
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="energy">Alpha Energy <strong id="energyLabel">5 MeV</strong></label>
+          <input type="range" id="energy" min="1" max="10" step="0.5" value="5" />
+        </div>
+
+        <div class="control-group">
+          <label for="atoms">Number of Atoms <strong id="atomsLabel">5</strong></label>
+          <input type="range" id="atoms" min="1" max="20" step="1" value="5" />
+        </div>
+
+        <div class="control-group">
+          <label for="material">Target Material</label>
+          <select id="material">
+            <option value="79" selected>Gold (Z=79)</option>
+            <option value="13">Aluminum (Z=13)</option>
+            <option value="82">Lead (Z=82)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showAtoms" checked /> Show atom interior</label>
+          <label><input type="checkbox" id="showFields" /> Show electric fields</label>
+          <label><input type="checkbox" id="showTrails" checked /> Show particle trails</label>
+          <label><input type="checkbox" id="showFlashes" checked /> Show detection flashes</label>
+          <label><input type="checkbox" id="showShells" checked /> Show electron shells</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Most alpha particles passed through the foil, but a few deflected at large angles. This showed that atoms have a tiny, dense, positively charged nucleus.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Why do most particles pass straight through?</li>
+          <li>What causes rare large-angle deflections?</li>
+          <li>How does Z affect scattering?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Atoms are mostly empty space.</li>
+          <li>Positive charge is concentrated in the nucleus.</li>
+          <li>Large Z yields stronger deflection.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('rfCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const energyInput = document.getElementById('energy');
+    const atomsInput = document.getElementById('atoms');
+    const materialSelect = document.getElementById('material');
+
+    const energyLabel = document.getElementById('energyLabel');
+    const atomsLabel = document.getElementById('atomsLabel');
+
+    const showAtoms = document.getElementById('showAtoms');
+    const showFields = document.getElementById('showFields');
+    const showTrails = document.getElementById('showTrails');
+    const showFlashes = document.getElementById('showFlashes');
+    const showShells = document.getElementById('showShells');
+
+    const fireBtn = document.getElementById('fire');
+    const autoBtn = document.getElementById('auto');
+    const resetBtn = document.getElementById('reset');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const tabs = document.querySelectorAll('.tab');
+
+    const state = {
+      mode: 'plum',
+      energy: 5,
+      atoms: 5,
+      Z: 79,
+      auto: false,
+      fired: 0,
+      straight: 0,
+      deflected: 0,
+      back: 0,
+      particles: [],
+      nuclei: [],
+      flashes: []
+    };
+
+    function updateLabels() {
+      energyLabel.textContent = `${state.energy.toFixed(1)} MeV`;
+      atomsLabel.textContent = state.atoms.toFixed(0);
+    }
+
+    function initAtoms() {
+      state.nuclei = [];
+      const midX = canvas.width * 0.5;
+      const midY = canvas.height / 2;
+      for (let i = 0; i < state.atoms; i++) {
+        state.nuclei.push({
+          x: midX + (Math.random() - 0.5) * 80,
+          y: midY + (Math.random() - 0.5) * 180
+        });
+      }
+    }
+
+    function fireParticle() {
+      const y = canvas.height / 2 + (Math.random() - 0.5) * 60;
+      state.particles.push({ x: 80, y, vx: 200, vy: 0, trail: [] });
+      state.fired += 1;
+    }
+
+    function updateParticles(dt) {
+      state.particles.forEach((p) => {
+        let ax = 0;
+        let ay = 0;
+        if (state.mode !== 'plum') {
+          state.nuclei.forEach((n) => {
+            const dx = p.x - n.x;
+            const dy = p.y - n.y;
+            const r2 = dx * dx + dy * dy + 200;
+            const force = (state.Z * 1000) / r2;
+            ax += (dx / Math.sqrt(r2)) * force;
+            ay += (dy / Math.sqrt(r2)) * force;
+          });
+        }
+        p.vx += ax * dt;
+        p.vy += ay * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        if (showTrails.checked) {
+          p.trail.push({ x: p.x, y: p.y });
+          if (p.trail.length > 40) p.trail.shift();
+        }
+      });
+      state.particles = state.particles.filter((p) => p.x < canvas.width - 60 && p.y > 0 && p.y < canvas.height);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(40, canvas.height / 2 - 30, 30, 60);
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText('α', 50, canvas.height / 2 + 4);
+
+      ctx.fillStyle = 'rgba(255,215,0,0.2)';
+      ctx.fillRect(canvas.width * 0.45, 60, 30, canvas.height - 120);
+
+      ctx.fillStyle = '#0c131d';
+      ctx.fillRect(canvas.width - 40, 60, 20, canvas.height - 120);
+
+      if (showAtoms.checked) {
+        state.nuclei.forEach((n) => {
+          ctx.fillStyle = '#f6c76b';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          if (showShells.checked) {
+            ctx.strokeStyle = 'rgba(106,215,255,0.4)';
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+        });
+      }
+
+      state.particles.forEach((p) => {
+        ctx.fillStyle = '#6ad7ff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        if (showTrails.checked) {
+          ctx.strokeStyle = 'rgba(106,215,255,0.5)';
+          ctx.beginPath();
+          p.trail.forEach((t, i) => {
+            if (i === 0) ctx.moveTo(t.x, t.y);
+            else ctx.lineTo(t.x, t.y);
+          });
+          ctx.stroke();
+        }
+      });
+    }
+
+    function updateDataPanel() {
+      dataPanel.innerHTML = `
+        <div><strong>Particles Fired:</strong> ${state.fired}</div>
+        <div><strong>Atomic Model:</strong> ${state.mode === 'plum' ? 'Plum Pudding' : 'Rutherford'}</div>
+        <div><strong>Target Z:</strong> ${state.Z}</div>
+      `;
+    }
+
+    function loop() {
+      if (state.auto) fireParticle();
+      updateParticles(0.016);
+      draw();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    document.querySelectorAll('.tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+      });
+    });
+
+    energyInput.addEventListener('input', (e) => {
+      state.energy = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    atomsInput.addEventListener('input', (e) => {
+      state.atoms = parseInt(e.target.value, 10);
+      initAtoms();
+      updateLabels();
+    });
+
+    materialSelect.addEventListener('change', (e) => {
+      state.Z = parseInt(e.target.value, 10);
+    });
+
+    fireBtn.addEventListener('click', () => {
+      fireParticle();
+    });
+
+    autoBtn.addEventListener('click', () => {
+      state.auto = !state.auto;
+      autoBtn.textContent = state.auto ? 'Pause' : 'Auto-Fire';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.particles = [];
+      state.fired = 0;
+      state.auto = false;
+      autoBtn.textContent = 'Auto-Fire';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    initAtoms();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

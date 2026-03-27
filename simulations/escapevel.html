@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Escape Velocity</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --bound: #ff6b6b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Escape Velocity</h1>
+    <div class="subtitle">Launch trajectories and energy to escape gravity</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+      <div style="margin-top: 10px;" class="buttons">
+        <button class="btn" id="launch">Launch</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Celestial Body</label>
+          <select id="body">
+            <option value="earth">Earth</option>
+            <option value="moon">Moon</option>
+            <option value="mars">Mars</option>
+            <option value="jupiter">Jupiter</option>
+            <option value="sun">Sun</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Launch Velocity (km/s)</label>
+          <input id="v0" type="range" min="0" max="20" step="0.1" value="5" />
+          <div class="row"><span>0</span><span id="v0Val">5.0</span><span>20</span></div>
+        </div>
+        <div class="control">
+          <label>Launch Angle (°)</label>
+          <input id="angle" type="range" min="0" max="360" step="1" value="45" />
+          <div class="row"><span>0</span><span id="angleVal">45°</span><span>360</span></div>
+        </div>
+        <div class="control">
+          <label>Launch Distance (R)</label>
+          <input id="dist" type="range" min="1" max="10" step="0.1" value="2" />
+          <div class="row"><span>1</span><span id="distVal">2.0</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showGravity" type="checkbox" checked /> Gravity field</label>
+            <label><input id="showOrbit" type="checkbox" checked /> Orbit path</label>
+            <label><input id="showEnergy" type="checkbox" checked /> Energy info</label>
+            <label><input id="showTrail" type="checkbox" checked /> Trajectory</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Escape velocity: v_esc = sqrt(2GM/R). Orbital velocity: v_orbit = v_esc / sqrt(2).
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const G = 6.674e-11;
+
+    const bodies = {
+      earth: { mass: 5.97e24, radius: 6.371e6, vEsc: 11.2, color: '#4a90d9' },
+      moon: { mass: 7.35e22, radius: 1.737e6, vEsc: 2.4, color: '#c0c0c0' },
+      mars: { mass: 6.42e23, radius: 3.389e6, vEsc: 5.0, color: '#c1440e' },
+      jupiter: { mass: 1.90e27, radius: 6.99e7, vEsc: 59.5, color: '#d4a574' },
+      sun: { mass: 1.99e30, radius: 6.96e8, vEsc: 618, color: '#f6c76b' }
+    };
+
+    const state = {
+      body: 'earth',
+      v0: 5,
+      angle: 45,
+      dist: 2,
+      showGravity: true,
+      showOrbit: true,
+      showEnergy: true,
+      showTrail: true,
+      isLaunched: false,
+      projectile: { x: 0, y: 0, vx: 0, vy: 0 },
+      trail: []
+    };
+
+    function escapeVelocity(body) {
+      return Math.sqrt(2 * G * body.mass / (body.radius * state.dist)) / 1000;
+    }
+
+    function drawBody() {
+      const body = bodies[state.body];
+      const cx = 300, cy = 210;
+      const r = 50;
+      ctx.fillStyle = body.color;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+
+      if (state.showGravity) {
+        const grad = ctx.createRadialGradient(cx, cy, r, cx, cy, 180);
+        grad.addColorStop(0, 'rgba(106,215,255,0.15)');
+        grad.addColorStop(1, 'rgba(106,215,255,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 180, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function updateProjectile(dt) {
+      if (!state.isLaunched) return;
+      const body = bodies[state.body];
+      const dx = state.projectile.x;
+      const dy = state.projectile.y;
+      const r = Math.sqrt(dx*dx + dy*dy);
+      const accel = -G * body.mass / (r*r*r);
+      state.projectile.vx += accel * dx * dt;
+      state.projectile.vy += accel * dy * dt;
+      state.projectile.x += state.projectile.vx * dt;
+      state.projectile.y += state.projectile.vy * dt;
+      state.trail.push({ x: state.projectile.x, y: state.projectile.y });
+      if (state.trail.length > 500) state.trail.shift();
+    }
+
+    function drawProjectile() {
+      const cx = 300, cy = 210;
+      if (state.showTrail) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.5)';
+        ctx.beginPath();
+        state.trail.forEach((p, i) => {
+          const x = cx + p.x / 1e6;
+          const y = cy + p.y / 1e6;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+      const x = cx + state.projectile.x / 1e6;
+      const y = cy + state.projectile.y / 1e6;
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawBody();
+      drawProjectile();
+    }
+
+    function updateReadout() {
+      const body = bodies[state.body];
+      const vEsc = escapeVelocity(body);
+      const vOrbit = vEsc / Math.sqrt(2);
+      const speed = Math.sqrt(state.projectile.vx**2 + state.projectile.vy**2) / 1000;
+      const r = Math.sqrt(state.projectile.x**2 + state.projectile.y**2) / 1000;
+      const E = 0.5 * speed*speed - (body.mass*G)/(r*1000);
+      const status = speed >= vEsc ? 'ESCAPE' : 'BOUND';
+      const text = `ESCAPE VELOCITY\n` +
+        `----------------\n` +
+        `Body: ${state.body}\n` +
+        `v_esc: ${vEsc.toFixed(2)} km/s\n` +
+        `v_orbit: ${vOrbit.toFixed(2)} km/s\n` +
+        `\nLaunch v0: ${state.v0.toFixed(2)} km/s\n` +
+        `Angle: ${state.angle.toFixed(0)}°\n` +
+        `\nStatus: ${status}\n` +
+        `Speed: ${speed.toFixed(2)} km/s\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      updateProjectile(0.05 * state.dist);
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    function launch() {
+      const body = bodies[state.body];
+      const r = body.radius * state.dist;
+      const angle = state.angle * Math.PI / 180;
+      state.projectile.x = r * Math.cos(angle);
+      state.projectile.y = r * Math.sin(angle);
+      const v = state.v0 * 1000;
+      state.projectile.vx = -v * Math.sin(angle);
+      state.projectile.vy = v * Math.cos(angle);
+      state.trail = [];
+      state.isLaunched = true;
+    }
+
+    document.getElementById('launch').addEventListener('click', launch);
+    document.getElementById('reset').addEventListener('click', () => {
+      state.isLaunched = false;
+      state.projectile = { x: 0, y: 0, vx: 0, vy: 0 };
+      state.trail = [];
+    });
+
+    document.getElementById('body').addEventListener('change', e => state.body = e.target.value);
+    document.getElementById('v0').addEventListener('input', e => {
+      state.v0 = parseFloat(e.target.value);
+      document.getElementById('v0Val').textContent = state.v0.toFixed(1);
+    });
+    document.getElementById('angle').addEventListener('input', e => {
+      state.angle = parseFloat(e.target.value);
+      document.getElementById('angleVal').textContent = `${state.angle.toFixed(0)}°`;
+    });
+    document.getElementById('dist').addEventListener('input', e => {
+      state.dist = parseFloat(e.target.value);
+      document.getElementById('distVal').textContent = state.dist.toFixed(1);
+    });
+
+    document.getElementById('showGravity').addEventListener('change', e => state.showGravity = e.target.checked);
+    document.getElementById('showOrbit').addEventListener('change', e => state.showOrbit = e.target.checked);
+    document.getElementById('showEnergy').addEventListener('change', e => state.showEnergy = e.target.checked);
+    document.getElementById('showTrail').addEventListener('change', e => state.showTrail = e.target.checked);
+
+    launch();
+    tick();
+  </script>
+</body>
+</html>

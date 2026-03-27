@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RC Filters</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RC Filters</h1>
+    <div class="subtitle">Low‑pass and high‑pass frequency response</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Filter Type</label>
+          <select id="type">
+            <option value="lowpass" selected>Low‑pass</option>
+            <option value="highpass">High‑pass</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Resistance R (Ω)</label>
+          <input id="res" type="range" min="100" max="100000" step="100" value="1000" />
+          <div class="row"><span>100</span><span id="resVal">1000</span><span>100k</span></div>
+        </div>
+        <div class="control">
+          <label>Capacitance C (μF)</label>
+          <input id="cap" type="range" min="1" max="1000" step="1" value="100" />
+          <div class="row"><span>1</span><span id="capVal">100</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Input Frequency (Hz)</label>
+          <input id="freq" type="range" min="1" max="10000" step="10" value="100" />
+          <div class="row"><span>1</span><span id="freqVal">100</span><span>10k</span></div>
+        </div>
+        <div class="control">
+          <label>Signal Type</label>
+          <select id="signal">
+            <option value="sine" selected>Sine</option>
+            <option value="square">Square</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showBode" type="checkbox" checked /> Bode plot</label>
+            <label><input id="showWave" type="checkbox" checked /> Waveforms</label>
+            <label><input id="logScale" type="checkbox" /> Log scale</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Cutoff frequency: f_c = 1/(2πRC). Gain = 1/√(1+(f/fc)²) (low‑pass).
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      type: 'lowpass',
+      R: 1000,
+      C: 100e-6,
+      f: 100,
+      signal: 'sine',
+      showBode: true,
+      showWave: true,
+      logScale: false,
+      t: 0
+    };
+
+    function fc() {
+      return 1 / (2 * Math.PI * state.R * state.C);
+    }
+
+    function gain(f) {
+      const ratio = f / fc();
+      if (state.type === 'lowpass') return 1 / Math.sqrt(1 + ratio*ratio);
+      return ratio / Math.sqrt(1 + ratio*ratio);
+    }
+
+    function phase(f) {
+      const ratio = f / fc();
+      if (state.type === 'lowpass') return -Math.atan(ratio);
+      return Math.atan(1/ratio);
+    }
+
+    function drawBode() {
+      if (!state.showBode) return;
+      const x = 80, y = 70, w = 360, h = 160;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Gain', x + 10, y + 15);
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.beginPath();
+      for (let i = 0; i <= w; i++) {
+        const f = 1 + (i / w) * 10000;
+        const g = gain(f);
+        const px = x + i;
+        const py = y + h - g * h;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      const fcut = fc();
+      const cx = x + (fcut / 10000) * w;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath(); ctx.moveTo(cx, y); ctx.lineTo(cx, y + h); ctx.stroke();
+    }
+
+    function drawWaveforms() {
+      if (!state.showWave) return;
+      const x = 80, y = 250, w = 360, h = 120;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(x, y, w, h);
+      const g = gain(state.f);
+      const ph = phase(state.f);
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath();
+      for (let i = 0; i < w; i++) {
+        const t = (i / w) * 2 * Math.PI;
+        const vin = Math.sin(t);
+        const yv = y + h/2 - vin * 40;
+        if (i === 0) ctx.moveTo(x + i, yv); else ctx.lineTo(x + i, yv);
+      }
+      ctx.stroke();
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.beginPath();
+      for (let i = 0; i < w; i++) {
+        const t = (i / w) * 2 * Math.PI;
+        const vout = g * Math.sin(t + ph);
+        const yv = y + h/2 - vout * 40;
+        if (i === 0) ctx.moveTo(x + i, yv); else ctx.lineTo(x + i, yv);
+      }
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawBode();
+      drawWaveforms();
+    }
+
+    function updateReadout() {
+      const g = gain(state.f);
+      const ph = phase(state.f) * 180 / Math.PI;
+      const text = `RC FILTERS\n` +
+        `---------\n` +
+        `Type: ${state.type}\n` +
+        `f_c = ${fc().toFixed(1)} Hz\n` +
+        `Gain at f = ${state.f.toFixed(0)} Hz: ${g.toFixed(3)}\n` +
+        `Phase: ${ph.toFixed(1)}°\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('type').addEventListener('change', e => state.type = e.target.value);
+    document.getElementById('res').addEventListener('input', e => { state.R = parseFloat(e.target.value); document.getElementById('resVal').textContent = state.R.toFixed(0); });
+    document.getElementById('cap').addEventListener('input', e => { state.C = parseFloat(e.target.value) * 1e-6; document.getElementById('capVal').textContent = e.target.value; });
+    document.getElementById('freq').addEventListener('input', e => { state.f = parseFloat(e.target.value); document.getElementById('freqVal').textContent = state.f.toFixed(0); });
+    document.getElementById('signal').addEventListener('change', e => state.signal = e.target.value);
+    document.getElementById('showBode').addEventListener('change', e => state.showBode = e.target.checked);
+    document.getElementById('showWave').addEventListener('change', e => state.showWave = e.target.checked);
+    document.getElementById('logScale').addEventListener('change', e => state.logScale = e.target.checked);
+
+    tick();
+  </script>
+</body>
+</html>

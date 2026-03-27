@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Black Holes</title>
+  <link rel="stylesheet" href="/styles.css"/><link rel="stylesheet" href="/simulation-theme.css"/>
+  <style>
+    :root{--accent:#6ad7ff;--accent-2:#f6c76b;--panel:rgba(15,22,35,0.92);--sim-border:rgba(120,150,190,0.18);--sim-text:#e9f2ff;--sim-muted:#9fb0c5;}
+    body{margin:0;background:#0a111c;color:var(--sim-text);font-family:"Space Grotesk",sans-serif;}
+    .page{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{display:flex;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--sim-border);background:rgba(8,12,20,0.7)}
+    .topbar a{color:var(--sim-text);text-decoration:none;font-weight:600}
+    header{text-align:center;padding:30px 20px}
+    header h1{font-size:clamp(1.6rem,2.4vw,2.5rem);margin:0 0 10px;letter-spacing:0.08em;text-transform:uppercase}
+    header p{color:var(--sim-muted);margin:0}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:12px 28px 18px}
+    .panel{background:var(--panel);border:1px solid var(--sim-border);border-radius:18px;padding:18px}
+    canvas{width:100%;height:350px;background:rgba(0,0,0,0.9);border-radius:16px;border:1px solid var(--sim-border)}
+    .controls{display:grid;gap:16px}
+    label{font-size:0.9rem;color:var(--sim-muted);display:flex;justify-content:space-between}
+    input[type="range"],select{width:100%}
+    .data-panel{font-size:0.9rem;color:var(--sim-muted)}
+    .data-panel strong{color:var(--accent);font-weight:600}
+    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a></div>
+    <header><h1>Black Holes</h1><p>Gravity's ultimate triumph</p></header>
+    <div class="layout">
+      <div><canvas id="bhCanvas"></canvas>
+        <div class="panel" style="margin-top:16px">
+          <div class="results-grid">
+            <div class="data-panel"><div>Mass: <strong id="massText">10</strong> M☉</div><div>Schwarzschild: <strong id="schwText">30 km</strong></div></div>
+            <div class="data-panel"><div>Event Horizon: <strong id="horizText">30 km</strong></div><div>Escape Vel: <strong id="escText">c</strong></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="panel"><div class="control-group"><label>Black Hole Mass <span id="massVal">10</span> M☉</label><input type="range" id="mass" min="1" max="1000" value="10"/></div></div>
+        <div class="panel"><div class="data-panel"><strong>Schwarzschild Radius:</strong></div><div style="margin-top:8px">Rs = 2GM/c²</div><div style="margin-top:8px">For 10 M☉: Rs ≈ 30 km</div><div style="margin-top:8px">For Sun: Rs ≈ 3 km</div></div>
+        <div class="panel"><div class="data-panel"><strong>Key Features:</strong></div><div style="margin-top:8px">• Event horizon: point of no return</div><div>• Singularity: infinite density</div><div>• Hawking radiation</div></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas=document.getElementById('bhCanvas'),ctx=canvas.getContext('2d');
+    let mass=10;const Msun=1.989e30,G=6.674e-11,c=299792458;
+    function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width*devicePixelRatio;canvas.height=r.height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+    function draw(){
+      const w=canvas.width/devicePixelRatio,h=canvas.height/devicePixelRatio;
+      ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+      const cx=w/2,cy=h/2;
+      const Rs=2*G*mass*Msun/c^2/1000;
+      const size=Rs*2;
+      const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(size,10));
+      grad.addColorStop(0,'#000');
+      grad.addColorStop(0.5,'#200');
+      grad.addColorStop(0.8,'#400');
+      grad.addColorStop(1,'transparent');
+      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(cx,cy,Math.max(size,30),0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#ff6b6b';ctx.shadowColor='#ff6b6b';ctx.shadowBlur=20;
+      ctx.beginPath();ctx.arc(cx,cy,Math.max(size/2,5),0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      document.getElementById('massText').textContent=mass;
+      document.getElementById('schwText').textContent=Rs.toFixed(1)+' km';
+      document.getElementById('horizText').textContent=Rs.toFixed(1)+' km';
+    }
+    document.getElementById('mass').oninput=e=>{mass=parseInt(e.target.value);document.getElementById('massVal').textContent=mass;};
+    function loop(){draw();requestAnimationFrame(loop);}
+    window.onresize=resize;resize();loop();
+  </script>
+</body>
+</html>

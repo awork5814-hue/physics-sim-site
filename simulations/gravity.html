@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gravity</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Gravity</span></div>
+    <header class="hero"><h1>Gravitational Force</h1><p>F = Gm₁m₂/r² — Inverse square law</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">F = G × m₁ × m₂ / r²</div>
+        <div class="control-group">
+          <label>Mass 1 (kg)</label>
+          <input type="range" id="m1Slider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Mass 2 (kg)</label>
+          <input type="range" id="m2Slider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Separation (m)</label>
+          <input type="range" id="rSlider" min="10" max="200" value="100">
+        </div>
+        <div class="data-panel">
+          <div>Force: <strong id="fVal">0</strong> N</div>
+          <div>Field at m2: <strong id="gVal">0</strong> m/s²</div>
+          <div>Acceleration: <strong id="aVal">0</strong> m/s²</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const m1Slider = document.getElementById('m1Slider');
+    const m2Slider = document.getElementById('m2Slider');
+    const rSlider = document.getElementById('rSlider');
+    let time = 0;
+    function update() {
+      const m1 = parseFloat(m1Slider.value);
+      const m2 = parseFloat(m2Slider.value);
+      const r = parseFloat(rSlider.value);
+      const G = 6.674e-11;
+      const F = G * m1 * m2 / (r * r);
+      const g = G * m1 / (r * r);
+      const a = F / m2;
+      document.getElementById('fVal').textContent = F.toExponential(2) + ' N';
+      document.getElementById('gVal').textContent = g.toExponential(2) + ' m/s²';
+      document.getElementById('aVal').textContent = a.toExponential(2) + ' m/s²';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const m1 = parseFloat(m1Slider.value);
+      const m2 = parseFloat(m2Slider.value);
+      const r = parseFloat(rSlider.value);
+      const cx = w / 2;
+      const scale = 2;
+      const sep = r * scale;
+      const x1 = cx - sep / 2;
+      const x2 = cx + sep / 2;
+      const cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const r1 = 15 + m1 * 0.5;
+      const r2 = 15 + m2 * 0.5;
+      const grad1 = ctx.createRadialGradient(x1 - r1/3, cy - r1/3, 0, x1, cy, r1);
+      grad1.addColorStop(0, '#6ad7ff');
+      grad1.addColorStop(1, '#3080a0');
+      ctx.fillStyle = grad1;
+      ctx.beginPath(); ctx.arc(x1, cy, r1, 0, Math.PI * 2); ctx.fill();
+      const grad2 = ctx.createRadialGradient(x2 - r2/3, cy - r2/3, 0, x2, cy, r2);
+      grad2.addColorStop(0, '#f6c76b');
+      grad2.addColorStop(1, '#c9a030');
+      ctx.fillStyle = grad2;
+      ctx.beginPath(); ctx.arc(x2, cy, r2, 0, Math.PI * 2); ctx.fill();
+      const force = Math.min(50, 10000 / (r * r));
+      ctx.strokeStyle = '#ff6b6b';
+      ctx.lineWidth = 2 + force / 5;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath(); ctx.moveTo(x1 + r1, cy); ctx.lineTo(x2 - r2, cy); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('m₁=' + m1, x1, cy + r1 + 20);
+      ctx.fillText('m₂=' + m2, x2, cy + r2 + 20);
+      ctx.font = '12px Space Grotesk';
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('F = Gm₁m₂/r²', cx, cy - 40);
+      ctx.fillText('r = ' + r + ' m', cx, cy + 60);
+      ctx.textAlign = 'left';
+      time++;
+      requestAnimationFrame(draw);
+    }
+    m1Slider.addEventListener('input', update);
+    m2Slider.addEventListener('input', update);
+    rSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

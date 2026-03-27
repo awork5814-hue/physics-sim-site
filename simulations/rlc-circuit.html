@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RLC Circuit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0f16;
+      --bg-2: #0f1723;
+      --panel: rgba(16, 24, 36, 0.86);
+      --panel-strong: rgba(12, 20, 32, 0.95);
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --violet: #b48bff;
+      --line: rgba(255,255,255,0.08);
+      --glow: rgba(106, 215, 255, 0.22);
+      --shadow: rgba(3, 6, 10, 0.6);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% -10%, #1f3146 0%, #0f1622 40%, #0a0f16 100%),
+        linear-gradient(180deg, #0a0f16 0%, #0d1520 60%, #0a0f16 100%);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px clamp(16px, 4vw, 36px) 36px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .title-block h1 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+    }
+
+    .wrap { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 24px 60px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, rgba(106, 215, 255, 0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    canvas { width: 100%; height: 460px; background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--glow);
+    }
+    .legend i.orange { background: var(--accent-2); box-shadow: 0 0 8px rgba(246, 199, 107, 0.4); }
+    .legend i.violet { background: var(--violet); box-shadow: 0 0 8px rgba(180, 139, 255, 0.4); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); font-weight: 600; }
+    .control input[type="range"],
+    .control select { width: 100%; }
+    .control select { background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 8px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(12, 20, 32, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.35); }
+    .btn.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+    .btn.ghost {
+      background: rgba(106, 215, 255, 0.1);
+      color: var(--accent);
+      border-color: rgba(106, 215, 255, 0.25);
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .read-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .read-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+    .read-card strong {
+      font-size: 16px;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+    }
+
+    .presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .presets .btn { font-size: 11px; padding: 8px 10px; }
+
+    .view-toggle { display: flex; gap: 8px; margin-top: 12px; }
+
+    footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 980px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wrap { grid-template-columns: 1fr; }
+      canvas { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <div class="badge">Precision Lab</div>
+        <h1>RLC Circuit</h1>
+        <div class="subtitle">Underdamped, critically damped, and overdamped responses</div>
+      </div>
+      <div class="buttons">
+        <button class="btn primary" id="run">Run</button>
+        <button class="btn" id="reset">Reset</button>
+        <button class="btn ghost" id="toggle">Free</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Resonance ω₀</div><div class="stat-value" id="w0Stat">0.00 rad/s</div></div>
+      <div class="stat"><div class="stat-label">Q Factor</div><div class="stat-value" id="qStat">0.00</div></div>
+      <div class="stat"><div class="stat-label">Damping</div><div class="stat-value" id="dampStat">Under</div></div>
+      <div class="stat"><div class="stat-label">Current</div><div class="stat-value" id="iStat">0.00 A</div></div>
+    </div>
+
+    <div class="wrap">
+      <div class="card">
+        <canvas id="scene"></canvas>
+        <div class="legend">
+          <span><i></i> Current I(t)</span>
+          <span><i class="orange"></i> V<sub>C</sub>(t)</span>
+          <span><i class="violet"></i> Phase (phasor)</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="controls">
+          <div class="control">
+            <label>Resistance R (Ω) <span class="value-chip" id="resVal">50</span></label>
+            <input id="res" type="range" min="1" max="500" step="1" value="50" />
+            <div class="row"><span>1</span><span>500</span></div>
+          </div>
+          <div class="control">
+            <label>Inductance L (H) <span class="value-chip" id="indVal">0.10</span></label>
+            <input id="ind" type="range" min="0.01" max="1" step="0.01" value="0.1" />
+            <div class="row"><span>0.01</span><span>1</span></div>
+          </div>
+          <div class="control">
+            <label>Capacitance C (μF) <span class="value-chip" id="capVal">100</span></label>
+            <input id="cap" type="range" min="1" max="1000" step="10" value="100" />
+            <div class="row"><span>1</span><span>1000</span></div>
+          </div>
+          <div class="control">
+            <label>Initial Voltage V₀ (V) <span class="value-chip" id="voltVal">5.0</span></label>
+            <input id="volt" type="range" min="1" max="12" step="0.5" value="5" />
+            <div class="row"><span>1</span><span>12</span></div>
+          </div>
+          <div class="control">
+            <label>Driving Frequency (Hz) <span class="value-chip" id="driveVal">10</span></label>
+            <input id="drive" type="range" min="0.1" max="100" step="0.1" value="10" />
+            <div class="row"><span>0.1</span><span>100</span></div>
+          </div>
+          <div class="control">
+            <label>Animation Speed <span class="value-chip" id="speedVal">1.0x</span></label>
+            <input id="speed" type="range" min="0.1" max="5" step="0.1" value="1" />
+            <div class="row"><span>0.1x</span><span>5x</span></div>
+          </div>
+        </div>
+
+        <div class="view-toggle">
+          <button class="btn ghost" id="viewTime">Time Domain</button>
+          <button class="btn ghost" id="viewPhasor">Phasor View</button>
+        </div>
+
+        <div class="readout">
+          <div class="read-card"><span>ω₀</span><strong id="w0Read">0.00 rad/s</strong></div>
+          <div class="read-card"><span>ω<sub>d</sub></span><strong id="wdRead">0.00 rad/s</strong></div>
+          <div class="read-card"><span>ζ</span><strong id="zRead">0.00</strong></div>
+          <div class="read-card"><span>Mode</span><strong id="modeRead">Free</strong></div>
+        </div>
+
+        <div class="presets">
+          <button class="btn" data-preset="under">Underdamped</button>
+          <button class="btn" data-preset="critical">Critical</button>
+          <button class="btn" data-preset="over">Overdamped</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Damping ratio ζ = R / (2√(L/C)). ω₀ = 1/√(LC).
+    </footer>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      R: 50,
+      L: 0.1,
+      C: 100e-6,
+      V0: 5,
+      forced: false,
+      drive: 10,
+      t: 0,
+      running: false,
+      speed: 1,
+      view: 'time',
+      q: 0,
+      iHist: [],
+      vHist: []
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function zeta() {
+      return state.R / (2 * Math.sqrt(state.L / state.C));
+    }
+
+    function omega0() { return 1 / Math.sqrt(state.L * state.C); }
+
+    function omegaD() {
+      const z = zeta();
+      const o0 = omega0();
+      return o0 * Math.sqrt(Math.max(0, 1 - z * z));
+    }
+
+    function current(t) {
+      const Imax = state.V0 / state.R;
+      if (state.forced) {
+        return Imax * Math.sin(2 * Math.PI * state.drive * t);
+      }
+      const z = zeta();
+      if (z < 1) {
+        return Imax * Math.exp(-state.R * t / (2 * state.L)) * Math.cos(omegaD() * t);
+      }
+      if (Math.abs(z - 1) < 1e-3) {
+        return Imax * (1 + t) * Math.exp(-state.R * t / (2 * state.L));
+      }
+      const a = state.R / (2 * state.L);
+      const s = Math.sqrt(a * a - 1 / (state.L * state.C));
+      return Imax * (Math.exp(-(a - s) * t) - Math.exp(-(a + s) * t));
+    }
+
+    function update(dt) {
+      if (!state.running) return;
+      state.t += dt * state.speed;
+      const I = current(state.t);
+      state.q += I * dt;
+      const Vc = state.q / state.C;
+      state.iHist.push(I);
+      state.vHist.push(Vc);
+      if (state.iHist.length > 300) { state.iHist.shift(); state.vHist.shift(); }
+    }
+
+    function drawCircuit() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      const left = 60;
+      const top = 70;
+      const circuitW = 380;
+      const circuitH = 240;
+      const midY = top + circuitH / 2;
+      const right = left + circuitW;
+
+      ctx.save();
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(106,215,255,0.35)';
+      ctx.shadowBlur = 6;
+
+      ctx.beginPath();
+      ctx.moveTo(left, midY);
+      ctx.lineTo(left + 50, midY);
+      ctx.stroke();
+
+      const zigX = left + 50;
+      const step = 14;
+      ctx.beginPath();
+      ctx.moveTo(zigX, midY);
+      for (let i = 0; i < 6; i += 1) {
+        const dx = zigX + step * (i + 1);
+        const dy = midY + (i % 2 === 0 ? -10 : 10);
+        ctx.lineTo(dx, dy);
+      }
+      ctx.lineTo(zigX + step * 7, midY);
+      ctx.stroke();
+
+      const coilX = right - 150;
+      ctx.beginPath();
+      ctx.moveTo(zigX + step * 7, midY);
+      ctx.lineTo(coilX - 20, midY);
+      ctx.stroke();
+
+      for (let i = 0; i < 6; i += 1) {
+        ctx.beginPath();
+        ctx.arc(coilX + i * 14, midY, 10, Math.PI, 0);
+        ctx.stroke();
+      }
+
+      const capX = right - 60;
+      ctx.beginPath();
+      ctx.moveTo(coilX + 80, midY);
+      ctx.lineTo(capX - 16, midY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(capX, midY - 28);
+      ctx.lineTo(capX, midY + 28);
+      ctx.moveTo(capX + 16, midY - 28);
+      ctx.lineTo(capX + 16, midY + 28);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(capX + 16, midY);
+      ctx.lineTo(right, midY);
+      ctx.lineTo(right, top + circuitH);
+      ctx.lineTo(left, top + circuitH);
+      ctx.lineTo(left, midY);
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '13px "Space Grotesk", sans-serif';
+      ctx.fillText('R', zigX + 36, midY - 24);
+      ctx.fillText('L', coilX + 18, midY - 24);
+      ctx.fillText('C', capX + 6, midY - 38);
+
+      const particles = 10;
+      ctx.fillStyle = 'rgba(106,215,255,0.7)';
+      for (let i = 0; i < particles; i += 1) {
+        const phase = (state.t * 0.6 + i / particles) % 1;
+        const px = left + phase * (circuitW - 40);
+        ctx.beginPath();
+        ctx.arc(px, midY, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawTimeGraph() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      const x = w * 0.52;
+      const y = 70;
+      const gw = w * 0.44;
+      const gh = 220;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      for (let i = 0; i <= 4; i += 1) {
+        const gy = y + (i / 4) * gh;
+        ctx.beginPath();
+        ctx.moveTo(x, gy);
+        ctx.lineTo(x + gw, gy);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 4; i += 1) {
+        const gx = x + (i / 4) * gw;
+        ctx.beginPath();
+        ctx.moveTo(gx, y);
+        ctx.lineTo(gx, y + gh);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.strokeRect(x, y, gw, gh);
+      ctx.fillStyle = '#dfe8f4';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.fillText('Response Curves', x + 10, y - 10);
+
+      const iMax = Math.max(0.5, ...state.iHist.map(v => Math.abs(v)));
+      const vMax = Math.max(1, ...state.vHist.map(v => Math.abs(v)));
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.shadowColor = 'rgba(106,215,255,0.4)';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      state.iHist.forEach((p, i) => {
+        const px = x + (i / 300) * gw;
+        const py = y + gh / 2 - (p / iMax) * (gh / 2);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath();
+      state.vHist.forEach((p, i) => {
+        const px = x + (i / 300) * gw;
+        const py = y + gh / 2 - (p / vMax) * (gh / 2);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPhasor() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      const cx = w * 0.74;
+      const cy = 180;
+      const radius = 90;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const omega = 2 * Math.PI * state.drive;
+      const Xl = omega * state.L;
+      const Xc = 1 / (omega * state.C);
+      const phi = Math.atan2(Xl - Xc, state.R);
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + radius * Math.cos(phi), cy - radius * Math.sin(phi));
+      ctx.stroke();
+
+      ctx.strokeStyle = '#b48bff';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + radius, cy);
+      ctx.stroke();
+
+      ctx.fillStyle = '#dfe8f4';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.fillText('Phasor', cx - 24, cy + radius + 18);
+      ctx.restore();
+    }
+
+    function draw() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, w, h);
+      drawCircuit();
+      if (state.view === 'time') {
+        drawTimeGraph();
+      } else {
+        drawPhasor();
+      }
+    }
+
+    function updateReadout() {
+      const z = zeta();
+      const o0 = omega0();
+      const od = omegaD();
+      const Q = 1 / (2 * z);
+      document.getElementById('w0Stat').textContent = `${o0.toFixed(2)} rad/s`;
+      document.getElementById('qStat').textContent = Q.toFixed(2);
+      document.getElementById('dampStat').textContent = z < 1 ? 'Under' : Math.abs(z - 1) < 1e-3 ? 'Critical' : 'Over';
+      document.getElementById('iStat').textContent = `${current(state.t).toFixed(3)} A`;
+
+      document.getElementById('w0Read').textContent = `${o0.toFixed(2)} rad/s`;
+      document.getElementById('wdRead').textContent = `${od.toFixed(2)} rad/s`;
+      document.getElementById('zRead').textContent = z.toFixed(2);
+      document.getElementById('modeRead').textContent = state.forced ? 'Forced' : 'Free';
+    }
+
+    function tick() {
+      update(0.016);
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    const res = document.getElementById('res');
+    const ind = document.getElementById('ind');
+    const cap = document.getElementById('cap');
+    const volt = document.getElementById('volt');
+    const drive = document.getElementById('drive');
+    const speed = document.getElementById('speed');
+
+    res.addEventListener('input', e => { state.R = parseFloat(e.target.value); document.getElementById('resVal').textContent = state.R.toFixed(0); });
+    ind.addEventListener('input', e => { state.L = parseFloat(e.target.value); document.getElementById('indVal').textContent = state.L.toFixed(2); });
+    cap.addEventListener('input', e => { state.C = parseFloat(e.target.value) * 1e-6; document.getElementById('capVal').textContent = e.target.value; });
+    volt.addEventListener('input', e => { state.V0 = parseFloat(e.target.value); document.getElementById('voltVal').textContent = state.V0.toFixed(1); });
+    drive.addEventListener('input', e => { state.drive = parseFloat(e.target.value); document.getElementById('driveVal').textContent = state.drive.toFixed(1); });
+    speed.addEventListener('input', e => { state.speed = parseFloat(e.target.value); document.getElementById('speedVal').textContent = `${state.speed.toFixed(1)}x`; });
+
+    document.getElementById('run').addEventListener('click', (e) => {
+      state.running = !state.running;
+      e.currentTarget.textContent = state.running ? 'Pause' : 'Run';
+    });
+    document.getElementById('reset').addEventListener('click', () => { state.t = 0; state.q = state.C * state.V0; state.iHist = []; state.vHist = []; state.running = false; document.getElementById('run').textContent = 'Run'; });
+    document.getElementById('toggle').addEventListener('click', (e) => { state.forced = !state.forced; state.t = 0; state.q = state.C * state.V0; state.iHist = []; state.vHist = []; e.currentTarget.textContent = state.forced ? 'Forced' : 'Free'; });
+
+    document.getElementById('viewTime').addEventListener('click', () => { state.view = 'time'; });
+    document.getElementById('viewPhasor').addEventListener('click', () => { state.view = 'phasor'; });
+
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        if (preset === 'under') { state.R = 10; state.L = 0.2; state.C = 200e-6; }
+        if (preset === 'critical') { state.R = 63; state.L = 0.1; state.C = 100e-6; }
+        if (preset === 'over') { state.R = 200; state.L = 0.1; state.C = 100e-6; }
+        res.value = state.R.toString();
+        ind.value = state.L.toFixed(2);
+        cap.value = (state.C * 1e6).toFixed(0);
+        document.getElementById('resVal').textContent = state.R.toFixed(0);
+        document.getElementById('indVal').textContent = state.L.toFixed(2);
+        document.getElementById('capVal').textContent = (state.C * 1e6).toFixed(0);
+        state.t = 0; state.q = state.C * state.V0; state.iHist = []; state.vHist = [];
+      });
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    state.q = state.C * state.V0;
+    updateReadout();
+    draw();
+    tick();
+  </script>
+</body>
+</html>

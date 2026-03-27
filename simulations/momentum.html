@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conservation of Momentum</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent: #38bdf8; --accent-2: #f59e0b; --sim-bg: #0b1020; --sim-text: #f8fafc; --sim-muted: #94a3b8; --sim-border: rgba(255, 255, 255, 0.08); --panel: rgba(15, 23, 42, 0.72); --shadow: 0 20px 40px rgba(0, 0, 0, 0.4); --mono: "JetBrains Mono", monospace; }
+    body.light { --sim-bg: #f5f7fa; --sim-text: #0f172a; --sim-muted: #475569; --sim-border: rgba(15, 23, 42, 0.12); --panel: rgba(255, 255, 255, 0.85); }
+    body { margin: 0; background: var(--sim-bg); color: var(--sim-text); font-family: "Inter", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; backdrop-filter: blur(12px); }
+    canvas { width: 100%; height: clamp(320px, 45vh, 480px); background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .formula { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--sim-border); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; font-family: var(--mono); }
+    .data-panel { padding: 0; background: transparent; border: none; box-shadow: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--sim-border); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--sim-muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+    button:hover { transform: translateY(-1px); border-color: rgba(56, 189, 248, 0.5); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a><button class="toggle" id="themeToggle">Light/Dark</button></div>
+    <header class="hero"><h1>Conservation of Momentum</h1><p>m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="simCanvas"></canvas>
+        <div class="data-panel">
+          <div class="data-grid">
+            <div class="data-card"><span class="data-label">p before</span><span class="data-value blue" id="pBefore">32</span></div>
+            <div class="data-card"><span class="data-label">p after</span><span class="data-value blue" id="pAfter">32</span></div>
+            <div class="data-card"><span class="data-label">KE before</span><span class="data-value orange" id="keBefore">0</span></div>
+            <div class="data-card"><span class="data-label">KE after</span><span class="data-value orange" id="keAfter">0</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel controls">
+        <div class="formula">p = mv</div>
+        <div class="control-group">
+          <label>Mass 1 (kg)</label>
+          <input type="range" id="m1Slider" min="1" max="10" value="4">
+        </div>
+        <div class="control-group">
+          <label>Mass 2 (kg)</label>
+          <input type="range" id="m2Slider" min="1" max="10" value="2">
+        </div>
+        <div class="control-group">
+          <label>Initial Velocity (m/s)</label>
+          <input type="range" id="vSlider" min="1" max="20" value="8">
+        </div>
+        <button id="fireBtn">Fire!</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const m1Slider = document.getElementById('m1Slider');
+    const m2Slider = document.getElementById('m2Slider');
+    const vSlider = document.getElementById('vSlider');
+    const fireBtn = document.getElementById('fireBtn');
+    let balls = [];
+    let trails = [[], []];
+    let fired = false;
+    function init() {
+      const m1 = parseFloat(m1Slider.value);
+      const m2 = parseFloat(m2Slider.value);
+      const v0 = parseFloat(vSlider.value);
+      balls = [
+        { x: 80, y: canvas.offsetHeight / 2 - 36, vx: v0, m: m1, r: m1 * 7 + 12, color: '#38bdf8' },
+        { x: 80, y: canvas.offsetHeight / 2 + 36, vx: v0, m: m2, r: m2 * 7 + 12, color: '#f59e0b' }
+      ];
+      trails = [[], []];
+      fired = false;
+      updateData();
+    }
+    function updateData() {
+      const m1 = parseFloat(m1Slider.value), m2 = parseFloat(m2Slider.value), v0 = parseFloat(vSlider.value);
+      const pBefore = m1 * v0 + m2 * v0;
+      const keBefore = 0.5 * m1 * v0 * v0 + 0.5 * m2 * v0 * v0;
+      document.getElementById('pBefore').textContent = pBefore.toFixed(1);
+      document.getElementById('keBefore').textContent = keBefore.toFixed(1);
+      if (fired) {
+        const v1f = (m1 - m2) / (m1 + m2) * v0, v2f = 2 * m1 / (m1 + m2) * v0;
+        document.getElementById('pAfter').textContent = (m1 * v1f + m2 * v2f).toFixed(1);
+        document.getElementById('keAfter').textContent = (0.5 * m1 * v1f * v1f + 0.5 * m2 * v2f * v2f).toFixed(1);
+      } else {
+        document.getElementById('pAfter').textContent = pBefore.toFixed(1);
+        document.getElementById('keAfter').textContent = keBefore.toFixed(1);
+      }
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      // track background
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, 'rgba(10, 16, 28, 0.95)');
+      bg.addColorStop(1, 'rgba(6, 10, 20, 0.95)');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+
+      // center lane
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.moveTo(0, h / 2);
+      ctx.lineTo(w, h / 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      balls.forEach((b, idx) => {
+        if (fired) b.x += b.vx;
+        if (b.x < b.r) { b.x = b.r; b.vx *= -1; }
+        if (b.x > w - b.r) { b.x = w - b.r; b.vx *= -1; }
+
+        // trail
+        const trail = trails[idx];
+        trail.push({ x: b.x, y: b.y });
+        if (trail.length > 18) trail.shift();
+        trail.forEach((p, i) => {
+          const alpha = (i / trail.length) * 0.35;
+          ctx.fillStyle = `rgba(56, 189, 248, ${idx === 0 ? alpha : alpha * 0.6})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 3 + i * 0.15, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        const grad = ctx.createRadialGradient(b.x - b.r/3, b.y - b.r/3, 0, b.x, b.y, b.r);
+        grad.addColorStop(0, b.color);
+        grad.addColorStop(1, 'rgba(15, 23, 42, 0.9)');
+        ctx.fillStyle = grad;
+        ctx.shadowColor = b.color;
+        ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#fff'; ctx.font = '600 12px Inter'; ctx.textAlign = 'center';
+        ctx.fillText(b.m + 'kg', b.x, b.y + 4);
+      });
+      ctx.textAlign = 'left';
+      requestAnimationFrame(draw);
+    }
+    fireBtn.addEventListener('click', () => { fired = true; updateData(); });
+    m1Slider.addEventListener('input', init);
+    m2Slider.addEventListener('input', init);
+    vSlider.addEventListener('input', init);
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+    init(); draw();
+  </script>
+</body>
+</html>

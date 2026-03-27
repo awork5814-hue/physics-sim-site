@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LED & Photodiodes</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6ad7ff;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #f6c76b;
+      --led-red: #ff4444;
+      --led-green: #44ff44;
+      --led-blue: #4444ff;
+      
+      --bg-deep: #0a1628;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 22, 40, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before { content: '←'; }
+    .topbar a:hover { color: var(--primary); background: rgba(106, 215, 255, 0.1); }
+
+    header.hero { text-align: center; padding: 30px 20px 20px; }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      font-weight: 800;
+    }
+
+    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .canvas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .canvas-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+    canvas {
+      width: 100%;
+      height: 200px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .canvas-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+    }
+
+    .canvas-label span {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mode-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .mode-badge.led { background: rgba(246, 199, 107, 0.2); color: #f6c76b; }
+    .mode-badge.photo { background: rgba(106, 215, 255, 0.2); color: #6ad7ff; }
+
+    .color-preview {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(106, 215, 255, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin: 12px 0;
+      transition: all 0.3s ease;
+    }
+
+    .status-indicator .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+    }
+
+    .status-indicator.inactive {
+      background: linear-gradient(135deg, rgba(100, 100, 100, 0.25), rgba(50, 50, 50, 0.1));
+      border-color: var(--text-dim);
+    }
+
+    .status-indicator.inactive .status-text { color: var(--text-dim); }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--primary);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(15, 25, 40, 0.9);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    select:hover, select:focus { border-color: var(--primary); outline: none; }
+    select option { background: #0f1f35; color: var(--text); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .radio-group { display: flex; gap: 8px; }
+
+    .radio-group label {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .radio-group label:hover { background: rgba(255, 255, 255, 0.08); }
+    .radio-group input[type="radio"] { display: none; }
+    .radio-group input[type="radio"]:checked + span { color: var(--primary); }
+    .radio-group label:has(input[type="radio"]:checked) {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--primary);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
+    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 12px; }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .data-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: #f87171; }
+
+    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
+
+    .theme-selector { display: flex; gap: 6px; flex-wrap: wrap; }
+    .theme-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .theme-btn:hover { background: rgba(255, 255, 255, 0.1); }
+    .theme-btn.active { background: rgba(106, 215, 255, 0.2); border-color: var(--primary); color: var(--primary); }
+
+    .help-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: var(--bg-deep);
+      font-size: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(106, 215, 255, 0.3);
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    .help-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(106, 215, 255, 0.5); }
+
+    .tooltip {
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: linear-gradient(135deg, rgba(20, 35, 55, 0.98), rgba(10, 20, 35, 0.95));
+      border: 1px solid var(--primary);
+      border-radius: 12px;
+      padding: 16px;
+      max-width: 320px;
+      color: var(--text);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      z-index: 1000;
+      display: none;
+    }
+    .tooltip.show { display: block; animation: fadeIn 0.3s ease; }
+    .tooltip h4 { margin: 0 0 10px; color: var(--primary); font-size: 1rem; }
+    .tooltip p { margin: 0 0 8px; color: var(--text-muted); }
+    .tooltip .close-tooltip { position: absolute; top: 8px; right: 10px; background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 180px; }
+      .canvas-grid { grid-template-columns: 1fr; }
+      .data-grid { grid-template-columns: repeat(2, 1fr); }
+      .tooltip { right: 10px; left: 10px; max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>LED & Photodiodes</h1>
+      <p>Electroluminescence and photovoltaic response</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="canvas-grid">
+          <div class="canvas-wrap">
+            <canvas id="deviceCanvas" width="480" height="200"></canvas>
+            <div class="canvas-label">
+              <span id="deviceLabel">Device</span>
+              <span class="mode-badge led" id="modeBadge">LED</span>
+            </div>
+          </div>
+          <div class="canvas-wrap">
+            <canvas id="ivCanvas" width="480" height="200"></canvas>
+            <div class="canvas-label">
+              <span>I-V Curve</span>
+              <span id="bandGapLabel">Eg = 1.98 eV</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-text" id="statusText">EMITTING</span>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Wavelength</span>
+            <span class="data-value blue" id="lambdaVal">625 <small>nm</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Photon Energy</span>
+            <span class="data-value yellow" id="energyVal">1.98 <small>eV</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Current</span>
+            <span class="data-value green" id="currentVal">20.0 <small>mA</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Voltage</span>
+            <span class="data-value red" id="voltageVal">2.20 <small>V</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Output Power</span>
+            <span class="data-value yellow" id="powerVal">0.88 <small>mW</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Responsivity</span>
+            <span class="data-value green" id="respVal">0.40 <small>A/W</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Photocurrent</span>
+            <span class="data-value blue" id="iphVal">8.0 <small>μA</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Efficiency</span>
+            <span class="data-value green" id="effVal">20%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">E = hc/λ = 1240/λ (nm)</div>
+          <div class="formula-desc">Photon energy from wavelength</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="control-group">
+          <label>Device Mode</label>
+          <div class="radio-group">
+            <label>
+              <input type="radio" name="device" value="led" checked>
+              <span>LED</span>
+            </label>
+            <label>
+              <input type="radio" name="device" value="photo">
+              <span>Photodiode</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Material</label>
+          <select id="material">
+            <option value="gaas">GaAs (940nm IR)</option>
+            <option value="gaasp">GaAsP (625nm Red)</option>
+            <option value="ingan">InGaN (525nm Green)</option>
+            <option value="si">Silicon (900nm)</option>
+            <option value="ge">Germanium (1550nm)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Wavelength <strong id="lambdaLabel">625 nm</strong></label>
+          <input type="range" id="lambda" min="380" max="1550" step="5" value="625">
+        </div>
+
+        <div class="control-group">
+          <label>Forward Current <strong id="currentLabel">20 mA</strong></label>
+          <input type="range" id="if" min="0" max="50" step="0.5" value="20">
+        </div>
+
+        <div class="control-group">
+          <label>Forward Voltage <strong id="voltageLabel">2.2 V</strong></label>
+          <input type="range" id="vf" min="1.5" max="4.0" step="0.01" value="2.2">
+        </div>
+
+        <div class="control-group">
+          <label>Reverse Bias <strong id="vrLabel">5 V</strong></label>
+          <input type="range" id="vr" min="0" max="20" step="0.5" value="5">
+        </div>
+
+        <div class="control-group">
+          <label>Light Intensity <strong id="intensityLabel">50%</strong></label>
+          <input type="range" id="light" min="0" max="100" step="1" value="50">
+        </div>
+
+        <div class="control-group">
+          <label>Background Theme</label>
+          <div class="theme-selector">
+            <button class="theme-btn active" data-theme="lab">Lab</button>
+            <button class="theme-btn" data-theme="dark">Dark</button>
+            <button class="theme-btn" data-theme="tech">Tech</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showCircuit" checked> Circuit</label>
+            <label><input type="checkbox" id="showIV" checked> I-V Curve</label>
+            <label><input type="checkbox" id="showElectrons" checked> Electrons</label>
+            <label><input type="checkbox" id="showGlow" checked> Glow Effect</label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <button class="help-btn" id="helpBtn">?</button>
+  <div class="tooltip" id="tooltip">
+    <button class="close-tooltip" id="closeTooltip">×</button>
+    <h4>LED & Photodiodes</h4>
+    <p><strong>LED (Light Emitting Diode):</strong> When forward-biased, electrons recombine with holes at the p-n junction, releasing photons. Higher current = more light.</p>
+    <p><strong>Photodiode:</strong> When reverse-biased and exposed to light, photon absorption creates electron-hole pairs, generating photocurrent.</p>
+    <p><strong>Key Formulas:</strong></p>
+    <p>• Photon Energy: E(eV) = 1240/λ(nm)</p>
+    <p>• Forward Voltage: Vf ≈ Eg (band gap)</p>
+    <p>• Responsivity: R = ηqλ/hc</p>
+  </div>
+
+  <script>
+    const deviceCanvas = document.getElementById('deviceCanvas');
+    const deviceCtx = deviceCanvas.getContext('2d');
+    const ivCanvas = document.getElementById('ivCanvas');
+    const ivCtx = ivCanvas.getContext('2d');
+
+    const materials = {
+      gaas: { lambda: 940, name: 'GaAs', eg: 1.42 },
+      gaasp: { lambda: 625, name: 'GaAsP', eg: 1.98 },
+      ingan: { lambda: 525, name: 'InGaN', eg: 2.36 },
+      si: { lambda: 900, name: 'Silicon', eg: 1.12 },
+      ge: { lambda: 1550, name: 'Germanium', eg: 0.67 }
+    };
+
+    const state = {
+      deviceType: 'led',
+      wavelength: 625,
+      forwardVoltage: 2.2,
+      forwardCurrent: 20,
+      reverseVoltage: 5,
+      lightIntensity: 50,
+      material: 'gaasp',
+      theme: 'lab',
+      showCircuit: true,
+      showIV: true,
+      showElectrons: true,
+      showGlow: true,
+      time: 0
+    };
+
+    function getLEDColor(lambda) {
+      if (lambda < 380) return '#7f00ff';
+      if (lambda < 450) return '#5c2aff';
+      if (lambda < 490) return '#00aaff';
+      if (lambda < 520) return '#00ffcc';
+      if (lambda < 565) return '#ccff00';
+      if (lambda < 590) return '#ffd000';
+      if (lambda < 625) return '#ff7a00';
+      if (lambda < 700) return '#ff2d2d';
+      if (lambda < 850) return '#a00000';
+      return '#400000';
+    }
+
+    function getColorName(lambda) {
+      if (lambda < 450) return 'Violet';
+      if (lambda < 495) return 'Blue';
+      if (lambda < 570) return 'Green';
+      if (lambda < 590) return 'Yellow';
+      if (lambda < 620) return 'Orange';
+      if (lambda < 700) return 'Red';
+      if (lambda < 850) return 'IR';
+      return 'Far IR';
+    }
+
+    function photonEnergyEv(lambda) {
+      return 1240 / lambda;
+    }
+
+    function ledLightPower() {
+      const eff = 0.2;
+      const IfA = state.forwardCurrent / 1000;
+      return eff * IfA * state.forwardVoltage;
+    }
+
+    function photodiodeResponsivity(lambda) {
+      return 0.5 * (lambda / 1000);
+    }
+
+    function photodiodeCurrent() {
+      const power = (state.lightIntensity / 100) * 0.02;
+      return photodiodeResponsivity(state.wavelength) * power;
+    }
+
+    function drawBackground(ctx, w, h) {
+      if (state.theme === 'lab') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0f1f35');
+        grad.addColorStop(1, '#0a1425');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+        ctx.lineWidth = 1;
+        for (let x = 0; x < w; x += 30) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 30) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+      } else if (state.theme === 'dark') {
+        const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(1, '#0a0a15');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      } else if (state.theme === 'tech') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0a1a15');
+        grad.addColorStop(1, '#050a08');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(52, 211, 153, 0.1)';
+        for (let x = 0; x < w; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
+      }
+    }
+
+    function drawDevice() {
+      const w = deviceCanvas.width;
+      const h = deviceCanvas.height;
+      const centerX = w / 2;
+      const centerY = h / 2;
+      
+      drawBackground(deviceCtx, w, h);
+
+      const color = getLEDColor(state.wavelength);
+      const isLED = state.deviceType === 'led';
+      const brightness = isLED ? state.forwardCurrent / 50 : state.lightIntensity / 100;
+
+      if (state.showCircuit) {
+        deviceCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        deviceCtx.lineWidth = 2;
+        deviceCtx.setLineDash([8, 4]);
+        deviceCtx.beginPath();
+        deviceCtx.moveTo(30, centerY);
+        deviceCtx.lineTo(centerX - 60, centerY);
+        deviceCtx.moveTo(centerX + 60, centerY);
+        deviceCtx.lineTo(w - 30, centerY);
+        deviceCtx.stroke();
+        deviceCtx.setLineDash([]);
+
+        const pTypeGrad = deviceCtx.createLinearGradient(centerX - 50, centerY - 30, centerX - 50, centerY + 30);
+        pTypeGrad.addColorStop(0, '#ff6b6b');
+        pTypeGrad.addColorStop(1, '#aa2222');
+        deviceCtx.fillStyle = pTypeGrad;
+        deviceCtx.fillRect(centerX - 50, centerY - 30, 40, 60);
+        
+        const nTypeGrad = deviceCtx.createLinearGradient(centerX + 10, centerY - 30, centerX + 10, centerY + 30);
+        nTypeGrad.addColorStop(0, '#6ad7ff');
+        nTypeGrad.addColorStop(1, '#2266aa');
+        deviceCtx.fillStyle = nTypeGrad;
+        deviceCtx.fillRect(centerX + 10, centerY - 30, 40, 60);
+
+        deviceCtx.fillStyle = '#fff';
+        deviceCtx.font = 'bold 14px Outfit';
+        deviceCtx.textAlign = 'center';
+        deviceCtx.fillText('p', centerX - 30, centerY + 5);
+        deviceCtx.fillText('n', centerX + 30, centerY + 5);
+
+        deviceCtx.strokeStyle = '#666';
+        deviceCtx.lineWidth = 1;
+        deviceCtx.beginPath();
+        deviceCtx.moveTo(centerX - 20, centerY);
+        deviceCtx.lineTo(centerX - 20, centerY - 40);
+        deviceCtx.moveTo(centerX + 20, centerY);
+        deviceCtx.lineTo(centerX + 20, centerY + 40);
+        deviceCtx.stroke();
+      }
+
+      if (state.showGlow && brightness > 0) {
+        const glowIntensity = isLED ? brightness : brightness * 0.5;
+        const glowSize = 30 + glowIntensity * 40;
+        
+        const glow = deviceCtx.createRadialGradient(centerX + 80, centerY, 0, centerX + 80, centerY, glowSize);
+        glow.addColorStop(0, color + Math.round(glowIntensity * 100).toString(16).padStart(2, '0'));
+        glow.addColorStop(0.5, color + Math.round(glowIntensity * 40).toString(16).padStart(2, '0'));
+        glow.addColorStop(1, color + '00');
+        deviceCtx.fillStyle = glow;
+        deviceCtx.beginPath();
+        deviceCtx.arc(centerX + 80, centerY, glowSize, 0, Math.PI * 2);
+        deviceCtx.fill();
+
+        const coreGlow = deviceCtx.createRadialGradient(centerX + 80, centerY, 0, centerX + 80, centerY, 15);
+        coreGlow.addColorStop(0, '#ffffff');
+        coreGlow.addColorStop(0.3, color);
+        coreGlow.addColorStop(1, color + '00');
+        deviceCtx.fillStyle = coreGlow;
+        deviceCtx.beginPath();
+        deviceCtx.arc(centerX + 80, centerY, 15, 0, Math.PI * 2);
+        deviceCtx.fill();
+      }
+
+      if (state.showElectrons && brightness > 0) {
+        const flowSpeed = isLED ? 2 : -1;
+        const particles = isLED ? 8 : 6;
+        
+        for (let i = 0; i < particles; i++) {
+          const offset = ((state.time * 30 * flowSpeed) + i * 40) % (w - 60);
+          const startX = isLED ? 40 + offset : w - 40 - offset;
+          const y = centerY - 20 + (i % 3) * 20;
+          
+          deviceCtx.fillStyle = isLED ? '#f6c76b' : '#6ad7ff';
+          deviceCtx.beginPath();
+          deviceCtx.arc(startX, y, 3, 0, Math.PI * 2);
+          deviceCtx.fill();
+
+          if (isLED) {
+            deviceCtx.strokeStyle = color + '40';
+            deviceCtx.lineWidth = 1;
+            deviceCtx.beginPath();
+            deviceCtx.moveTo(startX - 5, y);
+            deviceCtx.lineTo(startX - 15, y - 3);
+            deviceCtx.moveTo(startX - 5, y);
+            deviceCtx.lineTo(startX - 15, y + 3);
+            deviceCtx.stroke();
+          }
+        }
+
+        for (let i = 0; i < particles; i++) {
+          const offset = ((state.time * 30 * flowSpeed * 0.7) + i * 50) % (w - 60);
+          const startX = isLED ? 40 + offset : w - 40 - offset;
+          const y = centerY + 20 + (i % 3) * 20;
+          
+          deviceCtx.fillStyle = '#fff';
+          deviceCtx.beginPath();
+          deviceCtx.arc(startX, y, 2, 0, Math.PI * 2);
+          deviceCtx.fill();
+        }
+      }
+
+      deviceCtx.fillStyle = '#94a3b8';
+      deviceCtx.font = '12px Outfit';
+      deviceCtx.textAlign = 'left';
+      deviceCtx.fillText(isLED ? '→ Light emission' : '← Light absorption', 20, 25);
+
+      const modeBadge = document.getElementById('modeBadge');
+      modeBadge.textContent = isLED ? 'LED' : 'PD';
+      modeBadge.className = 'mode-badge ' + (isLED ? 'led' : 'photo');
+
+      document.getElementById('deviceLabel').textContent = isLED 
+        ? `LED: ${getColorName(state.wavelength)}` 
+        : `Photodiode: ${getColorName(state.wavelength)}`;
+    }
+
+    function drawIV() {
+      const w = ivCanvas.width;
+      const h = ivCanvas.height;
+      
+      drawBackground(ivCtx, w, h);
+
+      const vMin = -15, vMax = 5;
+      const iMin = -60, iMax = 60;
+
+      ivCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ivCtx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = 30 + i * ((h - 60) / 4);
+        ivCtx.beginPath(); ivCtx.moveTo(50, y); ivCtx.lineTo(w - 20, y); ivCtx.stroke();
+      }
+      for (let i = 0; i <= 5; i++) {
+        const x = 50 + i * ((w - 70) / 5);
+        ivCtx.beginPath(); ivCtx.moveTo(x, 30); ivCtx.lineTo(x, h - 30); ivCtx.stroke();
+      }
+
+      ivCtx.fillStyle = '#64748b';
+      ivCtx.font = '10px Outfit';
+      ivCtx.fillText('I (mA)', 15, 20);
+      ivCtx.fillText('V (V)', w - 30, h - 10);
+
+      ivCtx.fillStyle = '#f87171';
+      ivCtx.fillText('Photodiode (reverse)', w - 90, 40);
+      ivCtx.fillStyle = '#34d399';
+      ivCtx.fillText('LED (forward)', w - 75, h - 40);
+
+      if (!state.showIV) {
+        ivCtx.fillStyle = '#64748b';
+        ivCtx.font = '14px Outfit';
+        ivCtx.textAlign = 'center';
+        ivCtx.fillText('Curve hidden', w/2, h/2);
+        return;
+      }
+
+      ivCtx.strokeStyle = '#6ad7ff';
+      ivCtx.lineWidth = 2;
+      ivCtx.beginPath();
+
+      for (let v = vMin; v <= vMax; v += 0.2) {
+        let i;
+        if (v >= 0) {
+          const vf = photonEnergyEv(state.wavelength);
+          i = v > vf ? Math.min(50, (v - vf) * 20) : 0;
+        } else {
+          const lightCurrent = -photodiodeCurrent() * 1000;
+          i = v < 0 ? lightCurrent * (Math.abs(v) / 10) : 0;
+        }
+        
+        const x = 50 + ((v - vMin) / (vMax - vMin)) * (w - 70);
+        const y = 30 + ((iMax - i) / (iMax - iMin)) * (h - 60);
+        
+        if (v === vMin) ivCtx.moveTo(x, y); else ivCtx.lineTo(x, y);
+      }
+      ivCtx.stroke();
+
+      const isLED = state.deviceType === 'led';
+      const vNow = isLED ? state.forwardVoltage : -state.reverseVoltage;
+      const iNow = isLED ? state.forwardCurrent : -photodiodeCurrent() * 1000;
+      const xNow = 50 + ((vNow - vMin) / (vMax - vMin)) * (w - 70);
+      const yNow = 30 + ((iMax - iNow) / (iMax - iMin)) * (h - 60);
+
+      ivCtx.fillStyle = '#f6c76b';
+      ivCtx.beginPath();
+      ivCtx.arc(xNow, yNow, 6, 0, Math.PI * 2);
+      ivCtx.fill();
+
+      ivCtx.fillStyle = '#f6c76b';
+      ivCtx.beginPath();
+      ivCtx.arc(xNow, yNow, 10, 0, Math.PI * 2);
+      ivCtx.strokeStyle = '#f6c76b';
+      ivCtx.lineWidth = 1;
+      ivCtx.stroke();
+
+      const bandGap = photonEnergyEv(state.wavelength);
+      document.getElementById('bandGapLabel').textContent = `Eg = ${bandGap.toFixed(2)} eV`;
+    }
+
+    function updateDataCards() {
+      const eg = photonEnergyEv(state.wavelength);
+      const power = ledLightPower();
+      const resp = photodiodeResponsivity(state.wavelength);
+      const iph = photodiodeCurrent();
+      const isLED = state.deviceType === 'led';
+
+      document.getElementById('lambdaVal').innerHTML = `${state.wavelength} <small>nm</small>`;
+      document.getElementById('energyVal').innerHTML = `${eg.toFixed(2)} <small>eV</small>`;
+      document.getElementById('currentVal').innerHTML = isLED 
+        ? `${state.forwardCurrent.toFixed(1)} <small>mA</small>` 
+        : `${(iph * 1e6).toFixed(1)} <small>μA</small>`;
+      document.getElementById('voltageVal').innerHTML = isLED
+        ? `${state.forwardVoltage.toFixed(2)} <small>V</small>`
+        : `-${state.reverseVoltage.toFixed(1)} <small>V</small>`;
+      document.getElementById('powerVal').innerHTML = `${(power * 1000).toFixed(2)} <small>mW</small>`;
+      document.getElementById('respVal').innerHTML = `${resp.toFixed(2)} <small>A/W</small>`;
+      document.getElementById('iphVal').innerHTML = `${(iph * 1e6).toFixed(1)} <small>μA</small>`;
+      document.getElementById('effVal').innerHTML = '20%';
+
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      
+      if (isLED) {
+        if (state.forwardCurrent > 0) {
+          statusIndicator.classList.remove('inactive');
+          statusText.textContent = 'EMITTING';
+        } else {
+          statusIndicator.classList.add('inactive');
+          statusText.textContent = 'OFF';
+        }
+      } else {
+        if (state.lightIntensity > 0) {
+          statusIndicator.classList.remove('inactive');
+          statusText.textContent = 'GENERATING';
+        } else {
+          statusIndicator.classList.add('inactive');
+          statusText.textContent = 'DARK';
+        }
+      }
+    }
+
+    function updateLabels() {
+      document.getElementById('lambdaLabel').textContent = `${state.wavelength} nm`;
+      document.getElementById('currentLabel').textContent = `${state.forwardCurrent.toFixed(1)} mA`;
+      document.getElementById('voltageLabel').textContent = `${state.forwardVoltage.toFixed(2)} V`;
+      document.getElementById('vrLabel').textContent = `${state.reverseVoltage.toFixed(1)} V`;
+      document.getElementById('intensityLabel').textContent = `${state.lightIntensity}%`;
+    }
+
+    function draw() {
+      state.time += 0.016;
+      drawDevice();
+      drawIV();
+      updateDataCards();
+    }
+
+    function tick() {
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    document.querySelectorAll('input[name="device"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        state.deviceType = e.target.value;
+        updateLabels();
+      });
+    });
+
+    document.getElementById('material').addEventListener('change', e => {
+      const mat = materials[e.target.value];
+      state.material = e.target.value;
+      state.wavelength = mat.lambda;
+      document.getElementById('lambda').value = mat.lambda;
+      updateLabels();
+    });
+
+    document.getElementById('lambda').addEventListener('input', e => {
+      state.wavelength = Number(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('if').addEventListener('input', e => {
+      state.forwardCurrent = Number(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('vf').addEventListener('input', e => {
+      state.forwardVoltage = Number(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('vr').addEventListener('input', e => {
+      state.reverseVoltage = Number(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('light').addEventListener('input', e => {
+      state.lightIntensity = Number(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('showCircuit').addEventListener('change', e => state.showCircuit = e.target.checked);
+    document.getElementById('showIV').addEventListener('change', e => state.showIV = e.target.checked);
+    document.getElementById('showElectrons').addEventListener('change', e => state.showElectrons = e.target.checked);
+    document.getElementById('showGlow').addEventListener('change', e => state.showGlow = e.target.checked);
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.theme = btn.dataset.theme;
+      });
+    });
+
+    document.getElementById('helpBtn').addEventListener('click', () => {
+      document.getElementById('tooltip').classList.toggle('show');
+    });
+    document.getElementById('closeTooltip').addEventListener('click', () => {
+      document.getElementById('tooltip').classList.remove('show');
+    });
+
+    updateLabels();
+    tick();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

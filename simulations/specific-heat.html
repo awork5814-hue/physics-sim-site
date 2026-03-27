@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specific Heat Capacity</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --cold-color: #4a90d9;
+      --hot-color: #ff6b6b;
+      --water-color: #6ad7ff;
+      --metal-color: #8b7355;
+      --heat-source: #ff9a6c;
+      --thermometer: #ff6b6b;
+      --graph-line: #6ad7ff;
+      --boiling-color: #ffffff;
+      --ice-color: #a0d8ef;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .graph-panel {
+      margin: 0 28px 18px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="specific-heat">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Specific Heat Capacity</h1>
+      <p>Heat required to change temperature: Q = mcΔT</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="single">Single</button>
+      <button class="tab" data-mode="materials">Compare Materials</button>
+      <button class="tab" data-mode="masses">Compare Masses</button>
+      <button class="tab" data-mode="calorimetry">Calorimetry</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="heatCanvas" width="900" height="520" aria-label="Specific heat simulation"></canvas>
+        <div class="btn-row">
+          <button id="playPause">Heat</button>
+          <button id="reset">Reset</button>
+          <div class="inline" style="max-width: 220px;">
+            <label for="speed">Time Scale</label>
+            <select id="speed">
+              <option value="1" selected>1x</option>
+              <option value="10">10x</option>
+              <option value="100">100x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div id="singleControls">
+          <div class="control-group">
+            <label for="material">Material</label>
+            <select id="material">
+              <option value="water" selected>Water (4186)</option>
+              <option value="aluminum">Aluminum (897)</option>
+              <option value="iron">Iron (449)</option>
+              <option value="copper">Copper (385)</option>
+              <option value="lead">Lead (128)</option>
+              <option value="glass">Glass (840)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="mass">Mass <strong id="massLabel">1.0 kg</strong></label>
+            <input type="range" id="mass" min="0.1" max="10" step="0.1" value="1" />
+          </div>
+
+          <div class="control-group">
+            <label for="initialTemp">Initial Temp <strong id="initialLabel">20°C</strong></label>
+            <input type="range" id="initialTemp" min="0" max="100" step="1" value="20" />
+          </div>
+
+          <div class="control-group">
+            <label for="targetTemp">Target Temp <strong id="targetLabel">50°C</strong></label>
+            <input type="range" id="targetTemp" min="10" max="120" step="1" value="50" />
+          </div>
+
+          <div class="control-group">
+            <label for="power">Heat Power <strong id="powerLabel">100 W</strong></label>
+            <input type="range" id="power" min="10" max="1000" step="10" value="100" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showThermometer" checked /> Show thermometer</label>
+          <label><input type="checkbox" id="showGraph" checked /> Show temperature graph</label>
+          <label><input type="checkbox" id="showHeatFlow" checked /> Show heat flow arrows</label>
+          <label><input type="checkbox" id="showEnergy" checked /> Show energy values</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="graph-header">
+        <h3 style="margin:0;">Temperature vs Time</h3>
+        <div style="color: var(--sim-muted);">Heating curve</div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Temperature graph"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Specific heat capacity is the energy needed to raise 1 kg of a substance by 1°C. Water has a very high specific heat, so it changes temperature slowly.</p>
+        <p><strong>Formula:</strong> Q = m × c × ΔT</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Heat 1 kg of water vs 1 kg of copper by 50°C. Which needs more energy?</li>
+          <li>Double the mass of water. How much more heat is needed?</li>
+          <li>Why does a full kettle take longer than a half-full one?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Q = mcΔT governs heating and cooling.</li>
+          <li>High c → slower temperature change.</li>
+          <li>Water moderates climate due to high c.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('heatCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const tabs = document.querySelectorAll('.tab');
+    const materialSelect = document.getElementById('material');
+    const massInput = document.getElementById('mass');
+    const initialTempInput = document.getElementById('initialTemp');
+    const targetTempInput = document.getElementById('targetTemp');
+    const powerInput = document.getElementById('power');
+    const speedSelect = document.getElementById('speed');
+
+    const massLabel = document.getElementById('massLabel');
+    const initialLabel = document.getElementById('initialLabel');
+    const targetLabel = document.getElementById('targetLabel');
+    const powerLabel = document.getElementById('powerLabel');
+
+    const showThermometer = document.getElementById('showThermometer');
+    const showGraph = document.getElementById('showGraph');
+    const showHeatFlow = document.getElementById('showHeatFlow');
+    const showEnergy = document.getElementById('showEnergy');
+
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const materials = {
+      water: 4186,
+      aluminum: 897,
+      iron: 449,
+      copper: 385,
+      lead: 128,
+      glass: 840
+    };
+
+    const state = {
+      mode: 'single',
+      material: 'water',
+      specificHeat: 4186,
+      mass: 1,
+      initialTemp: 20,
+      currentTemp: 20,
+      targetTemp: 50,
+      power: 100,
+      time: 0,
+      heating: false,
+      speed: 1,
+      graphData: []
+    };
+
+    function updateLabels() {
+      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
+      initialLabel.textContent = `${state.initialTemp.toFixed(0)}°C`;
+      targetLabel.textContent = `${state.targetTemp.toFixed(0)}°C`;
+      powerLabel.textContent = `${state.power.toFixed(0)} W`;
+    }
+
+    function updateDataPanel() {
+      const deltaT = state.currentTemp - state.initialTemp;
+      const Q = state.mass * state.specificHeat * deltaT;
+      dataPanel.innerHTML = `
+        <div><strong>Material:</strong> ${state.material}</div>
+        <div><strong>Mass:</strong> ${state.mass.toFixed(1)} kg</div>
+        <div><strong>Specific Heat:</strong> ${state.specificHeat.toFixed(0)} J/(kg·°C)</div>
+        <div><strong>Initial Temp:</strong> ${state.initialTemp.toFixed(0)}°C</div>
+        <div><strong>Current Temp:</strong> ${state.currentTemp.toFixed(1)}°C</div>
+        <div><strong>ΔT:</strong> ${deltaT.toFixed(1)}°C</div>
+        <div><strong>Q = mcΔT:</strong> ${Q.toFixed(0)} J</div>
+      `;
+    }
+
+    function getTemperatureColor(temp) {
+      const t = Math.max(0, Math.min(100, temp));
+      if (t < 30) return '#4a90d9';
+      if (t < 60) return '#6ad7ff';
+      if (t < 85) return '#f6c76b';
+      return '#ff6b6b';
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const tank = {
+        x: canvas.width * 0.2,
+        y: canvas.height * 0.15,
+        w: canvas.width * 0.35,
+        h: canvas.height * 0.65
+      };
+
+      ctx.strokeStyle = 'rgba(233,242,255,0.3)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tank.x, tank.y, tank.w, tank.h);
+
+      const fillHeight = tank.h * 0.75;
+      ctx.fillStyle = getTemperatureColor(state.currentTemp);
+      ctx.fillRect(tank.x, tank.y + tank.h - fillHeight, tank.w, fillHeight);
+
+      ctx.fillStyle = '#ff9a6c';
+      ctx.fillRect(tank.x + tank.w * 0.25, tank.y + tank.h + 20, tank.w * 0.5, 14);
+      ctx.fillStyle = 'rgba(255, 154, 108, 0.4)';
+      ctx.fillRect(tank.x + tank.w * 0.2, tank.y + tank.h + 34, tank.w * 0.6, 6);
+
+      if (showThermometer.checked) {
+        ctx.fillStyle = '#e9f2ff';
+        ctx.fillRect(tank.x + tank.w + 40, tank.y + 20, 12, tank.h - 40);
+        ctx.fillStyle = '#ff6b6b';
+        const mercuryHeight = ((state.currentTemp - 0) / 120) * (tank.h - 60);
+        ctx.fillRect(tank.x + tank.w + 40, tank.y + tank.h - 20 - mercuryHeight, 12, mercuryHeight);
+        ctx.fillText(`${state.currentTemp.toFixed(1)}°C`, tank.x + tank.w + 10, tank.y + 10);
+      }
+
+      if (showHeatFlow.checked && state.heating) {
+        ctx.strokeStyle = 'rgba(246,199,107,0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(tank.x + tank.w / 2, tank.y + tank.h + 10);
+        ctx.lineTo(tank.x + tank.w / 2, tank.y + tank.h - 20);
+        ctx.stroke();
+      }
+    }
+
+    function updateGraph() {
+      if (!showGraph.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 30;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      if (state.graphData.length < 2) return;
+      gctx.strokeStyle = '#6ad7ff';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      state.graphData.forEach((p, i) => {
+        const x = padding + (i / (state.graphData.length - 1)) * width;
+        const y = padding + height - (p / 120) * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+    }
+
+    function update(dt) {
+      if (!state.heating) return;
+      const heatAdded = state.power * dt;
+      const dT = heatAdded / (state.mass * state.specificHeat);
+      state.currentTemp = Math.min(state.targetTemp, state.currentTemp + dT);
+      state.time += dt;
+      state.graphData.push(state.currentTemp);
+      if (state.graphData.length > 200) state.graphData.shift();
+      if (state.currentTemp >= state.targetTemp) {
+        state.heating = false;
+        playPauseBtn.textContent = 'Heat';
+      }
+    }
+
+    function render() {
+      drawScene();
+      updateDataPanel();
+      updateGraph();
+      requestAnimationFrame(render);
+    }
+
+    function loop() {
+      update((1 / 60) * state.speed);
+      requestAnimationFrame(loop);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+      });
+    });
+
+    materialSelect.addEventListener('change', (e) => {
+      state.material = e.target.value;
+      state.specificHeat = materials[state.material];
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    initialTempInput.addEventListener('input', (e) => {
+      state.initialTemp = parseFloat(e.target.value);
+      state.currentTemp = state.initialTemp;
+      updateLabels();
+    });
+
+    targetTempInput.addEventListener('input', (e) => {
+      state.targetTemp = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    powerInput.addEventListener('input', (e) => {
+      state.power = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.heating = !state.heating;
+      playPauseBtn.textContent = state.heating ? 'Pause' : 'Heat';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.currentTemp = state.initialTemp;
+      state.time = 0;
+      state.graphData = [];
+      state.heating = false;
+      playPauseBtn.textContent = 'Heat';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    updateDataPanel();
+    requestAnimationFrame(render);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

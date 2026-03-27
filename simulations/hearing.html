@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Human Hearing</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .readout .desc { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Human Hearing</h1>
+        <p>Ear anatomy, frequency range, and sensitivity</p>
+      </div>
+      <div class="pill">Cochlea · Audiogram · Equal loudness</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Ear Anatomy & Response</h2>
+        <canvas id="earCanvas" width="600" height="260"></canvas>
+        <canvas id="responseCanvas" width="600" height="220" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Frequency (Hz)</label>
+            <input type="range" id="freq" min="20" max="20000" step="10" value="1000" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">1000 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Intensity (dB)</label>
+            <input type="range" id="db" min="0" max="130" step="1" value="50" />
+            <div class="row"><span class="muted">β</span><span class="value" id="dbValue">50 dB</span></div>
+          </div>
+          <div class="control">
+            <label>Age Preset</label>
+            <select id="age">
+              <option value="child">Child</option>
+              <option value="adult" selected>Adult</option>
+              <option value="senior">Senior</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Animal Comparison</label>
+            <select id="animal">
+              <option value="human" selected>Human</option>
+              <option value="dog">Dog</option>
+              <option value="bat">Bat</option>
+              <option value="dolphin">Dolphin</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Play Test Tone</label>
+            <button id="play">Play</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Status</div>
+            <div class="row"><span>Hearing</span><span class="value" id="statusValue">Normal</span></div>
+            <div class="row"><span>Best sensitivity</span><span class="value">3 kHz</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Selected Anatomy</div>
+            <div class="row"><span id="partName">Pinna (Auricle)</span></div>
+            <div class="desc" id="partDesc">Funnels sound into the ear canal and boosts key speech frequencies.</div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span>Threshold of hearing</span><span class="value">0 dB</span></div>
+            <div class="row"><span>Threshold of pain</span><span class="value">130 dB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Click any ear structure to highlight it and read a short description.</div>
+  </div>
+
+  <script>
+    const state = {
+      freq: 1000,
+      db: 50,
+      age: 'adult',
+      animal: 'human',
+      playing: false
+    };
+
+    const dom = {
+      freq: document.getElementById('freq'),
+      db: document.getElementById('db'),
+      age: document.getElementById('age'),
+      animal: document.getElementById('animal'),
+      play: document.getElementById('play'),
+      freqValue: document.getElementById('freqValue'),
+      dbValue: document.getElementById('dbValue'),
+      statusValue: document.getElementById('statusValue'),
+      partName: document.getElementById('partName'),
+      partDesc: document.getElementById('partDesc')
+    };
+
+    const earCanvas = document.getElementById('earCanvas');
+    const earCtx = earCanvas.getContext('2d');
+    const responseCanvas = document.getElementById('responseCanvas');
+    const resCtx = responseCanvas.getContext('2d');
+
+    let audioCtx, osc, gain;
+    let activePartId = 'pinna';
+    const earParts = [
+      {
+        id: 'pinna',
+        name: 'Pinna (Auricle)',
+        desc: 'Funnels sound into the ear canal and boosts key speech frequencies.',
+        hit: { type: 'circle', x: 120, y: 130, r: 62 }
+      },
+      {
+        id: 'canal',
+        name: 'Ear Canal',
+        desc: 'Resonant tube that amplifies around 2–4 kHz before the eardrum.',
+        hit: { type: 'rect', x: 170, y: 122, w: 90, h: 16 }
+      },
+      {
+        id: 'eardrum',
+        name: 'Eardrum (Tympanic Membrane)',
+        desc: 'Thin membrane that vibrates with incoming sound waves.',
+        hit: { type: 'circle', x: 285, y: 130, r: 14 }
+      },
+      {
+        id: 'malleus',
+        name: 'Malleus (Hammer)',
+        desc: 'First ossicle, attached to the eardrum and transfers vibration.',
+        hit: { type: 'circle', x: 330, y: 116, r: 10 }
+      },
+      {
+        id: 'incus',
+        name: 'Incus (Anvil)',
+        desc: 'Middle ossicle that relays vibration from malleus to stapes.',
+        hit: { type: 'circle', x: 352, y: 130, r: 10 }
+      },
+      {
+        id: 'stapes',
+        name: 'Stapes (Stirrup)',
+        desc: 'Smallest bone; pushes on the oval window to drive the cochlea.',
+        hit: { type: 'circle', x: 372, y: 142, r: 9 }
+      },
+      {
+        id: 'oval',
+        name: 'Oval Window',
+        desc: 'Flexible membrane that transmits vibrations into cochlear fluid.',
+        hit: { type: 'rect', x: 392, y: 136, w: 16, h: 10 }
+      },
+      {
+        id: 'cochlea',
+        name: 'Cochlea',
+        desc: 'Spiral organ that converts vibrations into neural signals.',
+        hit: { type: 'circle', x: 475, y: 135, r: 52 }
+      },
+      {
+        id: 'semicircular',
+        name: 'Semicircular Canals',
+        desc: 'Balance organs detecting head rotation (not hearing, but inner ear).',
+        hit: { type: 'circle', x: 455, y: 70, r: 24 }
+      },
+      {
+        id: 'nerve',
+        name: 'Auditory Nerve',
+        desc: 'Carries encoded sound information to the brain.',
+        hit: { type: 'rect', x: 520, y: 125, w: 70, h: 20 }
+      }
+    ];
+
+    function startAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+      }
+      osc.frequency.value = state.freq;
+      gain.gain.value = state.playing ? Math.min(0.08, state.db / 2000) : 0;
+    }
+
+    function drawEar() {
+      const w = earCanvas.width;
+      const h = earCanvas.height;
+      earCtx.clearRect(0, 0, w, h);
+      earCtx.fillStyle = '#0b1420';
+      earCtx.fillRect(0, 0, w, h);
+
+      const highlight = (id, drawFn) => {
+        if (activePartId === id) {
+          earCtx.save();
+          earCtx.shadowColor = '#6ad7ff';
+          earCtx.shadowBlur = 12;
+          earCtx.lineWidth = 4;
+          drawFn();
+          earCtx.restore();
+        } else {
+          drawFn();
+        }
+      };
+
+      earCtx.strokeStyle = '#6ad7ff';
+      earCtx.lineWidth = 3;
+      highlight('pinna', () => {
+        earCtx.beginPath();
+        earCtx.arc(120, h/2, 60, Math.PI*0.3, Math.PI*1.7);
+        earCtx.stroke();
+      });
+
+      earCtx.strokeStyle = '#f6c76b';
+      earCtx.lineWidth = 4;
+      highlight('canal', () => {
+        earCtx.beginPath();
+        earCtx.moveTo(170, h/2);
+        earCtx.lineTo(260, h/2);
+        earCtx.stroke();
+      });
+
+      earCtx.fillStyle = '#6ad7ff';
+      highlight('eardrum', () => {
+        earCtx.beginPath();
+        earCtx.arc(285, h/2, 12, 0, Math.PI*2);
+        earCtx.fill();
+      });
+
+      earCtx.strokeStyle = '#f6c76b';
+      earCtx.lineWidth = 3;
+      highlight('malleus', () => {
+        earCtx.beginPath();
+        earCtx.arc(330, h/2 - 14, 8, 0, Math.PI*2);
+        earCtx.stroke();
+      });
+      highlight('incus', () => {
+        earCtx.beginPath();
+        earCtx.arc(352, h/2, 8, 0, Math.PI*2);
+        earCtx.stroke();
+      });
+      highlight('stapes', () => {
+        earCtx.beginPath();
+        earCtx.arc(372, h/2 + 10, 7, 0, Math.PI*2);
+        earCtx.stroke();
+      });
+
+      earCtx.fillStyle = '#6ad7ff';
+      highlight('oval', () => {
+        earCtx.fillRect(392, h/2 + 6, 16, 10);
+      });
+
+      earCtx.strokeStyle = '#6ad7ff';
+      earCtx.lineWidth = 3;
+      highlight('cochlea', () => {
+        earCtx.beginPath();
+        earCtx.arc(470, h/2, 50, -Math.PI/2, Math.PI);
+        earCtx.stroke();
+        earCtx.beginPath();
+        earCtx.arc(470, h/2, 30, -Math.PI/2, Math.PI);
+        earCtx.stroke();
+        earCtx.beginPath();
+        earCtx.arc(470, h/2, 12, -Math.PI/2, Math.PI);
+        earCtx.stroke();
+      });
+
+      earCtx.strokeStyle = '#f6c76b';
+      earCtx.lineWidth = 2;
+      highlight('semicircular', () => {
+        earCtx.beginPath();
+        earCtx.arc(455, h/2 - 60, 22, Math.PI*0.2, Math.PI*1.6);
+        earCtx.stroke();
+        earCtx.beginPath();
+        earCtx.arc(475, h/2 - 50, 18, Math.PI*0.2, Math.PI*1.6);
+        earCtx.stroke();
+      });
+
+      earCtx.strokeStyle = '#6ad7ff';
+      earCtx.lineWidth = 3;
+      highlight('nerve', () => {
+        earCtx.beginPath();
+        earCtx.moveTo(520, h/2);
+        earCtx.lineTo(590, h/2 + 6);
+        earCtx.stroke();
+      });
+
+      earCtx.fillStyle = '#8aa0b8';
+      earCtx.fillText('Pinna', 60, 24);
+      earCtx.fillText('Canal', 185, 24);
+      earCtx.fillText('Eardrum', 260, 24);
+      earCtx.fillText('Ossicles', 320, 24);
+      earCtx.fillText('Cochlea', 440, 24);
+      earCtx.fillText('Semicircular', 410, 48);
+      earCtx.fillText('Auditory N.', 505, 210);
+    }
+
+    function drawResponse() {
+      const w = responseCanvas.width;
+      const h = responseCanvas.height;
+      resCtx.clearRect(0, 0, w, h);
+      resCtx.fillStyle = '#0b1420';
+      resCtx.fillRect(0, 0, w, h);
+
+      resCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 60) {
+        resCtx.beginPath();
+        resCtx.moveTo(x, 0);
+        resCtx.lineTo(x, h);
+        resCtx.stroke();
+      }
+
+      resCtx.strokeStyle = '#6ad7ff';
+      resCtx.lineWidth = 2;
+      resCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const f = 20 + (x / w) * 20000;
+        const sensitivity = Math.exp(-Math.pow(Math.log(f/3000), 2) / 0.8);
+        const y = h - sensitivity * (h - 20) - 10;
+        if (x === 0) resCtx.moveTo(x, y); else resCtx.lineTo(x, y);
+      }
+      resCtx.stroke();
+
+      const markerX = (state.freq - 20) / 20000 * w;
+      resCtx.fillStyle = '#f6c76b';
+      resCtx.beginPath();
+      resCtx.arc(markerX, h/2, 4, 0, Math.PI*2);
+      resCtx.fill();
+    }
+
+    function updateReadouts() {
+      dom.freqValue.textContent = `${state.freq} Hz`;
+      dom.dbValue.textContent = `${state.db} dB`;
+      dom.statusValue.textContent = state.db > 85 ? 'Risky' : 'Normal';
+      const active = earParts.find((part) => part.id === activePartId) || earParts[0];
+      dom.partName.textContent = active.name;
+      dom.partDesc.textContent = active.desc;
+    }
+
+    function update() {
+      updateReadouts();
+      drawEar();
+      drawResponse();
+      startAudio();
+    }
+
+    function bind() {
+      dom.freq.addEventListener('input', () => { state.freq = Number(dom.freq.value); update(); });
+      dom.db.addEventListener('input', () => { state.db = Number(dom.db.value); update(); });
+      dom.age.addEventListener('change', () => { state.age = dom.age.value; update(); });
+      dom.animal.addEventListener('change', () => { state.animal = dom.animal.value; update(); });
+      dom.play.addEventListener('click', () => {
+        state.playing = !state.playing;
+        dom.play.textContent = state.playing ? 'Stop' : 'Play';
+        update();
+      });
+      earCanvas.addEventListener('click', (event) => {
+        const rect = earCanvas.getBoundingClientRect();
+        const scaleX = earCanvas.width / rect.width;
+        const scaleY = earCanvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+        for (const part of earParts) {
+          const hit = part.hit;
+          if (hit.type === 'circle') {
+            const dx = x - hit.x;
+            const dy = y - hit.y;
+            if (Math.hypot(dx, dy) <= hit.r) {
+              activePartId = part.id;
+              update();
+              return;
+            }
+          } else if (hit.type === 'rect') {
+            if (x >= hit.x && x <= hit.x + hit.w && y >= hit.y && y <= hit.y + hit.h) {
+              activePartId = part.id;
+              update();
+              return;
+            }
+          }
+        }
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

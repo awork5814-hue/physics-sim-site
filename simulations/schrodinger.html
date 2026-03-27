@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schrödinger Equation</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; font-size: 1.1rem; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    .energy-levels { display: flex; gap: 8px; align-items: flex-end; height: 80px; padding: 10px; background: rgba(6, 10, 18, 0.5); border-radius: 8px; }
+    .energy-bar { flex: 1; background: linear-gradient(180deg, var(--accent), rgba(106, 215, 255, 0.3)); border-radius: 4px 4px 0 0; transition: height 0.3s; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Wave</span></div>
+    <header class="hero"><h1>Schrödinger Equation</h1><p>iℏ∂Ψ/∂t = ĤΨ — The fundamental equation of quantum mechanics</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">-ℏ²/2m ∇²Ψ + VΨ = EΨ</div>
+        <div class="control-group">
+          <label>Quantum Number (n)</label>
+          <input type="range" id="nSlider" min="1" max="5" value="1">
+        </div>
+        <div class="control-group">
+          <label>Potential Well Width</label>
+          <input type="range" id="widthSlider" min="20" max="100" value="60">
+        </div>
+        <div class="control-group">
+          <label>Animation Speed</label>
+          <input type="range" id="speedSlider" min="1" max="50" value="20">
+        </div>
+        <div class="control-group">
+          <label>Show Probability Density</label>
+          <input type="checkbox" id="probCheck" checked>
+        </div>
+        <div class="data-panel">
+          <div>Energy Level: <strong id="energyVal">E₁</strong></div>
+          <div>Probability: <strong id="probVal">100%</strong></div>
+          <div>Wavelength: <strong id="waveVal">2L</strong></div>
+        </div>
+        <div class="energy-levels">
+          <div class="energy-bar" id="e5" style="height: 100%"></div>
+          <div class="energy-bar" id="e4" style="height: 80%"></div>
+          <div class="energy-bar" id="e3" style="height: 60%"></div>
+          <div class="energy-bar" id="e2" style="height: 40%"></div>
+          <div class="energy-bar" id="e1" style="height: 20%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const nSlider = document.getElementById('nSlider');
+    const widthSlider = document.getElementById('widthSlider');
+    const speedSlider = document.getElementById('speedSlider');
+    const probCheck = document.getElementById('probCheck');
+    let time = 0;
+    function update() {
+      const n = parseInt(nSlider.value);
+      document.getElementById('energyVal').textContent = 'E' + n;
+      document.getElementById('probVal').textContent = Math.round(100/n) + '%';
+      document.getElementById('waveVal').textContent = '2L/' + n;
+      for (let i = 1; i <= 5; i++) {
+        const bar = document.getElementById('e' + i);
+        bar.style.background = i === n ? 'linear-gradient(180deg, #f6c76b, rgba(246, 199, 107, 0.3))' : 'linear-gradient(180deg, var(--accent), rgba(106, 215, 255, 0.3))';
+      }
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const n = parseInt(nSlider.value);
+      const wellWidth = widthSlider.value * 2;
+      const speed = speedSlider.value / 100;
+      const showProb = probCheck.checked;
+      const cx = w / 2, cy = h / 2;
+      const left = cx - wellWidth, right = cx + wellWidth;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.2)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.1)';
+      ctx.fillRect(left - 10, 50, wellWidth * 2 + 20, h - 100);
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, 50); ctx.lineTo(left, h - 50);
+      ctx.moveTo(right, 50); ctx.lineTo(right, h - 50);
+      ctx.stroke();
+      const baseline = cy, amp = 60;
+      ctx.beginPath();
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      for (let x = left; x <= right; x += 2) {
+        const normalizedX = (x - left) / (right - left);
+        const psi = Math.sin(n * Math.PI * normalizedX) * Math.cos(time * speed);
+        const y = baseline - psi * amp;
+        if (x === left) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      if (showProb) {
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(246, 199, 107, 0.3)';
+        for (let x = left; x <= right; x += 2) {
+          const normalizedX = (x - left) / (right - left);
+          const psi = Math.sin(n * Math.PI * normalizedX);
+          const prob = psi * psi;
+          const y = baseline - prob * amp;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(right, baseline); ctx.lineTo(left, baseline); ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Space Grotesk';
+      ctx.fillText('∞', left - 8, cy + 5); ctx.fillText('∞', right + 2, cy + 5);
+      ctx.fillStyle = '#6ad7ff'; ctx.font = '12px Space Grotesk';
+      ctx.fillText('n = ' + n + ' (' + (n === 1 ? 'Ground State' : 'Excited State') + ')', 15, 25);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    nSlider.addEventListener('input', update);
+    widthSlider.addEventListener('input', update);
+    speedSlider.addEventListener('input', update);
+    probCheck.addEventListener('change', update);
+    update(); draw();
+  </script>
+</body>
+</html>

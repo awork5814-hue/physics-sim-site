@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gravitational Force</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="gravitational-force">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Universal Gravitation</h1>
+      <p>F = G × M₁ × M₂ / r²</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="gravCanvas" width="900" height="520" aria-label="Gravitational force"></canvas>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="mass1">Mass 1 <strong id="mass1Label">5.97e24 kg</strong></label>
+          <input type="range" id="mass1" min="1" max="1e20" step="1" value="1e20" />
+        </div>
+
+        <div class="control-group">
+          <label for="mass2">Mass 2 <strong id="mass2Label">7.35e22 kg</strong></label>
+          <input type="range" id="mass2" min="1" max="1e20" step="1" value="1e20" />
+        </div>
+
+        <div class="control-group">
+          <label for="distance">Distance <strong id="distanceLabel">1.0e6 m</strong></label>
+          <input type="range" id="distance" min="10" max="1e8" step="10" value="1e6" />
+        </div>
+
+        <div class="control-group">
+          <label>Presets</label>
+          <div class="btn-row">
+            <button data-preset="earth">Earth</button>
+            <button data-preset="moon">Moon</button>
+            <button data-preset="sun">Sun</button>
+            <button data-preset="person">Person</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showForce" checked /> Show force vectors</label>
+          <label><input type="checkbox" id="showDistance" checked /> Show distance</label>
+          <label><input type="checkbox" id="showValues" checked /> Show force values</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Newton's Law of Universal Gravitation: F = G M₁ M₂ / r².</p>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Force increases with mass.</li>
+          <li>Force decreases with distance squared.</li>
+          <li>Forces are equal and opposite.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gravCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const mass1Input = document.getElementById('mass1');
+    const mass2Input = document.getElementById('mass2');
+    const distanceInput = document.getElementById('distance');
+
+    const mass1Label = document.getElementById('mass1Label');
+    const mass2Label = document.getElementById('mass2Label');
+    const distanceLabel = document.getElementById('distanceLabel');
+
+    const showForce = document.getElementById('showForce');
+    const showDistance = document.getElementById('showDistance');
+    const showValues = document.getElementById('showValues');
+
+    const dataPanel = document.getElementById('dataPanel');
+
+    const G = 6.674e-11;
+
+    const state = {
+      m1: 5.97e24,
+      m2: 7.35e22,
+      r: 3.844e8
+    };
+
+    function updateLabels() {
+      mass1Label.textContent = `${state.m1.toExponential(2)} kg`;
+      mass2Label.textContent = `${state.m2.toExponential(2)} kg`;
+      distanceLabel.textContent = `${state.r.toExponential(2)} m`;
+    }
+
+    function computeForce() {
+      return (G * state.m1 * state.m2) / (state.r * state.r);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerY = canvas.height / 2;
+      const x1 = canvas.width * 0.3;
+      const x2 = canvas.width * 0.7;
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(x1, centerY, 18, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x2, centerY, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showForce.checked) {
+        const F = computeForce();
+        const len = Math.min(80, Math.log10(F + 1) * 10);
+        ctx.strokeStyle = '#f6c76b';
+        ctx.beginPath();
+        ctx.moveTo(x1 + 18, centerY);
+        ctx.lineTo(x1 + 18 + len, centerY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x2 - 12, centerY);
+        ctx.lineTo(x2 - 12 - len, centerY);
+        ctx.stroke();
+      }
+
+      if (showDistance.checked) {
+        ctx.strokeStyle = 'rgba(233,242,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(x1, centerY + 40);
+        ctx.lineTo(x2, centerY + 40);
+        ctx.stroke();
+      }
+    }
+
+    function updateDataPanel() {
+      const F = computeForce();
+      dataPanel.innerHTML = `
+        <div><strong>Mass 1:</strong> ${state.m1.toExponential(2)} kg</div>
+        <div><strong>Mass 2:</strong> ${state.m2.toExponential(2)} kg</div>
+        <div><strong>Distance:</strong> ${state.r.toExponential(2)} m</div>
+        <div><strong>Force:</strong> ${F.toExponential(2)} N</div>
+      `;
+    }
+
+    function loop() {
+      draw();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    mass1Input.addEventListener('input', (e) => {
+      state.m1 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    mass2Input.addEventListener('input', (e) => {
+      state.m2 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    distanceInput.addEventListener('input', (e) => {
+      state.r = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    document.querySelectorAll('[data-preset]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        if (preset === 'earth') { state.m1 = 5.97e24; state.m2 = 7.35e22; state.r = 3.844e8; }
+        if (preset === 'moon') { state.m1 = 7.35e22; state.m2 = 7.35e22; state.r = 1e7; }
+        if (preset === 'sun') { state.m1 = 1.99e30; state.m2 = 5.97e24; state.r = 1.5e11; }
+        if (preset === 'person') { state.m1 = 70; state.m2 = 70; state.r = 1; }
+        updateLabels();
+      });
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

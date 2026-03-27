@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Op‑Amp Basics</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Op‑Amp Basics</h1>
+    <div class="subtitle">Inverting, non‑inverting, and comparator modes</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Configuration</label>
+          <select id="config">
+            <option value="inverting" selected>Inverting</option>
+            <option value="noninverting">Non‑inverting</option>
+            <option value="comparator">Comparator</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Input Signal (V)</label>
+          <input id="vin" type="range" min="-5" max="5" step="0.1" value="0.5" />
+          <div class="row"><span>-5</span><span id="vinVal">0.5</span><span>5</span></div>
+        </div>
+        <div class="control">
+          <label>Input Frequency (Hz)</label>
+          <input id="freq" type="range" min="0.1" max="1000" step="1" value="100" />
+          <div class="row"><span>0.1</span><span id="freqVal">100</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Rin (kΩ)</label>
+          <input id="rin" type="range" min="1" max="100" step="1" value="10" />
+          <div class="row"><span>1</span><span id="rinVal">10</span><span>100</span></div>
+        </div>
+        <div class="control">
+          <label>Rf (kΩ)</label>
+          <input id="rf" type="range" min="1" max="1000" step="5" value="100" />
+          <div class="row"><span>1</span><span id="rfVal">100</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Open‑Loop Gain (A)</label>
+          <input id="gain" type="range" min="1000" max="100000" step="1000" value="100000" />
+          <div class="row"><span>1k</span><span id="gainVal">100000</span><span>100k</span></div>
+        </div>
+        <div class="control">
+          <label>Supply Rails ±Vcc (V)</label>
+          <input id="vcc" type="range" min="5" max="15" step="0.5" value="12" />
+          <div class="row"><span>5</span><span id="vccVal">12</span><span>15</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showScope" type="checkbox" checked /> Show scope</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Inverting: Vout = -(Rf/Rin)Vin. Non‑inverting: Vout = (1+Rf/Rin)Vin. Comparator saturates to rails.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      config: 'inverting',
+      Vin: 0.5,
+      freq: 100,
+      Rin: 10000,
+      Rf: 100000,
+      gain: 100000,
+      Vcc: 12,
+      t: 0,
+      showScope: true
+    };
+
+    function closedLoopGain() {
+      if (state.config === 'inverting') return -state.Rf / state.Rin;
+      if (state.config === 'noninverting') return 1 + state.Rf / state.Rin;
+      return Infinity;
+    }
+
+    function output(vin) {
+      if (state.config === 'comparator') {
+        return vin >= 0 ? state.Vcc : -state.Vcc;
+      }
+      const vout = closedLoopGain() * vin;
+      return Math.max(-state.Vcc, Math.min(state.Vcc, vout));
+    }
+
+    function drawOpamp() {
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(200, 100);
+      ctx.lineTo(200, 300);
+      ctx.lineTo(380, 200);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText('+', 210, 150);
+      ctx.fillText('-', 210, 250);
+      ctx.fillText('Vout', 390, 200);
+    }
+
+    function drawScope(vin, vout) {
+      if (!state.showScope) return;
+      const x = 440, y = 90, w = 460, h = 200;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Oscilloscope', x + 10, y + 15);
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.beginPath();
+      for (let i = 0; i < w; i++) {
+        const t = (i / w) * 2 * Math.PI;
+        const yv = y + h/2 - Math.sin(t) * 30;
+        if (i === 0) ctx.moveTo(x + i, yv); else ctx.lineTo(x + i, yv);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath();
+      for (let i = 0; i < w; i++) {
+        const t = (i / w) * 2 * Math.PI;
+        const yv = y + h/2 - Math.sin(t) * (vout / state.Vcc) * 60;
+        if (i === 0) ctx.moveTo(x + i, yv); else ctx.lineTo(x + i, yv);
+      }
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const vin = state.Vin * Math.sin(2 * Math.PI * state.freq * state.t);
+      const vout = output(vin);
+      drawOpamp();
+      drawScope(vin, vout);
+    }
+
+    function updateReadout() {
+      const gain = closedLoopGain();
+      const text = `OP‑AMP READOUT\n` +
+        `--------------\n` +
+        `Config: ${state.config}\n` +
+        `Closed‑loop gain: ${gain.toFixed(2)}\n` +
+        `Open‑loop gain: ${state.gain}\n` +
+        `Rails: ±${state.Vcc.toFixed(1)} V\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      state.t += 0.001;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('config').addEventListener('change', e => state.config = e.target.value);
+    document.getElementById('vin').addEventListener('input', e => { state.Vin = parseFloat(e.target.value); document.getElementById('vinVal').textContent = state.Vin.toFixed(1); });
+    document.getElementById('freq').addEventListener('input', e => { state.freq = parseFloat(e.target.value); document.getElementById('freqVal').textContent = state.freq.toFixed(0); });
+    document.getElementById('rin').addEventListener('input', e => { state.Rin = parseFloat(e.target.value) * 1000; document.getElementById('rinVal').textContent = e.target.value; });
+    document.getElementById('rf').addEventListener('input', e => { state.Rf = parseFloat(e.target.value) * 1000; document.getElementById('rfVal').textContent = e.target.value; });
+    document.getElementById('gain').addEventListener('input', e => { state.gain = parseFloat(e.target.value); document.getElementById('gainVal').textContent = state.gain.toFixed(0); });
+    document.getElementById('vcc').addEventListener('input', e => { state.Vcc = parseFloat(e.target.value); document.getElementById('vccVal').textContent = state.Vcc.toFixed(1); });
+    document.getElementById('showScope').addEventListener('change', e => state.showScope = e.target.checked);
+
+    tick();
+  </script>
+</body>
+</html>

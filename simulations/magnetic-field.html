@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Magnetic Field Patterns</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --blue: #6ad7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 360px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      cursor: grab;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Magnetic Field Patterns</h1>
+        <p>Field lines, strength, and superposition</p>
+      </div>
+      <div class="pill">Bar · Horseshoe · Dipole</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Field Visualization</h2>
+        <canvas id="fieldCanvas" width="600" height="360" aria-label="Magnetic field"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Magnet Type</label>
+            <select id="magnetType">
+              <option value="bar">Bar</option>
+              <option value="horseshoe">Horseshoe</option>
+              <option value="dipole">Dipole</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Magnet Position</label>
+            <div class="row"><span class="muted">Drag on canvas</span><span class="value" id="posValue">Center</span></div>
+          </div>
+          <div class="control">
+            <label>Second Magnet</label>
+            <button id="toggleSecond">Add Second Magnet</button>
+            <label class="toggle"><input type="checkbox" id="flipSecond"> Reverse Polarity</label>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showLines" checked> Show field lines</label>
+            <label class="toggle"><input type="checkbox" id="showStrength" checked> Show strength</label>
+            <label class="toggle"><input type="checkbox" id="showFilings"> Show filings</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Field Strength</div>
+            <div class="row"><span>At center</span><span class="value" id="strengthValue">0.50 T</span></div>
+            <div class="row"><span>Direction</span><span class="value">N → S (outside)</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Superposition</div>
+            <div class="row"><span>Magnets</span><span class="value" id="magCount">1</span></div>
+            <div class="row"><span>Mode</span><span class="value" id="modeValue">Single</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Drag the magnet to see how field lines and compasses react to position.</div>
+  </div>
+
+  <script>
+    const state = {
+      magnetType: 'bar',
+      magnetX: 300,
+      magnetY: 180,
+      secondMagnet: false,
+      secondFlip: false,
+      showLines: true,
+      showStrength: true,
+      showFilings: false,
+      dragging: false
+    };
+
+    const canvas = document.getElementById('fieldCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const dom = {
+      magnetType: document.getElementById('magnetType'),
+      toggleSecond: document.getElementById('toggleSecond'),
+      flipSecond: document.getElementById('flipSecond'),
+      showLines: document.getElementById('showLines'),
+      showStrength: document.getElementById('showStrength'),
+      showFilings: document.getElementById('showFilings'),
+      posValue: document.getElementById('posValue'),
+      strengthValue: document.getElementById('strengthValue'),
+      magCount: document.getElementById('magCount'),
+      modeValue: document.getElementById('modeValue')
+    };
+
+    function fieldAt(x, y, mx, my, flip = false) {
+      const dx = x - mx;
+      const dy = y - my;
+      const r2 = dx * dx + dy * dy + 30;
+      const r = Math.sqrt(r2);
+      const k = (flip ? -1 : 1) * 8000 / (r2 * r);
+      return { bx: k * dx, by: k * dy };
+    }
+
+    function drawField() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (state.showStrength) {
+        const img = ctx.createImageData(canvas.width, canvas.height);
+        for (let x = 0; x < canvas.width; x += 6) {
+          for (let y = 0; y < canvas.height; y += 6) {
+            let bx = 0, by = 0;
+            let f1 = fieldAt(x, y, state.magnetX, state.magnetY);
+            bx += f1.bx; by += f1.by;
+            if (state.secondMagnet) {
+              const mx2 = state.magnetX + 140;
+              const my2 = state.magnetY;
+              const f2 = fieldAt(x, y, mx2, my2, state.secondFlip);
+              bx += f2.bx; by += f2.by;
+            }
+            const mag = Math.min(1, Math.sqrt(bx * bx + by * by) / 2);
+            const idx = (y * canvas.width + x) * 4;
+            img.data[idx] = 20;
+            img.data[idx + 1] = 80 + mag * 120;
+            img.data[idx + 2] = 140 + mag * 100;
+            img.data[idx + 3] = 120;
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+      }
+
+      if (state.showLines) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          let x = state.magnetX + Math.cos(angle) * 50;
+          let y = state.magnetY + Math.sin(angle) * 50;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          for (let s = 0; s < 40; s++) {
+            let bx = 0, by = 0;
+            const f1 = fieldAt(x, y, state.magnetX, state.magnetY);
+            bx += f1.bx; by += f1.by;
+            if (state.secondMagnet) {
+              const mx2 = state.magnetX + 140;
+              const my2 = state.magnetY;
+              const f2 = fieldAt(x, y, mx2, my2, state.secondFlip);
+              bx += f2.bx; by += f2.by;
+            }
+            const len = Math.sqrt(bx * bx + by * by) + 1e-6;
+            x += (bx / len) * 6;
+            y += (by / len) * 6;
+            ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+      }
+
+      if (state.showFilings) {
+        ctx.fillStyle = '#8aa0b8';
+        for (let i = 0; i < 120; i++) {
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+          ctx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(state.magnetX - 40, state.magnetY - 20, 40, 40);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(state.magnetX, state.magnetY - 20, 40, 40);
+      ctx.fillStyle = '#f5f8fd';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText('N', state.magnetX - 26, state.magnetY + 4);
+      ctx.fillText('S', state.magnetX + 14, state.magnetY + 4);
+
+      if (state.secondMagnet) {
+        const mx2 = state.magnetX + 140;
+        const my2 = state.magnetY;
+        ctx.fillStyle = state.secondFlip ? '#6ad7ff' : '#ff6b6b';
+        ctx.fillRect(mx2 - 40, my2 - 20, 40, 40);
+        ctx.fillStyle = state.secondFlip ? '#ff6b6b' : '#6ad7ff';
+        ctx.fillRect(mx2, my2 - 20, 40, 40);
+        ctx.fillStyle = '#f5f8fd';
+        ctx.fillText(state.secondFlip ? 'S' : 'N', mx2 - 26, my2 + 4);
+        ctx.fillText(state.secondFlip ? 'N' : 'S', mx2 + 14, my2 + 4);
+      }
+
+      dom.posValue.textContent = `(${state.magnetX.toFixed(0)}, ${state.magnetY.toFixed(0)})`;
+      dom.magCount.textContent = state.secondMagnet ? '2' : '1';
+      dom.modeValue.textContent = state.secondMagnet ? 'Pair' : 'Single';
+      dom.strengthValue.textContent = '0.50 T';
+    }
+
+    function bind() {
+      dom.magnetType.addEventListener('change', () => {
+        state.magnetType = dom.magnetType.value;
+        drawField();
+      });
+      dom.toggleSecond.addEventListener('click', () => {
+        state.secondMagnet = !state.secondMagnet;
+        dom.toggleSecond.textContent = state.secondMagnet ? 'Remove Second Magnet' : 'Add Second Magnet';
+        drawField();
+      });
+      dom.flipSecond.addEventListener('change', () => {
+        state.secondFlip = dom.flipSecond.checked;
+        drawField();
+      });
+      dom.showLines.addEventListener('change', () => {
+        state.showLines = dom.showLines.checked;
+        drawField();
+      });
+      dom.showStrength.addEventListener('change', () => {
+        state.showStrength = dom.showStrength.checked;
+        drawField();
+      });
+      dom.showFilings.addEventListener('change', () => {
+        state.showFilings = dom.showFilings.checked;
+        drawField();
+      });
+
+      canvas.addEventListener('mousedown', () => {
+        state.dragging = true;
+        canvas.style.cursor = 'grabbing';
+      });
+      window.addEventListener('mouseup', () => {
+        state.dragging = false;
+        canvas.style.cursor = 'grab';
+      });
+      canvas.addEventListener('mousemove', (e) => {
+        if (!state.dragging) return;
+        const rect = canvas.getBoundingClientRect();
+        state.magnetX = e.clientX - rect.left;
+        state.magnetY = e.clientY - rect.top;
+        drawField();
+      });
+    }
+
+    bind();
+    drawField();
+  </script>
+</body>
+</html>

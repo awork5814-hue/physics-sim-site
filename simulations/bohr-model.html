@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bohr Model</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
+
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .tabs { display: flex; gap: 10px; padding: 0 28px 10px; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--sim-border); border-radius: 999px; padding: 8px 14px; cursor: pointer; background: rgba(12, 18, 28, 0.8); color: var(--sim-text); font-weight: 600; }
+    .tab.active { border-color: var(--accent); color: var(--accent); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; padding: 12px 28px 18px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+
+    .canvas-wrap { display: grid; gap: 16px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+
+    .accordion { display: grid; gap: 12px; margin: 0 28px 40px; }
+
+    details { border: 1px solid var(--sim-border); border-radius: 14px; background: rgba(12, 18, 28, 0.8); padding: 12px 16px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--accent); list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details p, details li { color: var(--sim-muted); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="bohr-model">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Bohr Model</h1>
+      <p>Quantized orbits & energy levels</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="particle">Particle View</button>
+      <button class="tab" data-mode="energy">Energy Diagram</button>
+      <button class="tab" data-mode="spectrum">Spectrum</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="bohrCanvas" width="900" height="520" aria-label="Bohr model"></canvas>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="level">Energy Level n <strong id="levelLabel">3</strong></label>
+          <input type="range" id="level" min="1" max="10" step="1" value="3" />
+        </div>
+
+        <div class="control-group">
+          <label>Transitions</label>
+          <div class="btn-row">
+            <button id="excite">Excite</button>
+            <button id="deexcite">De-excite</button>
+            <button id="reset">Reset to n=1</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showRadii" checked /> Show orbital radii</label>
+          <label><input type="checkbox" id="showEnergy" checked /> Show energy values</label>
+          <label><input type="checkbox" id="showPhoton" checked /> Show photon emission</label>
+          <label><input type="checkbox" id="showSpectrum" checked /> Show spectrum</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Bohr model: electrons occupy discrete orbits. Energy levels: E_n = -13.6 / n² eV.</p>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Orbits are quantized.</li>
+          <li>Photons emitted/absorbed on transitions.</li>
+          <li>Lyman, Balmer, Paschen series.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('bohrCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const levelInput = document.getElementById('level');
+    const levelLabel = document.getElementById('levelLabel');
+
+    const showRadii = document.getElementById('showRadii');
+    const showEnergy = document.getElementById('showEnergy');
+    const showPhoton = document.getElementById('showPhoton');
+    const showSpectrum = document.getElementById('showSpectrum');
+
+    const dataPanel = document.getElementById('dataPanel');
+
+    const a0 = 5.29e-11;
+
+    const state = {
+      n: 3
+    };
+
+    function energy(n) {
+      return -13.6 / (n * n);
+    }
+
+    function radius(n) {
+      return n * n * a0;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const center = { x: canvas.width / 2, y: canvas.height / 2 };
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      for (let i = 1; i <= 5; i++) {
+        const r = 40 + i * 30;
+        ctx.strokeStyle = 'rgba(233,242,255,0.2)';
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const r = 40 + state.n * 30;
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(center.x + r, center.y, 6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function updateDataPanel() {
+      const En = energy(state.n);
+      const rn = radius(state.n);
+      dataPanel.innerHTML = `
+        <div><strong>n:</strong> ${state.n}</div>
+        <div><strong>Radius:</strong> ${rn.toExponential(2)} m</div>
+        <div><strong>Energy:</strong> ${En.toFixed(2)} eV</div>
+      `;
+    }
+
+    function loop() {
+      draw();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    levelInput.addEventListener('input', (e) => {
+      state.n = parseInt(e.target.value, 10);
+      levelLabel.textContent = state.n;
+    });
+
+    document.getElementById('excite').addEventListener('click', () => {
+      state.n = Math.min(10, state.n + 1);
+      levelInput.value = state.n;
+      levelLabel.textContent = state.n;
+    });
+
+    document.getElementById('deexcite').addEventListener('click', () => {
+      state.n = Math.max(1, state.n - 1);
+      levelInput.value = state.n;
+      levelLabel.textContent = state.n;
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.n = 1;
+      levelInput.value = 1;
+      levelLabel.textContent = 1;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

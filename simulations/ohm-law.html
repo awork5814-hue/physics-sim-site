@@ -1,0 +1,836 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ohm's Law Simulation</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.9);
+      --shadow: 0 20px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 85% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      padding: 32px 28px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .hero-title {
+      max-width: 680px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      padding: 12px 28px 28px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .circuit-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 360px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(12, 18, 28, 0.85);
+      border: 1px solid var(--sim-border);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.05rem;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--accent);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    input[type="range"],
+    select,
+    input[type="number"] {
+      width: 100%;
+    }
+
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .inline > * {
+      flex: 1;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.85);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(106, 215, 255, 0.2);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+
+    button.ghost {
+      background: rgba(106, 215, 255, 0.1);
+      color: var(--accent);
+      border-color: rgba(106, 215, 255, 0.25);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(106, 215, 255, 0.4);
+    }
+
+    .triangle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .triangle svg {
+      width: 100%;
+      max-width: 360px;
+      justify-self: center;
+    }
+
+    .formula-box {
+      display: grid;
+      gap: 12px;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula {
+      padding: 12px;
+      padding-right: 80px;
+      border-radius: 12px;
+      border: 1px solid var(--sim-border);
+      background: rgba(10, 15, 24, 0.8);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .formula.active {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 1px rgba(246, 199, 107, 0.35);
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      grid-column: 1 / -1;
+    }
+
+    .triangle-panel {
+      grid-column: 2;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    .questions li {
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 900px) {
+      header.hero {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero-actions {
+        justify-content: flex-start;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      canvas {
+        height: 280px;
+      }
+
+      .triangle {
+        grid-template-columns: 1fr;
+      }
+
+      .triangle-panel {
+        grid-column: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="ohm-law">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <div class="hero-title">
+        <div class="hero-badge">Precision Lab</div>
+        <h1>Ohm's Law</h1>
+        <p>The relationship between Voltage (V), Current (I), and Resistance (R)</p>
+      </div>
+      <div class="hero-actions">
+        <button id="toggleAnim" class="primary">Pause</button>
+        <button id="viewSchematic" class="active ghost">Schematic</button>
+        <button id="viewRealistic" class="ghost">Realistic</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="panel circuit-wrap">
+        <canvas id="circuitCanvas" width="900" height="420" aria-label="Ohm's law circuit diagram"></canvas>
+      </div>
+
+      <div class="panel controls" aria-label="Control panel">
+        <div class="stats" aria-live="polite">
+          <div class="stat">
+            <span>Voltage</span>
+            <strong id="voltageValue">0.0 V</strong>
+          </div>
+          <div class="stat">
+            <span>Current</span>
+            <strong id="currentValue">0.00 A</strong>
+          </div>
+          <div class="stat">
+            <span>Resistance</span>
+            <strong id="resistanceValue">1 Ω</strong>
+          </div>
+          <div class="stat">
+            <span>Power</span>
+            <strong id="powerValue">0.00 W</strong>
+          </div>
+        </div>
+        <div class="control-group">
+          <label for="voltage">Voltage <span class="value-chip" id="voltageLabel">0.0 V</span></label>
+          <input type="range" id="voltage" min="0" max="24" step="0.5" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="resistanceSelect">Resistance <span class="value-chip" id="resistanceLabel">100 Ω</span></label>
+          <div class="inline">
+            <select id="resistanceSelect" aria-label="Resistance selector">
+              <option value="1">1 Ω</option>
+              <option value="10">10 Ω</option>
+              <option value="47">47 Ω</option>
+              <option value="100" selected>100 Ω</option>
+              <option value="220">220 Ω</option>
+              <option value="470">470 Ω</option>
+              <option value="1000">1 kΩ</option>
+            </select>
+            <input type="number" id="resistanceCustom" min="1" max="10000" step="1" value="100" aria-label="Custom resistance" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="viewToggle">Circuit View</label>
+          <div class="btn-row">
+            <button id="viewSchematicAlt" class="active ghost">Schematic</button>
+            <button id="viewRealisticAlt" class="ghost">Realistic</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="speed">Animation Speed <span class="value-chip" id="speedLabel">1.0x</span></label>
+          <input type="range" id="speed" min="0.2" max="2" step="0.1" value="1" />
+          <div class="btn-row">
+            <button id="toggleAnimAlt" class="ghost">Pause</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Formula <span class="value-chip" id="formulaValue">I = V / R</span></label>
+        </div>
+      </div>
+
+      <div class="panel triangle-panel">
+        <div class="triangle">
+          <svg viewBox="0 0 200 180" aria-label="Ohm's law triangle">
+            <polygon points="100,10 190,170 10,170" fill="rgba(106, 215, 255, 0.08)" stroke="rgba(106, 215, 255, 0.6)" stroke-width="2"></polygon>
+            <line x1="100" y1="70" x2="100" y2="170" stroke="rgba(246,199,107,0.7)" stroke-width="2" />
+            <line x1="45" y1="120" x2="155" y2="120" stroke="rgba(246,199,107,0.7)" stroke-width="2" />
+            <text x="100" y="55" text-anchor="middle" font-size="28" fill="#6ad7ff" id="triangleV">V</text>
+            <text x="70" y="145" text-anchor="middle" font-size="24" fill="#e9f2ff" id="triangleI">I</text>
+            <text x="130" y="145" text-anchor="middle" font-size="24" fill="#e9f2ff" id="triangleR">R</text>
+          </svg>
+          <div class="formula-box">
+            <div class="formula active" data-formula="V = I × R" onclick="copyFormula(this)">V = I × R<button class="copy-btn" title="Copy formula">📋</button></div>
+            <div class="formula" data-formula="I = V / R" onclick="copyFormula(this)">I = V / R<button class="copy-btn" title="Copy formula">📋</button></div>
+            <div class="formula" data-formula="R = V / I" onclick="copyFormula(this)">R = V / I<button class="copy-btn" title="Copy formula">📋</button></div>
+          </div>
+        </div>
+      </div>
+
+      <section class="accordion">
+        <details open>
+          <summary>📚 Theory</summary>
+          <p>Ohm's Law states that the current through a conductor between two points is directly proportional to the voltage across those two points and inversely proportional to the resistance.</p>
+          <p>Voltage is the "push" that drives charges, current is the flow of charges, and resistance is how strongly the circuit opposes that flow.</p>
+          <p><em>Optional analogy:</em> Think of voltage as water pressure, current as the flow rate, and resistance as the width of the pipe.</p>
+        </details>
+
+        <details>
+          <summary>❓ Guided Questions</summary>
+          <ol class="questions">
+            <li>What happens to current if voltage increases while resistance stays constant?</li>
+            <li>If you double the resistance, what happens to current?</li>
+            <li>Calculate: If V = 12V and R = 4Ω, what is I?</li>
+          </ol>
+        </details>
+
+        <details>
+          <summary>💡 Key Takeaways</summary>
+          <ul>
+            <li>Voltage and current are directly proportional when resistance is constant.</li>
+            <li>Current decreases as resistance increases.</li>
+            <li>Power scales with voltage and current: P = V × I.</li>
+          </ul>
+        </details>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const voltageInput = document.getElementById('voltage');
+    const resistanceSelect = document.getElementById('resistanceSelect');
+    const resistanceCustom = document.getElementById('resistanceCustom');
+    const speedInput = document.getElementById('speed');
+    const toggleAnimBtn = document.getElementById('toggleAnim');
+    const toggleAnimAlt = document.getElementById('toggleAnimAlt');
+    const viewSchematicBtn = document.getElementById('viewSchematic');
+    const viewRealisticBtn = document.getElementById('viewRealistic');
+    const viewSchematicAlt = document.getElementById('viewSchematicAlt');
+    const viewRealisticAlt = document.getElementById('viewRealisticAlt');
+    const voltageLabel = document.getElementById('voltageLabel');
+    const resistanceLabel = document.getElementById('resistanceLabel');
+    const speedLabel = document.getElementById('speedLabel');
+    const voltageValue = document.getElementById('voltageValue');
+    const currentValue = document.getElementById('currentValue');
+    const resistanceValue = document.getElementById('resistanceValue');
+    const powerValue = document.getElementById('powerValue');
+    const formulaValue = document.getElementById('formulaValue');
+    const formulas = document.querySelectorAll('.formula');
+    const triangleV = document.getElementById('triangleV');
+    const triangleI = document.getElementById('triangleI');
+    const triangleR = document.getElementById('triangleR');
+
+    const canvas = document.getElementById('circuitCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let state = {
+      voltage: 0,
+      resistance: 100,
+      current: 0,
+      power: 0,
+      speed: 1,
+      animating: true,
+      view: 'schematic',
+      formula: 'V = I × R',
+      electronOffset: 0
+    };
+
+    const electrons = Array.from({ length: 36 }, (_, i) => ({
+      t: i / 36
+    }));
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+
+    function formatOhms(value) {
+      if (value >= 1000) {
+        return (value / 1000).toFixed(1).replace(/\.0$/, '') + ' kΩ';
+      }
+      return value.toFixed(0) + ' Ω';
+    }
+
+    function recalc() {
+      const R = state.resistance;
+      const V = state.voltage;
+      const I = R === 0 ? Infinity : V / R;
+      const Icap = Math.min(I, 10);
+      const P = R === 0 ? Infinity : V * I;
+
+      state.current = I;
+      state.power = P;
+
+      voltageLabel.textContent = `${V.toFixed(1)} V`;
+      resistanceLabel.textContent = formatOhms(R);
+      speedLabel.textContent = `${state.speed.toFixed(1)}x`;
+
+      voltageValue.textContent = `${V.toFixed(1)} V`;
+      currentValue.textContent = I === Infinity ? '∞ A' : `${Icap.toFixed(2)} A`;
+      resistanceValue.textContent = formatOhms(R);
+      powerValue.textContent = P === Infinity ? '∞ W' : `${Math.min(P, 9999).toFixed(2)} W`;
+    }
+
+    function setResistance(value) {
+      const r = clamp(value, 1, 10000);
+      state.resistance = r;
+      resistanceCustom.value = r;
+      resistanceSelect.value = ['1','10','47','100','220','470','1000'].includes(String(r)) ? String(r) : 'custom';
+      recalc();
+    }
+
+    function setAnimating(isOn) {
+      state.animating = isOn;
+      const label = state.animating ? 'Pause' : 'Play';
+      toggleAnimBtn.textContent = label;
+      toggleAnimAlt.textContent = label;
+    }
+
+    function setView(view) {
+      state.view = view;
+      const isSchematic = view === 'schematic';
+      [viewSchematicBtn, viewSchematicAlt].forEach((btn) => btn.classList.toggle('active', isSchematic));
+      [viewRealisticBtn, viewRealisticAlt].forEach((btn) => btn.classList.toggle('active', !isSchematic));
+    }
+
+    function drawCircuit() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      ctx.scale(canvas.width / 900, canvas.height / 420);
+
+      const glow = Math.min(state.current, 5) / 5;
+      ctx.lineWidth = 6 + glow * 6;
+      ctx.strokeStyle = `rgba(106, 215, 255, ${0.2 + glow * 0.6})`;
+      ctx.beginPath();
+      ctx.moveTo(120, 100);
+      ctx.lineTo(780, 100);
+      ctx.lineTo(780, 320);
+      ctx.lineTo(120, 320);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = '#9fb0c5';
+      ctx.beginPath();
+      ctx.moveTo(120, 100);
+      ctx.lineTo(780, 100);
+      ctx.lineTo(780, 320);
+      ctx.lineTo(120, 320);
+      ctx.closePath();
+      ctx.stroke();
+
+      if (state.view === 'schematic') {
+        drawBattery(120, 210);
+        drawResistor(440, 100);
+        drawAmmeter(600, 320);
+        drawVoltmeter(440, 320);
+      } else {
+        drawBatteryReal(120, 210);
+        drawResistorReal(440, 100);
+        drawAmmeter(600, 320);
+        drawVoltmeter(440, 320);
+      }
+
+      drawElectrons();
+      ctx.restore();
+    }
+
+    function drawBattery(x, y) {
+      ctx.strokeStyle = '#e9f2ff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 40);
+      ctx.lineTo(x - 10, y + 40);
+      ctx.moveTo(x + 12, y - 25);
+      ctx.lineTo(x + 12, y + 25);
+      ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '18px Space Grotesk, sans-serif';
+      ctx.fillText('+', x + 22, y - 20);
+      ctx.fillText('-', x - 30, y + 25);
+    }
+
+    function drawBatteryReal(x, y) {
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.15)';
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(x - 28, y - 50, 56, 100, 12);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '16px Space Grotesk, sans-serif';
+      ctx.fillText('+', x + 18, y - 18);
+      ctx.fillText('-', x - 24, y + 24);
+    }
+
+    function drawResistor(x, y) {
+      ctx.strokeStyle = '#e9f2ff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(x - 120, y);
+      const zig = [
+        [-90, -18], [-60, 18], [-30, -18], [0, 18], [30, -18], [60, 18], [90, -18]
+      ];
+      zig.forEach(([dx, dy]) => ctx.lineTo(x + dx, y + dy));
+      ctx.lineTo(x + 120, y);
+      ctx.stroke();
+      ctx.fillStyle = '#9fb0c5';
+      ctx.font = '16px Space Grotesk, sans-serif';
+      ctx.fillText(formatOhms(state.resistance), x - 30, y - 30);
+    }
+
+    function drawResistorReal(x, y) {
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.15)';
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.roundRect(x - 70, y - 20, 140, 40, 10);
+      ctx.fill();
+      ctx.stroke();
+      const bands = ['#2c2c2c', '#c0392b', '#f1c40f', '#8e44ad'];
+      bands.forEach((color, i) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(x - 50 + i * 24, y - 20, 10, 40);
+      });
+      ctx.fillStyle = '#9fb0c5';
+      ctx.font = '16px Space Grotesk, sans-serif';
+      ctx.fillText(formatOhms(state.resistance), x - 30, y - 30);
+    }
+
+    function drawAmmeter(x, y) {
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.12)';
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '16px Space Grotesk, sans-serif';
+      ctx.fillText('A', x - 5, y + 6);
+    }
+
+    function drawVoltmeter(x, y) {
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.12)';
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, 22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '16px Space Grotesk, sans-serif';
+      ctx.fillText('V', x - 5, y + 6);
+    }
+
+    function drawElectrons() {
+      if (!state.animating) return;
+      const speed = state.speed * Math.min(state.current, 5) / 5;
+      state.electronOffset = (state.electronOffset + speed * 0.004) % 1;
+      ctx.fillStyle = '#6ad7ff';
+      electrons.forEach((e) => {
+        const t = (e.t + state.electronOffset) % 1;
+        const pos = getCircuitPoint(t);
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function getCircuitPoint(t) {
+      const pathLength = 2 * (660 + 220);
+      const dist = t * pathLength;
+      if (dist < 660) return { x: 120 + dist, y: 100 };
+      if (dist < 660 + 220) return { x: 780, y: 100 + (dist - 660) };
+      if (dist < 660 + 220 + 660) return { x: 780 - (dist - 880), y: 320 };
+      return { x: 120, y: 320 - (dist - 1540) };
+    }
+
+    function loop() {
+      drawCircuit();
+      requestAnimationFrame(loop);
+    }
+
+    voltageInput.addEventListener('input', (e) => {
+      state.voltage = parseFloat(e.target.value);
+      recalc();
+    });
+
+    resistanceSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'custom') return;
+      setResistance(parseFloat(e.target.value));
+    });
+
+    resistanceCustom.addEventListener('input', (e) => {
+      setResistance(parseFloat(e.target.value));
+    });
+
+    speedInput.addEventListener('input', (e) => {
+      state.speed = parseFloat(e.target.value);
+      recalc();
+    });
+
+    toggleAnimBtn.addEventListener('click', () => setAnimating(!state.animating));
+    toggleAnimAlt.addEventListener('click', () => setAnimating(!state.animating));
+
+    viewSchematicBtn.addEventListener('click', () => setView('schematic'));
+    viewSchematicAlt.addEventListener('click', () => setView('schematic'));
+
+    viewRealisticBtn.addEventListener('click', () => setView('realistic'));
+    viewRealisticAlt.addEventListener('click', () => setView('realistic'));
+
+    formulas.forEach((node) => {
+      node.addEventListener('click', () => {
+        formulas.forEach((f) => f.classList.remove('active'));
+        node.classList.add('active');
+        state.formula = node.dataset.formula;
+        formulaValue.textContent = state.formula;
+        const highlight = node.dataset.formula[0];
+        triangleV.setAttribute('fill', highlight === 'V' ? '#f6c76b' : '#6ad7ff');
+        triangleI.setAttribute('fill', highlight === 'I' ? '#f6c76b' : '#e9f2ff');
+        triangleR.setAttribute('fill', highlight === 'R' ? '#f6c76b' : '#e9f2ff');
+      });
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    recalc();
+    setAnimating(true);
+    setView(state.view);
+    loop();
+
+    function copyFormula(el) {
+      const text = el.childNodes[0].textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

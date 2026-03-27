@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signal Superposition</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #50fa7b;
+      --purple: #b388ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Signal Superposition</h1>
+        <p>Interference, beats, and phasor addition</p>
+      </div>
+      <div class="pill">y = Σ Aᵢ sin(ωᵢt + φᵢ)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Waveforms</h2>
+        <canvas id="signalCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Oscilloscope</h2>
+            <canvas id="scopeCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Phasor Diagram</h2>
+            <canvas id="phasorCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Signal 1 Amplitude</label>
+            <input type="range" id="a1" min="0" max="2" step="0.1" value="1" />
+            <div class="row"><span class="muted">A₁</span><span class="value" id="a1Value">1.0</span></div>
+          </div>
+          <div class="control">
+            <label>Signal 1 Frequency (Hz)</label>
+            <input type="range" id="f1" min="1" max="50" step="0.5" value="10" />
+            <div class="row"><span class="muted">f₁</span><span class="value" id="f1Value">10 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Signal 1 Phase (°)</label>
+            <input type="range" id="p1" min="0" max="360" step="5" value="0" />
+            <div class="row"><span class="muted">φ₁</span><span class="value" id="p1Value">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Signal 2 Amplitude</label>
+            <input type="range" id="a2" min="0" max="2" step="0.1" value="1" />
+            <div class="row"><span class="muted">A₂</span><span class="value" id="a2Value">1.0</span></div>
+          </div>
+          <div class="control">
+            <label>Signal 2 Frequency (Hz)</label>
+            <input type="range" id="f2" min="1" max="50" step="0.5" value="12" />
+            <div class="row"><span class="muted">f₂</span><span class="value" id="f2Value">12 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Signal 2 Phase (°)</label>
+            <input type="range" id="p2" min="0" max="360" step="5" value="0" />
+            <div class="row"><span class="muted">φ₂</span><span class="value" id="p2Value">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Number of Signals</label>
+            <input type="range" id="count" min="2" max="4" step="1" value="2" />
+            <div class="row"><span class="muted">N</span><span class="value" id="countValue">2</span></div>
+          </div>
+          <div class="control">
+            <label>Show Individual</label>
+            <div class="toggle">
+              <input type="checkbox" id="showInd" checked />
+              <span>Display components</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Animation Speed</label>
+            <input type="range" id="speed" min="0.5" max="2.5" step="0.1" value="1" />
+            <div class="row"><span class="muted">Rate</span><span class="value" id="speedValue">1.0×</span></div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Resultant</div>
+            <div class="row"><span>Type</span><span class="value" id="typeValue">Constructive</span></div>
+            <div class="row"><span>Beat frequency</span><span class="value" id="beatValue">2 Hz</span></div>
+            <div class="row"><span>Result amplitude</span><span class="value" id="ampValue">2.0</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Phasor Sum</div>
+            <div class="row"><span>Vector angle</span><span class="value" id="angleValue">0°</span></div>
+            <div class="row"><span>Vector length</span><span class="value" id="vectorValue">2.0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Same frequency + opposite phase → cancellation. Different frequencies → beats.</div>
+  </div>
+
+  <script>
+    const state = {
+      a1: 1, f1: 10, p1: 0,
+      a2: 1, f2: 12, p2: 0,
+      count: 2,
+      showInd: true,
+      speed: 1,
+      time: 0
+    };
+
+    const dom = {
+      a1: document.getElementById('a1'),
+      f1: document.getElementById('f1'),
+      p1: document.getElementById('p1'),
+      a2: document.getElementById('a2'),
+      f2: document.getElementById('f2'),
+      p2: document.getElementById('p2'),
+      count: document.getElementById('count'),
+      showInd: document.getElementById('showInd'),
+      speed: document.getElementById('speed'),
+      a1Value: document.getElementById('a1Value'),
+      f1Value: document.getElementById('f1Value'),
+      p1Value: document.getElementById('p1Value'),
+      a2Value: document.getElementById('a2Value'),
+      f2Value: document.getElementById('f2Value'),
+      p2Value: document.getElementById('p2Value'),
+      countValue: document.getElementById('countValue'),
+      speedValue: document.getElementById('speedValue'),
+      typeValue: document.getElementById('typeValue'),
+      beatValue: document.getElementById('beatValue'),
+      ampValue: document.getElementById('ampValue'),
+      angleValue: document.getElementById('angleValue'),
+      vectorValue: document.getElementById('vectorValue'),
+      signalCanvas: document.getElementById('signalCanvas'),
+      scopeCanvas: document.getElementById('scopeCanvas'),
+      phasorCanvas: document.getElementById('phasorCanvas')
+    };
+
+    const signalCtx = dom.signalCanvas.getContext('2d');
+    const scopeCtx = dom.scopeCanvas.getContext('2d');
+    const phasorCtx = dom.phasorCanvas.getContext('2d');
+
+    function updateReadouts() {
+      dom.a1Value.textContent = state.a1.toFixed(1);
+      dom.f1Value.textContent = `${state.f1.toFixed(1)} Hz`;
+      dom.p1Value.textContent = `${state.p1}°`;
+      dom.a2Value.textContent = state.a2.toFixed(1);
+      dom.f2Value.textContent = `${state.f2.toFixed(1)} Hz`;
+      dom.p2Value.textContent = `${state.p2}°`;
+      dom.countValue.textContent = state.count;
+      dom.speedValue.textContent = `${state.speed.toFixed(1)}×`;
+      const beat = Math.abs(state.f1 - state.f2);
+      dom.beatValue.textContent = `${beat.toFixed(1)} Hz`;
+      const amp = state.a1 + state.a2;
+      dom.ampValue.textContent = amp.toFixed(1);
+      dom.typeValue.textContent = (state.p1 === state.p2) ? 'Constructive' : (Math.abs(state.p1 - state.p2) === 180) ? 'Destructive' : 'Mixed';
+    }
+
+    function drawSignals() {
+      const w = dom.signalCanvas.width;
+      const h = dom.signalCanvas.height;
+      signalCtx.clearRect(0, 0, w, h);
+      signalCtx.fillStyle = '#0b1420';
+      signalCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      const scale = 40;
+      const omega1 = 2 * Math.PI * state.f1;
+      const omega2 = 2 * Math.PI * state.f2;
+      const p1 = state.p1 * Math.PI / 180;
+      const p2 = state.p2 * Math.PI / 180;
+
+      if (state.showInd) {
+        signalCtx.strokeStyle = '#6ad7ff';
+        signalCtx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const t = x / w * 2;
+          const y1 = state.a1 * Math.sin(omega1 * t + p1);
+          const y = mid - y1 * scale;
+          if (x === 0) signalCtx.moveTo(x, y); else signalCtx.lineTo(x, y);
+        }
+        signalCtx.stroke();
+        signalCtx.strokeStyle = '#50fa7b';
+        signalCtx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const t = x / w * 2;
+          const y2 = state.a2 * Math.sin(omega2 * t + p2);
+          const y = mid - y2 * scale;
+          if (x === 0) signalCtx.moveTo(x, y); else signalCtx.lineTo(x, y);
+        }
+        signalCtx.stroke();
+      }
+
+      signalCtx.strokeStyle = '#f6c76b';
+      signalCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = x / w * 2;
+        const y = state.a1 * Math.sin(omega1 * t + p1) + state.a2 * Math.sin(omega2 * t + p2);
+        const yPlot = mid - y * scale;
+        if (x === 0) signalCtx.moveTo(x, yPlot); else signalCtx.lineTo(x, yPlot);
+      }
+      signalCtx.stroke();
+    }
+
+    function drawScope() {
+      const w = dom.scopeCanvas.width;
+      const h = dom.scopeCanvas.height;
+      scopeCtx.clearRect(0, 0, w, h);
+      scopeCtx.fillStyle = '#0b1420';
+      scopeCtx.fillRect(0, 0, w, h);
+      scopeCtx.strokeStyle = '#1c2c43';
+      for (let y = 0; y <= h; y += 30) {
+        scopeCtx.beginPath();
+        scopeCtx.moveTo(0, y);
+        scopeCtx.lineTo(w, y);
+        scopeCtx.stroke();
+      }
+      const mid = h / 2;
+      scopeCtx.strokeStyle = '#b388ff';
+      scopeCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = x / w * 2;
+        const y = state.a1 * Math.sin(2 * Math.PI * state.f1 * t + state.p1 * Math.PI / 180)
+          + state.a2 * Math.sin(2 * Math.PI * state.f2 * t + state.p2 * Math.PI / 180);
+        const yPlot = mid - y * 30;
+        if (x === 0) scopeCtx.moveTo(x, yPlot); else scopeCtx.lineTo(x, yPlot);
+      }
+      scopeCtx.stroke();
+    }
+
+    function drawPhasor() {
+      const w = dom.phasorCanvas.width;
+      const h = dom.phasorCanvas.height;
+      phasorCtx.clearRect(0, 0, w, h);
+      phasorCtx.fillStyle = '#0b1420';
+      phasorCtx.fillRect(0, 0, w, h);
+      const center = { x: w / 2, y: h / 2 };
+      phasorCtx.strokeStyle = '#1c2c43';
+      phasorCtx.beginPath();
+      phasorCtx.arc(center.x, center.y, 60, 0, Math.PI * 2);
+      phasorCtx.stroke();
+
+      const p1 = state.p1 * Math.PI / 180;
+      const p2 = state.p2 * Math.PI / 180;
+      const v1 = { x: state.a1 * Math.cos(p1), y: state.a1 * Math.sin(p1) };
+      const v2 = { x: state.a2 * Math.cos(p2), y: state.a2 * Math.sin(p2) };
+      const sum = { x: v1.x + v2.x, y: v1.y + v2.y };
+
+      const scale = 40;
+      phasorCtx.strokeStyle = '#6ad7ff';
+      phasorCtx.beginPath();
+      phasorCtx.moveTo(center.x, center.y);
+      phasorCtx.lineTo(center.x + v1.x * scale, center.y - v1.y * scale);
+      phasorCtx.stroke();
+
+      phasorCtx.strokeStyle = '#50fa7b';
+      phasorCtx.beginPath();
+      phasorCtx.moveTo(center.x, center.y);
+      phasorCtx.lineTo(center.x + v2.x * scale, center.y - v2.y * scale);
+      phasorCtx.stroke();
+
+      phasorCtx.strokeStyle = '#f6c76b';
+      phasorCtx.lineWidth = 2;
+      phasorCtx.beginPath();
+      phasorCtx.moveTo(center.x, center.y);
+      phasorCtx.lineTo(center.x + sum.x * scale, center.y - sum.y * scale);
+      phasorCtx.stroke();
+
+      const angle = Math.atan2(sum.y, sum.x) * 180 / Math.PI;
+      dom.angleValue.textContent = `${angle.toFixed(0)}°`;
+      dom.vectorValue.textContent = Math.hypot(sum.x, sum.y).toFixed(2);
+    }
+
+    function render() {
+      updateReadouts();
+      drawSignals();
+      drawScope();
+      drawPhasor();
+    }
+
+    function tick() {
+      state.time += 0.016 * state.speed;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.a1.addEventListener('input', () => { state.a1 = Number(dom.a1.value); render(); });
+      dom.f1.addEventListener('input', () => { state.f1 = Number(dom.f1.value); render(); });
+      dom.p1.addEventListener('input', () => { state.p1 = Number(dom.p1.value); render(); });
+      dom.a2.addEventListener('input', () => { state.a2 = Number(dom.a2.value); render(); });
+      dom.f2.addEventListener('input', () => { state.f2 = Number(dom.f2.value); render(); });
+      dom.p2.addEventListener('input', () => { state.p2 = Number(dom.p2.value); render(); });
+      dom.count.addEventListener('input', () => { state.count = Number(dom.count.value); render(); });
+      dom.showInd.addEventListener('change', () => { state.showInd = dom.showInd.checked; render(); });
+      dom.speed.addEventListener('input', () => { state.speed = Number(dom.speed.value); render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

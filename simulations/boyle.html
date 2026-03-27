@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Boyle's Law</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --panel: rgba(16, 24, 36, 0.86);
+      --panel-strong: rgba(12, 20, 32, 0.95);
+      --glass-border: rgba(106, 215, 255, 0.2);
+      --glass-glow: rgba(106, 215, 255, 0.16);
+      --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 700px at 12% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 88% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px clamp(16px, 4vw, 36px) 36px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0 18px;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 8px 0 18px;
+    }
+
+    .hero-title { max-width: 720px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .btn {
+      background: rgba(12, 18, 28, 0.85);
+      color: var(--sim-text);
+      border: 1px solid var(--glass-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.45); }
+    .btn.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.05rem;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr);
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, var(--glass-glow), transparent 45%);
+      pointer-events: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 460px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .controls { display: grid; gap: 16px; }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .read-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .read-card span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .read-card strong {
+      font-size: 16px;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+    }
+
+    .graph-panel { margin-top: 18px; }
+
+    @media (max-width: 980px) {
+      header.hero { flex-direction: column; align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      canvas { height: 360px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="boyle">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <div class="hero-title">
+        <div class="hero-badge">Precision Lab</div>
+        <h1>Boyle's Law</h1>
+        <p>Pressure and volume are inversely proportional at constant temperature.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary" id="run">Run</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><span>Pressure</span><strong id="pStat">0.0 kPa</strong></div>
+      <div class="stat"><span>Volume</span><strong id="vStat">0.0 L</strong></div>
+      <div class="stat"><span>P × V</span><strong id="pvStat">0.0</strong></div>
+      <div class="stat"><span>Temperature</span><strong id="tStat">300 K</strong></div>
+    </div>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="scene" width="900" height="520" aria-label="Boyle's law piston"></canvas>
+      </div>
+
+      <div class="panel controls">
+        <div class="control-group">
+          <label for="mass">Applied Mass <span class="value-chip" id="massLabel">5 kg</span></label>
+          <input type="range" id="mass" min="0" max="20" step="0.5" value="5" />
+        </div>
+        <div class="control-group">
+          <label for="area">Piston Area <span class="value-chip" id="areaLabel">0.01 m²</span></label>
+          <input type="range" id="area" min="0.005" max="0.03" step="0.001" value="0.01" />
+        </div>
+        <div class="control-group">
+          <label for="temp">Temperature <span class="value-chip" id="tempLabel">300 K</span></label>
+          <input type="range" id="temp" min="250" max="400" step="5" value="300" />
+        </div>
+
+        <div class="readout">
+          <div class="read-card"><span>Force</span><strong id="forceRead">0 N</strong></div>
+          <div class="read-card"><span>Pressure</span><strong id="pRead">0 kPa</strong></div>
+          <div class="read-card"><span>Volume</span><strong id="vRead">0 L</strong></div>
+          <div class="read-card"><span>PV</span><strong id="pvRead">0</strong></div>
+        </div>
+
+        <section class="panel graph-panel">
+          <canvas id="pvCanvas" width="600" height="220" aria-label="PV curve"></canvas>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+    const pvCanvas = document.getElementById('pvCanvas');
+    const pvCtx = pvCanvas.getContext('2d');
+
+    const massInput = document.getElementById('mass');
+    const areaInput = document.getElementById('area');
+    const tempInput = document.getElementById('temp');
+
+    const massLabel = document.getElementById('massLabel');
+    const areaLabel = document.getElementById('areaLabel');
+    const tempLabel = document.getElementById('tempLabel');
+
+    const pStat = document.getElementById('pStat');
+    const vStat = document.getElementById('vStat');
+    const pvStat = document.getElementById('pvStat');
+    const tStat = document.getElementById('tStat');
+
+    const forceRead = document.getElementById('forceRead');
+    const pRead = document.getElementById('pRead');
+    const vRead = document.getElementById('vRead');
+    const pvRead = document.getElementById('pvRead');
+
+    const state = {
+      mass: 5,
+      area: 0.01,
+      temp: 300,
+      P0: 0,
+      V0: 6,
+      V: 6,
+      P: 101,
+      k: 0,
+      running: true,
+      molecules: [],
+      pistonY: 0
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const gw = pvCanvas.getBoundingClientRect();
+      pvCanvas.width = Math.round(gw.width * ratio);
+      pvCanvas.height = Math.round(gw.height * ratio);
+      pvCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function initMolecules() {
+      state.molecules = Array.from({ length: 40 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4
+      }));
+    }
+
+    function updateState() {
+      const g = 9.81;
+      const Patm = 101;
+      const force = state.mass * g;
+      const pressureExtra = force / state.area / 1000; // kPa
+      state.P = Patm + pressureExtra;
+      const k0 = state.P0 * state.V0;
+      state.k = k0 * (state.temp / 300);
+      state.V = Math.max(0.5, Math.min(16, state.k / state.P));
+      state.k = state.P * state.V;
+
+      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
+      areaLabel.textContent = `${state.area.toFixed(3)} m²`;
+      tempLabel.textContent = `${state.temp.toFixed(0)} K`;
+      tStat.textContent = `${state.temp.toFixed(0)} K`;
+
+      pStat.textContent = `${state.P.toFixed(1)} kPa`;
+      vStat.textContent = `${state.V.toFixed(2)} L`;
+      pvStat.textContent = `${state.k.toFixed(1)}`;
+
+      forceRead.textContent = `${force.toFixed(1)} N`;
+      pRead.textContent = `${state.P.toFixed(1)} kPa`;
+      vRead.textContent = `${state.V.toFixed(2)} L`;
+      pvRead.textContent = `${state.k.toFixed(1)}`;
+    }
+
+    function drawPiston() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.clearRect(0, 0, w, h);
+
+      const cylX = w * 0.22;
+      const cylY = 30;
+      const cylW = w * 0.34;
+      const cylH = h * 0.8;
+      const minVol = 0.5;
+      const maxVol = 16;
+      const t = (state.V - minVol) / (maxVol - minVol);
+      const targetPistonY = cylY + 20 + (1 - t) * (cylH - 100);
+      state.pistonY = state.pistonY || targetPistonY;
+      state.pistonY += (targetPistonY - state.pistonY) * 0.12;
+      const pistonY = state.pistonY;
+
+      // glass
+      const glassGrad = ctx.createLinearGradient(cylX, 0, cylX + cylW, 0);
+      glassGrad.addColorStop(0, 'rgba(140,190,255,0.06)');
+      glassGrad.addColorStop(0.5, 'rgba(200,230,255,0.08)');
+      glassGrad.addColorStop(1, 'rgba(140,190,255,0.04)');
+      ctx.fillStyle = glassGrad;
+      ctx.strokeStyle = 'rgba(140,190,255,0.5)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(cylX, cylY, cylW, cylH);
+      ctx.strokeRect(cylX, cylY, cylW, cylH);
+      // glass shine
+      ctx.strokeStyle = 'rgba(200,240,255,0.2)';
+      ctx.beginPath();
+      ctx.moveTo(cylX + 8, cylY + 10);
+      ctx.lineTo(cylX + 8, cylY + cylH - 10);
+      ctx.stroke();
+      // volume ticks
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      for (let i = 0; i <= 6; i++) {
+        const y = cylY + 30 + (i / 6) * (cylH - 60);
+        ctx.beginPath();
+        ctx.moveTo(cylX + cylW + 6, y);
+        ctx.lineTo(cylX + cylW + 16, y);
+        ctx.stroke();
+      }
+
+      // piston
+      ctx.fillStyle = '#0b4f6b';
+      ctx.fillRect(cylX, pistonY, cylW, 16);
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.fillRect(cylX, pistonY, cylW, 3);
+
+      // rod and weight
+      ctx.fillStyle = '#0e6a86';
+      ctx.fillRect(cylX + cylW * 0.45, cylY, cylW * 0.1, pistonY - cylY);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(cylX + cylW * 0.38, cylY - 20, cylW * 0.24, 20);
+      ctx.fillStyle = '#0a0f16';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.fillText(`${state.mass.toFixed(1)} kg`, cylX + cylW * 0.39, cylY - 6);
+
+      // arrows
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(cylX + cylW * 0.5, pistonY - 30);
+      ctx.lineTo(cylX + cylW * 0.5 - 8, pistonY - 10);
+      ctx.lineTo(cylX + cylW * 0.5 + 8, pistonY - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // molecules
+      const gasTop = pistonY + 16;
+      const gasBottom = cylY + cylH;
+      const gasHeight = gasBottom - gasTop;
+      const gasWidth = cylW;
+      ctx.fillStyle = 'rgba(255,120,180,0.9)';
+      state.molecules.forEach((m) => {
+        const x = cylX + m.x * gasWidth;
+        const y = gasTop + m.y * gasHeight;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    function updateMolecules() {
+      const speed = 0.3 + state.P / 220 + (state.temp - 300) / 600;
+      state.molecules.forEach((m) => {
+        m.x += m.vx * speed * 0.01;
+        m.y += m.vy * speed * 0.01;
+        if (m.x < 0 || m.x > 1) m.vx *= -1;
+        if (m.y < 0 || m.y > 1) m.vy *= -1;
+        m.x = Math.max(0, Math.min(1, m.x));
+        m.y = Math.max(0, Math.min(1, m.y));
+      });
+    }
+
+    function drawPV() {
+      const w = pvCanvas.width / (window.devicePixelRatio || 1);
+      const h = pvCanvas.height / (window.devicePixelRatio || 1);
+      pvCtx.clearRect(0, 0, w, h);
+      pvCtx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      pvCtx.fillRect(0, 0, w, h);
+
+      const pad = 30;
+      pvCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      pvCtx.beginPath();
+      pvCtx.moveTo(pad, pad);
+      pvCtx.lineTo(pad, h - pad);
+      pvCtx.lineTo(w - pad, h - pad);
+      pvCtx.stroke();
+
+      const pMin = 50;
+      const pMax = 250;
+      pvCtx.strokeStyle = '#6ad7ff';
+      pvCtx.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const P = pMin + (pMax - pMin) * (i / 100);
+        const V = state.k / P;
+        const x = pad + ((V - 1) / 9) * (w - 2 * pad);
+        const y = h - pad - ((P - pMin) / (pMax - pMin)) * (h - 2 * pad);
+        if (i === 0) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
+      }
+      pvCtx.stroke();
+
+      const cx = pad + ((state.V - 1) / 9) * (w - 2 * pad);
+      const cy = h - pad - ((state.P - pMin) / (pMax - pMin)) * (h - 2 * pad);
+      pvCtx.fillStyle = '#f6c76b';
+      pvCtx.beginPath();
+      pvCtx.arc(cx, cy, 5, 0, Math.PI * 2);
+      pvCtx.fill();
+    }
+
+    function loop() {
+      if (state.running) {
+        updateState();
+        updateMolecules();
+      }
+      drawPiston();
+      drawPV();
+      requestAnimationFrame(loop);
+    }
+
+    function reset() {
+      state.mass = 5;
+      state.area = 0.01;
+      state.temp = 300;
+      state.P0 = 120;
+      state.V0 = 6;
+      state.P = state.P0;
+      state.V = state.V0;
+      state.k = state.P * state.V;
+      massInput.value = state.mass;
+      areaInput.value = state.area;
+      tempInput.value = state.temp;
+      updateState();
+    }
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateState();
+    });
+
+    areaInput.addEventListener('input', (e) => {
+      state.area = parseFloat(e.target.value);
+      updateState();
+    });
+
+    tempInput.addEventListener('input', (e) => {
+      state.temp = parseFloat(e.target.value);
+      updateState();
+    });
+
+    document.getElementById('run').addEventListener('click', (e) => {
+      state.running = !state.running;
+      e.currentTarget.textContent = state.running ? 'Pause' : 'Run';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      reset();
+      document.getElementById('run').textContent = 'Run';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    initMolecules();
+    reset();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

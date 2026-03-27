@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wave Superposition</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #50fa7b;
+      --purple: #b388ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Wave Superposition</h1>
+        <p>Constructive, destructive, beats, and standing waves</p>
+      </div>
+      <div class="pill">y = y₁ + y₂ · φ controls interference</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Wave Display</h2>
+        <canvas id="waveCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Resultant Wave</h2>
+            <canvas id="sumCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Beat Envelope</h2>
+            <canvas id="beatCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Wave 1 Amplitude</label>
+            <input type="range" id="amp1" min="0" max="2" step="0.1" value="1" />
+            <div class="row"><span class="muted">A₁</span><span class="value" id="amp1Value">1.0</span></div>
+          </div>
+          <div class="control">
+            <label>Wave 2 Amplitude</label>
+            <input type="range" id="amp2" min="0" max="2" step="0.1" value="1" />
+            <div class="row"><span class="muted">A₂</span><span class="value" id="amp2Value">1.0</span></div>
+          </div>
+          <div class="control">
+            <label>Wave 1 Frequency (Hz)</label>
+            <input type="range" id="f1" min="1" max="20" step="0.1" value="10" />
+            <div class="row"><span class="muted">f₁</span><span class="value" id="f1Value">10 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Wave 2 Frequency (Hz)</label>
+            <input type="range" id="f2" min="1" max="20" step="0.1" value="12" />
+            <div class="row"><span class="muted">f₂</span><span class="value" id="f2Value">12 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Phase Difference (°)</label>
+            <input type="range" id="phase" min="0" max="360" step="5" value="0" />
+            <div class="row"><span class="muted">φ</span><span class="value" id="phaseValue">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Wave Direction</label>
+            <select id="direction">
+              <option value="same" selected>Same direction</option>
+              <option value="opposite">Opposite directions</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Animation Speed</label>
+            <input type="range" id="speed" min="0.5" max="2.5" step="0.1" value="1" />
+            <div class="row"><span class="muted">Rate</span><span class="value" id="speedValue">1.0×</span></div>
+          </div>
+          <div class="control">
+            <label>Show Components</label>
+            <div class="toggle">
+              <input type="checkbox" id="showComponents" checked />
+              <span>Display y₁ and y₂</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Wave Type</label>
+            <select id="waveType">
+              <option value="transverse" selected>Transverse</option>
+              <option value="longitudinal">Longitudinal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Interference</div>
+            <div class="row"><span>Type</span><span class="value" id="interferenceValue">Constructive</span></div>
+            <div class="row"><span>Result amplitude</span><span class="value" id="resultAmp">2.0</span></div>
+            <div class="row"><span>Beat frequency</span><span class="value" id="beatValue">2 Hz</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span>Standing wave</span><span class="value" id="standingValue">No</span></div>
+            <div class="row"><span>Phase relation</span><span class="value" id="phaseRelation">In phase</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Same frequency + opposite directions → standing wave. Different frequencies → beats.</div>
+  </div>
+
+  <script>
+    const state = {
+      amp1: 1,
+      amp2: 1,
+      f1: 10,
+      f2: 12,
+      phase: 0,
+      direction: 'same',
+      speed: 1,
+      showComponents: true,
+      waveType: 'transverse',
+      time: 0
+    };
+
+    const dom = {
+      amp1: document.getElementById('amp1'),
+      amp2: document.getElementById('amp2'),
+      f1: document.getElementById('f1'),
+      f2: document.getElementById('f2'),
+      phase: document.getElementById('phase'),
+      direction: document.getElementById('direction'),
+      speed: document.getElementById('speed'),
+      showComponents: document.getElementById('showComponents'),
+      waveType: document.getElementById('waveType'),
+      amp1Value: document.getElementById('amp1Value'),
+      amp2Value: document.getElementById('amp2Value'),
+      f1Value: document.getElementById('f1Value'),
+      f2Value: document.getElementById('f2Value'),
+      phaseValue: document.getElementById('phaseValue'),
+      speedValue: document.getElementById('speedValue'),
+      interferenceValue: document.getElementById('interferenceValue'),
+      resultAmp: document.getElementById('resultAmp'),
+      beatValue: document.getElementById('beatValue'),
+      standingValue: document.getElementById('standingValue'),
+      phaseRelation: document.getElementById('phaseRelation')
+    };
+
+    const waveCanvas = document.getElementById('waveCanvas');
+    const waveCtx = waveCanvas.getContext('2d');
+    const sumCanvas = document.getElementById('sumCanvas');
+    const sumCtx = sumCanvas.getContext('2d');
+    const beatCanvas = document.getElementById('beatCanvas');
+    const beatCtx = beatCanvas.getContext('2d');
+
+    function updateReadouts() {
+      dom.amp1Value.textContent = state.amp1.toFixed(1);
+      dom.amp2Value.textContent = state.amp2.toFixed(1);
+      dom.f1Value.textContent = `${state.f1.toFixed(1)} Hz`;
+      dom.f2Value.textContent = `${state.f2.toFixed(1)} Hz`;
+      dom.phaseValue.textContent = `${state.phase}°`;
+      dom.speedValue.textContent = `${state.speed.toFixed(1)}×`;
+      const beat = Math.abs(state.f1 - state.f2);
+      dom.beatValue.textContent = `${beat.toFixed(1)} Hz`;
+      dom.resultAmp.textContent = (state.amp1 + state.amp2).toFixed(1);
+      const phase = state.phase % 360;
+      dom.phaseRelation.textContent = phase === 0 ? 'In phase' : phase === 180 ? 'Out of phase' : `${phase}° offset`;
+      dom.interferenceValue.textContent = phase === 0 ? 'Constructive' : phase === 180 ? 'Destructive' : 'Partial';
+      dom.standingValue.textContent = (state.direction === 'opposite' && Math.abs(state.f1 - state.f2) < 0.01) ? 'Yes' : 'No';
+    }
+
+    function drawWaves() {
+      const w = waveCanvas.width;
+      const h = waveCanvas.height;
+      waveCtx.clearRect(0, 0, w, h);
+      waveCtx.fillStyle = '#0b1420';
+      waveCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      const k = 2 * Math.PI / 200;
+      const omega1 = 2 * Math.PI * state.f1;
+      const omega2 = 2 * Math.PI * state.f2;
+      const phase = state.phase * Math.PI / 180;
+      const dir2 = state.direction === 'opposite' ? -1 : 1;
+
+      if (state.showComponents) {
+        waveCtx.strokeStyle = '#6ad7ff';
+        waveCtx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const y1 = state.amp1 * Math.sin(k * x - omega1 * state.time);
+          const y = mid + y1 * 25;
+          if (x === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+        }
+        waveCtx.stroke();
+
+        waveCtx.strokeStyle = '#50fa7b';
+        waveCtx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const y2 = state.amp2 * Math.sin(k * x * dir2 - omega2 * state.time + phase);
+          const y = mid + y2 * 25;
+          if (x === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+        }
+        waveCtx.stroke();
+      }
+
+      waveCtx.strokeStyle = '#f6c76b';
+      waveCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const y1 = state.amp1 * Math.sin(k * x - omega1 * state.time);
+        const y2 = state.amp2 * Math.sin(k * x * dir2 - omega2 * state.time + phase);
+        const yTotal = y1 + y2;
+        const y = mid + yTotal * 25;
+        if (x === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+      }
+      waveCtx.stroke();
+    }
+
+    function drawSum() {
+      const w = sumCanvas.width;
+      const h = sumCanvas.height;
+      sumCtx.clearRect(0, 0, w, h);
+      sumCtx.fillStyle = '#0b1420';
+      sumCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      const omega1 = 2 * Math.PI * state.f1;
+      const omega2 = 2 * Math.PI * state.f2;
+      const phase = state.phase * Math.PI / 180;
+      const dir2 = state.direction === 'opposite' ? -1 : 1;
+      const k = 2 * Math.PI / 120;
+      sumCtx.strokeStyle = '#b388ff';
+      sumCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const y1 = state.amp1 * Math.sin(k * x - omega1 * state.time);
+        const y2 = state.amp2 * Math.sin(k * x * dir2 - omega2 * state.time + phase);
+        const y = mid + (y1 + y2) * 25;
+        if (x === 0) sumCtx.moveTo(x, y); else sumCtx.lineTo(x, y);
+      }
+      sumCtx.stroke();
+    }
+
+    function drawBeat() {
+      const w = beatCanvas.width;
+      const h = beatCanvas.height;
+      beatCtx.clearRect(0, 0, w, h);
+      beatCtx.fillStyle = '#0b1420';
+      beatCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      const beat = Math.abs(state.f1 - state.f2);
+      beatCtx.strokeStyle = '#f6c76b';
+      beatCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = x / w * 2;
+        const envelope = Math.cos(2 * Math.PI * beat * t) * (state.amp1 + state.amp2);
+        const y = mid - envelope * 15;
+        if (x === 0) beatCtx.moveTo(x, y); else beatCtx.lineTo(x, y);
+      }
+      beatCtx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawWaves();
+      drawSum();
+      drawBeat();
+    }
+
+    function tick() {
+      state.time += 0.016 * state.speed;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.amp1.addEventListener('input', () => { state.amp1 = Number(dom.amp1.value); render(); });
+      dom.amp2.addEventListener('input', () => { state.amp2 = Number(dom.amp2.value); render(); });
+      dom.f1.addEventListener('input', () => { state.f1 = Number(dom.f1.value); render(); });
+      dom.f2.addEventListener('input', () => { state.f2 = Number(dom.f2.value); render(); });
+      dom.phase.addEventListener('input', () => { state.phase = Number(dom.phase.value); render(); });
+      dom.direction.addEventListener('change', () => { state.direction = dom.direction.value; render(); });
+      dom.speed.addEventListener('input', () => { state.speed = Number(dom.speed.value); render(); });
+      dom.showComponents.addEventListener('change', () => { state.showComponents = dom.showComponents.checked; render(); });
+      dom.waveType.addEventListener('change', () => { state.waveType = dom.waveType.value; render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

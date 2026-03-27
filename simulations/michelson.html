@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Michelson-Morley Experiment</title>
+  <style>
+    :root {
+      --bg: #0a0c12;
+      --bg-2: #0e1320;
+      --panel: rgba(16, 20, 30, 0.88);
+      --panel-2: rgba(10, 14, 22, 0.92);
+      --text: #f2f3f5;
+      --muted: #b9c0cc;
+      --line: rgba(255, 255, 255, 0.08);
+      --beam-a: #ff6b6b;
+      --beam-b: #7bc4ff;
+      --accent: #f6c76b;
+      --steel: #717a86;
+      --brass: #b38c55;
+      --glass: rgba(160, 190, 220, 0.35);
+      --glow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 600px at 12% 5%, rgba(255, 140, 90, 0.12), transparent 60%),
+        radial-gradient(900px 600px at 88% 10%, rgba(123, 196, 255, 0.12), transparent 60%),
+        linear-gradient(140deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: "Sora", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px); background: rgba(8, 10, 16, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 30px 20px 10px; }
+    header.hero h1 { margin: 0 0 8px; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: 0.06em; text-transform: uppercase; }
+    header.hero p { margin: 0; color: var(--muted); }
+
+    .layout {
+      display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+      gap: 20px; padding: 14px 28px 8px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--glow);
+      padding: 16px 18px;
+    }
+    canvas {
+      width: 100%; height: 440px; border-radius: 16px;
+      background: rgba(6, 8, 12, 0.75); border: 1px solid var(--line);
+    }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.2)),
+        radial-gradient(120px 40px at 80% 20%, rgba(255,255,255,0.18), transparent 60%),
+        rgba(10, 14, 22, 0.85);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 10px 40px 10px 12px;
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04), 0 8px 20px rgba(0,0,0,0.35);
+      background-position: right 12px center, right 12px center, center;
+      background-repeat: no-repeat;
+      background-size: 0 0, 0 0, auto;
+    }
+    .control-group select {
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(255,255,255,0.6) 50%),
+        linear-gradient(135deg, rgba(255,255,255,0.6) 50%, transparent 50%);
+      background-position: right 18px top 18px, right 12px top 18px;
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+    select:focus {
+      outline: none;
+      border-color: rgba(123,196,255,0.6);
+      box-shadow: 0 0 0 2px rgba(123,196,255,0.2);
+    }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      background: rgba(12, 18, 28, 0.8); color: var(--text);
+      border: 1px solid var(--line); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+    }
+    .toggles { display: grid; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+    .toggles label { justify-content: flex-start; gap: 10px; }
+
+    .strip {
+      margin: 12px 28px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+    }
+    .strip .card {
+      background: rgba(12, 15, 22, 0.78); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+      color: var(--muted); font-size: 0.85rem; min-height: 92px;
+    }
+    .strip .card strong { display: block; margin-bottom: 6px; color: var(--text); }
+
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.8rem;
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 340px; }
+      .strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a><span class="badge">Interferometry Lab</span></div>
+    <header class="hero">
+      <h1>Michelson–Morley Experiment</h1>
+      <p>Interferometer rotation tests the ether wind hypothesis.</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="mmCanvas" width="980" height="520" aria-label="Michelson-Morley"></canvas>
+        <div class="btn-row" style="margin-top:12px;">
+          <button id="reset">Reset</button>
+          <button id="rotate">Rotate 90°</button>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="arm1">Arm 1 Length <strong id="arm1Label">1.00 m</strong></label>
+          <input type="range" id="arm1" min="50" max="180" step="1" value="120" />
+        </div>
+        <div class="control-group">
+          <label for="arm2">Arm 2 Length <strong id="arm2Label">1.00 m</strong></label>
+          <input type="range" id="arm2" min="50" max="180" step="1" value="120" />
+        </div>
+        <div class="control-group">
+          <label for="wavelength">Wavelength <strong id="waveLabel">633 nm</strong></label>
+          <input type="range" id="wavelength" min="400" max="800" step="1" value="633" />
+        </div>
+        <div class="control-group">
+          <label for="ether">Ether Wind <strong id="etherLabel">30 km/s</strong></label>
+          <input type="range" id="ether" min="0" max="100" step="1" value="30" />
+        </div>
+        <div class="control-group">
+          <label>Mode</label>
+          <select id="mode">
+            <option value="modern" selected>Modern Vacuum (Null Result)</option>
+            <option value="ether">Historical Ether Hypothesis</option>
+          </select>
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="showBeams" checked /> Show beam paths</label>
+          <label><input type="checkbox" id="showPattern" checked /> Show interference pattern</label>
+          <label><input type="checkbox" id="showFringe" checked /> Show fringe count</label>
+          <label><input type="checkbox" id="showVectors" checked /> Show velocity vectors</label>
+          <label><input type="checkbox" id="showLabels" checked /> Show labels</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="card"><strong>Fringe Shift</strong><span id="fringeReadout">0.00</span> fringes</div>
+      <div class="card"><strong>Phase Difference</strong><span id="phaseReadout">0.00</span> rad</div>
+      <div class="card"><strong>Interpretation</strong><span id="interpretReadout">Null result supports relativity.</span></div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('mmCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const arm1Input = document.getElementById('arm1');
+    const arm2Input = document.getElementById('arm2');
+    const wavelengthInput = document.getElementById('wavelength');
+    const etherInput = document.getElementById('ether');
+    const modeInput = document.getElementById('mode');
+
+    const arm1Label = document.getElementById('arm1Label');
+    const arm2Label = document.getElementById('arm2Label');
+    const waveLabel = document.getElementById('waveLabel');
+    const etherLabel = document.getElementById('etherLabel');
+
+    const showBeams = document.getElementById('showBeams');
+    const showPattern = document.getElementById('showPattern');
+    const showFringe = document.getElementById('showFringe');
+    const showVectors = document.getElementById('showVectors');
+    const showLabels = document.getElementById('showLabels');
+
+    const fringeReadout = document.getElementById('fringeReadout');
+    const phaseReadout = document.getElementById('phaseReadout');
+    const interpretReadout = document.getElementById('interpretReadout');
+
+    const state = {
+      arm1: 1.2,
+      arm2: 1.2,
+      wavelength: 633,
+      ether: 30,
+      rotation: 0,
+      time: 0,
+      mode: 'modern'
+    };
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function updateLabels() {
+      arm1Label.textContent = `${state.arm1.toFixed(2)} m`;
+      arm2Label.textContent = `${state.arm2.toFixed(2)} m`;
+      waveLabel.textContent = `${state.wavelength.toFixed(0)} nm`;
+      etherLabel.textContent = `${state.ether.toFixed(0)} km/s`;
+    }
+
+    function calculateFringes() {
+      const pathDiff = (state.arm2 - state.arm1) * 2;
+      const lambda = state.wavelength * 1e-9;
+      let fringes = (2 * pathDiff) / lambda;
+      if (state.mode === 'modern') {
+        fringes *= 0.02;
+      } else {
+        fringes *= 0.2 + state.ether / 300;
+      }
+      return { pathDiff, fringes };
+    }
+
+    function drawInterferometer() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const center = { x: w * 0.5, y: h * 0.55 };
+      const scale = Math.min(w, h) * 0.28;
+      const arm1Len = state.arm1 * scale;
+      const arm2Len = state.arm2 * scale;
+      const pulse = 0.6 + 0.4 * Math.sin(state.time * 2.2);
+
+      function roundRect(x, y, rw, rh, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + rw - r, y);
+        ctx.quadraticCurveTo(x + rw, y, x + rw, y + r);
+        ctx.lineTo(x + rw, y + rh - r);
+        ctx.quadraticCurveTo(x + rw, y + rh, x + rw - r, y + rh);
+        ctx.lineTo(x + r, y + rh);
+        ctx.quadraticCurveTo(x, y + rh, x, y + rh - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      const baseGrad = ctx.createLinearGradient(0, h * 0.62, 0, h);
+      baseGrad.addColorStop(0, 'rgba(20, 24, 34, 0.9)');
+      baseGrad.addColorStop(1, 'rgba(8, 10, 16, 0.95)');
+      ctx.fillStyle = baseGrad;
+      roundRect(w * 0.08, h * 0.62, w * 0.84, h * 0.3, 18);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.rotate((state.rotation * Math.PI) / 180);
+
+      const railGrad = ctx.createLinearGradient(0, -10, 0, 10);
+      railGrad.addColorStop(0, 'rgba(180,190,205,0.25)');
+      railGrad.addColorStop(0.5, 'rgba(90,98,110,0.8)');
+      railGrad.addColorStop(1, 'rgba(40,44,52,0.9)');
+      ctx.strokeStyle = railGrad;
+      ctx.lineWidth = 10;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(arm1Len, 0);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(0, -arm2Len);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, -3);
+      ctx.lineTo(arm1Len, -3);
+      ctx.moveTo(3, 0);
+      ctx.lineTo(3, -arm2Len);
+      ctx.stroke();
+
+      const hubGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 16);
+      hubGrad.addColorStop(0, 'rgba(220,230,240,0.9)');
+      hubGrad.addColorStop(1, 'rgba(80,90,105,0.95)');
+      ctx.fillStyle = hubGrad;
+      roundRect(-12, -12, 24, 24, 6);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(0, 0);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = 'rgba(160,190,220,0.38)';
+      ctx.strokeStyle = 'rgba(220,235,255,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(-16, -4, 32, 8);
+      ctx.strokeRect(-16, -4, 32, 8);
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.beginPath();
+      ctx.moveTo(-14, -2);
+      ctx.lineTo(14, -2);
+      ctx.stroke();
+      ctx.restore();
+
+      const mirrorGrad = ctx.createLinearGradient(0, -16, 0, 16);
+      mirrorGrad.addColorStop(0, 'rgba(190,150,90,0.95)');
+      mirrorGrad.addColorStop(0.5, 'rgba(130,100,60,0.95)');
+      mirrorGrad.addColorStop(1, 'rgba(90,70,45,0.95)');
+      ctx.fillStyle = mirrorGrad;
+      roundRect(arm1Len - 10, -18, 20, 36, 6);
+      ctx.fill();
+      roundRect(-18, -arm2Len - 10, 36, 20, 6);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      const detectorX = arm1Len + 46;
+      const detectorY = 0;
+      const detGrad = ctx.createRadialGradient(detectorX - 6, detectorY - 6, 6, detectorX, detectorY, 26);
+      detGrad.addColorStop(0, 'rgba(255,255,255,0.9)');
+      detGrad.addColorStop(1, 'rgba(120,130,150,0.85)');
+      ctx.fillStyle = detGrad;
+      ctx.beginPath();
+      ctx.arc(detectorX, detectorY, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      if (showBeams.checked) {
+        const beamColor = state.mode === 'ether' ? 'rgba(255, 90, 90, 0.85)' : 'rgba(123,196,255,0.85)';
+        ctx.strokeStyle = beamColor;
+        ctx.lineWidth = 3;
+        ctx.shadowColor = beamColor;
+        ctx.shadowBlur = 12 + 8 * pulse;
+        ctx.beginPath();
+        ctx.moveTo(-120, 0);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(arm1Len, 0);
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, -arm2Len);
+        ctx.stroke();
+
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = 'rgba(255, 130, 130, 0.7)';
+        ctx.beginPath();
+        ctx.moveTo(arm1Len, 0);
+        ctx.lineTo(arm1Len + 44, 0);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+
+      if (showVectors.checked) {
+        ctx.strokeStyle = 'rgba(246,199,107,0.7)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-120, 70);
+        ctx.lineTo(-40, 70);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-46, 66);
+        ctx.lineTo(-40, 70);
+        ctx.lineTo(-46, 74);
+        ctx.stroke();
+      }
+
+      if (showLabels.checked) {
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = '14px Sora, sans-serif';
+        ctx.fillText('Beam Splitter', 18, -18);
+        ctx.fillText('Mirror', arm1Len - 10, 22);
+        ctx.fillText('Mirror', -52, -arm2Len - 12);
+        ctx.fillText('Detector', arm1Len + 12, -28);
+      }
+
+      ctx.restore();
+
+      if (showPattern.checked) {
+        const { fringes } = calculateFringes();
+        const rings = Math.max(4, Math.min(14, Math.abs(fringes) / 4));
+        const cx = w * 0.76;
+        const cy = h * 0.7;
+        const coreGrad = ctx.createRadialGradient(cx, cy, 6, cx, cy, 55);
+        coreGrad.addColorStop(0, 'rgba(255,255,255,0.85)');
+        coreGrad.addColorStop(1, 'rgba(255,255,255,0.05)');
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+        ctx.fill();
+        for (let i = 1; i <= rings; i++) {
+          ctx.strokeStyle = i % 2 === 0 ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.18)';
+          ctx.beginPath();
+          ctx.arc(cx, cy, i * 10, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function updateReadouts() {
+      const { fringes } = calculateFringes();
+      const phase = fringes * Math.PI * 2;
+      fringeReadout.textContent = fringes.toFixed(2);
+      phaseReadout.textContent = phase.toFixed(2);
+      interpretReadout.textContent = state.mode === 'modern'
+        ? 'Null result supports relativity.'
+        : 'Ether wind predicts a measurable shift.';
+    }
+
+    function loop() {
+      state.time += 0.01;
+      drawInterferometer();
+      updateReadouts();
+      requestAnimationFrame(loop);
+    }
+
+    arm1Input.addEventListener('input', (e) => {
+      state.arm1 = parseFloat(e.target.value) / 100;
+      updateLabels();
+    });
+
+    arm2Input.addEventListener('input', (e) => {
+      state.arm2 = parseFloat(e.target.value) / 100;
+      updateLabels();
+    });
+
+    wavelengthInput.addEventListener('input', (e) => {
+      state.wavelength = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    etherInput.addEventListener('input', (e) => {
+      state.ether = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    modeInput.addEventListener('change', (e) => {
+      state.mode = e.target.value;
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.arm1 = 1.2;
+      state.arm2 = 1.2;
+      state.rotation = 0;
+      updateLabels();
+    });
+
+    document.getElementById('rotate').addEventListener('click', () => {
+      state.rotation = (state.rotation + 90) % 360;
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cell Membrane Transport</title>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --bg-2: #131a28;
+      --panel: rgba(16, 20, 30, 0.88);
+      --panel-2: rgba(10, 14, 22, 0.92);
+      --text: #f2f3f5;
+      --muted: #b9c0cc;
+      --line: rgba(255, 255, 255, 0.08);
+      --na: #69b9ff;
+      --k: #ffb15c;
+      --membrane: #c7a86b;
+      --tail: #8b6c3a;
+      --accent: #7de0b0;
+      --glow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 600px at 12% 5%, rgba(125, 224, 176, 0.12), transparent 60%),
+        radial-gradient(900px 600px at 88% 10%, rgba(105, 185, 255, 0.12), transparent 60%),
+        linear-gradient(140deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: "Sora", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px); background: rgba(8, 10, 16, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 30px 20px 10px; }
+    header.hero h1 { margin: 0 0 8px; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: 0.04em; }
+    header.hero p { margin: 0; color: var(--muted); }
+
+    .layout {
+      display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr);
+      gap: 20px; padding: 14px 28px 8px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--glow);
+      padding: 16px 18px;
+    }
+    canvas {
+      width: 100%; height: 460px; border-radius: 16px;
+      background: rgba(6, 8, 12, 0.75); border: 1px solid var(--line);
+    }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+    .toggles { display: grid; gap: 8px; color: var(--muted); font-size: 0.9rem; }
+    .toggles label { justify-content: flex-start; gap: 10px; }
+
+    .strip {
+      margin: 12px 28px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
+    }
+    .strip .card {
+      background: rgba(12, 15, 22, 0.78); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+      color: var(--muted); font-size: 0.85rem; min-height: 92px;
+    }
+    .strip .card strong { display: block; margin-bottom: 6px; color: var(--text); }
+    .explain {
+      margin: 0 28px 30px; background: rgba(12, 15, 22, 0.78);
+      border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; color: var(--muted);
+      font-size: 0.9rem; line-height: 1.6;
+    }
+    .explain strong { color: var(--text); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 360px; }
+      .strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a><span>Cell Membrane Transport</span></div>
+    <header class="hero">
+      <h1>Cell Membrane</h1>
+      <p>Active transport across a phospholipid bilayer (Na⁺ / K⁺ pump).</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="memCanvas" width="980" height="560" aria-label="Cell membrane"></canvas>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="gradient">Concentration Gradient <strong id="gradLabel">60%</strong></label>
+          <input type="range" id="gradient" min="0" max="100" step="1" value="60" />
+        </div>
+        <div class="control-group">
+          <label for="atp">ATP Availability <strong id="atpLabel">70%</strong></label>
+          <input type="range" id="atp" min="0" max="100" step="1" value="70" />
+        </div>
+        <div class="control-group">
+          <label for="potential">Membrane Potential <strong id="potLabel">-70 mV</strong></label>
+          <input type="range" id="potential" min="-90" max="30" step="1" value="-70" />
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" id="showDiffusion" checked /> Show diffusion</label>
+          <label><input type="checkbox" id="showActive" checked /> Show active transport</label>
+          <label><input type="checkbox" id="showLabels" checked /> Show labels</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="strip">
+      <div class="card"><strong>Na⁺ Distribution</strong><span id="naReadout">Outside: 0 · Inside: 0</span></div>
+      <div class="card"><strong>K⁺ Distribution</strong><span id="kReadout">Outside: 0 · Inside: 0</span></div>
+      <div class="card"><strong>Energy Use</strong><span id="energyReadout">ATP usage: 0%</span></div>
+    </section>
+
+    <section class="explain">
+      <strong>What you’re seeing:</strong>
+      The phospholipid bilayer is a selective barrier. Sodium (Na⁺) is higher outside and potassium (K⁺) higher inside.
+      Diffusion lets ions drift down their gradients, while the Na⁺/K⁺ pump uses ATP to move ions against the gradient,
+      maintaining the membrane potential.
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('memCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const gradientInput = document.getElementById('gradient');
+    const atpInput = document.getElementById('atp');
+    const potentialInput = document.getElementById('potential');
+
+    const gradLabel = document.getElementById('gradLabel');
+    const atpLabel = document.getElementById('atpLabel');
+    const potLabel = document.getElementById('potLabel');
+
+    const showDiffusion = document.getElementById('showDiffusion');
+    const showActive = document.getElementById('showActive');
+    const showLabels = document.getElementById('showLabels');
+
+    const naReadout = document.getElementById('naReadout');
+    const kReadout = document.getElementById('kReadout');
+    const energyReadout = document.getElementById('energyReadout');
+
+    const state = {
+      gradient: 60,
+      atp: 70,
+      potential: -70,
+      time: 0,
+      ions: [],
+      pumps: [0.35, 0.55, 0.75]
+    };
+
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function initIons() {
+      state.ions = [];
+      const total = 140;
+      for (let i = 0; i < total; i++) {
+        state.ions.push(makeIon(i % 2 === 0 ? 'na' : 'k'));
+      }
+    }
+
+    function makeIon(type) {
+      const outside = Math.random() < 0.5;
+      return {
+        type,
+        x: 100 + Math.random() * (canvas.clientWidth - 200),
+        y: outside ? 70 + Math.random() * 130 : canvas.clientHeight - 180 + Math.random() * 120,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: (Math.random() - 0.5) * 0.4
+      };
+    }
+
+    function updateInputs() {
+      state.gradient = parseInt(gradientInput.value, 10);
+      state.atp = parseInt(atpInput.value, 10);
+      state.potential = parseInt(potentialInput.value, 10);
+      gradLabel.textContent = `${state.gradient}%`;
+      atpLabel.textContent = `${state.atp}%`;
+      potLabel.textContent = `${state.potential} mV`;
+    }
+
+    function drawBackground(w, h) {
+      const extGrad = ctx.createLinearGradient(0, 0, 0, h * 0.45);
+      extGrad.addColorStop(0, 'rgba(120, 170, 200, 0.22)');
+      extGrad.addColorStop(0.7, 'rgba(20, 28, 40, 0.25)');
+      extGrad.addColorStop(1, 'rgba(10, 12, 18, 0.18)');
+      ctx.fillStyle = extGrad;
+      ctx.fillRect(0, 0, w, h * 0.45);
+
+      const cytGrad = ctx.createLinearGradient(0, h * 0.55, 0, h);
+      cytGrad.addColorStop(0, 'rgba(170, 125, 90, 0.25)');
+      cytGrad.addColorStop(0.6, 'rgba(40, 28, 18, 0.3)');
+      cytGrad.addColorStop(1, 'rgba(10, 10, 12, 0.25)');
+      ctx.fillStyle = cytGrad;
+      ctx.fillRect(0, h * 0.55, w, h * 0.45);
+
+      ctx.save();
+      ctx.globalAlpha = 0.15;
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.arc(w * 0.15 + i * 90, h * 0.2, 18 + i * 4, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawMembrane(w, h) {
+      const mid = h * 0.5;
+      const thickness = 60;
+      const top = mid - thickness / 2;
+      const bottom = mid + thickness / 2;
+
+      const slab = ctx.createLinearGradient(0, top, 0, bottom);
+      slab.addColorStop(0, 'rgba(220, 195, 135, 0.85)');
+      slab.addColorStop(0.45, 'rgba(160, 120, 70, 0.7)');
+      slab.addColorStop(0.55, 'rgba(120, 85, 50, 0.75)');
+      slab.addColorStop(1, 'rgba(210, 185, 125, 0.85)');
+      ctx.fillStyle = slab;
+      ctx.fillRect(0, top, w, thickness);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(0, top + 2);
+      ctx.lineTo(w, top + 2);
+      ctx.moveTo(0, bottom - 2);
+      ctx.lineTo(w, bottom - 2);
+      ctx.stroke();
+
+      const headCount = Math.floor(w / 32);
+      for (let i = 0; i < headCount; i++) {
+        const x = 20 + i * 32;
+        const headGrad = ctx.createRadialGradient(x - 4, top + 10, 2, x, top + 12, 10);
+        headGrad.addColorStop(0, 'rgba(255, 245, 220, 0.95)');
+        headGrad.addColorStop(1, 'rgba(190, 160, 110, 0.95)');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(x, top + 12, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.stroke();
+
+        const headGrad2 = ctx.createRadialGradient(x - 4, bottom - 14, 2, x, bottom - 12, 10);
+        headGrad2.addColorStop(0, 'rgba(255, 245, 220, 0.95)');
+        headGrad2.addColorStop(1, 'rgba(190, 160, 110, 0.95)');
+        ctx.fillStyle = headGrad2;
+        ctx.beginPath();
+        ctx.arc(x, bottom - 12, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(110, 80, 45, 0.85)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(x - 3, top + 20);
+        ctx.lineTo(x - 8, bottom - 20);
+        ctx.moveTo(x + 3, top + 20);
+        ctx.lineTo(x + 8, bottom - 20);
+        ctx.stroke();
+      }
+
+      return { top, bottom, mid };
+    }
+
+    function drawPumps(w, h, membrane) {
+      state.pumps.forEach((pos, idx) => {
+        const x = w * pos;
+        const y = membrane.mid;
+        const pulse = 0.5 + 0.5 * Math.sin(state.time * 2 + idx);
+        ctx.save();
+        ctx.translate(x, y);
+        const pumpGrad = ctx.createLinearGradient(-16, -36, 16, 28);
+        pumpGrad.addColorStop(0, 'rgba(210, 160, 240, 0.9)');
+        pumpGrad.addColorStop(0.5, `rgba(155, 105, 180, ${0.8 + pulse * 0.1})`);
+        pumpGrad.addColorStop(1, 'rgba(90, 60, 120, 0.95)');
+        ctx.fillStyle = pumpGrad;
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-16, -36);
+        ctx.quadraticCurveTo(-28, -10, -16, 28);
+        ctx.lineTo(16, 28);
+        ctx.quadraticCurveTo(30, -8, 16, -36);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        if (showActive.checked && state.atp > 10) {
+          ctx.fillStyle = 'rgba(0,0,0,0.35)';
+          ctx.beginPath();
+          ctx.arc(0, -6 + pulse * 6, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+          ctx.beginPath();
+          ctx.moveTo(-10, -8);
+          ctx.lineTo(10, -8);
+          ctx.stroke();
+        }
+        ctx.restore();
+      });
+    }
+
+    function drawATP(w, h, membrane) {
+      if (!showActive.checked) return;
+      const y = membrane.mid + 52;
+      const atpGrad = ctx.createLinearGradient(0, y, 0, y + 14);
+      atpGrad.addColorStop(0, 'rgba(170, 255, 230, 0.95)');
+      atpGrad.addColorStop(1, 'rgba(70, 180, 160, 0.9)');
+      ctx.fillStyle = atpGrad;
+      for (let i = 0; i < 4; i++) {
+        const x = w * (0.2 + i * 0.12);
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 18, y + 6);
+        ctx.lineTo(x, y + 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(240, 190, 110, 0.95)';
+      ctx.fillRect(w * 0.7, y + 2, 14, 8);
+      ctx.fillRect(w * 0.74, y + 2, 14, 8);
+    }
+
+    function updateIons(membrane) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const topLimit = membrane.top - 30;
+      const bottomLimit = membrane.bottom + 30;
+      const gradientBias = state.gradient / 100;
+
+      state.ions.forEach((ion) => {
+        ion.x += ion.vx;
+        ion.y += ion.vy;
+        ion.vx += (Math.random() - 0.5) * 0.05;
+        ion.vy += (Math.random() - 0.5) * 0.05;
+        ion.vx *= 0.96;
+        ion.vy *= 0.96;
+
+        if (showDiffusion.checked) {
+          const towardOutside = ion.type === 'na' ? gradientBias : 1 - gradientBias;
+          if (ion.y > membrane.mid && Math.random() < towardOutside * 0.002) {
+            ion.y = membrane.mid - 40;
+          } else if (ion.y < membrane.mid && Math.random() < (1 - towardOutside) * 0.002) {
+            ion.y = membrane.mid + 40;
+          }
+        }
+
+        if (ion.y < 30) ion.y = 30;
+        if (ion.y > h - 30) ion.y = h - 30;
+        if (ion.x < 40) ion.x = 40;
+        if (ion.x > w - 40) ion.x = w - 40;
+      });
+
+      if (showActive.checked && state.atp > 20) {
+        state.pumps.forEach((pos, idx) => {
+          const x = w * pos;
+          const targetNa = state.ions.find(ion => ion.type === 'na' && ion.y > membrane.mid + 10);
+          if (targetNa && Math.random() < 0.02) {
+            targetNa.x = x + (Math.random() - 0.5) * 20;
+            targetNa.y = membrane.top - 30;
+          }
+          const targetK = state.ions.find(ion => ion.type === 'k' && ion.y < membrane.mid - 10);
+          if (targetK && Math.random() < 0.02) {
+            targetK.x = x + (Math.random() - 0.5) * 20;
+            targetK.y = membrane.bottom + 30;
+          }
+        });
+      }
+
+      const naOut = state.ions.filter(i => i.type === 'na' && i.y < membrane.mid).length;
+      const naIn = state.ions.filter(i => i.type === 'na' && i.y > membrane.mid).length;
+      const kOut = state.ions.filter(i => i.type === 'k' && i.y < membrane.mid).length;
+      const kIn = state.ions.filter(i => i.type === 'k' && i.y > membrane.mid).length;
+      naReadout.textContent = `Outside: ${naOut} · Inside: ${naIn}`;
+      kReadout.textContent = `Outside: ${kOut} · Inside: ${kIn}`;
+      energyReadout.textContent = `ATP usage: ${Math.round(state.atp * (showActive.checked ? 0.8 : 0))}%`;
+    }
+
+    function drawIons() {
+      state.ions.forEach((ion) => {
+        const color = ion.type === 'na'
+          ? ctx.createRadialGradient(ion.x - 2, ion.y - 2, 2, ion.x, ion.y, 8)
+          : ctx.createRadialGradient(ion.x - 2, ion.y - 2, 2, ion.x, ion.y, 8);
+        if (ion.type === 'na') {
+          color.addColorStop(0, 'rgba(220,245,255,0.95)');
+          color.addColorStop(1, 'rgba(80,150,230,0.95)');
+        } else {
+          color.addColorStop(0, 'rgba(255,235,200,0.95)');
+          color.addColorStop(1, 'rgba(230,150,70,0.95)');
+        }
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(ion.x, ion.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      });
+    }
+
+    function drawLabels(w, membrane) {
+      if (!showLabels.checked) return;
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.font = '14px Sora, sans-serif';
+      ctx.fillText('Extracellular Fluid', 20, 34);
+      ctx.fillText('Cytoplasm', 20, canvas.clientHeight - 26);
+      ctx.fillText('Phospholipid Bilayer', w * 0.64, membrane.mid + 6);
+      ctx.fillStyle = 'rgba(105,185,255,0.9)';
+      ctx.fillText('Na⁺', w * 0.87, membrane.top - 30);
+      ctx.fillStyle = 'rgba(255,177,92,0.9)';
+      ctx.fillText('K⁺', w * 0.87, membrane.bottom + 40);
+    }
+
+    function loop() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      drawBackground(w, h);
+      const membrane = drawMembrane(w, h);
+      drawPumps(w, h, membrane);
+      drawATP(w, h, membrane);
+      updateIons(membrane);
+      drawIons();
+      drawLabels(w, membrane);
+      state.time += 0.01;
+      requestAnimationFrame(loop);
+    }
+
+    gradientInput.addEventListener('input', updateInputs);
+    atpInput.addEventListener('input', updateInputs);
+    potentialInput.addEventListener('input', updateInputs);
+    showDiffusion.addEventListener('change', () => {});
+    showActive.addEventListener('change', () => {});
+    showLabels.addEventListener('change', () => {});
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    updateInputs();
+    initIons();
+    loop();
+  </script>
+</body>
+</html>

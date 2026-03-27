@@ -1,0 +1,656 @@
+<div class="auth-modal" id="authModal">
+  <div class="auth-modal-overlay"></div>
+  <div class="auth-modal-content">
+    <button class="auth-modal-close" id="authModalClose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="signin">Sign In</button>
+      <button class="auth-tab" data-tab="signup">Sign Up</button>
+    </div>
+
+    <div class="auth-form-container">
+      <form class="auth-form" id="signinForm">
+        <div class="auth-header">
+          <h3>Welcome Back</h3>
+          <p>Sign in to access your account</p>
+        </div>
+        
+        <div class="auth-field">
+          <label for="signinEmail">Email</label>
+          <input type="email" id="signinEmail" placeholder="your@email.com" required />
+        </div>
+        
+        <div class="auth-field">
+          <label for="signinPassword">
+            Password
+            <a href="#" class="auth-link" id="showForgotPassword">Forgot?</a>
+          </label>
+          <div class="auth-password-field">
+            <input type="password" id="signinPassword" placeholder="Enter password" required />
+            <button type="button" class="auth-toggle-password" data-target="signinPassword">
+              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-error" id="signinError" style="display:none"></div>
+        <div class="auth-success" id="signinSuccess" style="display:none"></div>
+
+        <button type="submit" class="auth-submit-btn">
+          <span class="btn-text">Sign In</span>
+          <span class="btn-loader" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </span>
+        </button>
+      </form>
+
+      <form class="auth-form" id="signupForm" style="display:none">
+        <div class="auth-header">
+          <h3>Create Account</h3>
+          <p>Join Physics Experiments Lab</p>
+        </div>
+        
+        <div class="auth-field">
+          <label for="signupEmail">Email</label>
+          <input type="email" id="signupEmail" placeholder="your@email.com" required />
+        </div>
+        
+        <div class="auth-field">
+          <label for="signupPassword">Password</label>
+          <div class="auth-password-field">
+            <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" />
+            <button type="button" class="auth-toggle-password" data-target="signupPassword">
+              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+          <div class="auth-password-strength" id="passwordStrength">
+            <div class="strength-bar"><div class="strength-fill"></div></div>
+            <span class="strength-text"></span>
+          </div>
+        </div>
+        
+        <div class="auth-field">
+          <label for="signupConfirm">Confirm Password</label>
+          <div class="auth-password-field">
+            <input type="password" id="signupConfirm" placeholder="Repeat password" required />
+            <button type="button" class="auth-toggle-password" data-target="signupConfirm">
+              <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-error" id="signupError" style="display:none"></div>
+
+        <button type="submit" class="auth-submit-btn">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </span>
+        </button>
+      </form>
+
+      <form class="auth-form" id="forgotForm" style="display:none">
+        <div class="auth-header">
+          <h3>Reset Password</h3>
+          <p>Enter your email to receive reset instructions</p>
+        </div>
+        
+        <div class="auth-field">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" placeholder="your@email.com" required />
+        </div>
+
+        <div class="auth-error" id="forgotError" style="display:none"></div>
+        <div class="auth-success" id="forgotSuccess" style="display:none"></div>
+
+        <button type="submit" class="auth-submit-btn">
+          <span class="btn-text">Send Reset Link</span>
+          <span class="btn-loader" style="display:none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </span>
+        </button>
+        
+        <a href="#" class="auth-link auth-back-link" id="backToSignin">Back to Sign In</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.auth-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-modal.active {
+  display: flex;
+}
+
+.auth-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.auth-modal-content {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-2, #1a2536), var(--bg-1, #0f1724));
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 24px;
+  max-width: 420px;
+  width: 100%;
+  padding: 32px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  animation: authSlideIn 0.3s ease;
+}
+
+@keyframes authSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.auth-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted, #8b949e);
+  transition: all 0.2s ease;
+}
+
+.auth-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text, #fff);
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 28px;
+  background: rgba(0,0,0,0.2);
+  padding: 4px;
+  border-radius: 12px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--muted, #8b949e);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-tab.active {
+  background: var(--accent, #6ad7ff);
+  color: #0a0a0f;
+}
+
+.auth-form-container {
+  min-height: 320px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-header h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text, #fff);
+}
+
+.auth-header p {
+  color: var(--muted, #8b949e);
+  font-size: 14px;
+}
+
+.auth-field {
+  margin-bottom: 20px;
+}
+
+.auth-field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted, #8b949e);
+  margin-bottom: 8px;
+}
+
+.auth-field input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--text, #fff);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-field input:focus {
+  outline: none;
+  border-color: var(--accent, #6ad7ff);
+  box-shadow: 0 0 0 3px rgba(106, 215, 255, 0.15);
+}
+
+.auth-field input::placeholder {
+  color: var(--muted, #8b949e);
+  opacity: 0.6;
+}
+
+.auth-password-field {
+  position: relative;
+}
+
+.auth-toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted, #8b949e);
+  padding: 4px;
+}
+
+.auth-toggle-password:hover {
+  color: var(--text, #fff);
+}
+
+.auth-password-strength {
+  margin-top: 8px;
+  display: none;
+}
+
+.auth-password-strength.active {
+  display: block;
+}
+
+.strength-bar {
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.strength-fill.weak { width: 33%; background: #ff4444; }
+.strength-fill.medium { width: 66%; background: #ffaa44; }
+.strength-fill.strong { width: 100%; background: #44ff44; }
+
+.strength-text {
+  font-size: 11px;
+  color: var(--muted, #8b949e);
+  margin-top: 4px;
+  display: block;
+}
+
+.auth-error {
+  background: rgba(255, 68, 68, 0.15);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff6464;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.auth-success {
+  background: rgba(68, 255, 100, 0.15);
+  border: 1px solid rgba(68, 255, 100, 0.3);
+  color: #44ff64;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent, #6ad7ff), #4ab8e8);
+  border: none;
+  border-radius: 12px;
+  color: #0a0a0f;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(106, 215, 255, 0.3);
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-link {
+  color: var(--accent, #6ad7ff);
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-back-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.btn-loader svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+[data-theme="light"] .auth-modal-content {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .auth-field input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #0a0a0f;
+}
+
+[data-theme="light"] .auth-header h3,
+[data-theme="light"] .auth-field label {
+  color: #0a0a0f;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const authModal = document.getElementById('authModal');
+  const authModalClose = document.getElementById('authModalClose');
+  const authModalOverlay = document.querySelector('.auth-modal-overlay');
+  const authTabs = document.querySelectorAll('.auth-tab');
+  const signinForm = document.getElementById('signinForm');
+  const signupForm = document.getElementById('signupForm');
+  const forgotForm = document.getElementById('forgotForm');
+
+  function openAuthModal(tab = 'signin') {
+    authModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    switchTab(tab);
+  }
+
+  function closeAuthModal() {
+    authModal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function switchTab(tab) {
+    authTabs.forEach(t => t.classList.remove('active'));
+    document.querySelector(`.auth-tab[data-tab="${tab}"]`)?.classList.add('active');
+    
+    signinForm.style.display = tab === 'signin' ? 'block' : 'none';
+    signupForm.style.display = tab === 'signup' ? 'block' : 'none';
+    forgotForm.style.display = tab === 'forgot' ? 'block' : 'none';
+    
+    clearErrors();
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.auth-error, .auth-success').forEach(el => {
+      el.style.display = 'none';
+    });
+  }
+
+  function showError(formId, message) {
+    const error = document.getElementById(formId + 'Error');
+    if (error) {
+      error.textContent = message;
+      error.style.display = 'block';
+    }
+  }
+
+  function showSuccess(formId, message) {
+    const success = document.getElementById(formId + 'Success');
+    if (success) {
+      success.textContent = message;
+      success.style.display = 'block';
+    }
+  }
+
+  function setLoading(form, loading) {
+    const btn = form.querySelector('.auth-submit-btn');
+    const text = btn.querySelector('.btn-text');
+    const loader = btn.querySelector('.btn-loader');
+    
+    btn.disabled = loading;
+    text.style.display = loading ? 'none' : 'inline';
+    loader.style.display = loading ? 'inline-flex' : 'none';
+  }
+
+  authModalClose?.addEventListener('click', closeAuthModal);
+  authModalOverlay?.addEventListener('click', closeAuthModal);
+
+  authTabs.forEach(tab => {
+    tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+  });
+
+  document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchTab('forgot');
+  });
+
+  document.getElementById('backToSignin')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    switchTab('signin');
+  });
+
+  document.querySelectorAll('.auth-toggle-password').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.target;
+      const input = document.getElementById(targetId);
+      const eyeOpen = btn.querySelector('.eye-open');
+      const eyeClosed = btn.querySelector('.eye-closed');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeOpen.style.display = 'none';
+        eyeClosed.style.display = 'block';
+      } else {
+        input.type = 'password';
+        eyeOpen.style.display = 'block';
+        eyeClosed.style.display = 'none';
+      }
+    });
+  });
+
+  const passwordInput = document.getElementById('signupPassword');
+  const strengthDiv = document.getElementById('passwordStrength');
+  const strengthFill = strengthDiv?.querySelector('.strength-fill');
+  const strengthText = strengthDiv?.querySelector('.strength-text');
+
+  passwordInput?.addEventListener('input', () => {
+    const password = passwordInput.value;
+    
+    if (password.length === 0) {
+      strengthDiv.classList.remove('active');
+      return;
+    }
+    
+    strengthDiv.classList.add('active');
+    
+    let strength = 0;
+    if (password.length >= 6) strength++;
+    if (password.length >= 10) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[^A-Za-z0-9]/.test(password)) strength++;
+    
+    strengthFill.className = 'strength-fill';
+    if (strength <= 2) {
+      strengthFill.classList.add('weak');
+      strengthText.textContent = 'Weak';
+    } else if (strength <= 3) {
+      strengthFill.classList.add('medium');
+      strengthText.textContent = 'Medium';
+    } else {
+      strengthFill.classList.add('strong');
+      strengthText.textContent = 'Strong';
+    }
+  });
+
+  signinForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+    
+    const email = document.getElementById('signinEmail').value;
+    const password = document.getElementById('signinPassword').value;
+    
+    setLoading(signinForm, true);
+    
+    const result = await Auth.signin(email, password);
+    
+    setLoading(signinForm, false);
+    
+    if (result.success) {
+      closeAuthModal();
+      window.location.reload();
+    } else {
+      showError('signin', result.error);
+    }
+  });
+
+  signupForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+    
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirm').value;
+    
+    if (password !== confirm) {
+      showError('signup', 'Passwords do not match');
+      return;
+    }
+    
+    if (password.length < 6) {
+      showError('signup', 'Password must be at least 6 characters');
+      return;
+    }
+    
+    setLoading(signupForm, true);
+    
+    const result = await Auth.signup(email, password);
+    
+    setLoading(signupForm, false);
+    
+    if (result.success) {
+      closeAuthModal();
+      window.location.reload();
+    } else {
+      showError('signup', result.error);
+    }
+  });
+
+  forgotForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearErrors();
+    
+    const email = document.getElementById('forgotEmail').value;
+    
+    setLoading(forgotForm, true);
+    
+    const result = await Auth.forgotPassword(email);
+    
+    setLoading(forgotForm, false);
+    
+    if (result.success) {
+      showSuccess('forgot', 'Check your email for reset instructions');
+    } else {
+      showError('forgot', result.error);
+    }
+  });
+
+  window.showAuthModal = openAuthModal;
+});
+</script>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Pressure</title>
+  <link rel="stylesheet" href="/styles.css"/><link rel="stylesheet" href="/simulation-theme.css"/>
+  <style>
+    :root{--accent:#6ad7ff;--accent-2:#f6c76b;--panel:rgba(15,22,35,0.92);--sim-border:rgba(120,150,190,0.18);--sim-text:#e9f2ff;--sim-muted:#9fb0c5;}
+    body{margin:0;background:#0a111c;color:var(--sim-text);font-family:"Space Grotesk",sans-serif;}
+    .page{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{display:flex;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--sim-border);background:rgba(8,12,20,0.7)}
+    .topbar a{color:var(--sim-text);text-decoration:none;font-weight:600}
+    header{text-align:center;padding:30px 20px}
+    header h1{font-size:clamp(1.6rem,2.4vw,2.5rem);margin:0 0 10px;letter-spacing:0.08em;text-transform:uppercase}
+    header p{color:var(--sim-muted);margin:0}
+    .layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;padding:12px 28px 18px}
+    .panel{background:var(--panel);border:1px solid var(--sim-border);border-radius:18px;padding:18px}
+    canvas{width:100%;height:350px;background:rgba(6,10,18,0.7);border-radius:16px;border:1px solid var(--sim-border)}
+    .controls{display:grid;gap:16px}
+    label{font-size:0.9rem;color:var(--sim-muted);display:flex;justify-content:space-between}
+    input[type="range"],select{width:100%}
+    .data-panel{font-size:0.9rem;color:var(--sim-muted)}
+    .data-panel strong{color:var(--accent);font-weight:600}
+    .results-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a></div>
+    <header><h1>Pressure</h1><p>Force per unit area</p></header>
+    <div class="layout">
+      <div><canvas id="pressureCanvas"></canvas>
+        <div class="panel" style="margin-top:16px">
+          <div class="results-grid">
+            <div class="data-panel"><div>Pressure: <strong id="pressText">0 Pa</strong></div><div>Depth: <strong id="depthText">0 m</strong></div></div>
+            <div class="data-panel"><div>Force: <strong id="forceText">0 N</strong></div><div>Atmosphere: <strong id="atmText">1 atm</strong></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="panel"><div class="control-group"><label>Depth <span id="depVal">10</span> m</label><input type="range" id="depth" min="0" max="100" value="10"/></div></div>
+        <div class="panel"><div class="control-group"><label>Fluid Density <span id="rhoVal">1000</span> kg/m³</label><input type="range" id="rho" min="100" max="1300" value="1000"/></div></div>
+        <div class="panel"><div class="control-group"><label>Surface Area <span id="areaVal">1</span> m²</label><input type="range" id="area" min="0.1" max="10" value="1" step="0.1"/></div></div>
+        <div class="panel"><div class="data-panel"><strong>Equations:</strong></div><div style="margin-top:8px">P = ρgh (fluid)<br/>P = F/A (general)<br/>1 atm = 101325 Pa</div></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas=document.getElementById('pressureCanvas'),ctx=canvas.getContext('2d');
+    let depth=10,rho=1000,area=1;
+    function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width*devicePixelRatio;canvas.height=r.height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+    function draw(){
+      const w=canvas.width/devicePixelRatio,h=canvas.height/devicePixelRatio;
+      ctx.fillStyle='rgba(6,10,18,0.95)';ctx.fillRect(0,0,w,h);
+      const waterY=100;const waterH=h-150;
+      const grad=ctx.createLinearGradient(0,waterY,0,waterY+waterH);
+      grad.addColorStop(0,'rgba(106,215,255,0.3)');
+      grad.addColorStop(1,'rgba(106,215,255,0.8)');
+      ctx.fillStyle=grad;ctx.fillRect(0,waterY,w,waterH);
+      ctx.fillStyle='#e9f2ff';ctx.fillRect(0,waterY,w,20);
+      const depthPct=depth/100;const objY=waterY+20+depthPct*(waterH-20);
+      ctx.fillStyle='#f6c76b';ctx.shadowColor='#f6c76b';ctx.shadowBlur=15;
+      ctx.beginPath();ctx.arc(w/2,objY,20,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#666';ctx.font='12px sans-serif';ctx.textAlign='center';
+      ctx.fillText('↓ F = '+Math.round(rho*9.8*depth*area)+' N',w/2,objY+40);
+      const P=101325+rho*9.8*depth;const atm=P/101325;
+      document.getElementById('pressText').textContent=P.toFixed(0)+' Pa';
+      document.getElementById('depthText').textContent=depth+' m';
+      document.getElementById('forceText').textContent=(rho*9.8*depth*area).toFixed(0)+' N';
+      document.getElementById('atmText').textContent=atm.toFixed(2)+' atm';
+    }
+    document.getElementById('depth').oninput=e=>{depth=parseInt(e.target.value);document.getElementById('depVal').textContent=depth;};
+    document.getElementById('rho').oninput=e=>{rho=parseInt(e.target.value);document.getElementById('rhoVal').textContent=rho;};
+    document.getElementById('area').oninput=e=>{area=parseFloat(e.target.value);document.getElementById('areaVal').textContent=area;};
+    function loop(){draw();requestAnimationFrame(loop);}
+    window.onresize=resize;resize();loop();
+  </script>
+</body>
+</html>

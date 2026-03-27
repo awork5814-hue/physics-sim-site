@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Galvanometer</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Galvanometer</h1>
+        <p>Magnetic torque deflects a coil pointer: τ = N I A B</p>
+      </div>
+      <div class="pill">D'Arsonval movement · sensitivity · modes</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Physical View</h2>
+        <canvas id="gCanvas" width="560" height="320" aria-label="Galvanometer"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Current (μA)</label>
+            <input type="range" id="current" min="-100" max="100" step="1" value="50" />
+            <div class="row"><span class="muted">I</span><span class="value" id="currentValue">50 μA</span></div>
+          </div>
+          <div class="control">
+            <label>Coil Resistance (Ω)</label>
+            <input type="range" id="coilR" min="10" max="500" step="1" value="50" />
+            <div class="row"><span class="muted">R</span><span class="value" id="coilRValue">50 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Magnetic Field (T)</label>
+            <input type="range" id="field" min="0.1" max="1.0" step="0.01" value="0.5" />
+            <div class="row"><span class="muted">B</span><span class="value" id="fieldValue">0.50 T</span></div>
+          </div>
+          <div class="control">
+            <label>Turns (N)</label>
+            <input type="range" id="turns" min="100" max="1000" step="10" value="200" />
+            <div class="row"><span class="muted">N</span><span class="value" id="turnsValue">200</span></div>
+          </div>
+          <div class="control">
+            <label>Measurement Mode</label>
+            <select id="mode">
+              <option value="current">Current</option>
+              <option value="voltage">Voltage</option>
+              <option value="ohmmeter">Ohmmeter</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showComponents" checked> Show internal components</label>
+            <label class="toggle"><input type="checkbox" id="showTorque" checked> Show torque indicator</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Deflection & Torque</div>
+            <div class="row"><span>Deflection θ</span><span class="value" id="thetaValue">0°</span></div>
+            <div class="row"><span>Torque τ</span><span class="value" id="torqueValue">0.0e-6 N·m</span></div>
+            <div class="row"><span>Sensitivity</span><span class="value" id="sensValue">50 μA FS</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Meter Readout</div>
+            <div class="row"><span>Mode</span><span class="value" id="modeValue">Current</span></div>
+            <div class="row"><span>Measured</span><span class="value" id="measuredValue">50 μA</span></div>
+            <div class="row"><span>Coil Spec</span><span class="value" id="coilSpec">A = 1 cm²</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              τ = N I A B
+              <br>θ = τ / k
+              <br>I_fs = (π/2)k / (NAB)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Deflection is linear for small angles. Modes are illustrative and use the same underlying coil model.</div>
+  </div>
+
+  <script>
+    const state = {
+      current: 50e-6,
+      coilResistance: 50,
+      magneticField: 0.5,
+      numberOfTurns: 200,
+      coilArea: 1e-4,
+      springConstant: 1e-6,
+      showComponents: true,
+      showTorque: true,
+      mode: 'current'
+    };
+
+    const dom = {
+      current: document.getElementById('current'),
+      coilR: document.getElementById('coilR'),
+      field: document.getElementById('field'),
+      turns: document.getElementById('turns'),
+      mode: document.getElementById('mode'),
+      showComponents: document.getElementById('showComponents'),
+      showTorque: document.getElementById('showTorque'),
+      currentValue: document.getElementById('currentValue'),
+      coilRValue: document.getElementById('coilRValue'),
+      fieldValue: document.getElementById('fieldValue'),
+      turnsValue: document.getElementById('turnsValue'),
+      thetaValue: document.getElementById('thetaValue'),
+      torqueValue: document.getElementById('torqueValue'),
+      sensValue: document.getElementById('sensValue'),
+      modeValue: document.getElementById('modeValue'),
+      measuredValue: document.getElementById('measuredValue'),
+      coilSpec: document.getElementById('coilSpec')
+    };
+
+    const canvas = document.getElementById('gCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function calculateTorque() {
+      return state.numberOfTurns * state.current * state.coilArea * state.magneticField;
+    }
+    function calculateDeflection() {
+      return calculateTorque() / state.springConstant;
+    }
+    function calculateFullScaleCurrent() {
+      return (Math.PI / 2) * state.springConstant / (state.numberOfTurns * state.coilArea * state.magneticField);
+    }
+
+    function drawMeter(angleRad) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      const centerX = w / 2;
+      const centerY = h * 0.7;
+      const radius = 120;
+
+      ctx.strokeStyle = '#253a53';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, Math.PI, 2 * Math.PI);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f6c76b';
+      for (let i = -5; i <= 5; i++) {
+        const ang = Math.PI + (i + 5) * (Math.PI / 10);
+        const inner = radius - 10;
+        const outer = radius + (i % 5 === 0 ? 8 : 4);
+        ctx.beginPath();
+        ctx.moveTo(centerX + inner * Math.cos(ang), centerY + inner * Math.sin(ang));
+        ctx.lineTo(centerX + outer * Math.cos(ang), centerY + outer * Math.sin(ang));
+        ctx.stroke();
+      }
+
+      const needleAngle = Math.PI + Math.PI / 2 + angleRad;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (radius - 20) * Math.cos(needleAngle), centerY + (radius - 20) * Math.sin(needleAngle));
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.showComponents) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(centerX - 80, 40, 160, 80);
+        ctx.fillStyle = '#8aa0b8';
+        ctx.font = '12px Trebuchet MS';
+        ctx.fillText('Coil', centerX - 12, 85);
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillText('N', centerX - 140, 70);
+        ctx.fillStyle = '#a9b6c6';
+        ctx.fillText('S', centerX + 120, 70);
+      }
+
+      if (state.showTorque) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(centerX + 80 * Math.cos(needleAngle), centerY + 80 * Math.sin(needleAngle));
+        ctx.stroke();
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('τ', centerX + 90 * Math.cos(needleAngle), centerY + 90 * Math.sin(needleAngle));
+      }
+    }
+
+    function updateReadouts() {
+      const torque = calculateTorque();
+      const theta = calculateDeflection();
+      const thetaDeg = theta * 180 / Math.PI;
+      const fs = calculateFullScaleCurrent();
+
+      dom.currentValue.textContent = `${(state.current * 1e6).toFixed(0)} μA`;
+      dom.coilRValue.textContent = `${state.coilResistance} Ω`;
+      dom.fieldValue.textContent = `${state.magneticField.toFixed(2)} T`;
+      dom.turnsValue.textContent = `${state.numberOfTurns}`;
+      dom.thetaValue.textContent = `${thetaDeg.toFixed(1)}°`;
+      dom.torqueValue.textContent = `${(torque * 1e6).toFixed(2)} × 10⁻⁶ N·m`;
+      dom.sensValue.textContent = `${(fs * 1e6).toFixed(1)} μA FS`;
+      dom.modeValue.textContent = state.mode;
+      dom.measuredValue.textContent = state.mode === 'current'
+        ? `${(state.current * 1e6).toFixed(0)} μA`
+        : (state.mode === 'voltage' ? `${(state.current * state.coilResistance).toFixed(3)} V` : `${(1 / (state.current / 1e-6)).toFixed(0)} Ω`);
+      dom.coilSpec.textContent = `A = ${(state.coilArea * 1e4).toFixed(1)} cm²`;
+    }
+
+    function update() {
+      updateReadouts();
+      const angle = calculateDeflection();
+      const clamped = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, angle));
+      drawMeter(clamped);
+    }
+
+    function bind() {
+      dom.current.addEventListener('input', () => {
+        state.current = Number(dom.current.value) * 1e-6;
+        update();
+      });
+      dom.coilR.addEventListener('input', () => {
+        state.coilResistance = Number(dom.coilR.value);
+        update();
+      });
+      dom.field.addEventListener('input', () => {
+        state.magneticField = Number(dom.field.value);
+        update();
+      });
+      dom.turns.addEventListener('input', () => {
+        state.numberOfTurns = Number(dom.turns.value);
+        update();
+      });
+      dom.mode.addEventListener('change', () => {
+        state.mode = dom.mode.value;
+        update();
+      });
+      dom.showComponents.addEventListener('change', () => {
+        state.showComponents = dom.showComponents.checked;
+        update();
+      });
+      dom.showTorque.addEventListener('change', () => {
+        state.showTorque = dom.showTorque.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

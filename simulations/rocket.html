@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rocket Propulsion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --panel: rgba(12, 18, 30, 0.86);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --panel: rgba(255,255,255,0.92);
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 700px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 22px 20px 8px; display: flex; gap: 12px; align-items: baseline; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(106,215,255,0.35);
+      background:
+        radial-gradient(120% 140% at 10% 0%, rgba(106,215,255,0.22), transparent 60%),
+        linear-gradient(135deg, rgba(15, 30, 55, 0.85), rgba(12, 20, 38, 0.75));
+      box-shadow:
+        inset 0 0 0 1px rgba(106,215,255,0.15),
+        0 18px 32px rgba(8, 12, 20, 0.35);
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      backdrop-filter: blur(10px);
+    }
+    .formula strong { color: var(--ink); letter-spacing: 0.04em; text-transform: uppercase; font-size: 12px; }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Rocket Propulsion</h1>
+    <div class="subtitle">Thrust, mass flow, and altitude in a simple vertical launch</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="button-row">
+        <button class="btn" id="toggleRun">Launch</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+      <div class="data-panel" id="readout" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Dry Mass <span id="dryMassVal">12000 kg</span></label>
+          <input id="dryMass" type="range" min="3000" max="20000" step="100" value="12000" />
+        </div>
+        <div class="control">
+          <label>Fuel Mass <span id="fuelMassVal">18000 kg</span></label>
+          <input id="fuelMass" type="range" min="2000" max="30000" step="200" value="18000" />
+        </div>
+        <div class="control">
+          <label>Exhaust Velocity ve <span id="veVal">2600 m/s</span></label>
+          <input id="ve" type="range" min="1500" max="4500" step="50" value="2600" />
+        </div>
+        <div class="control">
+          <label>Mass Flow ṁ <span id="mdotVal">220 kg/s</span></label>
+          <input id="mdot" type="range" min="50" max="600" step="10" value="220" />
+        </div>
+        <div class="control">
+          <label>Drag Coefficient Cd <span id="cdVal">0.35</span></label>
+          <input id="cd" type="range" min="0.1" max="0.9" step="0.01" value="0.35" />
+        </div>
+        <div class="control">
+          <label>Planet</label>
+          <select id="planet">
+            <option value="earth" selected>Earth</option>
+            <option value="moon">Moon</option>
+            <option value="mars">Mars</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Display</label>
+          <div class="checks">
+            <label><input id="showTrail" type="checkbox" checked /> Exhaust trail</label>
+            <label><input id="showVectors" type="checkbox" checked /> Force vectors</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="formula">
+        <strong>Rocket Equation</strong><br>
+        Thrust: <span style="color: var(--ink);">F = ṁ · ve</span><br>
+        Ideal Δv: <span style="color: var(--ink);">Δv = ve ln(m0 / mf)</span><br>
+        Net: <span style="color: var(--ink);">Fnet = F − mg − D</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Launch and watch thrust vs gravity and drag as fuel burns down.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      dryMass: 12000,
+      fuelMass: 18000,
+      ve: 2600,
+      mdot: 220,
+      cd: 0.35,
+      planet: 'earth',
+      running: false,
+      time: 0,
+      altitude: 0,
+      velocity: 0,
+      trail: [],
+      launch: false
+    };
+
+    const planets = {
+      earth: { g: 9.81, rho0: 1.225, H: 8500, skyTop: '#0b1b3a', skyMid: '#101c2e', skyBot: '#0a0f1a', glow: '#6ad7ff' },
+      moon: { g: 1.62, rho0: 0.01, H: 20000, skyTop: '#03040a', skyMid: '#060915', skyBot: '#0b0f1a', glow: '#cbd5f5' },
+      mars: { g: 3.71, rho0: 0.02, H: 11100, skyTop: '#2a0f0c', skyMid: '#2a1410', skyBot: '#120b0b', glow: '#f59e0b' }
+    };
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function totalMass() {
+      return state.dryMass + Math.max(0, state.fuelMass);
+    }
+
+    function airDensity(altitude) {
+      const planet = planets[state.planet];
+      return planet.rho0 * Math.exp(-altitude / planet.H);
+    }
+
+    function thrust() {
+      if (!state.launch || state.fuelMass <= 0) return 0;
+      return state.mdot * state.ve;
+    }
+
+    function update(dt) {
+      if (!state.running) return;
+      if (state.launch && state.fuelMass > 0) {
+        state.fuelMass = Math.max(0, state.fuelMass - state.mdot * dt);
+      }
+
+      const m = totalMass();
+      const g = planets[state.planet].g;
+      const rho = airDensity(state.altitude);
+      const area = 8.5;
+      const v = state.velocity;
+      const drag = 0.5 * rho * state.cd * area * v * v * Math.sign(v);
+      const F = thrust() - m * g - drag;
+      const a = F / m;
+      state.velocity += a * dt;
+      state.altitude = Math.max(0, state.altitude + state.velocity * dt);
+      if (state.altitude === 0 && state.velocity < 0) state.velocity = 0;
+    }
+
+    function drawBackground() {
+      const palette = planets[state.planet];
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, palette.skyTop);
+      grad.addColorStop(0.55, palette.skyMid);
+      grad.addColorStop(1, palette.skyBot);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < w; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+
+      if (state.planet !== 'earth') {
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        for (let i = 0; i < 80; i++) {
+          const sx = (i * 173) % w;
+          const sy = (i * 97) % (h * 0.7);
+          ctx.fillRect(sx, sy, 1.2, 1.2);
+        }
+      }
+
+      const glow = ctx.createRadialGradient(w * 0.75, h * 0.15, 20, w * 0.75, h * 0.15, 220);
+      glow.addColorStop(0, `${palette.glow}55`);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+
+      const groundY = h * 0.86;
+      const ground = ctx.createLinearGradient(0, groundY, 0, h);
+      ground.addColorStop(0, state.planet === 'earth' ? '#10161f' : state.planet === 'mars' ? '#2a1410' : '#0c1116');
+      ground.addColorStop(1, '#05070c');
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, groundY, w, h - groundY);
+    }
+
+    function drawRocket() {
+      const centerX = canvas.clientWidth * 0.35;
+      const baseY = canvas.clientHeight * 0.82;
+      const scale = 0.5 + Math.min(1, state.altitude / 2000);
+      const rocketY = baseY - (state.altitude * 0.08);
+
+      ctx.save();
+      ctx.translate(centerX, rocketY);
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(-18, -120, 36, 120);
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(-18, -120);
+      ctx.lineTo(0, -150);
+      ctx.lineTo(18, -120);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-28, -40, 10, 30);
+      ctx.fillRect(18, -40, 10, 30);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(-12, -80, 24, 18);
+
+      if (state.launch && state.fuelMass > 0) {
+        const flameLen = 40 + Math.random() * 20;
+        ctx.fillStyle = '#fb923c';
+        ctx.beginPath();
+        ctx.moveTo(-10, 0);
+        ctx.lineTo(0, flameLen);
+        ctx.lineTo(10, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(251, 146, 60, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(-16, 0);
+        ctx.lineTo(0, flameLen * 1.4);
+        ctx.lineTo(16, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+
+      if (document.getElementById('showTrail').checked) {
+        state.trail.push({ x: centerX, y: rocketY + 20, alpha: 0.6 });
+        if (state.trail.length > 70) state.trail.shift();
+        for (const t of state.trail) {
+          ctx.fillStyle = `rgba(251, 146, 60, ${t.alpha})`;
+          ctx.fillRect(t.x - 2, t.y, 4, 8);
+          t.alpha *= 0.95;
+        }
+      }
+    }
+
+    function drawVectors() {
+      if (!document.getElementById('showVectors').checked) return;
+      const baseX = canvas.clientWidth * 0.35;
+      const baseY = canvas.clientHeight * 0.82 - (state.altitude * 0.08);
+      const thrustVal = thrust();
+      const g = planets[state.planet].g;
+      const weight = totalMass() * g;
+      const drag = 0.5 * airDensity(state.altitude) * state.cd * 8.5 * state.velocity * state.velocity * Math.sign(state.velocity);
+
+      const scale = 0.0008;
+      drawArrow(baseX + 40, baseY, baseX + 40, baseY - thrustVal * scale, '#22c55e');
+      drawArrow(baseX + 60, baseY, baseX + 60, baseY + weight * scale, '#f87171');
+      drawArrow(baseX + 20, baseY, baseX + 20, baseY + drag * scale, '#6ad7ff');
+    }
+
+    function drawArrow(x1, y1, x2, y2, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI / 6), y2 - 8 * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI / 6), y2 - 8 * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function draw() {
+      drawBackground();
+      drawRocket();
+      drawVectors();
+    }
+
+    function updateReadout() {
+      const m = totalMass();
+      const g = planets[state.planet].g;
+      const thrustVal = thrust();
+      const weight = m * g;
+      const rho = airDensity(state.altitude);
+      const drag = 0.5 * rho * state.cd * 8.5 * state.velocity * state.velocity * Math.sign(state.velocity);
+      const accel = (thrustVal - weight - drag) / m;
+
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Altitude</span><span class="data-value blue">${state.altitude.toFixed(1)} m</span></div>
+          <div class="data-card"><span class="data-label">Velocity</span><span class="data-value orange">${state.velocity.toFixed(1)} m/s</span></div>
+          <div class="data-card"><span class="data-label">Acceleration</span><span class="data-value green">${accel.toFixed(2)} m/s²</span></div>
+          <div class="data-card"><span class="data-label">Mass</span><span class="data-value blue">${m.toFixed(0)} kg</span></div>
+          <div class="data-card"><span class="data-label">Thrust</span><span class="data-value orange">${thrustVal.toFixed(0)} N</span></div>
+          <div class="data-card"><span class="data-label">Fuel</span><span class="data-value green">${Math.max(0, state.fuelMass).toFixed(0)} kg</span></div>
+          <div class="data-card"><span class="data-label">Air Density</span><span class="data-value blue">${rho.toFixed(3)} kg/m³</span></div>
+        </div>
+      `;
+    }
+
+    function tick(now) {
+      if (!state.last) state.last = now;
+      const dt = Math.min(0.03, (now - state.last) / 1000);
+      state.last = now;
+      update(dt);
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('dryMass').addEventListener('input', e => {
+      state.dryMass = parseFloat(e.target.value);
+      document.getElementById('dryMassVal').textContent = `${state.dryMass.toFixed(0)} kg`;
+    });
+    document.getElementById('fuelMass').addEventListener('input', e => {
+      state.fuelMass = parseFloat(e.target.value);
+      document.getElementById('fuelMassVal').textContent = `${state.fuelMass.toFixed(0)} kg`;
+    });
+    document.getElementById('ve').addEventListener('input', e => {
+      state.ve = parseFloat(e.target.value);
+      document.getElementById('veVal').textContent = `${state.ve.toFixed(0)} m/s`;
+    });
+    document.getElementById('mdot').addEventListener('input', e => {
+      state.mdot = parseFloat(e.target.value);
+      document.getElementById('mdotVal').textContent = `${state.mdot.toFixed(0)} kg/s`;
+    });
+    document.getElementById('cd').addEventListener('input', e => {
+      state.cd = parseFloat(e.target.value);
+      document.getElementById('cdVal').textContent = `${state.cd.toFixed(2)}`;
+    });
+    document.getElementById('planet').addEventListener('change', e => {
+      state.planet = e.target.value;
+    });
+
+    document.getElementById('toggleRun').addEventListener('click', () => {
+      state.running = !state.running;
+      state.launch = state.running;
+      document.getElementById('toggleRun').textContent = state.running ? 'Pause' : 'Launch';
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      state.running = false;
+      state.launch = false;
+      state.time = 0;
+      state.altitude = 0;
+      state.velocity = 0;
+      state.fuelMass = parseFloat(document.getElementById('fuelMass').value);
+      state.trail = [];
+      document.getElementById('toggleRun').textContent = 'Launch';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

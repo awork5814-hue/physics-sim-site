@@ -1,0 +1,2380 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acceleration</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00f5ff;
+      --secondary: #ff8c42;
+      --accent: #ff2d92;
+      --accent-2: #f6c76b;
+      --velocity: #00ffc8;
+      --acceleration: #ff6b6b;
+      --position: #00f5ff;
+      --time: #f6c76b;
+      --energy: #ff8c42;
+      
+      --glow-primary: 0 0 20px rgba(0, 245, 255, 0.5);
+      --glow-secondary: 0 0 20px rgba(255, 140, 66, 0.5);
+      --glow-accent: 0 0 20px rgba(255, 45, 146, 0.5);
+      
+      --bg-deep: #030712;
+      --bg-card: rgba(10, 20, 35, 0.9);
+      --bg-card-light: rgba(15, 30, 50, 0.85);
+      
+      --text: #f0f4f8;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --border: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(0, 245, 255, 0.3);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--primary), var(--accent));
+      border-radius: 4px;
+    }
+
+    body {
+      margin: 0;
+      background: 
+        radial-gradient(ellipse 1200px 800px at 20% -20%, rgba(0, 245, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 1000px 600px at 80% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 400px at 90% 20%, rgba(255, 45, 146, 0.06) 0%, transparent 40%),
+        linear-gradient(180deg, #050a12 0%, #030712 50%, #020508 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      animation: pageIn 0.8s ease forwards;
+    }
+
+    @keyframes pageIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(3, 7, 18, 0.8);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+      opacity: 0.5;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before {
+      content: '←';
+      transition: transform 0.3s;
+    }
+
+    .topbar a:hover {
+      color: var(--primary);
+      background: rgba(0, 245, 255, 0.1);
+    }
+
+    .topbar a:hover::before {
+      transform: translateX(-4px);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 40px 20px 24px;
+      position: relative;
+    }
+
+    header.hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(0, 245, 255, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: clamp(2rem, 4vw, 3.2rem);
+      margin: 0 0 12px;
+      color: var(--text);
+      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    header.hero p {
+      background: linear-gradient(90deg, var(--text-muted), var(--text));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 12px;
+      padding: 0 clamp(20px, 4vw, 40px) 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 24px;
+      cursor: pointer;
+      background: linear-gradient(135deg, rgba(15, 25, 45, 0.8), rgba(10, 20, 35, 0.8));
+      color: var(--text-muted);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255, 255, 255, 0.1) 50%, transparent 60%);
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+
+    .tab:hover {
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(139, 92, 246, 0.15));
+      border-color: rgba(0, 245, 255, 0.3);
+      color: var(--text);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 245, 255, 0.15);
+    }
+
+    .tab:hover::before {
+      transform: translateX(100%);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.25), rgba(139, 92, 246, 0.25));
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.1);
+    }
+
+    .tab .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+
+    .tab.active .dot {
+      opacity: 1;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px clamp(20px, 4vw, 40px) 24px;
+    }
+
+    .panel {
+      background: 
+        linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%),
+        linear-gradient(225deg, rgba(255,255,255,0.03) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(15, 25, 45, 0.95), rgba(8, 15, 30, 0.95));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px;
+      backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        0 1px 0 rgba(255, 255, 255, 0.08) inset,
+        0 0 60px rgba(0, 245, 255, 0.03);
+      position: relative;
+      overflow: hidden;
+      animation: panelIn 0.6s ease forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+      opacity: 0.4;
+    }
+
+    @keyframes panelIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel:nth-child(1) { animation-delay: 0.1s; }
+    .panel:nth-child(2) { animation-delay: 0.2s; }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    .canvas-wrap .data-panel {
+      padding: 0;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      animation: none;
+      opacity: 1;
+    }
+
+    canvas {
+      width: 100%;
+      height: 280px;
+      background: 
+        radial-gradient(ellipse at 30% 20%, rgba(0, 245, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 45, 146, 0.03) 0%, transparent 60%),
+        linear-gradient(180deg, #030812 0%, #050d18 50%, #030810 100%);
+      border-radius: 20px;
+      border: 2px solid rgba(0, 245, 255, 0.15);
+      box-shadow: 
+        0 0 0 1px rgba(0, 0, 0, 0.5),
+        0 25px 60px rgba(0, 0, 0, 0.5),
+        inset 0 0 100px rgba(0, 245, 255, 0.02),
+        0 0 40px rgba(139, 92, 246, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    canvas::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.02) 2px,
+        rgba(0, 0, 0, 0.02) 4px
+      );
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    canvas::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      background: linear-gradient(45deg, var(--primary), var(--accent), var(--secondary), var(--primary));
+      border-radius: 22px;
+      z-index: -1;
+      opacity: 0.3;
+      animation: borderPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.4; }
+    }
+
+    .controls {
+      display: grid;
+      gap: 20px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    .control-group > label:first-child {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .control-group > label:first-child strong {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 10px;
+      background: linear-gradient(90deg, 
+        rgba(0, 245, 255, 0.2) 0%, 
+        rgba(139, 92, 246, 0.2) 50%,
+        rgba(255, 45, 146, 0.2) 100%
+      );
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+      position: relative;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      background: linear-gradient(135deg, #ffffff, #e5e7eb);
+      border-radius: 50%;
+      border: 3px solid var(--primary);
+      box-shadow: 
+        0 0 15px var(--primary),
+        0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s;
+      position: relative;
+      z-index: 2;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 
+        0 0 25px var(--primary),
+        0 6px 16px rgba(0, 0, 0, 0.5);
+    }
+
+    select {
+      width: 100%;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.08), rgba(139, 92, 246, 0.08));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300f5ff' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    select:hover, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+      outline: none;
+    }
+
+    select option {
+      background: #0a1525;
+      color: var(--text);
+      padding: 12px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 0;
+      width: 100%;
+    }
+
+    .btn-row > * {
+      flex-shrink: 0;
+    }
+
+    .btn-row .inline {
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(139, 92, 246, 0.1));
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-row .inline:hover {
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.2);
+    }
+
+    .btn-row .inline select {
+      background: transparent;
+      border: none;
+      color: var(--primary) !important;
+      font-weight: 600;
+      padding: 2px 20px 2px 2px;
+      min-width: auto;
+      width: auto;
+      font-size: 0.85rem;
+    }
+
+    .btn-row .inline label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, rgba(20, 30, 50, 0.9), rgba(15, 25, 40, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 18px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      border-color: rgba(0, 245, 255, 0.5);
+      background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(139, 92, 246, 0.15));
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .checkbox-group label:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .checkbox-group input[type="checkbox"]:hover {
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .checkbox-group input[type="checkbox"]:checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 5px;
+      width: 5px;
+      height: 9px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 8px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .canvas-wrap .data-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .data-card:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+    }
+
+    .canvas-wrap .data-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .canvas-wrap .data-label::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .canvas-wrap .data-value {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      line-height: 1.2;
+    }
+
+    .data-value.cyan { 
+      color: var(--position);
+    }
+    .data-value.cyan .data-label::before { background: var(--position); }
+    
+    .data-value.green { 
+      color: var(--velocity);
+    }
+    .data-value.green .data-label::before { background: var(--velocity); }
+    
+    .data-value.red { 
+      color: var(--acceleration);
+    }
+    .data-value.red .data-label::before { background: var(--acceleration); }
+    
+    .data-value.gold { 
+      color: var(--time);
+    }
+    .data-value.gold .data-label::before { background: var(--time); }
+
+    .canvas-wrap .data-value small {
+      font-size: 0.6rem;
+      opacity: 0.7;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+
+    .canvas-wrap .energy-bars {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .canvas-wrap .energy-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .canvas-wrap .energy-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      width: 28px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .canvas-wrap .energy-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border);
+    }
+
+    .canvas-wrap .energy-value {
+      font-size: 0.7rem;
+      min-width: 50px;
+    }
+
+    .energy-fill {
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.15s ease;
+      position: relative;
+      min-width: 2px;
+    }
+
+    .energy-fill.green {
+      background: #00d4a8;
+    }
+
+    .energy-fill.cyan {
+      background: #00c4dd;
+    }
+
+    .energy-value {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      min-width: 65px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .graph-panel {
+      margin: 0 clamp(20px, 4vw, 40px) 24px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .graph-header h3 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .graph-legend {
+      display: flex;
+      gap: 20px;
+      font-size: 0.85rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.s { background: var(--position); }
+    .legend-dot.v { background: var(--velocity); }
+    .legend-dot.a { background: var(--acceleration); }
+
+    #graphCanvas {
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: 
+        radial-gradient(ellipse at 20% 30%, rgba(0, 245, 255, 0.04) 0%, transparent 50%),
+        rgba(5, 12, 22, 0.9);
+    }
+
+    .accordion {
+      display: grid;
+      gap: 14px;
+      margin: 0 clamp(20px, 4vw, 40px) 40px;
+    }
+
+    details {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(15, 25, 45, 0.9), rgba(10, 18, 35, 0.9));
+      padding: 16px 20px;
+      transition: all 0.3s;
+    }
+
+    details:hover {
+      border-color: rgba(0, 245, 255, 0.2);
+      background: linear-gradient(135deg, rgba(20, 35, 60, 0.9), rgba(15, 25, 45, 0.9));
+    }
+
+    details[open] {
+      border-color: rgba(0, 245, 255, 0.3);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.1);
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--primary);
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1rem;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::before {
+      content: '▶';
+      font-size: 0.65rem;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      color: var(--accent);
+    }
+
+    details[open] summary::before {
+      transform: rotate(90deg) scale(1.3);
+    }
+
+    summary::after {
+      content: attr(data-icon);
+      margin-left: auto;
+      font-size: 1.3rem;
+    }
+
+    details p, details li {
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    details strong {
+      color: var(--text);
+    }
+
+    details ul, details ol {
+      margin: 12px 0 0 24px;
+    }
+
+    details li {
+      margin: 8px 0;
+    }
+
+    @media (max-width: 1100px) {
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .tabs {
+        padding: 0 16px 12px;
+      }
+      .tab {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+      }
+      .layout {
+        padding: 12px 16px 18px;
+      }
+      .graph-panel, .accordion {
+        margin: 0 16px 18px;
+      }
+      .topbar {
+        padding: 14px 16px;
+      }
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .data-value {
+        font-size: 1.3rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="acceleration">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Acceleration</h1>
+      <p>Rate of change of velocity — explore motion dynamics</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="constant">Constant Accel</button>
+      <button class="tab" data-mode="variable">Variable</button>
+      <button class="tab" data-mode="freefall">Free Fall</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="accelCanvas" width="900" height="380" aria-label="Acceleration motion"></canvas>
+        <div class="btn-row">
+          <button id="playPause">
+            <span>▶</span> Play
+          </button>
+          <button id="reset">
+            <span>↺</span> Reset
+          </button>
+          <div class="inline">
+            <label for="speed">Speed</label>
+            <select id="speed">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+          <div class="inline">
+            <label for="objectType">Object</label>
+            <select id="objectType">
+              <option value="cart" selected>Cart</option>
+              <option value="ball">Ball</option>
+              <option value="box">Box</option>
+              <option value="sphere">Sphere</option>
+              <option value="skateboard">Skateboard</option>
+              <option value="car">Car</option>
+              <option value="rocket">Rocket</option>
+              <option value="runner">Runner</option>
+              <option value="train">Train</option>
+              <option value="airplane">Airplane</option>
+              <option value="marble">Marble</option>
+              <option value="dice">Dice</option>
+            </select>
+          </div>
+        </div>
+        <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="s0">Initial Position <strong id="s0Label">0 m</strong></label>
+          <input type="range" id="s0" min="-50" max="50" step="1" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="u">Initial Velocity <strong id="uLabel">0 m/s</strong></label>
+          <input type="range" id="u" min="-20" max="20" step="1" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="a">Acceleration <strong id="aLabel">5.0 m/s²</strong></label>
+          <input type="range" id="a" min="-10" max="10" step="0.5" value="5" />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showVel" checked /> Show velocity vector</label>
+            <label><input type="checkbox" id="showAcc" checked /> Show acceleration vector</label>
+            <label><input type="checkbox" id="showTrail" checked /> Show motion trail</label>
+            <label><input type="checkbox" id="showGraphs" checked /> Show graphs</label>
+            <label><input type="checkbox" id="showFormula" checked /> Show formula</label>
+            <label><input type="checkbox" id="showEnergy" /> Show energy bars</label>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="trailStyle">Trail Style</label>
+          <select id="trailStyle">
+            <option value="glow" selected>Glow</option>
+            <option value="sparkle">Sparkle</option>
+            <option value="smoke">Smoke</option>
+            <option value="none">None</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="bgTheme">Background</label>
+          <select id="bgTheme">
+            <option value="space" selected>Space</option>
+            <option value="city">City</option>
+            <option value="lab">Laboratory</option>
+            <option value="sunset">Sunset</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="graph-header">
+        <h3>Motion Graphs</h3>
+        <div class="graph-legend">
+          <span class="legend-item"><span class="legend-dot s"></span> s(t)</span>
+          <span class="legend-item"><span class="legend-dot v"></span> v(t)</span>
+          <span class="legend-item"><span class="legend-dot a"></span> a(t)</span>
+        </div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Motion graphs"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Acceleration is the rate of change of velocity with respect to time. When acceleration is constant, the velocity changes uniformly, producing a <strong>linear v-t graph</strong> and a <strong>parabolic s-t graph</strong>.</p>
+        <p>The equations of motion for constant acceleration are:</p>
+        <ul>
+          <li>v = u + at (velocity-time)</li>
+          <li>s = ut + ½at² (position-time)</li>
+          <li>v² = u² + 2as (velocity-displacement)</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>What does the <strong>slope</strong> of the v-t graph represent?</li>
+          <li>What does the <strong>area under</strong> the v-t graph represent?</li>
+          <li>How do <strong>negative accelerations</strong> appear in the simulation?</li>
+          <li>What happens when acceleration equals zero?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li><strong>Acceleration:</strong> a = Δv/Δt (rate of velocity change)</li>
+          <li><strong>Constant a</strong> → linear v-t graph, parabolic s-t graph</li>
+          <li><strong>Area under v-t</strong> gives displacement</li>
+          <li><strong>Slope of v-t</strong> gives acceleration</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('accelCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const s0Input = document.getElementById('s0');
+    const uInput = document.getElementById('u');
+    const aInput = document.getElementById('a');
+
+    const s0Label = document.getElementById('s0Label');
+    const uLabel = document.getElementById('uLabel');
+    const aLabel = document.getElementById('aLabel');
+
+    const showVel = document.getElementById('showVel');
+    const showAcc = document.getElementById('showAcc');
+    const showTrail = document.getElementById('showTrail');
+    const showGraphs = document.getElementById('showGraphs');
+    const showFormulaCheck = document.getElementById('showFormula');
+    const showEnergyCheck = document.getElementById('showEnergy');
+
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const speedSelect = document.getElementById('speed');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const state = {
+      s0: 0,
+      u: 0,
+      a: 5,
+      time: 0,
+      s: 0,
+      v: 0,
+      trail: [],
+      graphData: [],
+      playing: false,
+      speed: 1,
+      mode: 'constant',
+      objectType: 'cart',
+      showEnergy: false,
+      showFormula: true,
+      trailStyle: 'glow',
+      bgTheme: 'space'
+    };
+
+    const objects = {
+      cart: {
+        name: 'Cart',
+        trailColor: '#06b6d4',
+        draw: (ctx, x, y, groundY) => {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 8, 24, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createLinearGradient(x - 22, groundY - 28, x + 22, groundY);
+          grad.addColorStop(0, '#06b6d4');
+          grad.addColorStop(0.5, '#22d3ee');
+          grad.addColorStop(1, '#06b6d4');
+          ctx.fillStyle = grad;
+          roundRect(ctx, x - 22, groundY - 28, 44, 24, 6);
+
+          ctx.shadowColor = '#06b6d4';
+          ctx.shadowBlur = 20;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+          roundRect(ctx, x - 20, groundY - 26, 40, 6, 3);
+
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(x - 14, groundY + 2, 7, 0, Math.PI * 2);
+          ctx.arc(x + 14, groundY + 2, 7, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.arc(x - 14, groundY + 2, 4, 0, Math.PI * 2);
+          ctx.arc(x + 14, groundY + 2, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      ball: {
+        name: 'Ball',
+        trailColor: '#f59e0b',
+        draw: (ctx, x, y, groundY) => {
+          const radius = 18;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 3, radius + 5, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createRadialGradient(x - 6, groundY - radius - 6, 2, x, groundY - radius, radius);
+          grad.addColorStop(0, '#fbbf24');
+          grad.addColorStop(0.5, '#f59e0b');
+          grad.addColorStop(1, '#b45309');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#f59e0b';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.arc(x, groundY - radius, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.beginPath();
+          ctx.arc(x - 6, groundY - radius - 6, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      box: {
+        name: 'Box',
+        trailColor: '#8b5cf6',
+        draw: (ctx, x, y, groundY) => {
+          const size = 36;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.fillRect(x - size/2 + 3, groundY - 3, size + 4, 8);
+
+          const grad = ctx.createLinearGradient(x - size/2, groundY - size, x + size/2, groundY);
+          grad.addColorStop(0, '#8b5cf6');
+          grad.addColorStop(0.5, '#a78bfa');
+          grad.addColorStop(1, '#7c3aed');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#8b5cf6';
+          ctx.shadowBlur = 15;
+          ctx.fillRect(x - size/2, groundY - size, size, size);
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillRect(x - size/2 + 3, groundY - size + 3, size - 6, 8);
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x - size/2, groundY - size, size, size);
+        }
+      },
+      sphere: {
+        name: 'Sphere',
+        trailColor: '#6366f1',
+        draw: (ctx, x, y, groundY) => {
+          const radius = 22;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 4, radius + 4, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createRadialGradient(x - 8, groundY - radius - 8, 3, x, groundY - radius, radius);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.2, '#e0e7ff');
+          grad.addColorStop(0.5, '#6366f1');
+          grad.addColorStop(1, '#312e81');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#6366f1';
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(x, groundY - radius, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.beginPath();
+          ctx.arc(x - 8, groundY - radius - 8, 7, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      skateboard: {
+        name: 'Skateboard',
+        trailColor: '#ec4899',
+        draw: (ctx, x, y, groundY) => {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 4, 28, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createLinearGradient(x - 25, groundY - 8, x + 25, groundY);
+          grad.addColorStop(0, '#ec4899');
+          grad.addColorStop(0.5, '#f472b6');
+          grad.addColorStop(1, '#db2777');
+          ctx.fillStyle = grad;
+          roundRect(ctx, x - 25, groundY - 8, 50, 8, 4);
+          ctx.shadowColor = '#ec4899';
+          ctx.shadowBlur = 12;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = '#fcd34d';
+          roundRect(ctx, x - 10, groundY - 6, 20, 4, 2);
+
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(x - 18, groundY + 2, 5, 0, Math.PI * 2);
+          ctx.arc(x + 18, groundY + 2, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      car: {
+        name: 'Car',
+        trailColor: '#ef4444',
+        draw: (ctx, x, y, groundY) => {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 6, 28, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createLinearGradient(x - 24, groundY - 20, x + 24, groundY);
+          grad.addColorStop(0, '#ef4444');
+          grad.addColorStop(0.5, '#f87171');
+          grad.addColorStop(1, '#dc2626');
+          ctx.fillStyle = grad;
+
+          ctx.beginPath();
+          ctx.moveTo(x - 24, groundY - 5);
+          ctx.lineTo(x - 22, groundY - 18);
+          ctx.lineTo(x - 8, groundY - 22);
+          ctx.lineTo(x + 10, groundY - 22);
+          ctx.lineTo(x + 20, groundY - 16);
+          ctx.lineTo(x + 24, groundY - 5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.shadowColor = '#ef4444';
+          ctx.shadowBlur = 15;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.beginPath();
+          ctx.moveTo(x - 6, groundY - 19);
+          ctx.lineTo(x + 6, groundY - 19);
+          ctx.lineTo(x + 8, groundY - 8);
+          ctx.lineTo(x - 8, groundY - 8);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(x - 22, groundY - 8, 6, 3);
+          ctx.fillRect(x + 16, groundY - 8, 6, 3);
+
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(x - 16, groundY + 2, 6, 0, Math.PI * 2);
+          ctx.arc(x + 16, groundY + 2, 6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#94a3b8';
+          ctx.beginPath();
+          ctx.arc(x - 16, groundY + 2, 3, 0, Math.PI * 2);
+          ctx.arc(x + 16, groundY + 2, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      rocket: {
+        name: 'Rocket',
+        trailColor: '#f97316',
+        draw: (ctx, x, y, groundY) => {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 8, 16, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const time = Date.now() / 100;
+          const flameLen = 15 + Math.sin(time * 3) * 8;
+          
+          const flameGrad = ctx.createLinearGradient(x, groundY - 5, x, groundY + flameLen + 10);
+          flameGrad.addColorStop(0, '#fbbf24');
+          flameGrad.addColorStop(0.3, '#f97316');
+          flameGrad.addColorStop(0.6, '#dc2626');
+          flameGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = flameGrad;
+          ctx.beginPath();
+          ctx.moveTo(x - 8, groundY - 5);
+          ctx.quadraticCurveTo(x - 12, groundY + flameLen, x, groundY + flameLen + 10);
+          ctx.quadraticCurveTo(x + 12, groundY + flameLen, x + 8, groundY - 5);
+          ctx.closePath();
+          ctx.fill();
+
+          const bodyGrad = ctx.createLinearGradient(x - 12, groundY - 50, x + 12, groundY);
+          bodyGrad.addColorStop(0, '#e5e7eb');
+          bodyGrad.addColorStop(0.5, '#9ca3af');
+          bodyGrad.addColorStop(1, '#6b7280');
+          ctx.fillStyle = bodyGrad;
+          ctx.beginPath();
+          ctx.moveTo(x, groundY - 60);
+          ctx.lineTo(x + 12, groundY - 10);
+          ctx.lineTo(x + 12, groundY - 5);
+          ctx.lineTo(x - 12, groundY - 5);
+          ctx.lineTo(x - 12, groundY - 10);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.shadowColor = '#f97316';
+          ctx.shadowBlur = 15;
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(x - 10, groundY - 45, 20, 8);
+
+          ctx.fillStyle = '#3b82f6';
+          ctx.beginPath();
+          ctx.moveTo(x, groundY - 60);
+          ctx.lineTo(x + 6, groundY - 52);
+          ctx.lineTo(x - 6, groundY - 52);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.beginPath();
+          ctx.ellipse(x - 4, groundY - 35, 3, 6, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      runner: {
+        name: 'Runner',
+        trailColor: '#22c55e',
+        draw: (ctx, x, y, groundY) => {
+          const time = Date.now() / 80;
+          const legAngle = Math.sin(time) * 0.5;
+          const armAngle = Math.sin(time + Math.PI) * 0.4;
+          
+          ctx.fillStyle = '#22c55e';
+          ctx.beginPath();
+          ctx.arc(x, groundY - 45, 8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 4;
+          ctx.lineCap = 'round';
+          
+          ctx.beginPath();
+          ctx.moveTo(x, groundY - 37);
+          ctx.lineTo(x + Math.sin(armAngle) * 12, groundY - 28);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x, groundY - 37);
+          ctx.lineTo(x - 2, groundY - 20);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - 2, groundY - 20);
+          ctx.lineTo(x - 2 + Math.sin(legAngle) * 10, groundY - 8);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - 2, groundY - 20);
+          ctx.lineTo(x - 2 - Math.sin(legAngle) * 10, groundY - 8);
+          ctx.stroke();
+
+          ctx.strokeStyle = '#15803d';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(x + Math.sin(armAngle + 0.2) * 10, groundY - 26);
+          ctx.lineTo(x + Math.sin(armAngle + 0.2) * 18, groundY - 22);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(x - 2 + Math.sin(legAngle + 0.2) * 8, groundY - 10);
+          ctx.lineTo(x - 2 + Math.sin(legAngle + 0.2) * 16, groundY - 3);
+          ctx.stroke();
+        }
+      },
+      train: {
+        name: 'Train',
+        trailColor: '#64748b',
+        draw: (ctx, x, y, groundY) => {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.fillRect(x - 70, groundY + 4, 140, 6);
+
+          const colors = ['#dc2626', '#2563eb', '#16a34a', '#f59e0b'];
+          const carCount = 3;
+          const carWidth = 40;
+          
+          for (let i = 0; i < carCount; i++) {
+            const carX = x - 50 + i * carWidth;
+            const grad = ctx.createLinearGradient(carX - 15, groundY - 25, carX + 15, groundY);
+            grad.addColorStop(0, colors[i % colors.length]);
+            grad.addColorStop(1, colors[i % colors.length] + '99');
+            ctx.fillStyle = grad;
+            ctx.shadowColor = colors[i % colors.length];
+            ctx.shadowBlur = 10;
+            ctx.fillRect(carX - 15, groundY - 25, 30, 20);
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.arc(carX - 10, groundY, 5, 0, Math.PI * 2);
+            ctx.arc(carX + 10, groundY, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(carX - 12, groundY - 20, 4, 4);
+            ctx.fillRect(carX + 8, groundY - 20, 4, 4);
+          }
+
+          const engineGrad = ctx.createLinearGradient(x + 20, groundY - 30, x + 50, groundY);
+          engineGrad.addColorStop(0, '#374151');
+          engineGrad.addColorStop(1, '#1f2937');
+          ctx.fillStyle = engineGrad;
+          ctx.shadowColor = '#374151';
+          ctx.shadowBlur = 10;
+          roundRect(ctx, x + 25, groundY - 30, 35, 25, 3);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.arc(x + 50, groundY - 20, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(x + 35, groundY, 6, 0, Math.PI * 2);
+          ctx.arc(x + 50, groundY, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      },
+      airplane: {
+        name: 'Airplane',
+        trailColor: '#0ea5e9',
+        draw: (ctx, x, y, groundY) => {
+          const time = Date.now() / 200;
+          const wobble = Math.sin(time * 2) * 3;
+          
+          ctx.save();
+          ctx.translate(x, groundY - 30 + wobble);
+          
+          const bodyGrad = ctx.createLinearGradient(-30, -8, -30, 8);
+          bodyGrad.addColorStop(0, '#e5e7eb');
+          bodyGrad.addColorStop(0.5, '#9ca3af');
+          bodyGrad.addColorStop(1, '#6b7280');
+          ctx.fillStyle = bodyGrad;
+          
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 30, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#1e40af';
+          ctx.beginPath();
+          ctx.ellipse(0, -8, 10, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const wingGrad = ctx.createLinearGradient(-5, 0, -5, 15);
+          wingGrad.addColorStop(0, '#d1d5db');
+          wingGrad.addColorStop(1, '#9ca3af');
+          ctx.fillStyle = wingGrad;
+          ctx.beginPath();
+          ctx.moveTo(-5, 2);
+          ctx.lineTo(-25, 15);
+          ctx.lineTo(5, 15);
+          ctx.lineTo(5, 2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = wingGrad;
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(30, 10);
+          ctx.lineTo(20, -5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.moveTo(-25, 0);
+          ctx.lineTo(-35, -3);
+          ctx.lineTo(-35, 3);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.ellipse(25, 0, 3, 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        }
+      },
+      marble: {
+        name: 'Marble',
+        trailColor: '#a855f7',
+        draw: (ctx, x, y, groundY) => {
+          const radius = 15;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.beginPath();
+          ctx.ellipse(x, groundY + 2, radius + 3, 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          const grad = ctx.createRadialGradient(x - 5, groundY - radius - 5, 2, x, groundY - radius, radius);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.15, '#e9d5ff');
+          grad.addColorStop(0.4, '#c084fc');
+          grad.addColorStop(0.7, '#9333ea');
+          grad.addColorStop(1, '#6b21a8');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#a855f7';
+          ctx.shadowBlur = 18;
+          ctx.beginPath();
+          ctx.arc(x, groundY - radius, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.beginPath();
+          ctx.arc(x - 5, groundY - radius - 5, 5, 0, Math.PI * 2);
+          ctx.fill();
+
+          const swirlGrad = ctx.createLinearGradient(x - 10, groundY - radius - 8, x + 5, groundY - radius + 8);
+          swirlGrad.addColorStop(0, 'transparent');
+          swirlGrad.addColorStop(0.5, 'rgba(233, 213, 255, 0.3)');
+          swirlGrad.addColorStop(1, 'transparent');
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x, groundY - radius, 8, 0, Math.PI * 1.5);
+          ctx.stroke();
+        }
+      },
+      dice: {
+        name: 'Dice',
+        trailColor: '#f8fafc',
+        draw: (ctx, x, y, groundY) => {
+          const size = 22;
+          const time = Date.now() / 100;
+          const rotation = state.playing ? time * 2 : 0;
+          
+          ctx.save();
+          ctx.translate(x, groundY - size / 2);
+          
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+          ctx.fillRect(-size/2 + 3, size/2 - 2, size + 4, 6);
+
+          const grad = ctx.createLinearGradient(-size/2, -size/2, size/2, size/2);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.5, '#f1f5f9');
+          grad.addColorStop(1, '#cbd5e1');
+          ctx.fillStyle = grad;
+          ctx.shadowColor = '#f8fafc';
+          ctx.shadowBlur = 15;
+          
+          ctx.beginPath();
+          ctx.roundRect(-size/2, -size/2, size, size, 4);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+
+          ctx.fillStyle = '#1e293b';
+          const dots = [[0, 0], [-6, -6], [6, -6], [-6, 6], [6, 6], [0, -6]];
+          dots.forEach(([dx, dy]) => {
+            ctx.beginPath();
+            ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          });
+
+          ctx.restore();
+        }
+      }
+    };
+
+    const particles = [];
+    for (let i = 0; i < 25; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.2,
+        vy: (Math.random() - 0.5) * 0.2,
+        size: Math.random() * 2 + 0.5,
+        alpha: Math.random() * 0.4 + 0.1
+      });
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function updateLabels() {
+      s0Label.textContent = `${state.s0.toFixed(0)} m`;
+      uLabel.textContent = `${state.u.toFixed(0)} m/s`;
+      aLabel.textContent = `${state.a.toFixed(1)} m/s²`;
+    }
+
+    function updatePhysics(dt) {
+      state.time += dt;
+      
+      let currentA = state.a;
+      if (state.mode === 'variable') {
+        currentA = state.a * Math.sin(state.time * 0.5);
+      }
+      
+      state.v = state.u + currentA * state.time;
+      state.s = state.s0 + state.u * state.time + 0.5 * currentA * state.time * state.time;
+      
+      // Wrap around when reaching the ends - smooth continuous motion
+      const minPos = -50;
+      const maxPos = 50;
+      if (state.s > maxPos) {
+        state.s = minPos + (state.s - maxPos);
+      } else if (state.s < minPos) {
+        state.s = maxPos + (state.s - minPos);
+      }
+      
+      if (showTrail.checked) {
+        state.trail.push({ s: state.s, v: state.v, a: currentA, time: state.time });
+        if (state.trail.length > 150) state.trail.shift();
+      }
+      state.graphData.push({ t: state.time, s: state.s, v: state.v, a: currentA });
+      if (state.graphData.length > 250) state.graphData.shift();
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(106, 215, 255, ${p.alpha})`;
+        ctx.fill();
+      });
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const time = Date.now() / 1000;
+      
+      if (state.bgTheme === 'space') {
+        // Deep space gradient
+        const spaceGrad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
+        spaceGrad.addColorStop(0, '#0a1628');
+        spaceGrad.addColorStop(0.5, '#050d18');
+        spaceGrad.addColorStop(1, '#020408');
+        ctx.fillStyle = spaceGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Nebula clouds
+        const nebulaGrad1 = ctx.createRadialGradient(canvas.width * 0.2, canvas.height * 0.3, 0, canvas.width * 0.2, canvas.height * 0.3, 300);
+        nebulaGrad1.addColorStop(0, 'rgba(139, 92, 246, 0.15)');
+        nebulaGrad1.addColorStop(0.5, 'rgba(139, 92, 246, 0.05)');
+        nebulaGrad1.addColorStop(1, 'transparent');
+        ctx.fillStyle = nebulaGrad1;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        const nebulaGrad2 = ctx.createRadialGradient(canvas.width * 0.8, canvas.height * 0.7, 0, canvas.width * 0.8, canvas.height * 0.7, 250);
+        nebulaGrad2.addColorStop(0, 'rgba(0, 245, 255, 0.1)');
+        nebulaGrad2.addColorStop(0.5, 'rgba(0, 245, 255, 0.03)');
+        nebulaGrad2.addColorStop(1, 'transparent');
+        ctx.fillStyle = nebulaGrad2;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Twinkling stars
+        for (let i = 0; i < 150; i++) {
+          const sx = (i * 137 + time * 5) % canvas.width;
+          const sy = (i * 89) % canvas.height;
+          const twinkle = 0.3 + 0.7 * Math.abs(Math.sin(time * 2 + i));
+          const size = 0.5 + (i % 3) * 0.5;
+          
+          ctx.beginPath();
+          ctx.arc(sx, sy, size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+          ctx.fill();
+          
+          // Star glow
+          if (i % 10 === 0) {
+            const glowGrad = ctx.createRadialGradient(sx, sy, 0, sx, sy, size * 4);
+            glowGrad.addColorStop(0, `rgba(255, 255, 255, ${twinkle * 0.3})`);
+            glowGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = glowGrad;
+            ctx.fillRect(sx - size * 4, sy - size * 4, size * 8, size * 8);
+          }
+        }
+        
+        // Shooting stars
+        if (Math.random() < 0.02) {
+          const sx = Math.random() * canvas.width;
+          const sy = Math.random() * canvas.height * 0.5;
+          const len = 50 + Math.random() * 100;
+          
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + len, sy + len * 0.5);
+          const shootGrad = ctx.createLinearGradient(sx, sy, sx + len, sy + len * 0.5);
+          shootGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+          shootGrad.addColorStop(1, 'transparent');
+          ctx.strokeStyle = shootGrad;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        
+        // Animated planet
+        const planetX = canvas.width - 100;
+        const planetY = 80;
+        
+        // Planet glow
+        const planetGlow = ctx.createRadialGradient(planetX, planetY, 0, planetX, planetY, 60);
+        planetGlow.addColorStop(0, 'rgba(255, 140, 66, 0.3)');
+        planetGlow.addColorStop(0.5, 'rgba(255, 100, 50, 0.1)');
+        planetGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = planetGlow;
+        ctx.beginPath();
+        ctx.arc(planetX, planetY, 60, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Planet body
+        const planetGrad = ctx.createRadialGradient(planetX - 10, planetY - 10, 0, planetX, planetY, 30);
+        planetGrad.addColorStop(0, '#ffb366');
+        planetGrad.addColorStop(0.7, '#ff6b35');
+        planetGrad.addColorStop(1, '#cc4400');
+        ctx.fillStyle = planetGrad;
+        ctx.beginPath();
+        ctx.arc(planetX, planetY, 30, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Planet ring
+        ctx.strokeStyle = 'rgba(255, 200, 150, 0.4)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.ellipse(planetX, planetY, 45, 12, -0.3, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Moon
+        const moonX = canvas.width - 180;
+        const moonY = 50;
+        const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 25);
+        moonGlow.addColorStop(0, 'rgba(200, 200, 220, 0.4)');
+        moonGlow.addColorStop(1, 'transparent');
+        ctx.fillStyle = moonGlow;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#e8e8f0';
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#c8c8d8';
+        ctx.beginPath();
+        ctx.arc(moonX - 3, moonY - 2, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(moonX + 4, moonY + 3, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        drawGrid();
+        drawParticles();
+      } else if (state.bgTheme === 'city') {
+        const cityGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        cityGrad.addColorStop(0, '#0f172a');
+        cityGrad.addColorStop(0.3, '#1e293b');
+        cityGrad.addColorStop(1, '#020408');
+        ctx.fillStyle = cityGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Animated city skyline
+        for (let i = 0; i < 20; i++) {
+          const bx = i * 55 + 10;
+          const bh = 40 + (i * 23) % 100;
+          const bw = 35 + (i * 7) % 20;
+          
+          // Building shadow
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          ctx.fillRect(bx + 5, canvas.height - bh - 15, bw, bh + 20);
+          
+          // Building
+          const bldgGrad = ctx.createLinearGradient(bx, canvas.height - bh, bx, canvas.height);
+          bldgGrad.addColorStop(0, '#1e293b');
+          bldgGrad.addColorStop(1, '#0f172a');
+          ctx.fillStyle = bldgGrad;
+          ctx.fillRect(bx, canvas.height - bh - 20, bw, bh);
+          
+          // Windows
+          for (let w = 0; w < Math.floor(bw / 10); w++) {
+            for (let h = 0; h < Math.floor(bh / 15); h++) {
+              if ((i + w + h) % 3 !== 0) {
+                const winAlpha = 0.3 + 0.7 * Math.sin(time * 2 + i + w * 0.5 + h * 0.3);
+                ctx.fillStyle = `rgba(255, ${180 + Math.random() * 50}, ${100 + Math.random() * 30}, ${winAlpha})`;
+                ctx.fillRect(bx + 4 + w * 10, canvas.height - bh - 15 + h * 14, 6, 8);
+              }
+            }
+          }
+        }
+        
+        // City lights reflection
+        const reflectGrad = ctx.createLinearGradient(0, canvas.height - 100, 0, canvas.height);
+        reflectGrad.addColorStop(0, 'transparent');
+        reflectGrad.addColorStop(0.5, 'rgba(255, 180, 80, 0.1)');
+        reflectGrad.addColorStop(1, 'rgba(255, 180, 80, 0.2)');
+        ctx.fillStyle = reflectGrad;
+        ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+        
+        drawGrid();
+      } else if (state.bgTheme === 'lab') {
+        const labGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        labGrad.addColorStop(0, '#1e293b');
+        labGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = labGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 5; i++) {
+          const lineY = 100 + i * 80;
+          ctx.beginPath();
+          ctx.moveTo(0, lineY);
+          ctx.lineTo(canvas.width, lineY);
+          ctx.stroke();
+        }
+        
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+        for (let i = 0; i < 8; i++) {
+          const lineX = 100 + i * 120;
+          ctx.beginPath();
+          ctx.moveTo(lineX, 0);
+          ctx.lineTo(lineX, canvas.height);
+          ctx.stroke();
+        }
+        
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.1)';
+        ctx.fillRect(50, 50, 100, 60);
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, 100, 60);
+        
+        ctx.fillStyle = 'rgba(6, 182, 212, 0.3)';
+        ctx.fillRect(60, 60, 30, 40);
+        
+        drawGrid();
+        drawParticles();
+      } else if (state.bgTheme === 'sunset') {
+        const time = Date.now() / 2000;
+        
+        // Dynamic sky gradient
+        const sunGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        sunGrad.addColorStop(0, '#0c1929');
+        sunGrad.addColorStop(0.25, '#1e3a5f');
+        sunGrad.addColorStop(0.4, '#7c2d12');
+        sunGrad.addColorStop(0.55, '#c2410c');
+        sunGrad.addColorStop(0.7, '#ea580c');
+        sunGrad.addColorStop(0.85, '#9a3412');
+        sunGrad.addColorStop(1, '#1c1917');
+        ctx.fillStyle = sunGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Animated sun
+        const sunY = canvas.height * 0.38 + Math.sin(time * 0.5) * 8;
+        
+        // Sun glow
+        const glowGrad = ctx.createRadialGradient(canvas.width / 2, sunY, 0, canvas.width / 2, sunY, 200);
+        glowGrad.addColorStop(0, 'rgba(251, 191, 36, 0.5)');
+        glowGrad.addColorStop(0.3, 'rgba(251, 146, 60, 0.3)');
+        glowGrad.addColorStop(0.6, 'rgba(234, 88, 12, 0.1)');
+        glowGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Sun layers
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, sunY, 45, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#fcd34d';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, sunY, 35, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#fef3c7';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, sunY, 25, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Sun reflection on water
+        const reflectY = sunY + 60;
+        for (let i = 0; i < 20; i++) {
+          const rippleX = (canvas.width / 2 - 100) + i * 10 + Math.sin(time * 2 + i) * 5;
+          const rippleW = 3 + Math.sin(time * 3 + i) * 2;
+          ctx.fillStyle = `rgba(251, 191, 36, ${0.3 - i * 0.015})`;
+          ctx.beginPath();
+          ctx.ellipse(rippleX, reflectY + i * 4, rippleW, 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Birds
+        for (let i = 0; i < 3; i++) {
+          const birdX = (canvas.width * 0.3 + i * 50 + time * 20) % (canvas.width * 0.6) + canvas.width * 0.2;
+          const birdY = 100 + i * 20 + Math.sin(time * 2 + i) * 10;
+          ctx.strokeStyle = 'rgba(30, 30, 30, 0.6)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(birdX - 8, birdY);
+          ctx.quadraticCurveTo(birdX, birdY - 5, birdX + 8, birdY);
+          ctx.moveTo(birdX + 8, birdY);
+          ctx.quadraticCurveTo(birdX, birdY + 2, birdX - 8, birdY);
+          ctx.stroke();
+        }
+        
+        drawGrid();
+      }
+
+      const groundY = canvas.height * 0.7;
+
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#6ad7ff';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(40, groundY);
+      ctx.lineTo(canvas.width - 40, groundY);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Calculate position with proper wrapping for display
+      let x = 60 + (state.s + 50) * 6;
+      const minX = 60;
+      const maxX = canvas.width - 60;
+      
+      // Draw ghost on opposite side for smooth wrapping
+      const isWrappingRight = x > maxX;
+      const isWrappingLeft = x < minX;
+      
+      // Draw the wrapped copies (ghosts)
+      if (isWrappingRight) {
+        const ghostX = x - (canvas.width - 80);
+        if (objects[state.objectType]) {
+          const alpha = Math.max(0, 1 - (x - maxX) / 30);
+          ctx.globalAlpha = alpha;
+          objects[state.objectType].draw(ctx, ghostX, groundY - 10, groundY);
+        }
+      }
+      if (isWrappingLeft) {
+        const ghostX = x + (canvas.width - 80);
+        if (objects[state.objectType]) {
+          const alpha = Math.max(0, 1 - (minX - x) / 30);
+          ctx.globalAlpha = alpha;
+          objects[state.objectType].draw(ctx, ghostX, groundY - 10, groundY);
+        }
+      }
+      
+      // Clamp x to visible area for main object
+      x = Math.max(minX, Math.min(maxX, x));
+
+      if (showTrail.checked && state.trail.length > 1) {
+        const trailColor = objects[state.objectType]?.trailColor || '#06b6d4';
+        
+        if (state.trailStyle === 'glow') {
+          state.trail.forEach((point, i) => {
+            const alpha = (i / state.trail.length) * 0.7;
+            const tx = 60 + (point.s + 50) * 6;
+            const size = 3 + (i / state.trail.length) * 5;
+            
+            ctx.beginPath();
+            ctx.arc(tx, groundY - 10, size, 0, Math.PI * 2);
+            ctx.fillStyle = trailColor + Math.round(alpha * 255).toString(16).padStart(2, '0');
+            ctx.shadowColor = trailColor;
+            ctx.shadowBlur = 12;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          });
+        } else if (state.trailStyle === 'sparkle') {
+          state.trail.forEach((point, i) => {
+            const alpha = (i / state.trail.length) * 0.8;
+            const tx = 60 + (point.s + 50) * 6;
+            const size = 2 + Math.random() * 4;
+            
+            ctx.beginPath();
+            ctx.arc(tx + (Math.random() - 0.5) * 10, groundY - 10 + (Math.random() - 0.5) * 10, size * (i / state.trail.length), 0, Math.PI * 2);
+            ctx.fillStyle = trailColor + Math.round(alpha * 200).toString(16).padStart(2, '0');
+            ctx.shadowColor = trailColor;
+            ctx.shadowBlur = 15;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            if (Math.random() > 0.7) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(tx + (Math.random() - 0.5) * 8, groundY - 10 + (Math.random() - 0.5) * 8, 2, 2);
+            }
+          });
+        } else if (state.trailStyle === 'smoke') {
+          state.trail.forEach((point, i) => {
+            const alpha = (i / state.trail.length) * 0.3;
+            const tx = 60 + (point.s + 50) * 6;
+            const size = 8 + (i / state.trail.length) * 20;
+            
+            const smokeGrad = ctx.createRadialGradient(tx, groundY - 10, 0, tx, groundY - 10, size);
+            smokeGrad.addColorStop(0, trailColor + Math.round(alpha * 150).toString(16).padStart(2, '0'));
+            smokeGrad.addColorStop(1, 'transparent');
+            
+            ctx.beginPath();
+            ctx.arc(tx, groundY - 10, size, 0, Math.PI * 2);
+            ctx.fillStyle = smokeGrad;
+            ctx.fill();
+          });
+        }
+      }
+
+      if (objects[state.objectType]) {
+        objects[state.objectType].draw(ctx, x, groundY - 10, groundY);
+      } else {
+        objects.cart.draw(ctx, x, groundY - 10, groundY);
+      }
+
+      if (showVel.checked && Math.abs(state.v) > 0.1) {
+        drawVector(x, groundY - 25, state.v * 3, 0, '#10b981', 'v');
+      }
+      if (showAcc.checked && Math.abs(state.a) > 0.1) {
+        drawVector(x, groundY - 40, state.a * 5, 0, '#ef4444', 'a');
+      }
+
+      if (showFormulaCheck.checked) {
+        ctx.font = 'bold 14px IBM Plex Sans, sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.textAlign = 'left';
+        
+        const formulaY = 35;
+        ctx.fillStyle = 'rgba(10, 15, 25, 0.7)';
+        ctx.fillRect(15, formulaY - 18, 380, 60);
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(15, formulaY - 18, 380, 60);
+        
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('v = u + at', 25, formulaY);
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`v = ${state.u.toFixed(1)} + (${state.a.toFixed(1)})(${state.time.toFixed(1)})`, 25, formulaY + 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`v = ${state.v.toFixed(2)} m/s`, 240, formulaY);
+      }
+    }
+
+    function drawVector(x, y, dx, dy, color, label) {
+      const angle = Math.atan2(dy, dx);
+      const length = Math.sqrt(dx * dx + dy * dy);
+      
+      if (length < 2) return;
+      
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 12;
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.min(length, 100), 0);
+      ctx.stroke();
+      
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(Math.min(length, 100), 0);
+      ctx.lineTo(Math.min(length, 100) - 12, -7);
+      ctx.lineTo(Math.min(length, 100) - 12, 7);
+      ctx.closePath();
+      ctx.fill();
+      
+      ctx.restore();
+      
+      if (label) {
+        ctx.font = 'bold 13px IBM Plex Sans, sans-serif';
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.fillText(label, x + dx + 8, y + dy - 8);
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    function drawGraphs() {
+      if (!showGraphs.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(6, 10, 18, 0.85)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 35;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      gctx.lineWidth = 1;
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      const centerY = padding + height / 2;
+      gctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      gctx.setLineDash([5, 5]);
+      gctx.beginPath();
+      gctx.moveTo(padding, centerY);
+      gctx.lineTo(padding + width, centerY);
+      gctx.stroke();
+      gctx.setLineDash([]);
+
+      const lines = [
+        { key: 's', color: '#6ad7ff', scale: 0.015 },
+        { key: 'v', color: '#6bff6b', scale: 0.08 },
+        { key: 'a', color: '#ff6b6b', scale: 0.15 }
+      ];
+
+      lines.forEach((line) => {
+        if (state.graphData.length < 2) return;
+        
+        const gradient = gctx.createLinearGradient(0, padding, 0, padding + height);
+        gradient.addColorStop(0, line.color + '30');
+        gradient.addColorStop(1, line.color + '05');
+
+        gctx.beginPath();
+        gctx.moveTo(padding, centerY);
+        state.graphData.forEach((p, i) => {
+          const x = padding + (i / (state.graphData.length - 1)) * width;
+          const y = centerY - p[line.key] * line.scale * height;
+          gctx.lineTo(x, Math.max(padding - 20, Math.min(padding + height + 20, y)));
+        });
+        gctx.lineTo(padding + width, centerY);
+        gctx.closePath();
+        gctx.fillStyle = gradient;
+        gctx.fill();
+
+        gctx.strokeStyle = line.color;
+        gctx.lineWidth = 2;
+        gctx.shadowColor = line.color;
+        gctx.shadowBlur = 8;
+        gctx.beginPath();
+        state.graphData.forEach((p, i) => {
+          const x = padding + (i / (state.graphData.length - 1)) * width;
+          const y = centerY - p[line.key] * line.scale * height;
+          if (i === 0) gctx.moveTo(x, y);
+          else gctx.lineTo(x, Math.max(padding - 20, Math.min(padding + height + 20, y)));
+        });
+        gctx.stroke();
+        gctx.shadowBlur = 0;
+      });
+    }
+
+    function updateDataPanel() {
+      let energyBars = '';
+      if (state.showEnergy) {
+        const mass = 1;
+        const g = 9.81;
+        const h = Math.max(0, 50 - state.s);
+        const ke = 0.5 * mass * state.v * state.v;
+        const pe = mass * g * Math.max(0, state.s + 50);
+        const total = ke + pe || 1;
+        const kePercent = Math.min(100, (ke / total) * 100);
+        const pePercent = Math.min(100, (pe / total) * 100);
+        
+        energyBars = `
+          <div class="energy-bars">
+            <div class="energy-bar">
+              <span class="energy-label">KE</span>
+              <div class="energy-track">
+                <div class="energy-fill green" style="width: ${kePercent}%"></div>
+              </div>
+              <span class="energy-value">${ke.toFixed(1)} J</span>
+            </div>
+            <div class="energy-bar">
+              <span class="energy-label">PE</span>
+              <div class="energy-track">
+                <div class="energy-fill cyan" style="width: ${pePercent}%"></div>
+              </div>
+              <span class="energy-value">${pe.toFixed(1)} J</span>
+            </div>
+          </div>
+        `;
+      }
+
+      dataPanel.innerHTML = `
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Position</span>
+            <span class="data-value cyan">${state.s.toFixed(2)} <small>m</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Velocity</span>
+            <span class="data-value green">${state.v.toFixed(2)} <small>m/s</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Acceleration</span>
+            <span class="data-value red">${state.a.toFixed(1)} <small>m/s²</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Time</span>
+            <span class="data-value gold">${state.time.toFixed(2)} <small>s</small></span>
+          </div>
+        </div>
+        ${energyBars}
+      `;
+    }
+
+    function loop() {
+      if (state.playing) {
+        updatePhysics((1 / 60) * state.speed);
+      }
+      drawScene();
+      drawGraphs();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    s0Input.addEventListener('input', (e) => {
+      state.s0 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    uInput.addEventListener('input', (e) => {
+      state.u = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    aInput.addEventListener('input', (e) => {
+      state.a = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    const objectTypeSelect = document.getElementById('objectType');
+    objectTypeSelect.addEventListener('change', (e) => {
+      state.objectType = e.target.value;
+    });
+
+    const trailStyleSelect = document.getElementById('trailStyle');
+
+    showFormulaCheck.addEventListener('change', (e) => {
+      state.showFormula = e.target.checked;
+    });
+
+    showEnergyCheck.addEventListener('change', (e) => {
+      state.showEnergy = e.target.checked;
+    });
+
+    trailStyleSelect.addEventListener('change', (e) => {
+      state.trailStyle = e.target.value;
+    });
+
+    const bgThemeSelect = document.getElementById('bgTheme');
+    bgThemeSelect.addEventListener('change', (e) => {
+      state.bgTheme = e.target.value;
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.time = 0;
+      state.trail = [];
+      state.graphData = [];
+      state.playing = false;
+      playPauseBtn.innerHTML = '<span>▶</span> Play';
+    });
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+        
+        if (state.mode === 'freefall') {
+          state.s0 = 0;
+          state.u = 0;
+          state.a = 9.81;
+        } else if (state.mode === 'constant') {
+          state.a = 5;
+        } else if (state.mode === 'variable') {
+          state.s0 = 0;
+          state.u = 0;
+          state.a = 8;
+        }
+        
+        s0Input.value = state.s0;
+        uInput.value = state.u;
+        aInput.value = state.a;
+        updateLabels();
+      });
+    });
+
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

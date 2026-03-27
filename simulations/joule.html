@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Joule's Law</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --cold: #6ad7ff;
+      --hot: #ff6b6b;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Joule's Law</h1>
+        <p>Electrical energy converted to heat</p>
+      </div>
+      <div class="pill">Q = I²Rt · P = I²R</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Circuit View</h2>
+        <canvas id="jouleCanvas" width="640" height="260"></canvas>
+        <canvas id="graphCanvas" width="640" height="200" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Current (A)</label>
+            <input type="range" id="current" min="0" max="10" step="0.1" value="5" />
+            <div class="row"><span class="muted">I</span><span class="value" id="currentValue">5.0 A</span></div>
+          </div>
+          <div class="control">
+            <label>Resistance (Ω)</label>
+            <input type="range" id="resistance" min="1" max="50" step="1" value="10" />
+            <div class="row"><span class="muted">R</span><span class="value" id="resistanceValue">10 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Time Duration (s)</label>
+            <input type="range" id="time" min="1" max="120" step="1" value="60" />
+            <div class="row"><span class="muted">t</span><span class="value" id="timeValue">60 s</span></div>
+          </div>
+          <div class="control">
+            <label>Wire Material</label>
+            <select id="material">
+              <option value="nichrome" selected>Nichrome</option>
+              <option value="copper">Copper</option>
+              <option value="iron">Iron</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Wire Length (cm)</label>
+            <input type="range" id="length" min="10" max="200" step="5" value="50" />
+            <div class="row"><span class="muted">L</span><span class="value" id="lengthValue">50 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Wire Thickness (mm)</label>
+            <input type="range" id="thickness" min="0.5" max="5" step="0.1" value="1.5" />
+            <div class="row"><span class="muted">d</span><span class="value" id="thicknessValue">1.5 mm</span></div>
+          </div>
+          <div class="control">
+            <label>Show Formula</label>
+            <div class="toggle">
+              <input type="checkbox" id="showFormula" checked />
+              <span>Display equations</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>Power</span><span class="value" id="powerValue">250 W</span></div>
+            <div class="row"><span>Energy</span><span class="value" id="energyValue">15000 J</span></div>
+            <div class="row"><span>Temperature</span><span class="value" id="tempValue">245°C</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formula</div>
+            <div class="row"><span id="formulaValue">Q = I²Rt</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Doubling current produces four times the heat.</div>
+  </div>
+
+  <script>
+    const materials = {
+      nichrome: { resistivity: 1.1, note: 'Nichrome has high resistivity.' },
+      copper: { resistivity: 0.017, note: 'Copper has low resistivity.' },
+      iron: { resistivity: 0.1, note: 'Iron is moderate.' }
+    };
+
+    const state = {
+      current: 5,
+      resistance: 10,
+      time: 60,
+      material: 'nichrome',
+      length: 50,
+      thickness: 1.5,
+      showFormula: true
+    };
+
+    const dom = {
+      current: document.getElementById('current'),
+      resistance: document.getElementById('resistance'),
+      time: document.getElementById('time'),
+      material: document.getElementById('material'),
+      length: document.getElementById('length'),
+      thickness: document.getElementById('thickness'),
+      showFormula: document.getElementById('showFormula'),
+      currentValue: document.getElementById('currentValue'),
+      resistanceValue: document.getElementById('resistanceValue'),
+      timeValue: document.getElementById('timeValue'),
+      lengthValue: document.getElementById('lengthValue'),
+      thicknessValue: document.getElementById('thicknessValue'),
+      powerValue: document.getElementById('powerValue'),
+      energyValue: document.getElementById('energyValue'),
+      tempValue: document.getElementById('tempValue'),
+      formulaValue: document.getElementById('formulaValue'),
+      jouleCanvas: document.getElementById('jouleCanvas'),
+      graphCanvas: document.getElementById('graphCanvas')
+    };
+
+    const jouleCtx = dom.jouleCanvas.getContext('2d');
+    const graphCtx = dom.graphCanvas.getContext('2d');
+
+    function calcPower() {
+      return state.current ** 2 * state.resistance;
+    }
+
+    function calcEnergy() {
+      return calcPower() * state.time;
+    }
+
+    function updateReadouts() {
+      dom.currentValue.textContent = `${state.current.toFixed(1)} A`;
+      dom.resistanceValue.textContent = `${state.resistance.toFixed(0)} Ω`;
+      dom.timeValue.textContent = `${state.time} s`;
+      dom.lengthValue.textContent = `${state.length} cm`;
+      dom.thicknessValue.textContent = `${state.thickness.toFixed(1)} mm`;
+      dom.powerValue.textContent = `${calcPower().toFixed(0)} W`;
+      dom.energyValue.textContent = `${calcEnergy().toFixed(0)} J`;
+      dom.tempValue.textContent = `${(20 + calcEnergy() / 60).toFixed(0)}°C`;
+      dom.formulaValue.textContent = state.showFormula ? `Q = ${state.current.toFixed(1)}² × ${state.resistance.toFixed(0)} × ${state.time}` : 'Formula hidden';
+    }
+
+    function drawCircuit() {
+      const w = dom.jouleCanvas.width;
+      const h = dom.jouleCanvas.height;
+      jouleCtx.clearRect(0, 0, w, h);
+      jouleCtx.fillStyle = '#0b1420';
+      jouleCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      jouleCtx.strokeStyle = '#6ad7ff';
+      jouleCtx.lineWidth = 2;
+      jouleCtx.beginPath();
+      jouleCtx.moveTo(80, mid);
+      jouleCtx.lineTo(w - 80, mid);
+      jouleCtx.stroke();
+
+      const tempColor = `rgb(${Math.min(255, 80 + calcEnergy() / 40)}, 80, 80)`;
+      jouleCtx.fillStyle = tempColor;
+      jouleCtx.fillRect(w / 2 - 40, mid - 20, 80, 40);
+      jouleCtx.fillStyle = '#f6c76b';
+      for (let i = 0; i < 12; i++) {
+        jouleCtx.beginPath();
+        jouleCtx.arc(100 + i * 40, mid + 30 + Math.sin(i) * 4, 3, 0, Math.PI * 2);
+        jouleCtx.fill();
+      }
+      jouleCtx.fillStyle = '#8aa0b8';
+      jouleCtx.fillText('A', 50, mid - 10);
+      jouleCtx.fillText('V', w - 50, mid - 10);
+    }
+
+    function drawGraph() {
+      const w = dom.graphCanvas.width;
+      const h = dom.graphCanvas.height;
+      graphCtx.clearRect(0, 0, w, h);
+      graphCtx.fillStyle = '#0b1420';
+      graphCtx.fillRect(0, 0, w, h);
+      graphCtx.strokeStyle = '#6ad7ff';
+      graphCtx.beginPath();
+      graphCtx.moveTo(40, h - 40);
+      graphCtx.lineTo(w - 40, 40);
+      graphCtx.stroke();
+      graphCtx.fillStyle = '#8aa0b8';
+      graphCtx.fillText('Energy', 10, 30);
+      graphCtx.fillText('Time', w - 40, h - 10);
+    }
+
+    function render() {
+      updateReadouts();
+      drawCircuit();
+      drawGraph();
+    }
+
+    function bind() {
+      dom.current.addEventListener('input', () => { state.current = Number(dom.current.value); render(); });
+      dom.resistance.addEventListener('input', () => { state.resistance = Number(dom.resistance.value); render(); });
+      dom.time.addEventListener('input', () => { state.time = Number(dom.time.value); render(); });
+      dom.material.addEventListener('change', () => { state.material = dom.material.value; render(); });
+      dom.length.addEventListener('input', () => { state.length = Number(dom.length.value); render(); });
+      dom.thickness.addEventListener('input', () => { state.thickness = Number(dom.thickness.value); render(); });
+      dom.showFormula.addEventListener('change', () => { state.showFormula = dom.showFormula.checked; render(); });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

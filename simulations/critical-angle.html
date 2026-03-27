@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Total Internal Reflection</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Optics</span></div>
+    <header class="hero"><h1>Total Internal Reflection</h1><p>Critical angle and optical fibers</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">θc = sin⁻¹(n₂/n₁)</div>
+        <div class="control-group">
+          <label>Incident Angle (°)</label>
+          <input type="range" id="angleSlider" min="0" max="90" value="50">
+        </div>
+        <div class="control-group">
+          <label>n₁ (denser)</label>
+          <select id="n1" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="1.5">Glass (1.50)</option>
+            <option value="1.33">Water (1.33)</option>
+            <option value="2.42">Diamond (2.42)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>n₂ (rarer)</label>
+          <select id="n2" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="1.0">Air (1.00)</option>
+            <option value="1.33">Water (1.33)</option>
+          </select>
+        </div>
+        <div class="data-panel">
+          <div>Critical Angle: <strong id="critVal">0</strong>°</div>
+          <div>Status: <strong id="statusVal">Refraction</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const angleSlider = document.getElementById('angleSlider');
+    const n1 = document.getElementById('n1');
+    const n2 = document.getElementById('n2');
+    function update() {
+      const n1v = parseFloat(n1.value), n2v = parseFloat(n2.value);
+      const theta1 = parseFloat(angleSlider.value);
+      const crit = Math.asin(n2v / n1v) * 180 / Math.PI;
+      const isTIR = theta1 > crit;
+      document.getElementById('critVal').textContent = crit.toFixed(1);
+      document.getElementById('statusVal').textContent = isTIR ? 'TIR!' : 'Refraction';
+      document.getElementById('statusVal').style.color = isTIR ? '#ff6b6b' : '#6ad7ff';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const n1v = parseFloat(n1.value), n2v = parseFloat(n2.value);
+      const theta1 = parseFloat(angleSlider.value);
+      const crit = Math.asin(n2v / n1v) * 180 / Math.PI;
+      const isTIR = theta1 > crit;
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.15)';
+      ctx.fillRect(0, 0, cx, h);
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.15)';
+      ctx.fillRect(cx, 0, cx, h);
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(50, cy); ctx.lineTo(w - 50, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx, 30); ctx.lineTo(cx, h - 30); ctx.stroke();
+      const r = 120;
+      const rad1 = theta1 * Math.PI / 180;
+      const x1 = cx + Math.cos(Math.PI - rad1) * r;
+      const y1 = cy - Math.sin(rad1) * r;
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x1, y1); ctx.stroke();
+      if (!isTIR) {
+        const theta2 = Math.asin(n1v / n2v * Math.sin(rad1));
+        const x2 = cx + Math.cos(theta2) * r;
+        const y2 = cy - Math.sin(theta2) * r;
+        ctx.strokeStyle = '#f6c76b';
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x2, y2); ctx.stroke();
+      } else {
+        const reflectAngle = Math.PI - rad1;
+        const xr = cx + Math.cos(reflectAngle) * r;
+        const yr = cy - Math.sin(reflectAngle) * r;
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(xr, yr); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      update();
+      requestAnimationFrame(draw);
+    }
+    angleSlider.addEventListener('input', update);
+    n1.addEventListener('change', update);
+    n2.addEventListener('change', update);
+    draw();
+  </script>
+</body>
+</html>

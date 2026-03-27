@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Atomic Spectra</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Atomic Spectra</h1>
+        <p>Emission and absorption lines</p>
+      </div>
+      <div class="pill">1/λ = R(1/n² - 1/m²)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Atom & Spectrum</h2>
+        <canvas id="atomCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Spectrum Display</h2>
+            <canvas id="spectrumCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Energy Levels</h2>
+            <canvas id="levelsCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Element</label>
+            <select id="element">
+              <option value="hydrogen" selected>Hydrogen</option>
+              <option value="helium">Helium</option>
+              <option value="neon">Neon</option>
+              <option value="mercury">Mercury</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Initial Level (m)</label>
+            <input type="range" id="mLevel" min="2" max="6" step="1" value="3" />
+            <div class="row"><span class="muted">m</span><span class="value" id="mValue">3</span></div>
+          </div>
+          <div class="control">
+            <label>Final Level (n)</label>
+            <input type="range" id="nLevel" min="1" max="3" step="1" value="2" />
+            <div class="row"><span class="muted">n</span><span class="value" id="nValue">2</span></div>
+          </div>
+          <div class="control">
+            <label>Show Series</label>
+            <div class="toggle">
+              <input type="checkbox" id="showSeries" checked />
+              <span>Lyman/Balmer/Paschen</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Spectrum Type</label>
+            <select id="specType">
+              <option value="emission" selected>Emission</option>
+              <option value="absorption">Absorption</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Wavelength Range</label>
+            <input type="range" id="range" min="200" max="900" step="10" value="700" />
+            <div class="row"><span class="muted">Max λ</span><span class="value" id="rangeValue">700 nm</span></div>
+          </div>
+          <div class="control">
+            <label>Transition</label>
+            <button id="transition">Fire Transition</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Transition</div>
+            <div class="row"><span>λ</span><span class="value" id="lambdaValue">656 nm</span></div>
+            <div class="row"><span>Photon E</span><span class="value" id="energyValue">1.89 eV</span></div>
+            <div class="row"><span>Series</span><span class="value" id="seriesValue">Balmer</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span id="noteValue">Hydrogen Balmer lines are visible.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Each element has unique spectral fingerprints used in spectroscopy.</div>
+  </div>
+
+  <script>
+    const R = 1.097e7;
+    const elements = {
+      hydrogen: { lines: [656.3, 486.1, 434.0, 410.2] },
+      helium: { lines: [587.6, 447.1, 468.6] },
+      neon: { lines: [585.2, 640.2, 650.7, 703.2] },
+      mercury: { lines: [404.7, 435.8, 546.1, 577.0] }
+    };
+
+    const state = {
+      element: 'hydrogen',
+      m: 3,
+      n: 2,
+      showSeries: true,
+      specType: 'emission',
+      range: 700,
+      glow: 0
+    };
+
+    const dom = {
+      element: document.getElementById('element'),
+      mLevel: document.getElementById('mLevel'),
+      nLevel: document.getElementById('nLevel'),
+      showSeries: document.getElementById('showSeries'),
+      specType: document.getElementById('specType'),
+      range: document.getElementById('range'),
+      transition: document.getElementById('transition'),
+      mValue: document.getElementById('mValue'),
+      nValue: document.getElementById('nValue'),
+      rangeValue: document.getElementById('rangeValue'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      energyValue: document.getElementById('energyValue'),
+      seriesValue: document.getElementById('seriesValue'),
+      noteValue: document.getElementById('noteValue'),
+      atomCanvas: document.getElementById('atomCanvas'),
+      spectrumCanvas: document.getElementById('spectrumCanvas'),
+      levelsCanvas: document.getElementById('levelsCanvas')
+    };
+
+    const atomCtx = dom.atomCanvas.getContext('2d');
+    const specCtx = dom.spectrumCanvas.getContext('2d');
+    const levelsCtx = dom.levelsCanvas.getContext('2d');
+
+    function rydberg(m, n) {
+      return 1 / (R * (1 / (n * n) - 1 / (m * m)));
+    }
+
+    function photonEnergy(lambdaNm) {
+      return 1240 / lambdaNm;
+    }
+
+    function seriesName(n) {
+      if (n === 1) return 'Lyman';
+      if (n === 2) return 'Balmer';
+      if (n === 3) return 'Paschen';
+      if (n === 4) return 'Brackett';
+      return 'Series';
+    }
+
+    function updateReadouts() {
+      dom.mValue.textContent = state.m;
+      dom.nValue.textContent = state.n;
+      dom.rangeValue.textContent = `${state.range} nm`;
+      const lambda = rydberg(state.m, state.n) * 1e9;
+      dom.lambdaValue.textContent = `${lambda.toFixed(1)} nm`;
+      dom.energyValue.textContent = `${photonEnergy(lambda).toFixed(2)} eV`;
+      dom.seriesValue.textContent = seriesName(state.n);
+      dom.noteValue.textContent = state.element === 'hydrogen'
+        ? 'Hydrogen Balmer lines are visible.'
+        : 'Each element has unique spectral lines.';
+    }
+
+    function drawAtom() {
+      const w = dom.atomCanvas.width;
+      const h = dom.atomCanvas.height;
+      atomCtx.clearRect(0, 0, w, h);
+      atomCtx.fillStyle = '#0b1420';
+      atomCtx.fillRect(0, 0, w, h);
+      const center = { x: w / 2, y: h / 2 };
+      atomCtx.strokeStyle = '#6ad7ff';
+      for (let i = 1; i <= 5; i++) {
+        atomCtx.beginPath();
+        atomCtx.arc(center.x, center.y, i * 25, 0, Math.PI * 2);
+        atomCtx.stroke();
+      }
+      atomCtx.fillStyle = '#f6c76b';
+      atomCtx.beginPath();
+      atomCtx.arc(center.x + state.m * 15, center.y, 6, 0, Math.PI * 2);
+      atomCtx.fill();
+      if (state.glow > 0) {
+        atomCtx.strokeStyle = `rgba(246,199,107,${state.glow})`;
+        atomCtx.beginPath();
+        atomCtx.arc(center.x + state.n * 15, center.y, 12, 0, Math.PI * 2);
+        atomCtx.stroke();
+        state.glow -= 0.02;
+      }
+    }
+
+    function drawSpectrum() {
+      const w = dom.spectrumCanvas.width;
+      const h = dom.spectrumCanvas.height;
+      specCtx.clearRect(0, 0, w, h);
+      specCtx.fillStyle = '#0b1420';
+      specCtx.fillRect(0, 0, w, h);
+      const lines = elements[state.element].lines.filter((l) => l <= state.range);
+      lines.forEach((lambda) => {
+        const x = (lambda - 200) / (state.range - 200) * w;
+        specCtx.strokeStyle = `hsl(${(750 - lambda) / 2}, 80%, 60%)`;
+        specCtx.beginPath();
+        specCtx.moveTo(x, 20);
+        specCtx.lineTo(x, h - 20);
+        specCtx.stroke();
+      });
+    }
+
+    function drawLevels() {
+      const w = dom.levelsCanvas.width;
+      const h = dom.levelsCanvas.height;
+      levelsCtx.clearRect(0, 0, w, h);
+      levelsCtx.fillStyle = '#0b1420';
+      levelsCtx.fillRect(0, 0, w, h);
+      levelsCtx.strokeStyle = '#6ad7ff';
+      for (let i = 1; i <= 5; i++) {
+        const y = h - i * 35;
+        levelsCtx.beginPath();
+        levelsCtx.moveTo(40, y);
+        levelsCtx.lineTo(w - 40, y);
+        levelsCtx.stroke();
+        levelsCtx.fillStyle = '#8aa0b8';
+        levelsCtx.fillText(`n=${i}`, 10, y + 4);
+      }
+      levelsCtx.strokeStyle = '#f6c76b';
+      levelsCtx.beginPath();
+      levelsCtx.moveTo(w / 2, h - state.m * 35);
+      levelsCtx.lineTo(w / 2, h - state.n * 35);
+      levelsCtx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawAtom();
+      drawSpectrum();
+      drawLevels();
+    }
+
+    function bind() {
+      dom.element.addEventListener('change', () => { state.element = dom.element.value; render(); });
+      dom.mLevel.addEventListener('input', () => { state.m = Number(dom.mLevel.value); render(); });
+      dom.nLevel.addEventListener('input', () => { state.n = Number(dom.nLevel.value); render(); });
+      dom.showSeries.addEventListener('change', () => { state.showSeries = dom.showSeries.checked; render(); });
+      dom.specType.addEventListener('change', () => { state.specType = dom.specType.value; render(); });
+      dom.range.addEventListener('input', () => { state.range = Number(dom.range.value); render(); });
+      dom.transition.addEventListener('click', () => { state.glow = 1; render(); });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Magnetic Fields</title>
+  <style>
+    :root {
+      --bg: #0c1116;
+      --panel: #141b22;
+      --ink: #e6f0ff;
+      --muted: #9fb3c8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --good: #6bff6b;
+      --danger: #ff6b6b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1000px 600px at 10% -10%, #1a2430 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 {
+      font-size: 20px;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .tab.active { color: var(--ink); border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(106,215,255,0.3); }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    .legend { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Magnetic Fields</h1>
+    <div class="subtitle">Field patterns, right-hand rule, and force on a current-carrying wire</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="bar">Bar Magnet</button>
+        <button class="tab" data-mode="wire">Straight Wire</button>
+        <button class="tab" data-mode="solenoid">Solenoid</button>
+        <button class="tab" data-mode="force">Force on Wire</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <canvas id="scene" width="960" height="420"></canvas>
+      </div>
+      <div style="margin-top: 10px; display: flex; gap: 12px; align-items: center;">
+        <div class="legend"><span class="dot" style="background: var(--accent);"></span> Field lines</div>
+        <div class="legend"><span class="dot" style="background: var(--accent-2);"></span> Current / Magnet</div>
+        <div class="legend"><span class="dot" style="background: var(--good);"></span> Force</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Current (I)</label>
+          <input id="current" type="range" min="0" max="10" step="0.1" value="5" />
+          <div class="row"><span>0 A</span><span id="currentVal">5.0 A</span><span>10 A</span></div>
+        </div>
+        <div class="control">
+          <label>Wire Length (L)</label>
+          <input id="length" type="range" min="0.05" max="0.5" step="0.01" value="0.1" />
+          <div class="row"><span>0.05 m</span><span id="lengthVal">0.10 m</span><span>0.50 m</span></div>
+        </div>
+        <div class="control">
+          <label>Solenoid Turns (N)</label>
+          <input id="turns" type="range" min="50" max="500" step="10" value="200" />
+          <div class="row"><span>50</span><span id="turnsVal">200</span><span>500</span></div>
+        </div>
+        <div class="control">
+          <label>Magnet Strength</label>
+          <input id="strength" type="range" min="0.5" max="5" step="0.1" value="2" />
+          <div class="row"><span>0.5x</span><span id="strengthVal">2.0x</span><span>5.0x</span></div>
+        </div>
+        <div class="control">
+          <label>Probe (Compass) Mode</label>
+          <select id="probeMode">
+            <option value="compass">Compass Needle</option>
+            <option value="meter">Field Meter</option>
+          </select>
+          <div style="margin-top: 8px; font-size: 12px; color: var(--muted);">Drag the probe in the canvas.</div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showLines" type="checkbox" checked /> Field lines</label>
+            <label><input id="showArrows" type="checkbox" checked /> Line arrows</label>
+            <label><input id="showCompass" type="checkbox" checked /> Probe</label>
+            <label><input id="showStrength" type="checkbox" /> Strength color</label>
+            <label><input id="showForce" type="checkbox" checked /> Force vector</label>
+            <label><input id="showDir" type="checkbox" checked /> Direction labels</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Right-hand rule: thumb = current, fingers curl = field direction. Force on wire: F = BIL sin(theta).
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      mode: 'bar',
+      I: 5,
+      L: 0.1,
+      N: 200,
+      strength: 2,
+      probe: { x: 650, y: 210, dragging: false },
+      showLines: true,
+      showArrows: true,
+      showCompass: true,
+      showStrength: false,
+      showForce: true,
+      showDir: true,
+      probeMode: 'compass',
+      currentOut: true,
+      time: 0
+    };
+
+    const mu0 = 4 * Math.PI * 1e-7;
+
+    function toCanvas(x, y) { return { x, y }; }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function fieldAt(x, y) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      if (state.mode === 'wire') {
+        const dx = x - cx;
+        const dy = y - cy;
+        const r2 = dx*dx + dy*dy;
+        const r = Math.sqrt(r2) + 1e-6;
+        const Bmag = (mu0 * state.I) / (2 * Math.PI * (r * 0.002));
+        const dir = state.currentOut ? 1 : -1;
+        const tx = -dy / r * dir;
+        const ty = dx / r * dir;
+        return { bx: tx * Bmag, by: ty * Bmag, B: Bmag };
+      }
+
+      if (state.mode === 'solenoid') {
+        const coil = { x: cx - 160, y: cy - 60, w: 320, h: 120 };
+        const inside = x > coil.x && x < coil.x + coil.w && y > coil.y && y < coil.y + coil.h;
+        const n = state.N / (0.3);
+        const Bmag = mu0 * n * state.I * 0.8;
+        if (inside) return { bx: Bmag, by: 0, B: Bmag };
+        const dx = x - cx;
+        const dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy) + 1e-6;
+        return { bx: -Bmag * dx / (r*r) * 40, by: -Bmag * dy / (r*r) * 40, B: Bmag / (r*0.02) };
+      }
+
+      // bar magnet (dipole) along x axis
+      const m = state.strength;
+      const dx = (x - cx) / 120;
+      const dy = (y - cy) / 120;
+      const r2 = dx*dx + dy*dy + 0.01;
+      const r = Math.sqrt(r2);
+      const mx = 1, my = 0;
+      const dot = mx*dx + my*dy;
+      const factor = m / (r2 * r);
+      const bx = factor * (3 * dot * dx / r2 - mx);
+      const by = factor * (3 * dot * dy / r2 - my);
+      const B = Math.sqrt(bx*bx + by*by) * 1e-3;
+      return { bx, by, B };
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < canvas.width; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 60) {
+        ctx.beginPath();
+        ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+    }
+
+    function drawBarMagnet() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const w = 200;
+      const h = 40;
+      ctx.fillStyle = '#6a1b1b';
+      ctx.fillRect(cx - w/2, cy - h/2, w/2, h);
+      ctx.fillStyle = '#0b4f8a';
+      ctx.fillRect(cx, cy - h/2, w/2, h);
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px Trebuchet MS';
+      ctx.fillText('N', cx - w/2 + 10, cy + 5);
+      ctx.fillText('S', cx + w/2 - 20, cy + 5);
+    }
+
+    function drawWire() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (state.currentOut) {
+        ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.stroke();
+      } else {
+        ctx.moveTo(cx-6, cy-6); ctx.lineTo(cx+6, cy+6);
+        ctx.moveTo(cx+6, cy-6); ctx.lineTo(cx-6, cy+6);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1;
+      if (state.showDir) {
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText(state.currentOut ? 'I out of page' : 'I into page', cx - 40, cy + 40);
+      }
+    }
+
+    function drawSolenoid() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const w = 320;
+      const h = 120;
+      ctx.strokeStyle = '#4a5568';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - w/2, cy - h/2, w, h);
+      ctx.strokeStyle = '#f6c76b';
+      for (let i = 0; i < 12; i++) {
+        const x = cx - w/2 + i * (w/12) + 10;
+        ctx.beginPath();
+        ctx.arc(x, cy, 16, Math.PI/2, Math.PI*1.5);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('I', cx + w/2 + 10, cy - 10);
+    }
+
+    function drawForceScene() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      // poles
+      ctx.fillStyle = '#6a1b1b';
+      ctx.fillRect(cx - 200, cy - 120, 90, 240);
+      ctx.fillStyle = '#0b4f8a';
+      ctx.fillRect(cx + 110, cy - 120, 90, 240);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('N', cx - 170, cy - 100);
+      ctx.fillText('S', cx + 150, cy - 100);
+
+      // uniform field arrows
+      if (state.showLines) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.4)';
+        for (let y = cy - 90; y <= cy + 90; y += 30) {
+          ctx.beginPath();
+          ctx.moveTo(cx - 90, y); ctx.lineTo(cx + 90, y); ctx.stroke();
+          if (state.showArrows) drawArrow(cx - 10, y, cx + 10, y, '#6ad7ff');
+        }
+      }
+
+      // wire in middle
+      ctx.fillStyle = '#222';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 16, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (state.currentOut) {
+        ctx.arc(cx, cy, 6, 0, Math.PI*2); ctx.stroke();
+      } else {
+        ctx.moveTo(cx-6, cy-6); ctx.lineTo(cx+6, cy+6);
+        ctx.moveTo(cx+6, cy-6); ctx.lineTo(cx-6, cy+6);
+        ctx.stroke();
+      }
+      ctx.lineWidth = 1;
+
+      // force arrow
+      if (state.showForce) {
+        const B = 1;
+        const I = state.I;
+        const L = state.L;
+        const dir = state.currentOut ? 1 : -1;
+        const Fx = 0;
+        const Fy = dir * B * I * L;
+        const scale = 200;
+        drawArrow(cx, cy, cx + scale * 0.5, cy - Fy * scale, '#6bff6b');
+        ctx.fillStyle = '#6bff6b';
+        ctx.fillText('F', cx + scale * 0.5 + 6, cy - Fy * scale + 4);
+      }
+    }
+
+    function drawArrow(x1, y1, x2, y2, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const head = 8;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - head * Math.cos(angle - Math.PI/6), y2 - head * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(x2 - head * Math.cos(angle + Math.PI/6), y2 - head * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawFieldLines() {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      ctx.strokeStyle = 'rgba(106,215,255,0.5)';
+      ctx.lineWidth = 1;
+
+      if (state.mode === 'wire') {
+        for (let r = 30; r < 200; r += 25) {
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI*2);
+          ctx.stroke();
+          if (state.showArrows) {
+            const ax = cx + r;
+            const ay = cy;
+            drawArrow(ax, ay, ax, ay + (state.currentOut ? 18 : -18), '#6ad7ff');
+          }
+        }
+      } else if (state.mode === 'solenoid') {
+        const coil = { x: cx - 160, y: cy - 60, w: 320, h: 120 };
+        for (let i = 0; i < 6; i++) {
+          const y = coil.y + 20 + i * 16;
+          ctx.beginPath();
+          ctx.moveTo(coil.x + 10, y);
+          ctx.lineTo(coil.x + coil.w - 10, y);
+          ctx.stroke();
+          if (state.showArrows) drawArrow(coil.x + coil.w - 30, y, coil.x + coil.w - 5, y, '#6ad7ff');
+        }
+        // return lines
+        ctx.beginPath();
+        ctx.moveTo(coil.x + coil.w - 10, coil.y - 10);
+        ctx.bezierCurveTo(cx + 200, cy - 120, cx + 200, cy + 120, coil.x + coil.w - 10, coil.y + coil.h + 10);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(coil.x + 10, coil.y + coil.h + 10);
+        ctx.bezierCurveTo(cx - 200, cy + 120, cx - 200, cy - 120, coil.x + 10, coil.y - 10);
+        ctx.stroke();
+      } else if (state.mode === 'bar') {
+        // stylized field loops
+        for (let i = 0; i < 5; i++) {
+          const offset = i * 22;
+          ctx.beginPath();
+          ctx.moveTo(cx - 110, cy - 30 - offset);
+          ctx.bezierCurveTo(cx - 160, cy - 120 - offset, cx + 160, cy - 120 - offset, cx + 110, cy - 30 - offset);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx - 110, cy + 30 + offset);
+          ctx.bezierCurveTo(cx - 160, cy + 120 + offset, cx + 160, cy + 120 + offset, cx + 110, cy + 30 + offset);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function drawStrengthMap() {
+      const step = 25;
+      for (let x = step; x < canvas.width; x += step) {
+        for (let y = step; y < canvas.height; y += step) {
+          const f = fieldAt(x, y);
+          const b = clamp(f.B * 5e4, 0, 1);
+          const r = Math.floor(50 + 150 * b);
+          const g = Math.floor(80 + 120 * (1 - b));
+          ctx.fillStyle = `rgba(${r},${g},200,0.25)`;
+          ctx.fillRect(x - step/2, y - step/2, step, step);
+        }
+      }
+    }
+
+    function drawCompass() {
+      const { x, y } = state.probe;
+      const f = fieldAt(x, y);
+      const angle = Math.atan2(f.by, f.bx);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.strokeStyle = '#fff';
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(-16, 0); ctx.lineTo(16, 0); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(16, 0); ctx.lineTo(8, -6); ctx.lineTo(8, 6); ctx.closePath(); ctx.fill();
+      ctx.restore();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
+    }
+
+    function drawProbeMeter() {
+      const { x, y } = state.probe;
+      ctx.fillStyle = '#0f151c';
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.rect(x - 18, y - 12, 36, 24); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '11px Consolas';
+      const f = fieldAt(x, y);
+      ctx.fillText(`${(f.B*1e5).toFixed(2)}e-5 T`, x - 16, y + 4);
+    }
+
+    function draw() {
+      drawBackground();
+
+      if (state.showStrength) drawStrengthMap();
+
+      if (state.mode === 'bar') drawBarMagnet();
+      if (state.mode === 'wire') drawWire();
+      if (state.mode === 'solenoid') drawSolenoid();
+      if (state.mode === 'force') drawForceScene();
+
+      if (state.showLines && state.mode !== 'force') drawFieldLines();
+
+      if (state.showCompass) {
+        if (state.probeMode === 'compass') drawCompass();
+        else drawProbeMeter();
+      }
+    }
+
+    function updateReadout() {
+      const f = fieldAt(state.probe.x, state.probe.y);
+      let src = '';
+      if (state.mode === 'bar') src = 'Bar Magnet';
+      if (state.mode === 'wire') src = 'Straight Wire';
+      if (state.mode === 'solenoid') src = 'Solenoid';
+      if (state.mode === 'force') src = 'Wire in Field';
+
+      const r = Math.sqrt(Math.pow(state.probe.x - canvas.width/2,2) + Math.pow(state.probe.y - canvas.height/2,2));
+      const dist = (r * 0.002).toFixed(3);
+
+      const B = f.B;
+      const force = B * state.I * state.L;
+
+      const text = `MAGNETIC FIELD DATA\n` +
+        `-----------------------------\n` +
+        `FIELD SOURCE\n` +
+        `Type: ${src}\n` +
+        `Current I: ${state.I.toFixed(2)} A\n` +
+        `Distance r: ${dist} m\n` +
+        `\nFIELD STRENGTH\n` +
+        `B = ${B.toExponential(2)} T\n` +
+        `Earth field ~ 5e-5 T\n` +
+        `\nFORCE (if wire present)\n` +
+        `Length L: ${state.L.toFixed(2)} m\n` +
+        `F = BIL = ${force.toExponential(2)} N\n`;
+
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      state.time += 0.016;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI bindings
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+      });
+    });
+
+    document.getElementById('current').addEventListener('input', e => {
+      state.I = parseFloat(e.target.value);
+      document.getElementById('currentVal').textContent = `${state.I.toFixed(1)} A`;
+    });
+
+    document.getElementById('length').addEventListener('input', e => {
+      state.L = parseFloat(e.target.value);
+      document.getElementById('lengthVal').textContent = `${state.L.toFixed(2)} m`;
+    });
+
+    document.getElementById('turns').addEventListener('input', e => {
+      state.N = parseFloat(e.target.value);
+      document.getElementById('turnsVal').textContent = `${state.N.toFixed(0)}`;
+    });
+
+    document.getElementById('strength').addEventListener('input', e => {
+      state.strength = parseFloat(e.target.value);
+      document.getElementById('strengthVal').textContent = `${state.strength.toFixed(1)}x`;
+    });
+
+    document.getElementById('showLines').addEventListener('change', e => state.showLines = e.target.checked);
+    document.getElementById('showArrows').addEventListener('change', e => state.showArrows = e.target.checked);
+    document.getElementById('showCompass').addEventListener('change', e => state.showCompass = e.target.checked);
+    document.getElementById('showStrength').addEventListener('change', e => state.showStrength = e.target.checked);
+    document.getElementById('showForce').addEventListener('change', e => state.showForce = e.target.checked);
+    document.getElementById('showDir').addEventListener('change', e => state.showDir = e.target.checked);
+    document.getElementById('probeMode').addEventListener('change', e => state.probeMode = e.target.value);
+
+    // Drag probe
+    canvas.addEventListener('mousedown', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      const dx = x - state.probe.x;
+      const dy = y - state.probe.y;
+      if (Math.sqrt(dx*dx + dy*dy) < 20) {
+        state.probe.dragging = true;
+      }
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (!state.probe.dragging) return;
+      const rect = canvas.getBoundingClientRect();
+      state.probe.x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      state.probe.y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    });
+    window.addEventListener('mouseup', () => state.probe.dragging = false);
+
+    // Toggle current direction on double click
+    canvas.addEventListener('dblclick', () => {
+      state.currentOut = !state.currentOut;
+    });
+
+    tick();
+  </script>
+</body>
+</html>

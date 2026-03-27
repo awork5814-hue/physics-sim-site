@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Heisenberg Uncertainty Principle</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+                  radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+                  #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 16px; text-align: center; font-size: 1.3rem; margin: 12px 0; }
+    .wave-packet { display: flex; gap: 4px; height: 60px; align-items: flex-end; margin: 10px 0; }
+    .wave-bar { width: 8px; background: var(--accent); border-radius: 2px; transition: height 0.1s; }
+    .uncertainty-display { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .unc-box { background: rgba(6, 10, 18, 0.5); border-radius: 10px; padding: 12px; text-align: center; }
+    .unc-box .label { font-size: 0.85rem; color: var(--sim-muted); }
+    .unc-box .value { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .product-display { text-align: center; padding: 14px; background: rgba(246, 199, 107, 0.1); border-radius: 12px; border: 1px solid var(--accent-2); margin-top: 12px; }
+    .product-display .value { font-size: 1.5rem; font-weight: 700; color: var(--accent-2); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/">← Physics Simulations</a>
+      <span class="toggle">Uncertainty Principle</span>
+    </div>
+    <header class="hero">
+      <h1>Heisenberg Uncertainty</h1>
+      <p>Δx · Δp ≥ ℏ/2 — The fundamental limit to measurement precision</p>
+    </header>
+    <div class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="simCanvas"></canvas>
+      </div>
+      <div class="panel controls">
+        <div class="control-group">
+          <label>Momentum Uncertainty (Δp)</label>
+          <input type="range" id="dpSlider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Position Measurement Precision</label>
+          <input type="range" id="dxSlider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Particle Mass (kg)</label>
+          <input type="range" id="massSlider" min="1" max="100" value="10">
+        </div>
+        <div class="formula">Δx · Δp ≥ <span id="hbar2">5.27e-35</span> J·s</div>
+        <div class="uncertainty-display">
+          <div class="unc-box">
+            <div class="label">Δx (position)</div>
+            <div class="value" id="dxVal">1.00 nm</div>
+          </div>
+          <div class="unc-box">
+            <div class="label">Δp (momentum)</div>
+            <div class="value" id="dpVal">1.00e-25</div>
+          </div>
+        </div>
+        <div class="product-display">
+          <div class="label">Uncertainty Product</div>
+          <div class="value" id="productVal">1.00e-34</div>
+          <div class="label" id="constraintStatus">≥ ℏ/2 ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+
+    const dpSlider = document.getElementById('dpSlider');
+    const dxSlider = document.getElementById('dxSlider');
+    const massSlider = document.getElementById('massSlider');
+
+    let time = 0;
+    const hbar = 1.0546e-34;
+    const minProduct = hbar / 2;
+
+    function update() {
+      const dp = dpSlider.value / 10;
+      const dx = dxSlider.value / 10;
+      const mass = massSlider.value / 10 * 9.109e-31;
+
+      const actualDx = minProduct / (dp * mass * 1e10) * 1e9;
+      const product = dx * dp * mass * 1e20;
+
+      document.getElementById('dxVal').textContent = dx.toFixed(2) + ' nm';
+      document.getElementById('dpVal').textContent = dp.toFixed(2) + 'e-25';
+      document.getElementById('hbar2').textContent = minProduct.toExponential(2);
+      document.getElementById('productVal').textContent = product.toExponential(2);
+      document.getElementById('constraintStatus').textContent = product >= minProduct ? '≥ ℏ/2 ✓' : '< ℏ/2 ✗';
+      document.getElementById('constraintStatus').style.color = product >= minProduct ? '#6ad7ff' : '#ff6b6b';
+    }
+
+    function draw() {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const dp = dpSlider.value / 10;
+      const dx = dxSlider.value / 10;
+      const cx = w / 2, cy = h / 2;
+
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+
+      const spread = dx * 30 + 20;
+      const momentumSpread = dp * 15 + 5;
+
+      const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, spread * 2);
+      gradient.addColorStop(0, 'rgba(106, 215, 255, 0.8)');
+      gradient.addColorStop(0.3, 'rgba(106, 215, 255, 0.4)');
+      gradient.addColorStop(0.6, 'rgba(106, 215, 255, 0.15)');
+      gradient.addColorStop(1, 'rgba(106, 215, 255, 0)');
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, spread * 2, spread, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, spread, spread * 0.5, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.fillText('Δx', cx + spread + 10, cy);
+
+      const arrowLen = momentumSpread * 8;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - arrowLen/2, cy + spread + 40);
+      ctx.lineTo(cx + arrowLen/2, cy + spread + 40);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(cx + arrowLen/2, cy + spread + 40);
+      ctx.lineTo(cx + arrowLen/2 - 8, cy + spread + 35);
+      ctx.lineTo(cx + arrowLen/2 - 8, cy + spread + 45);
+      ctx.fill();
+      ctx.fillText('Δp', cx, cy + spread + 60);
+
+      for (let i = 0; i < 5; i++) {
+        const angle = time * 0.02 + i * Math.PI * 0.4;
+        const r = spread * 0.3 + Math.sin(time * 0.05 + i) * 15;
+        const px = cx + Math.cos(angle) * r;
+        const py = cy + Math.sin(angle) * r * 0.5;
+
+        ctx.fillStyle = 'rgba(246, 199, 107, 0.7)';
+        ctx.beginPath();
+        ctx.arc(px, py, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Particle Position (uncertain)', 15, h - 20);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('Momentum vectors (uncertain)', w - 180, h - 20);
+
+      time++;
+      requestAnimationFrame(draw);
+    }
+
+    dpSlider.addEventListener('input', update);
+    dxSlider.addEventListener('input', update);
+    massSlider.addEventListener('input', update);
+
+    update();
+    draw();
+  </script>
+</body>
+</html>

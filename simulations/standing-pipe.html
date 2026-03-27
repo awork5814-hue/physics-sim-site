@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standing Waves in Pipes</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Standing Waves in Pipes</h1>
+        <p>Open vs closed pipes and harmonic series</p>
+      </div>
+      <div class="pill">Open: fₙ = nv/2L · Closed: fₙ = nv/4L</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Pipe & Wave Pattern</h2>
+        <canvas id="pipeCanvas" width="640" height="260"></canvas>
+        <canvas id="pressureCanvas" width="640" height="200" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Pipe Type</label>
+            <select id="pipeType">
+              <option value="open" selected>Open-Open</option>
+              <option value="closed">Closed-Open</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Harmonic Number (n)</label>
+            <input type="range" id="harmonic" min="1" max="10" step="1" value="1" />
+            <div class="row"><span class="muted">n</span><span class="value" id="harmonicValue">1</span></div>
+          </div>
+          <div class="control">
+            <label>Pipe Length (m)</label>
+            <input type="range" id="length" min="0.3" max="2.0" step="0.02" value="1.0" />
+            <div class="row"><span class="muted">L</span><span class="value" id="lengthValue">1.00 m</span></div>
+          </div>
+          <div class="control">
+            <label>Temperature (°C)</label>
+            <input type="range" id="temp" min="-10" max="40" step="1" value="20" />
+            <div class="row"><span class="muted">T</span><span class="value" id="tempValue">20°C</span></div>
+          </div>
+          <div class="control">
+            <label>Show Pressure</label>
+            <div class="toggle">
+              <input type="checkbox" id="showPressure" checked />
+              <span>Pressure vs displacement</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show End Correction</label>
+            <div class="toggle">
+              <input type="checkbox" id="endCorrection" />
+              <span>Effective length</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Play Sound</label>
+            <button id="play">Play</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Measurements</div>
+            <div class="row"><span>Speed of sound</span><span class="value" id="speedValue">343 m/s</span></div>
+            <div class="row"><span>Wavelength</span><span class="value" id="lambdaValue">2.00 m</span></div>
+            <div class="row"><span>Frequency</span><span class="value" id="freqValue">171.5 Hz</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Harmonics</div>
+            <div class="row"><span>Allowed</span><span class="value" id="harmonicSet">All</span></div>
+            <div class="row"><span>End correction</span><span class="value" id="corrValue">Off</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Closed pipes support only odd harmonics because one end is a displacement node.</div>
+  </div>
+
+  <script>
+    const state = {
+      pipeType: 'open',
+      harmonic: 1,
+      length: 1.0,
+      temp: 20,
+      showPressure: true,
+      endCorrection: false,
+      time: 0
+    };
+
+    const dom = {
+      pipeType: document.getElementById('pipeType'),
+      harmonic: document.getElementById('harmonic'),
+      length: document.getElementById('length'),
+      temp: document.getElementById('temp'),
+      showPressure: document.getElementById('showPressure'),
+      endCorrection: document.getElementById('endCorrection'),
+      play: document.getElementById('play'),
+      harmonicValue: document.getElementById('harmonicValue'),
+      lengthValue: document.getElementById('lengthValue'),
+      tempValue: document.getElementById('tempValue'),
+      speedValue: document.getElementById('speedValue'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      freqValue: document.getElementById('freqValue'),
+      harmonicSet: document.getElementById('harmonicSet'),
+      corrValue: document.getElementById('corrValue')
+    };
+
+    const pipeCanvas = document.getElementById('pipeCanvas');
+    const pipeCtx = pipeCanvas.getContext('2d');
+    const pressureCanvas = document.getElementById('pressureCanvas');
+    const pressureCtx = pressureCanvas.getContext('2d');
+
+    let audioCtx, osc, gain;
+
+    function calcSpeed() {
+      return 331.5 + 0.6 * state.temp;
+    }
+
+    function effectiveLength() {
+      if (!state.endCorrection) return state.length;
+      const radius = 0.02;
+      return state.length + 0.6 * radius;
+    }
+
+    function calcWavelength() {
+      const L = effectiveLength();
+      if (state.pipeType === 'open') return (2 * L) / state.harmonic;
+      const n = state.harmonic * 2 - 1;
+      return (4 * L) / n;
+    }
+
+    function calcFrequency() {
+      const v = calcSpeed();
+      return v / calcWavelength();
+    }
+
+    function updateReadouts() {
+      dom.harmonicValue.textContent = state.harmonic;
+      dom.lengthValue.textContent = `${state.length.toFixed(2)} m`;
+      dom.tempValue.textContent = `${state.temp}°C`;
+      dom.speedValue.textContent = `${calcSpeed().toFixed(1)} m/s`;
+      dom.lambdaValue.textContent = `${calcWavelength().toFixed(2)} m`;
+      dom.freqValue.textContent = `${calcFrequency().toFixed(1)} Hz`;
+      dom.harmonicSet.textContent = state.pipeType === 'open' ? 'All' : 'Odd only';
+      dom.corrValue.textContent = state.endCorrection ? 'On' : 'Off';
+    }
+
+    function drawPipe() {
+      const w = pipeCanvas.width;
+      const h = pipeCanvas.height;
+      pipeCtx.clearRect(0, 0, w, h);
+      pipeCtx.fillStyle = '#0b1420';
+      pipeCtx.fillRect(0, 0, w, h);
+
+      const mid = h / 2;
+      const margin = 40;
+      const pipeY = mid - 40;
+      const pipeH = 80;
+      pipeCtx.strokeStyle = '#6ad7ff';
+      pipeCtx.lineWidth = 2;
+      pipeCtx.strokeRect(margin, pipeY, w - 2 * margin, pipeH);
+
+      pipeCtx.fillStyle = state.pipeType === 'open' ? '#6ad7ff' : '#f6c76b';
+      if (state.pipeType === 'open') {
+        pipeCtx.beginPath();
+        pipeCtx.arc(margin, mid, 6, 0, Math.PI * 2);
+        pipeCtx.arc(w - margin, mid, 6, 0, Math.PI * 2);
+        pipeCtx.fill();
+      } else {
+        pipeCtx.fillRect(margin - 4, pipeY, 8, pipeH);
+        pipeCtx.beginPath();
+        pipeCtx.arc(w - margin, mid, 6, 0, Math.PI * 2);
+        pipeCtx.fill();
+      }
+
+      const k = 2 * Math.PI / calcWavelength();
+      const omega = 2 * Math.PI * calcFrequency();
+      pipeCtx.strokeStyle = '#f6c76b';
+      pipeCtx.beginPath();
+      for (let x = margin; x <= w - margin; x++) {
+        const xPos = (x - margin) / (w - 2 * margin) * effectiveLength();
+        const phase = state.pipeType === 'open' ? Math.sin(k * xPos) : Math.sin(k * xPos / 2);
+        const y = mid + 30 * phase * Math.sin(omega * state.time);
+        if (x === margin) pipeCtx.moveTo(x, y); else pipeCtx.lineTo(x, y);
+      }
+      pipeCtx.stroke();
+    }
+
+    function drawPressure() {
+      const w = pressureCanvas.width;
+      const h = pressureCanvas.height;
+      pressureCtx.clearRect(0, 0, w, h);
+      pressureCtx.fillStyle = '#0b1420';
+      pressureCtx.fillRect(0, 0, w, h);
+      if (!state.showPressure) {
+        pressureCtx.fillStyle = '#8aa0b8';
+        pressureCtx.fillText('Pressure view hidden', 20, h / 2);
+        return;
+      }
+      const mid = h / 2;
+      const margin = 40;
+      const k = 2 * Math.PI / calcWavelength();
+      pressureCtx.strokeStyle = '#6ad7ff';
+      pressureCtx.beginPath();
+      for (let x = margin; x <= w - margin; x++) {
+        const xPos = (x - margin) / (w - 2 * margin) * effectiveLength();
+        const phase = Math.cos(k * xPos);
+        const y = mid + 30 * phase;
+        if (x === margin) pressureCtx.moveTo(x, y); else pressureCtx.lineTo(x, y);
+      }
+      pressureCtx.stroke();
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.connect(gain).connect(audioCtx.destination);
+        gain.gain.value = 0;
+        osc.start();
+      }
+    }
+
+    function playTone() {
+      ensureAudio();
+      const now = audioCtx.currentTime;
+      osc.frequency.setValueAtTime(calcFrequency(), now);
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+    }
+
+    function render() {
+      updateReadouts();
+      drawPipe();
+      drawPressure();
+    }
+
+    function tick() {
+      state.time += 0.016;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.pipeType.addEventListener('change', () => {
+        state.pipeType = dom.pipeType.value;
+        render();
+      });
+      dom.harmonic.addEventListener('input', () => {
+        state.harmonic = Number(dom.harmonic.value);
+        render();
+      });
+      dom.length.addEventListener('input', () => {
+        state.length = Number(dom.length.value);
+        render();
+      });
+      dom.temp.addEventListener('input', () => {
+        state.temp = Number(dom.temp.value);
+        render();
+      });
+      dom.showPressure.addEventListener('change', () => {
+        state.showPressure = dom.showPressure.checked;
+        render();
+      });
+      dom.endCorrection.addEventListener('change', () => {
+        state.endCorrection = dom.endCorrection.checked;
+        render();
+      });
+      dom.play.addEventListener('click', playTone);
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

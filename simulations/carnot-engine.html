@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carnot Engine</title>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --panel: #121a25;
+      --ink: #e7f2ff;
+      --muted: #9fb3c8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --good: #6bff6b;
+      --danger: #ff6b6b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2230 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .tab.active { color: var(--ink); border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(106,215,255,0.3); }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Carnot Engine</h1>
+    <div class="subtitle">Maximum efficiency heat engine and ideal cycle visualization</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="pv">P-V Diagram</button>
+        <button class="tab" data-mode="ts">T-S Diagram</button>
+        <button class="tab" data-mode="engine">Engine Animation</button>
+        <button class="tab" data-mode="energy">Energy Flow</button>
+      </div>
+      <div style="margin-top: 10px;">
+        <canvas id="scene" width="960" height="420"></canvas>
+      </div>
+      <div style="margin-top: 10px;" class="buttons">
+        <button class="btn" id="animate">Animate Cycle</button>
+        <button class="btn" id="pause">Pause</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Hot Temperature Tₕ (K)</label>
+          <input id="hot" type="range" min="300" max="1000" step="10" value="600" />
+          <div class="row"><span>300</span><span id="hotVal">600</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Cold Temperature Tᴄ (K)</label>
+          <input id="cold" type="range" min="100" max="500" step="10" value="300" />
+          <div class="row"><span>100</span><span id="coldVal">300</span><span>500</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showLabels" type="checkbox" checked /> Process labels</label>
+            <label><input id="showArea" type="checkbox" checked /> Work area</label>
+            <label><input id="showParticles" type="checkbox" checked /> Gas particles</label>
+            <label><input id="showHeat" type="checkbox" checked /> Heat flow arrows</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Carnot efficiency: η = 1 - T_cold / T_hot. No real engine can exceed this limit.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      mode: 'pv',
+      Th: 600,
+      Tc: 300,
+      phase: 0,
+      playing: false,
+      showLabels: true,
+      showArea: true,
+      showParticles: true,
+      showHeat: true
+    };
+
+    function efficiency() {
+      return 1 - state.Tc / state.Th;
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      for (let x = 0; x < canvas.width; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+    }
+
+    function drawPV() {
+      const left = 80, top = 60, w = 360, h = 260;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(left, top, w, h);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('P', left - 20, top + 10);
+      ctx.fillText('V', left + w + 10, top + h + 5);
+
+      const p1 = { x: left + 60, y: top + 60 };
+      const p2 = { x: left + 200, y: top + 40 };
+      const p3 = { x: left + 300, y: top + 200 };
+      const p4 = { x: left + 120, y: top + 220 };
+
+      if (state.showArea) {
+        ctx.fillStyle = 'rgba(106,215,255,0.12)';
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p4.x, p4.y);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      if (state.showLabels) {
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText('1 Isothermal (T_h)', p1.x - 10, p1.y - 10);
+        ctx.fillText('2 Adiabatic', p2.x - 10, p2.y - 10);
+        ctx.fillText('3 Isothermal (T_c)', p3.x - 10, p3.y + 20);
+        ctx.fillText('4 Adiabatic', p4.x - 10, p4.y + 20);
+      }
+    }
+
+    function drawTS() {
+      const left = 80, top = 60, w = 360, h = 260;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(left, top, w, h);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('T', left - 20, top + 10);
+      ctx.fillText('S', left + w + 10, top + h + 5);
+
+      const t1 = { x: left + 60, y: top + 40 };
+      const t2 = { x: left + 300, y: top + 40 };
+      const t3 = { x: left + 300, y: top + 220 };
+      const t4 = { x: left + 60, y: top + 220 };
+
+      if (state.showArea) {
+        ctx.fillStyle = 'rgba(246,199,107,0.12)';
+        ctx.fillRect(t1.x, t1.y, t2.x - t1.x, t4.y - t1.y);
+      }
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(t1.x, t1.y);
+      ctx.lineTo(t2.x, t2.y);
+      ctx.lineTo(t3.x, t3.y);
+      ctx.lineTo(t4.x, t4.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      if (state.showLabels) {
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('T_h', t1.x - 10, t1.y - 10);
+        ctx.fillText('T_c', t4.x - 10, t4.y + 20);
+      }
+    }
+
+    function drawEngine() {
+      const x = 520, y = 90, w = 320, h = 240;
+      ctx.strokeStyle = '#fff';
+      ctx.strokeRect(x, y, w, h);
+      const pistonY = y + 40 + Math.sin(state.phase) * 40;
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(x, pistonY, w, 12);
+
+      if (state.showParticles) {
+        ctx.fillStyle = '#6bff6b';
+        for (let i = 0; i < 60; i++) {
+          const px = x + 10 + (i * 13 % (w - 20));
+          const py = y + 60 + (i * 29 % (h - 80));
+          if (py > pistonY + 12 && py < y + h - 10) {
+            ctx.beginPath();
+            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      if (state.showHeat) {
+        ctx.strokeStyle = '#f6c76b';
+        ctx.beginPath();
+        ctx.moveTo(x + w + 10, y + 30);
+        ctx.lineTo(x + w + 60, y + 30);
+        ctx.stroke();
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText('Qh', x + w + 65, y + 35);
+
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.beginPath();
+        ctx.moveTo(x + w + 10, y + h - 30);
+        ctx.lineTo(x + w + 60, y + h - 30);
+        ctx.stroke();
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('Qc', x + w + 65, y + h - 25);
+      }
+    }
+
+    function drawEnergyFlow() {
+      const x = 520, y = 90;
+      ctx.fillStyle = '#0f151c';
+      ctx.fillRect(x, y, 320, 240);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(x + 20, y + 30, 200, 30);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Q_hot', x + 30, y + 50);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(x + 20, y + 90, 120, 30);
+      ctx.fillText('W', x + 30, y + 110);
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(x + 20, y + 150, 120, 30);
+      ctx.fillText('Q_cold', x + 30, y + 170);
+    }
+
+    function draw() {
+      drawBackground();
+      if (state.mode === 'pv') drawPV();
+      if (state.mode === 'ts') drawTS();
+      if (state.mode === 'engine') drawEngine();
+      if (state.mode === 'energy') drawEnergyFlow();
+    }
+
+    function updateReadout() {
+      const eta = efficiency();
+      const Qh = 100;
+      const W = Qh * eta;
+      const Qc = Qh - W;
+      const text = `CARNOT ENGINE DATA\n` +
+        `--------------------\n` +
+        `TEMPERATURES\n` +
+        `T_hot: ${state.Th.toFixed(0)} K\n` +
+        `T_cold: ${state.Tc.toFixed(0)} K\n` +
+        `\nEFFICIENCY\n` +
+        `eta = 1 - Tc/Th\n` +
+        `eta = ${eta.toFixed(2)} (${(eta*100).toFixed(1)}%)\n` +
+        `\nENERGY FLOW\n` +
+        `Q_hot: ${Qh.toFixed(0)} J\n` +
+        `Work: ${W.toFixed(0)} J\n` +
+        `Q_cold: ${Qc.toFixed(0)} J\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      if (state.playing) state.phase += 0.03;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+      });
+    });
+
+    document.getElementById('hot').addEventListener('input', e => {
+      state.Th = parseFloat(e.target.value);
+      document.getElementById('hotVal').textContent = state.Th.toFixed(0);
+    });
+    document.getElementById('cold').addEventListener('input', e => {
+      state.Tc = parseFloat(e.target.value);
+      document.getElementById('coldVal').textContent = state.Tc.toFixed(0);
+    });
+
+    document.getElementById('showLabels').addEventListener('change', e => state.showLabels = e.target.checked);
+    document.getElementById('showArea').addEventListener('change', e => state.showArea = e.target.checked);
+    document.getElementById('showParticles').addEventListener('change', e => state.showParticles = e.target.checked);
+    document.getElementById('showHeat').addEventListener('change', e => state.showHeat = e.target.checked);
+
+    document.getElementById('animate').addEventListener('click', () => state.playing = true);
+    document.getElementById('pause').addEventListener('click', () => state.playing = false);
+    document.getElementById('reset').addEventListener('click', () => { state.phase = 0; state.playing = false; });
+
+    tick();
+  </script>
+</body>
+</html>

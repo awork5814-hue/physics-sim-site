@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zeeman Effect</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Physics</span></div>
+    <header class="hero"><h1>Zeeman Effect</h1><p>Splitting of spectral lines in magnetic field</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">ΔE = μB B m</div>
+        <div class="control-group">
+          <label>Magnetic Field (T)</label>
+          <input type="range" id="bFieldSlider" min="0" max="10" value="0">
+        </div>
+        <div class="control-group">
+          <label>Spectral Line</label>
+          <select id="lineSelect" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="blue">Blue (486 nm)</option>
+            <option value="green">Green (546 nm)</option>
+            <option value="red">Red (656 nm)</option>
+          </select>
+        </div>
+        <div class="data-panel">
+          <div>Splitting: <strong id="splitVal">0</strong> meV</div>
+          <div>Components: <strong id="compVal">1</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const bFieldSlider = document.getElementById('bFieldSlider');
+    const lineSelect = document.getElementById('lineSelect');
+    let time = 0;
+    function update() {
+      const B = parseFloat(bFieldSlider.value);
+      const muB = 0.058; // meV/T
+      const dE = muB * B;
+      const comps = B > 0.5 ? 3 : 1;
+      document.getElementById('splitVal').textContent = dE.toFixed(2);
+      document.getElementById('compVal').textContent = comps;
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const B = parseFloat(bFieldSlider.value);
+      const line = lineSelect.value;
+      const colors = { blue: '#0066ff', green: '#00ff00', red: '#ff0000' };
+      const wavelengths = { blue: 486, green: 546, red: 656 };
+      const color = colors[line];
+      const baseY = cy;
+      const separation = B * 15;
+      ctx.fillStyle = color;
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      if (B < 0.5) {
+        ctx.globalAlpha = 0.8 + Math.sin(time * 0.1) * 0.2;
+        ctx.fillRect(cx - 40, baseY - 3, 80, 6);
+        ctx.globalAlpha = 1;
+        ctx.fillText('No field', cx, baseY + 40);
+      } else {
+        const offsets = [-separation, 0, separation];
+        offsets.forEach((off, i) => {
+          ctx.globalAlpha = 0.8 + Math.sin(time * 0.1 + i) * 0.2;
+          ctx.fillRect(cx - 40, baseY + off - 3, 80, 6);
+        });
+        ctx.globalAlpha = 1;
+        ctx.fillText('B = ' + B + ' T', cx, baseY + separation + 40);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Spectroscope view', cx, 30);
+      ctx.fillText('λ = ' + wavelengths[line] + ' nm', cx, h - 20);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    bFieldSlider.addEventListener('input', update);
+    lineSelect.addEventListener('change', update);
+    update(); draw();
+  </script>
+</body>
+</html>

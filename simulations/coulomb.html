@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Coulomb's Law</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.72);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --pos: #ef4444;
+      --neg: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.85);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(56,189,248,0.5); box-shadow: 0 0 12px rgba(56,189,248,0.25); }
+    header {
+      padding: 24px 20px 8px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+
+    canvas { width: 100%; height: clamp(320px, 45vh, 480px); background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    .btn:hover { border-color: rgba(56,189,248,0.5); box-shadow: 0 0 12px rgba(56,189,248,0.25); }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+    .formula-note {
+      font-family: var(--mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Coulomb's Law</h1>
+    <div class="subtitle">Electric force between charges (inverse‑square)</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+      <div style="margin-top: 10px;" class="buttons">
+        <button class="btn" id="swap">Swap Charges</button>
+        <button class="btn" id="toggleDrag">Toggle Drag</button>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Charge 1 (μC)</label>
+          <input id="q1" type="range" min="-10" max="10" step="0.5" value="5" />
+          <div class="row"><span>-10</span><span id="q1Val">+5</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Charge 2 (μC)</label>
+          <input id="q2" type="range" min="-10" max="10" step="0.5" value="5" />
+          <div class="row"><span>-10</span><span id="q2Val">+5</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Separation r (m)</label>
+          <input id="dist" type="range" min="0.5" max="10" step="0.1" value="3" />
+          <div class="row"><span>0.5</span><span id="distVal">3.0</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showField" type="checkbox" checked /> Field lines</label>
+            <label><input id="showEquip" type="checkbox" /> Equipotentials</label>
+            <label><input id="showForce" type="checkbox" checked /> Force arrow</label>
+            <label><input id="showValues" type="checkbox" checked /> Values</label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="formula-note">
+    Coulomb's law: F = k |q₁q₂| / r². Same sign = repulsion, opposite sign = attraction.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const k = 8.99e9;
+
+    const state = {
+      q1: 5e-6,
+      q2: 5e-6,
+      r: 3,
+      showField: true,
+      showEquip: false,
+      showForce: true,
+      showValues: true,
+      dragMode: false,
+      p1: { x: 300, y: 210 },
+      p2: { x: 660, y: 210 },
+      dragging: null,
+      t: 0
+    };
+
+    function force() {
+      const F = k * Math.abs(state.q1 * state.q2) / (state.r * state.r);
+      const repulsive = state.q1 * state.q2 > 0;
+      return { F, repulsive };
+    }
+
+    function drawFieldLines() {
+      if (!state.showField) return;
+      const lines = 12;
+      for (let i = 0; i < lines; i++) {
+        const angle = (i / lines) * Math.PI * 2 + state.t * 0.3;
+        drawRay(state.p1.x, state.p1.y, angle, state.q1 > 0 ? '#38bdf8' : '#22c55e');
+        drawRay(state.p2.x, state.p2.y, angle, state.q2 > 0 ? '#38bdf8' : '#22c55e');
+      }
+    }
+
+    function drawRay(x, y, angle, color) {
+      const len = 90;
+      const dash = 8;
+      const offset = (state.t * 40) % (dash * 2);
+      ctx.strokeStyle = color;
+      ctx.setLineDash([dash, dash]);
+      ctx.lineDashOffset = -offset;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawEquipotentials() {
+      if (!state.showEquip) return;
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      for (let r = 40; r < 160; r += 30) {
+        ctx.beginPath();
+        ctx.arc(state.p1.x, state.p1.y, r, 0, Math.PI*2); ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(state.p2.x, state.p2.y, r, 0, Math.PI*2); ctx.stroke();
+      }
+    }
+
+    function drawCharges() {
+      drawCharge(state.p1, state.q1);
+      drawCharge(state.p2, state.q2);
+    }
+
+    function drawCharge(p, q) {
+      const color = q >= 0 ? '#ef4444' : '#22c55e';
+      const grad = ctx.createRadialGradient(p.x - 6, p.y - 6, 2, p.x, p.y, 18);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(1, color);
+      ctx.fillStyle = grad;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 18, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fff';
+      ctx.font = '600 12px Inter';
+      ctx.fillText(q >= 0 ? '+' : '-', p.x - 4, p.y + 4);
+    }
+
+    function drawForceArrow() {
+      if (!state.showForce) return;
+      const { repulsive, F } = force();
+      const dir = repulsive ? -1 : 1;
+      drawArrow(state.p1.x, state.p1.y, state.p1.x + dir * 60, state.p1.y, 'rgba(245,158,11,0.9)');
+      drawArrow(state.p2.x, state.p2.y, state.p2.x - dir * 60, state.p2.y, 'rgba(245,158,11,0.9)');
+      ctx.fillStyle = 'rgba(245,158,11,0.9)';
+      ctx.fillText(`F = ${F.toFixed(3)} N`, 40, 40);
+    }
+
+    function drawRuler() {
+      ctx.strokeStyle = '#fff';
+      ctx.beginPath();
+      ctx.moveTo(state.p1.x, state.p1.y + 40);
+      ctx.lineTo(state.p2.x, state.p2.y + 40);
+      ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(`r = ${state.r.toFixed(2)} m`, (state.p1.x + state.p2.x)/2 - 20, state.p1.y + 60);
+    }
+
+    function drawArrow(x1, y1, x2, y2, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI/6), y2 - 8 * Math.sin(angle - Math.PI/6));
+      ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI/6), y2 - 8 * Math.sin(angle + Math.PI/6));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // glow background
+      const glow = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 40, canvas.width/2, canvas.height/2, canvas.width);
+      glow.addColorStop(0, 'rgba(56,189,248,0.08)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawFieldLines();
+      drawEquipotentials();
+      drawCharges();
+      drawForceArrow();
+      drawRuler();
+    }
+
+    function updateReadout() {
+      const { F, repulsive } = force();
+      const E = k * Math.abs(state.q2) / (state.r * state.r);
+      const V = k * state.q2 / state.r;
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">q1</span><span class="data-value blue">${(state.q1*1e6).toFixed(2)} μC</span></div>
+          <div class="data-card"><span class="data-label">q2</span><span class="data-value blue">${(state.q2*1e6).toFixed(2)} μC</span></div>
+          <div class="data-card"><span class="data-label">r</span><span class="data-value orange">${state.r.toFixed(2)} m</span></div>
+          <div class="data-card"><span class="data-label">Force</span><span class="data-value orange">${F.toFixed(3)} N</span></div>
+          <div class="data-card"><span class="data-label">Type</span><span class="data-value blue">${repulsive ? 'Repulsion' : 'Attraction'}</span></div>
+          <div class="data-card"><span class="data-label">E‑field</span><span class="data-value blue">${E.toFixed(0)} N/C</span></div>
+          <div class="data-card"><span class="data-label">Potential</span><span class="data-value blue">${V.toFixed(0)} V</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      state.t += 0.016;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI
+    document.getElementById('q1').addEventListener('input', e => {
+      state.q1 = parseFloat(e.target.value) * 1e-6;
+      document.getElementById('q1Val').textContent = `${state.q1 >= 0 ? '+' : ''}${(state.q1*1e6).toFixed(1)}`;
+    });
+    document.getElementById('q2').addEventListener('input', e => {
+      state.q2 = parseFloat(e.target.value) * 1e-6;
+      document.getElementById('q2Val').textContent = `${state.q2 >= 0 ? '+' : ''}${(state.q2*1e6).toFixed(1)}`;
+    });
+    document.getElementById('dist').addEventListener('input', e => {
+      state.r = parseFloat(e.target.value);
+      document.getElementById('distVal').textContent = state.r.toFixed(1);
+      const centerX = canvas.width / 2;
+      state.p1.x = centerX - state.r * 20;
+      state.p2.x = centerX + state.r * 20;
+    });
+
+    document.getElementById('showField').addEventListener('change', e => state.showField = e.target.checked);
+    document.getElementById('showEquip').addEventListener('change', e => state.showEquip = e.target.checked);
+    document.getElementById('showForce').addEventListener('change', e => state.showForce = e.target.checked);
+    document.getElementById('showValues').addEventListener('change', e => state.showValues = e.target.checked);
+
+    document.getElementById('swap').addEventListener('click', () => {
+      const tmp = state.q1; state.q1 = state.q2; state.q2 = tmp;
+    });
+    document.getElementById('toggleDrag').addEventListener('click', () => {
+      state.dragMode = !state.dragMode;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    // drag behavior
+    canvas.addEventListener('mousedown', e => {
+      if (!state.dragMode) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (Math.hypot(x - state.p1.x, y - state.p1.y) < 20) state.dragging = 'p1';
+      if (Math.hypot(x - state.p2.x, y - state.p2.y) < 20) state.dragging = 'p2';
+    });
+    canvas.addEventListener('mousemove', e => {
+      if (!state.dragMode || !state.dragging) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+      const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+      if (state.dragging === 'p1') { state.p1.x = x; state.p1.y = y; }
+      if (state.dragging === 'p2') { state.p2.x = x; state.p2.y = y; }
+      state.r = Math.abs(state.p2.x - state.p1.x) / 20;
+      document.getElementById('dist').value = state.r;
+      document.getElementById('distVal').textContent = state.r.toFixed(1);
+    });
+    window.addEventListener('mouseup', () => state.dragging = null);
+
+    tick();
+  </script>
+</body>
+</html>

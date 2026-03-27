@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Voltage Divider</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Voltage Divider</h1>
+    <div class="subtitle">Series resistors split voltage proportionally</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Input Voltage Vin (V)</label>
+          <input id="vin" type="range" min="1" max="24" step="1" value="12" />
+          <div class="row"><span>1</span><span id="vinVal">12</span><span>24</span></div>
+        </div>
+        <div class="control">
+          <label>R1 (Ω)</label>
+          <input id="r1" type="range" min="100" max="100000" step="100" value="1000" />
+          <div class="row"><span>100</span><span id="r1Val">1000</span><span>100k</span></div>
+        </div>
+        <div class="control">
+          <label>R2 (Ω)</label>
+          <input id="r2" type="range" min="100" max="100000" step="100" value="1000" />
+          <div class="row"><span>100</span><span id="r2Val">1000</span><span>100k</span></div>
+        </div>
+        <div class="control">
+          <label>Add Load</label>
+          <div class="checks">
+            <label><input id="addLoad" type="checkbox" /> Load resistor</label>
+            <label><input id="showCurrent" type="checkbox" checked /> Show current</label>
+            <label><input id="showVoltage" type="checkbox" checked /> Show voltage drops</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Load Resistance (Ω)</label>
+          <input id="rl" type="range" min="1000" max="1000000" step="1000" value="10000" />
+          <div class="row"><span>1k</span><span id="rlVal">10k</span><span>1M</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Vout = Vin × R2/(R1+R2). Loading reduces Vout.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      Vin: 12,
+      R1: 1000,
+      R2: 1000,
+      addLoad: false,
+      RL: 10000,
+      showCurrent: true,
+      showVoltage: true
+    };
+
+    function calc() {
+      let Rtotal = state.R2;
+      if (state.addLoad) Rtotal = (state.R2 * state.RL) / (state.R2 + state.RL);
+      const Vout = state.Vin * (Rtotal / (state.R1 + Rtotal));
+      const I = state.Vin / (state.R1 + Rtotal);
+      const V1 = I * state.R1;
+      const V2 = I * Rtotal;
+      return { Vout, I, V1, V2, Rtotal };
+    }
+
+    function draw() {
+      const { Vout, V1, V2 } = calc();
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(200, 80, 300, 200);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Vin', 180, 70);
+      ctx.fillText(`Vout ${Vout.toFixed(2)}V`, 520, 180);
+
+      if (state.showVoltage) {
+        ctx.fillStyle = 'rgba(106,215,255,0.3)';
+        ctx.fillRect(200, 80, 40, 200 * (V1/state.Vin));
+        ctx.fillStyle = 'rgba(246,199,107,0.3)';
+        ctx.fillRect(200, 80 + 200 * (V1/state.Vin), 40, 200 * (V2/state.Vin));
+      }
+    }
+
+    function updateReadout() {
+      const { Vout, I, V1, V2, Rtotal } = calc();
+      const text = `VOLTAGE DIVIDER\n` +
+        `---------------\n` +
+        `Vin = ${state.Vin.toFixed(1)} V\n` +
+        `Vout = ${Vout.toFixed(2)} V\n` +
+        `I = ${(I*1000).toFixed(2)} mA\n` +
+        `V1 = ${V1.toFixed(2)} V\n` +
+        `V2 = ${V2.toFixed(2)} V\n` +
+        `Rload = ${state.addLoad ? state.RL.toFixed(0) : 'none'}\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('vin').addEventListener('input', e => { state.Vin = parseFloat(e.target.value); document.getElementById('vinVal').textContent = state.Vin.toFixed(0); });
+    document.getElementById('r1').addEventListener('input', e => { state.R1 = parseFloat(e.target.value); document.getElementById('r1Val').textContent = state.R1.toFixed(0); });
+    document.getElementById('r2').addEventListener('input', e => { state.R2 = parseFloat(e.target.value); document.getElementById('r2Val').textContent = state.R2.toFixed(0); });
+    document.getElementById('addLoad').addEventListener('change', e => state.addLoad = e.target.checked);
+    document.getElementById('rl').addEventListener('input', e => { state.RL = parseFloat(e.target.value); document.getElementById('rlVal').textContent = (state.RL/1000).toFixed(0) + 'k'; });
+    document.getElementById('showCurrent').addEventListener('change', e => state.showCurrent = e.target.checked);
+    document.getElementById('showVoltage').addEventListener('change', e => state.showVoltage = e.target.checked);
+
+    tick();
+  </script>
+</body>
+</html>

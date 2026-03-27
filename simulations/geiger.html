@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Geiger Counter</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .display { background: #1a1a1a; border: 2px solid #333; border-radius: 10px; padding: 20px; text-align: center; margin: 10px 0; }
+    .display .value { font-size: 3rem; font-family: 'Courier New', monospace; color: #ff6b6b; text-shadow: 0 0 10px #ff6b6b; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Nuclear Physics</span></div>
+    <header class="hero"><h1>Geiger Counter</h1><p>Radiation detection and counting</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="display"><div class="value" id="countVal">0</div><div style="color:#666;font-size:0.9rem;">CPM</div></div>
+        <div class="control-group">
+          <label>Source Activity</label>
+          <input type="range" id="activitySlider" min="0" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Distance (cm)</label>
+          <input type="range" id="distSlider" min="1" max="50" value="10">
+        </div>
+        <div class="data-panel">
+          <div>Counts (10s): <strong id="totalVal">0</strong></div>
+          <div>Dose Rate: <strong id="doseVal">0</strong> μSv/h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const activitySlider = document.getElementById('activitySlider');
+    const distSlider = document.getElementById('distSlider');
+    let counts = [];
+    let totalCounts = 0;
+    function update() {
+      const activity = parseFloat(activitySlider.value);
+      const dist = parseFloat(distSlider.value);
+      const rate = activity / (dist * dist) * 100;
+      document.getElementById('countVal').textContent = Math.floor(rate);
+      document.getElementById('totalVal').textContent = totalCounts;
+      document.getElementById('doseVal').textContent = (rate * 0.0087).toFixed(2);
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const activity = parseFloat(activitySlider.value);
+      const dist = parseFloat(distSlider.value) * 4;
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath(); ctx.arc(cx - 150, cy, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.fillText('☢', cx - 156, cy + 4);
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx - 150, cy, dist, 0, Math.PI * 2); ctx.stroke();
+      const prob = activity / 1000;
+      if (Math.random() < prob) {
+        counts.push({ x: cx - 150, y: cy, age: 0 });
+        totalCounts++;
+      }
+      counts.forEach((c, i) => {
+        c.x += (cx - 150 + dist - c.x) * 0.1;
+        c.age++;
+        if (c.age > 50) counts.splice(i, 1);
+        ctx.fillStyle = '#6ad7ff';
+        ctx.globalAlpha = 1 - c.age / 50;
+        ctx.beginPath(); ctx.arc(c.x, c.y, 3, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#333';
+      ctx.fillRect(cx + 50, cy - 60, 120, 120);
+      ctx.strokeStyle = '#666';
+      ctx.strokeRect(cx + 50, cy - 60, 120, 120);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(cx + 55, cy - 50, 80, 20);
+      ctx.fillStyle = '#666';
+      ctx.fillRect(cx + 55, cy + 10, 80, 40);
+      update();
+      requestAnimationFrame(draw);
+    }
+    activitySlider.addEventListener('input', update);
+    distSlider.addEventListener('input', update);
+    draw();
+  </script>
+</body>
+</html>

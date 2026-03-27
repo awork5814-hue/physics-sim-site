@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physics Experiments Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+<link rel="stylesheet" href="simulation-theme.css" />
+  <script>!function(){var t=localStorage.getItem('physicsSimTheme')||'dark';document.documentElement.setAttribute('data-theme',t)}();
+  </script>
+</head>
+<body data-paged="true" data-page="1" data-total-pages="20">
+  <div class="background">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">λ</span>
+      <div>
+        <div class="brand-title">Physics Experiments Lab</div>
+        <div class="brand-subtitle">Interactive simulations for fundamental discoveries</div>
+      </div>
+    </div>
+    <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav" id="mainNav">
+      <div class="nav-dropdown">
+        <a href="index.html" class="nav-trigger">Experiments ▾</a>
+        <div class="nav-menu">
+          <div class="nav-section">
+            <h4>Mechanics</h4>
+            <a href="index.html#pendulum">Simple Pendulum</a>
+            <a href="index.html#hooke">Hooke's Law</a>
+            <a href="index.html#projectile">Projectile Motion</a>
+            <a href="index.html#circular">Circular Motion</a>
+            <a href="index.html#shm">Simple Harmonic Motion</a>
+            <a href="index.html#moments">Moments</a>
+            <a href="index.html#freefall">Free Fall (Air Resistance)</a>
+            <a href="index.html#satellite">Satellite Orbits</a>
+          </div>
+          <div class="nav-section">
+            <h4>Advanced Mechanics</h4>
+            <a href="index.html#energy">Conservation of Energy</a>
+            <a href="index.html#friction">Friction</a>
+            <a href="index.html#pulley">Pulley Systems</a>
+            <a href="index.html#relative">Relative Motion</a>
+            <a href="index.html#range">Projectile Range</a>
+            <a href="index.html#orbitalvel">Orbital Velocity</a>
+            <a href="index.html#escapevel">Escape Velocity</a>
+            <a href="index.html#levers">Simple Machines</a>
+            <a href="index.html#equilibrium">Static Equilibrium</a>
+          </div>
+          <div class="nav-section">
+            <h4>Geophysics</h4>
+            <a href="index.html#seismic">Seismic Waves</a>
+            <a href="index.html#earthquake">Earthquake</a>
+            <a href="index.html#mantle">Mantle Convection</a>
+            <a href="index.html#plate">Plate Tectonics</a>
+            <a href="index.html#gravity">Gravity Anomaly</a>
+            <a href="index.html#magnetic">Earth's Magnetic Field</a>
+            <a href="index.html#tides">Ocean Tides</a>
+            <a href="index.html#erosion">Erosion</a>
+            <a href="index.html#weathering">Weathering</a>
+            <a href="index.html#geothermal">Geothermal Energy</a>
+          </div>
+          <div class="nav-section">
+            <h4>Fluid Dynamics</h4>
+            <a href="index.html#flow">Fluid Flow</a>
+            <a href="index.html#bernoulli">Bernoulli's Principle</a>
+            <a href="index.html#pressure">Pressure</a>
+            <a href="index.html#archimedes">Buoyancy</a>
+            <a href="index.html#viscosity">Viscosity</a>
+            <a href="index.html#surface">Surface Tension</a>
+            <a href="index.html#laminar">Laminar vs Turbulent</a>
+            <a href="index.html#capillary">Capillary Action</a>
+            <a href="index.html#venturi">Venturi Effect</a>
+            <a href="index.html#pascal">Pascal's Principle</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electricity</h4>
+            <a href="index.html#ohm-law">Ohm's Law</a>
+            <a href="index.html#coulomb">Coulomb's Law</a>
+            <a href="index.html#oersted">Oersted's Experiment</a>
+            <a href="index.html#series-parallel">Series vs Parallel</a>
+            <a href="index.html#iv-curve">I-V Characteristics</a>
+            <a href="index.html#wheatstone">Wheatstone Bridge</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electronics</h4>
+            <a href="index.html#capacitor">Capacitors</a>
+            <a href="index.html#rc-circuit">RC Circuits</a>
+            <a href="index.html#rl-circuit">RL Circuits</a>
+            <a href="index.html#rlc-circuit">RLC Circuits</a>
+            <a href="index.html#opamp">Op-Amp Basics</a>
+            <a href="index.html#voltage-divider">Voltage Dividers</a>
+            <a href="index.html#filters">Filters</a>
+            <a href="index.html#transistor-amp">Transistor Amplifier</a>
+            <a href="index.html#logic-gates">Logic Gates</a>
+          </div>
+          <div class="nav-section">
+            <h4>Waves & Optics</h4>
+            <a href="index.html#polarization">Polarization of Light</a>
+            <a href="index.html#refraction">Refraction & Lenses</a>
+            <a href="index.html#waves">Wave Motion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Sound & Acoustics</h4>
+            <a href="index.html#standing-string">Standing Waves (String)</a>
+            <a href="index.html#standing-pipe">Standing Waves (Pipe)</a>
+            <a href="index.html#beat-frequency">Beat Frequency</a>
+            <a href="index.html#sound-intensity">Sound Intensity</a>
+            <a href="index.html#mech-resonance">Mechanical Resonance</a>
+            <a href="index.html#wave-type">Wave Types</a>
+            <a href="index.html#echo-sound">Echo & Reflection</a>
+            <a href="index.html#ultrasound">Ultrasound</a>
+            <a href="index.html#acoustic-impedance">Acoustic Impedance</a>
+          </div>
+          <div class="nav-section">
+            <h4>Modern Physics</h4>
+            <a href="index.html#rutherford">Rutherford Scattering</a>
+            <a href="index.html#michelson">Michelson-Morley</a>
+            <a href="index.html#bohr">Bohr Model (Hydrogen)</a>
+            <a href="index.html#photoelectric">Photoelectric Effect</a>
+            <a href="index.html#millikan">Millikan Oil Drop</a>
+            <a href="index.html#brownian">Brownian Motion</a>
+            <a href="index.html#blackbody">Blackbody Radiation</a>
+            <a href="index.html#compton">Compton Scattering</a>
+            <a href="index.html#hall">Hall Effect</a>
+            <a href="index.html#thermoelectric">Thermoelectric Effect</a>
+            <a href="index.html#joule">Joule Heating</a>
+          </div>
+          <div class="nav-section">
+            <h4>Quantum Physics</h4>
+            <a href="index.html#waveparticle">Wave-Particle Duality</a>
+            <a href="index.html#tunneling">Quantum Tunneling</a>
+            <a href="index.html#heisenberg">Heisenberg Uncertainty</a>
+            <a href="index.html#spin">Quantum Spin</a>
+            <a href="index.html#schrodinger">Schrödinger's Cat</a>
+            <a href="index.html#superposition">Quantum Superposition</a>
+            <a href="index.html#debroglie">de Broglie Wavelength</a>
+            <a href="index.html#entanglement">Quantum Entanglement</a>
+            <a href="index.html#quantumnumbers">Quantum Numbers</a>
+            <a href="index.html#quantumhamiltonian">Quantum Hamiltonian</a>
+            <a href="index.html#frank-hertz">Frank-Hertz Experiment</a>
+            <a href="index.html#zeeman">Zeeman Effect</a>
+          </div>
+          <div class="nav-section">
+            <h4>Astrophysics</h4>
+            <a href="index.html#kepler">Kepler's Laws</a>
+            <a href="index.html#eclipse">Eclipse Simulation</a>
+            <a href="index.html#stellar">Stellar Evolution</a>
+            <a href="index.html#hrdiagram">HR Diagram</a>
+            <a href="index.html#blackhole">Black Holes</a>
+            <a href="index.html#orbital">Orbital Mechanics</a>
+            <a href="index.html#tidal">Tidal Forces</a>
+            <a href="index.html#doppler">Doppler in Space</a>
+            <a href="index.html#solarscale">Solar System Scale</a>
+            <a href="index.html#neutron-star">Neutron Stars</a>
+            <a href="index.html#dark-matter">Dark Matter</a>
+            <a href="index.html#big-bang">Big Bang / CMB</a>
+          </div>
+          <div class="nav-section">
+            <h4>Nuclear Physics</h4>
+            <a href="index.html#radioactive">Radioactive Decay</a>
+            <a href="index.html#halflife">Half-life Simulation</a>
+            <a href="index.html#fission">Nuclear Fission</a>
+            <a href="index.html#fission-chain">Fission Chain Reaction</a>
+            <a href="index.html#fusion">Nuclear Fusion</a>
+            <a href="index.html#geiger">Geiger Counter</a>
+            <a href="index.html#carbon-dating">Carbon Dating</a>
+            <a href="index.html#binding">Binding Energy</a>
+            <a href="index.html#accelerator">Particle Accelerator</a>
+            <a href="index.html#cloud">Cloud Chamber</a>
+            <a href="index.html#shielding">Radiation Shielding</a>
+          </div>
+          <div class="nav-section">
+            <h4>Biophysics</h4>
+            <a href="index.html#nerve">Nerve Impulses</a>
+            <a href="index.html#muscle">Muscle Contraction</a>
+            <a href="index.html#vision">Vision Physics</a>
+            <a href="index.html#hearing">Hearing Physics</a>
+            <a href="index.html#diffusion">Diffusion</a>
+            <a href="index.html#osmosis">Osmosis</a>
+            <a href="index.html#membrane">Cell Membrane</a>
+            <a href="index.html#biomech">Biomechanics</a>
+            <a href="index.html#bloodflow">Fluid Flow in Vessels</a>
+            <a href="index.html#medical">Medical Imaging</a>
+          </div>
+          <div class="nav-section">
+            <h4>Materials Science</h4>
+            <a href="index.html#stressstrain">Stress-Strain</a>
+            <a href="index.html#shear">Shear Modulus</a>
+            <a href="index.html#poisson">Poisson's Ratio</a>
+            <a href="index.html#elasticity">Elasticity</a>
+            <a href="index.html#plastic">Plastic Deformation</a>
+            <a href="index.html#hardness">Hardness Testing</a>
+            <a href="index.html#fatigue">Fatigue</a>
+            <a href="index.html#creep">Creep</a>
+            <a href="index.html#thermal-expansion">Thermal Expansion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Communications</h4>
+            <a href="index.html#am-modulation">AM Modulation</a>
+            <a href="index.html#fm-modulation">FM Modulation</a>
+            <a href="index.html#signal-encoding">Signal Encoding</a>
+            <a href="index.html#antennas">Antennas</a>
+            <a href="index.html#waveguides">Waveguides</a>
+            <a href="index.html#fiber-optics">Fiber Optics</a>
+            <a href="index.html#signal-propagation">Signal Propagation</a>
+            <a href="index.html#signal-superposition">Signal Superposition</a>
+            <a href="index.html#shannon">Shannon Limit</a>
+          </div>
+          <div class="nav-section">
+            <h4>Thermal</h4>
+            <a href="index.html#boyle">Boyle's Law</a>
+            <a href="index.html#ideal-gas">Ideal Gas Law</a>
+            <a href="index.html#heat-capacity">Specific Heat</a>
+            <a href="index.html#carnot">Carnot Engine</a>
+            <a href="index.html#heatengine">Heat Engine Efficiency</a>
+          </div>
+      </div>
+      <a href="index.html#favorites">Favorites</a>
+      <a href="index.html#about">About</a>
+      <a href="questions.html" class="active">Question Bank</a>
+      <a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="global-toggle">
+      <label>
+        <input type="checkbox" id="globalLearningToggle" checked />
+        <span>Learning panels</span>
+      </label>
+      <label class="theme-toggle">
+        <input type="checkbox" id="themeToggle" />
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </label>
+    </div>
+    <div class="header-actions">
+      <button class="achievements-trigger" id="achievementsBtn">
+        🏆 <span class="badge-count" id="badgeCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <div class="return-link-wrap"><a class="return-link" id="returnToLab" href="index.html">← Back to Experiments</a></div>
+    <section id="questions" class="question-bank">
+      <div class="question-bank-header">
+        <h2>Question Bank</h2>
+        <p>Practice physics problems with auto-graded questions aligned to each simulation.</p>
+      </div>
+
+      <div class="question-bank-grid">
+        <aside class="question-bank-sidebar">
+          <div class="question-bank-filter">
+            <h4>Category</h4>
+            <label><input type="checkbox" data-filter="category" value="Mechanics" checked /> Mechanics</label>
+            <label><input type="checkbox" data-filter="category" value="Waves & Optics" checked /> Waves & Optics</label>
+            <label><input type="checkbox" data-filter="category" value="Electricity" checked /> Electricity</label>
+            <label><input type="checkbox" data-filter="category" value="Thermal" checked /> Thermal</label>
+            <label><input type="checkbox" data-filter="category" value="Modern Physics" checked /> Modern Physics</label>
+          </div>
+          <div class="question-bank-filter">
+            <h4>Difficulty</h4>
+            <label><input type="checkbox" data-filter="difficulty" value="Easy" checked /> Easy</label>
+            <label><input type="checkbox" data-filter="difficulty" value="Medium" checked /> Medium</label>
+            <label><input type="checkbox" data-filter="difficulty" value="Hard" checked /> Hard</label>
+          </div>
+          <div class="question-bank-filter">
+            <h4>Question Type</h4>
+            <label><input type="checkbox" data-filter="type" value="Multiple Choice" checked /> Multiple Choice</label>
+            <label><input type="checkbox" data-filter="type" value="True/False" checked /> True/False</label>
+            <label><input type="checkbox" data-filter="type" value="Open Ended" checked /> Open Ended</label>
+          </div>
+        </aside>
+
+        <div class="question-bank-content">
+          <div class="question-bank-toolbar">
+            <div class="question-bank-search">
+              <input type="text" id="questionSearch" placeholder="Search questions..." />
+            </div>
+            <div class="view-toggle" id="questionViewToggle">
+              <button class="view-btn active" data-view="bank">Bank</button>
+              <button class="view-btn" data-view="quiz">Quiz Mode</button>
+            </div>
+          </div>
+
+          <div class="quiz-setup" id="quizSetup" style="display: none;">
+            <div class="quiz-setup-header">
+              <h3>Quiz Setup</h3>
+            </div>
+            <div class="quiz-setup-content">
+              <div class="quiz-setup-section">
+                <h4>Select Topics</h4>
+                <div class="quiz-topics-grid" id="quizTopicsGrid"></div>
+              </div>
+              <div class="quiz-setup-section">
+                <h4>Quiz Settings</h4>
+                <div class="quiz-settings">
+                  <div class="quiz-setting-row">
+                    <label>Number of Questions</label>
+                    <select id="quizQuestionCount">
+                      <option value="5">5 Questions</option>
+                      <option value="10" selected>10 Questions</option>
+                      <option value="15">15 Questions</option>
+                      <option value="20">20 Questions</option>
+                      <option value="25">25 Questions</option>
+                      <option value="30">30 Questions</option>
+                      <option value="50">50 Questions</option>
+                    </select>
+                  </div>
+                  <div class="quiz-setting-row">
+                    <label>Timer</label>
+                    <select id="quizTimer">
+                      <option value="0">No Timer</option>
+                      <option value="300">5 Minutes</option>
+                      <option value="600" selected>10 Minutes</option>
+                      <option value="900">15 Minutes</option>
+                      <option value="1200">20 Minutes</option>
+                      <option value="1800">30 Minutes</option>
+                      <option value="3600">60 Minutes</option>
+                    </select>
+                  </div>
+                  <div class="quiz-setting-row">
+                    <label>Question Types</label>
+                    <div class="quiz-types-checkboxes">
+                      <label><input type="checkbox" id="quizTypeMC" checked /> Multiple Choice</label>
+                      <label><input type="checkbox" id="quizTypeTF" checked /> True/False</label>
+                      <label><input type="checkbox" id="quizTypeOE" /> Open Ended</label>
+                    </div>
+                  </div>
+                  <div class="quiz-setting-row">
+                    <label>Difficulty</label>
+                    <select id="quizDifficulty">
+                      <option value="all">All Levels</option>
+                      <option value="Easy">Easy Only</option>
+                      <option value="Medium">Medium Only</option>
+                      <option value="Hard">Hard Only</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="quiz-setup-actions">
+                <button class="quiz-start-btn" id="quizStartBtn">Start Quiz</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quiz-active" id="quizActive" style="display: none;">
+            <div class="quiz-layout">
+              <div class="quiz-main">
+                <div class="quiz-header">
+                  <div class="quiz-progress">
+                    <span id="quizProgressText">Question 1 of 10</span>
+                    <div class="quiz-progress-bar">
+                      <div class="quiz-progress-fill" id="quizProgressFill"></div>
+                    </div>
+                  </div>
+                  <div class="quiz-timer" id="quizTimerDisplay">
+                    <span id="quizTimerText">10:00</span>
+                  </div>
+                </div>
+                <div class="quiz-content" id="quizContent"></div>
+                <div class="quiz-footer">
+                  <button class="quiz-nav-btn" id="quizPrevBtn">Previous</button>
+                  <button class="quiz-nav-btn" id="quizMarkReviewBtn">☆ Mark for Review</button>
+                  <button class="quiz-nav-btn primary" id="quizNextBtn">Next</button>
+                  <button class="quiz-nav-btn success" id="quizSubmitBtn" style="display: none;">Submit Quiz</button>
+                </div>
+              </div>
+              <div class="quiz-navigator">
+                <h4>Question Navigator</h4>
+                <div class="quiz-navigator-grid" id="quizNavigatorGrid"></div>
+                <div class="quiz-navigator-legend">
+                  <div class="legend-item"><span class="legend-dot answered"></span> Answered</div>
+                  <div class="legend-item"><span class="legend-dot flagged"></span> Flagged</div>
+                  <div class="legend-item"><span class="legend-dot current"></span> Current</div>
+                  <div class="legend-item"><span class="legend-dot unanswered"></span> Unanswered</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="quiz-results" id="quizResults" style="display: none;">
+            <div class="quiz-results-header">
+              <h3>Quiz Complete!</h3>
+            </div>
+            <div class="quiz-results-content">
+              <div class="quiz-score">
+                <div class="quiz-score-circle" id="quizScoreCircle">
+                  <span id="quizScorePercent">0%</span>
+                </div>
+                <div class="quiz-score-details">
+                  <p><strong id="quizScoreCorrect">0</strong> Correct</p>
+                  <p><strong id="quizScoreWrong">0</strong> Incorrect</p>
+                  <p><strong id="quizScoreSkipped">0</strong> Skipped</p>
+                </div>
+              </div>
+              <div class="quiz-time-used">
+                <p>Time Used: <span id="quizTimeUsed">0:00</span></p>
+              </div>
+              <div class="quiz-results-actions">
+                <button class="quiz-action-btn" id="quizReviewBtn">Review Answers</button>
+                <button class="quiz-action-btn" id="quizRetryBtn">Try Again</button>
+                <button class="quiz-action-btn secondary" id="quizBackBtn">Back to Setup</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="question-bank-meta">
+            <span id="questionCount">Showing 0 of 0 questions</span>
+          </div>
+
+          <div id="questionList"></div>
+
+          <div class="question-pagination" id="questionPagination">
+            <button class="pagination-btn" data-page="prev">Previous</button>
+            <div class="pagination-pages" id="questionPages"></div>
+            <button class="pagination-btn" data-page="next">Next</button>
+          </div>
+        </div>
+      </div>
+    </section>
+</main>
+
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <span>© 2026 Physics Experiments Lab · Built for interactive learning</span>
+      <span class="footer-attribution">
+        OpenStax University Physics content used under
+        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.
+        Changes made: curated, reformatted, and answers added. OpenStax does not endorse this site.
+      </span>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/physicsexperimentslab/" target="_blank" rel="noopener" class="social-link" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="https://x.com/physicsexplab" target="_blank" rel="noopener" class="social-link" title="X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.reddit.com/user/physicsexplab/" target="_blank" rel="noopener" class="social-link" title="Reddit">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.965-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="achievements.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.min.js"></script>
+  <script src="questions-data.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var hamburgerBtn = document.getElementById('hamburgerBtn');
+      var mainNav = document.getElementById('mainNav');
+      var navOverlay = document.getElementById('navOverlay');
+      function toggleMobileNav() {
+        if (mainNav.classList.contains('mobile-open')) {
+          mainNav.classList.remove('mobile-open');
+          hamburgerBtn.classList.remove('active');
+          navOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        } else {
+          mainNav.classList.add('mobile-open');
+          hamburgerBtn.classList.add('active');
+          navOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+      function closeMobileNav() {
+        mainNav.classList.remove('mobile-open');
+        hamburgerBtn.classList.remove('active');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileNav);
+      if (navOverlay) navOverlay.addEventListener('click', closeMobileNav);
+      document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+        var t = d.querySelector('.nav-trigger');
+        if (t) t.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.querySelectorAll('.nav-dropdown').forEach(function(x) { if (x !== d) x.classList.remove('expanded'); });
+          d.classList.toggle('expanded');
+        });
+      });
+      if (mainNav) mainNav.querySelectorAll('a:not(.nav-trigger)').forEach(function(l) { l.addEventListener('click', closeMobileNav); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMobileNav(); });
+    });
+  </script>
+  <script>
+    function initQuestionsPage() {
+      console.log('initQuestionsPage called');
+      console.log('initQuestionBank exists:', typeof initQuestionBank === 'function');
+      console.log('QUESTION_BANK exists:', typeof window.QUESTION_BANK !== 'undefined');
+      console.log('QUESTION_BANK length:', window.QUESTION_BANK ? window.QUESTION_BANK.length : 0);
+      
+      const btn = document.getElementById('achievementsBtn');
+      if (btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (window.BadgeUI && typeof BadgeUI.showDropdown === 'function') {
+            BadgeUI.showDropdown();
+          }
+        });
+      }
+      
+      if (window.BadgeUI && typeof BadgeUI.updateHeaderBadgeIcon === 'function') {
+        BadgeUI.updateHeaderBadgeIcon();
+      }
+
+      if (typeof initQuestionBank === 'function' && typeof window.QUESTION_BANK !== 'undefined') {
+        initQuestionBank();
+      } else {
+        console.error('Cannot initialize question bank: initQuestionBank=', typeof initQuestionBank, 'QUESTION_BANK=', typeof window.QUESTION_BANK);
+      }
+    }
+    
+    if (document.readyState === 'complete') {
+      initQuestionsPage();
+    } else {
+      window.addEventListener('load', initQuestionsPage);
+    }
+  </script>
+  
+  <!-- Custom Warning Modal -->
+  <div class="quiz-warning-modal" id="quizWarningModal" style="display: none;">
+    <div class="quiz-warning-backdrop"></div>
+    <div class="quiz-warning-container">
+      <div class="quiz-warning-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </div>
+      <h3 class="quiz-warning-title">Hold On!</h3>
+      <p class="quiz-warning-message" id="quizWarningMessage"></p>
+      <div class="quiz-warning-summary" id="quizWarningSummary"></div>
+      <div class="quiz-warning-actions">
+        <button class="quiz-warning-btn cancel" id="quizWarningCancel">Go Back & Review</button>
+        <button class="quiz-warning-btn submit" id="quizWarningSubmit">Submit Anyway</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="suggest-modal" id="suggestModal">
+    <div class="suggest-modal-content">
+      <div class="suggest-modal-header">
+        <div>
+          <h2>Share Your Ideas</h2>
+          <p>Help us improve! Submit your suggestions below.</p>
+        </div>
+        <button class="suggest-modal-close" id="suggestModalClose">×</button>
+      </div>
+      <div class="suggest-tabs">
+        <button class="suggest-tab active" data-tab="experiment"><span class="tab-icon">🔬</span><span class="tab-label">Experiment</span></button>
+        <button class="suggest-tab" data-tab="feature"><span class="tab-icon">⚡</span><span class="tab-label">Feature</span></button>
+        <button class="suggest-tab" data-tab="question"><span class="tab-icon">📝</span><span class="tab-label">Question</span></button>
+      </div>
+      <form class="suggest-form" id="suggestExperimentForm" data-type="experiment">
+        <div class="suggest-form-group"><label>Experiment Name <span>*</span></label><input type="text" id="suggestName" placeholder="e.g., Gravitational Wave Detector" required /></div>
+        <div class="suggest-form-row">
+          <div class="suggest-form-group"><label>Physics Category <span>*</span></label><select id="suggestCategory" required><option value="">Select category</option><option value="mechanics">Mechanics</option><option value="thermodynamics">Thermodynamics</option><option value="electromagnetism">Electromagnetism</option><option value="optics">Optics</option><option value="quantum">Quantum Physics</option><option value="relativity">Relativity</option><option value="astrophysics">Astrophysics</option><option value="nuclear">Nuclear Physics</option><option value="biophysics">Biophysics</option><option value="engineering">Engineering</option><option value="other">Other</option></select></div>
+          <div class="suggest-form-group"><label>Your Name</label><input type="text" id="suggestAuthor" placeholder="Optional" /></div>
+        </div>
+        <div class="suggest-form-group"><label>Priority Level</label><div class="suggest-priority-group"><div class="suggest-priority-option low"><input type="radio" name="priority" id="priorityLow" value="low" /><label for="priorityLow"><span class="priority-icon">📚</span><span class="priority-label">Learning</span><span class="priority-desc">For education</span></label></div><div class="suggest-priority-option medium"><input type="radio" name="priority" id="priorityMedium" value="medium" checked /><label for="priorityMedium"><span class="priority-icon">🔬</span><span class="priority-label">Research</span><span class="priority-desc">Scientific interest</span></label></div><div class="suggest-priority-option high"><input type="radio" name="priority" id="priorityHigh" value="high" /><label for="priorityHigh"><span class="priority-icon">💡</span><span class="priority-label">Cool!</span><span class="priority-desc">Just interesting</span></label></div></div></div>
+        <div class="suggest-form-group"><label>Description <span>*</span></label><textarea id="suggestDescription" placeholder="Describe what this simulation should show..." required></textarea></div>
+        <div class="suggest-form-submit"><button type="submit" class="btn primary">Submit Experiment</button></div>
+      </form>
+      <form class="suggest-form hidden" id="suggestFeatureForm" data-type="feature">
+        <div class="suggest-form-group"><label>Feature Name <span>*</span></label><input type="text" id="featureName" placeholder="e.g., Dark Mode, Mobile App" required /></div>
+        <div class="suggest-form-group"><label>Category</label><select id="featureCategory"><option value="">Select category</option><option value="ui">User Interface</option><option value="ux">User Experience</option><option value="performance">Performance</option><option value="mobile">Mobile Support</option><option value="social">Social Features</option><option value="gamification">Gamification</option><option value="content">Content</option><option value="other">Other</option></select></div>
+        <div class="suggest-form-group"><label>Description <span>*</span></label><textarea id="featureDescription" placeholder="Describe the feature..." required></textarea></div>
+        <div class="suggest-form-submit"><button type="submit" class="btn primary">Submit Feature</button></div>
+      </form>
+      <form class="suggest-form hidden" id="suggestQuestionForm" data-type="question">
+        <div class="suggest-form-group"><label>Question <span>*</span></label><textarea id="questionText" placeholder="Write your physics question..." required></textarea></div>
+        <div class="suggest-form-group"><label>Answer <span>*</span></label><textarea id="questionAnswer" placeholder="Write the correct answer..." required></textarea></div>
+        <div class="suggest-form-group"><label>Explanation</label><textarea id="questionExplanation" placeholder="Explain why this is correct..."></textarea></div>
+        <div class="suggest-form-group"><label>Difficulty</label><select id="questionDifficulty"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div>
+        <div class="suggest-form-submit"><button type="submit" class="btn primary">Submit Question</button></div>
+      </form>
+      <div class="suggest-success" id="suggestSuccess"><div class="suggest-success-icon">🎉</div><h3>Thanks for your suggestion!</h3><p>We've received your idea and will review it.</p></div>
+    </div>
+  </div>
+</body>
+</html>

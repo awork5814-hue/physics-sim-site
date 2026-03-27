@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physics Experiments Lab</title>
+  <link rel="icon" type="image/png" href="logo.png" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0a0f16" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+<link rel="stylesheet" href="simulation-theme.css" />
+  <script>!function(){var t=localStorage.getItem('physicsSimTheme')||'dark';document.documentElement.setAttribute('data-theme',t)}();
+  </script>
+</head>
+<body data-paged="true" data-page="1" data-total-pages="36" class="home">
+  <div class="background">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">λ</span>
+      <div>
+        <div class="brand-title">Physics Experiments Lab</div>
+        <div class="brand-subtitle">Interactive simulations for fundamental discoveries</div>
+      </div>
+    </div>
+    <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav" id="mainNav">
+      <div class="nav-dropdown">
+        <a href="#" class="nav-trigger">Experiments ▾</a>
+        <div class="nav-menu">
+          <div class="nav-section">
+            <h4>Mechanics</h4>
+            <a href="#pendulum">Simple Pendulum</a>
+            <a href="#hooke">Hooke's Law</a>
+            <a href="#projectile">Projectile Motion</a>
+            <a href="#circular">Circular Motion</a>
+            <a href="#shm">Simple Harmonic Motion</a>
+            <a href="#moments">Moments</a>
+            <a href="#freefall">Free Fall (Air Resistance)</a>
+            <a href="#satellite">Satellite Orbits</a>
+          </div>
+          <div class="nav-section">
+            <h4>Advanced Mechanics</h4>
+            <a href="#energy">Conservation of Energy</a>
+            <a href="#friction">Friction</a>
+            <a href="#pulley">Pulley Systems</a>
+            <a href="#relative">Relative Motion</a>
+            <a href="#range">Projectile Range</a>
+            <a href="#orbitalvel">Orbital Velocity</a>
+            <a href="#escapevel">Escape Velocity</a>
+            <a href="#levers">Simple Machines</a>
+            <a href="#equilibrium">Static Equilibrium</a>
+          </div>
+          <div class="nav-section">
+            <h4>Geophysics</h4>
+            <a href="#seismic">Seismic Waves</a>
+            <a href="#earthquake">Earthquake</a>
+            <a href="#mantle">Mantle Convection</a>
+            <a href="#plate">Plate Tectonics</a>
+            <a href="#gravity">Gravity Anomaly</a>
+            <a href="#magnetic">Earth's Magnetic Field</a>
+            <a href="#tides">Ocean Tides</a>
+            <a href="#erosion">Erosion</a>
+            <a href="#weathering">Weathering</a>
+            <a href="#geothermal">Geothermal Energy</a>
+          </div>
+          <div class="nav-section">
+            <h4>Fluid Dynamics</h4>
+            <a href="#flow">Fluid Flow</a>
+            <a href="#bernoulli">Bernoulli's Principle</a>
+            <a href="#pressure">Pressure</a>
+            <a href="#archimedes">Buoyancy</a>
+            <a href="#viscosity">Viscosity</a>
+            <a href="#surface">Surface Tension</a>
+            <a href="#laminar">Laminar vs Turbulent</a>
+            <a href="#capillary">Capillary Action</a>
+            <a href="#venturi">Venturi Effect</a>
+            <a href="#pascal">Pascal's Principle</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electricity</h4>
+            <a href="#ohm-law">Ohm's Law</a>
+            <a href="#coulomb">Coulomb's Law</a>
+            <a href="#oersted">Oersted's Experiment</a>
+            <a href="#series-parallel">Series vs Parallel</a>
+            <a href="#iv-curve">I-V Characteristics</a>
+            <a href="#wheatstone">Wheatstone Bridge</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electronics</h4>
+            <a href="#capacitor">Capacitors</a>
+            <a href="#rc-circuit">RC Circuits</a>
+            <a href="#rl-circuit">RL Circuits</a>
+            <a href="#rlc-circuit">RLC Circuits</a>
+            <a href="#opamp">Op-Amp Basics</a>
+            <a href="#voltage-divider">Voltage Dividers</a>
+            <a href="#filters">Filters</a>
+            <a href="#transistor-amp">Transistor Amplifier</a>
+            <a href="#logic-gates">Logic Gates</a>
+          </div>
+          <div class="nav-section">
+            <h4>Waves & Optics</h4>
+            <a href="simulations/double-slit.html">Double Slit</a>
+            <a href="#polarization">Polarization of Light</a>
+            <a href="#refraction">Refraction & Lenses</a>
+            <a href="#waves">Wave Motion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Sound & Acoustics</h4>
+            <a href="#standing-string">Standing Waves (String)</a>
+            <a href="#standing-pipe">Standing Waves (Pipe)</a>
+            <a href="#beat-frequency">Beat Frequency</a>
+            <a href="#sound-intensity">Sound Intensity</a>
+            <a href="#mech-resonance">Mechanical Resonance</a>
+            <a href="#wave-type">Wave Types</a>
+            <a href="#echo-sound">Echo & Reflection</a>
+            <a href="#ultrasound">Ultrasound</a>
+            <a href="#acoustic-impedance">Acoustic Impedance</a>
+          </div>
+          <div class="nav-section">
+            <h4>Modern Physics</h4>
+            <a href="#rutherford">Rutherford Scattering</a>
+            <a href="#michelson">Michelson-Morley</a>
+            <a href="#bohr">Bohr Model (Hydrogen)</a>
+            <a href="#photoelectric">Photoelectric Effect</a>
+            <a href="#millikan">Millikan Oil Drop</a>
+            <a href="#brownian">Brownian Motion</a>
+            <a href="#blackbody">Blackbody Radiation</a>
+            <a href="#compton">Compton Scattering</a>
+            <a href="#hall">Hall Effect</a>
+            <a href="#thermoelectric">Thermoelectric Effect</a>
+            <a href="#joule">Joule Heating</a>
+          </div>
+          <div class="nav-section">
+            <h4>Quantum Physics</h4>
+            <a href="#waveparticle">Wave-Particle Duality</a>
+            <a href="#tunneling">Quantum Tunneling</a>
+            <a href="#heisenberg">Heisenberg Uncertainty</a>
+            <a href="#spin">Quantum Spin</a>
+            <a href="#schrodinger">Schrödinger's Cat</a>
+            <a href="#superposition">Quantum Superposition</a>
+            <a href="#debroglie">de Broglie Wavelength</a>
+            <a href="#entanglement">Quantum Entanglement</a>
+            <a href="#quantumnumbers">Quantum Numbers</a>
+            <a href="#quantumhamiltonian">Quantum Hamiltonian</a>
+            <a href="#frank-hertz">Frank-Hertz Experiment</a>
+            <a href="#zeeman">Zeeman Effect</a>
+          </div>
+          <div class="nav-section">
+            <h4>Astrophysics</h4>
+            <a href="#kepler">Kepler's Laws</a>
+            <a href="#eclipse">Eclipse Simulation</a>
+            <a href="#stellar">Stellar Evolution</a>
+            <a href="#hrdiagram">HR Diagram</a>
+            <a href="#blackhole">Black Holes</a>
+            <a href="#orbital">Orbital Mechanics</a>
+            <a href="#tidal">Tidal Forces</a>
+            <a href="#doppler">Doppler in Space</a>
+            <a href="#solarscale">Solar System Scale</a>
+            <a href="#neutron-star">Neutron Stars</a>
+            <a href="#dark-matter">Dark Matter</a>
+            <a href="#big-bang">Big Bang / CMB</a>
+          </div>
+          <div class="nav-section">
+            <h4>Nuclear Physics</h4>
+            <a href="#radioactive">Radioactive Decay</a>
+            <a href="#halflife">Half-life Simulation</a>
+            <a href="#fission">Nuclear Fission</a>
+            <a href="#fission-chain">Fission Chain Reaction</a>
+            <a href="#fusion">Nuclear Fusion</a>
+            <a href="#geiger">Geiger Counter</a>
+            <a href="#carbon Dating">Carbon Dating</a>
+            <a href="#binding">Binding Energy</a>
+            <a href="#accelerator">Particle Accelerator</a>
+            <a href="#cloud">Cloud Chamber</a>
+            <a href="#shielding">Radiation Shielding</a>
+          </div>
+          <div class="nav-section">
+            <h4>Biophysics</h4>
+            <a href="#nerve">Nerve Impulses</a>
+            <a href="#muscle">Muscle Contraction</a>
+            <a href="#vision">Vision Physics</a>
+            <a href="#hearing">Hearing Physics</a>
+            <a href="#diffusion">Diffusion</a>
+            <a href="#osmosis">Osmosis</a>
+            <a href="#membrane">Cell Membrane</a>
+            <a href="#biomech">Biomechanics</a>
+            <a href="#bloodflow">Fluid Flow in Vessels</a>
+            <a href="#medical">Medical Imaging</a>
+          </div>
+          <div class="nav-section">
+            <h4>Materials Science</h4>
+            <a href="#stressstrain">Stress-Strain</a>
+            <a href="#shear">Shear Modulus</a>
+            <a href="#poisson">Poisson's Ratio</a>
+            <a href="#elasticity">Elasticity</a>
+            <a href="#plastic">Plastic Deformation</a>
+            <a href="#hardness">Hardness Testing</a>
+            <a href="#fatigue">Fatigue</a>
+            <a href="#creep">Creep</a>
+            <a href="#thermal-expansion">Thermal Expansion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Communications</h4>
+            <a href="#am-modulation">AM Modulation</a>
+            <a href="#fm-modulation">FM Modulation</a>
+            <a href="#signal-encoding">Signal Encoding</a>
+            <a href="#antennas">Antennas</a>
+            <a href="#waveguides">Waveguides</a>
+            <a href="#fiber-optics">Fiber Optics</a>
+            <a href="#signal-propagation">Signal Propagation</a>
+            <a href="#signal-superposition">Signal Superposition</a>
+            <a href="#shannon">Shannon Limit</a>
+          </div>
+          <div class="nav-section">
+            <h4>Thermal</h4>
+            <a href="#boyle">Boyle's Law</a>
+            <a href="#ideal-gas">Ideal Gas Law</a>
+            <a href="#heat-capacity">Specific Heat</a>
+            <a href="#carnot">Carnot Engine</a>
+            <a href="#heatengine">Heat Engine Efficiency</a>
+          </div>
+        </div>
+      </div>
+      <a href="#favorites">Favorites</a>
+      <a href="#about">About</a>
+      <a href="questions.html">Question Bank</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="#simulations" class="try-free-btn" id="tryFreeBtn">Try Free</a>
+      <button class="suggest-btn" id="suggestBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        Suggest
+      </button>
+    </nav>
+    
+    <div class="global-toggle">
+      <label>
+        <input type="checkbox" id="globalLearningToggle" checked />
+        <span>Learning panels</span>
+      </label>
+      <label class="theme-toggle">
+        <input type="checkbox" id="themeToggle" />
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </label>
+      <button class="achievements-trigger" id="achievementsBtn" type="button">
+        🏆 <span class="badge-count" id="badgeCount">0</span>
+      </button>
+      <div class="auth-dropdown-wrapper">
+        <button class="auth-btn" id="authBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>Sign In</span>
+        </button>
+        <div class="auth-dropdown" id="authDropdown"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sample-modal" id="sampleModal">
+    <div class="sample-modal-content">
+      <div class="sample-modal-header">
+        <div>
+          <h2>Try These Free Experiments</h2>
+          <p>Get a taste of what Physics Lab has to offer!</p>
+        </div>
+        <button class="sample-modal-close" id="sampleModalClose">×</button>
+      </div>
+      <div class="sample-experiments">
+        <a href="simulations/pendulum.html" class="sample-exp-card">
+          <div class="sample-exp-icon">⏱️</div>
+          <h3>Simple Pendulum</h3>
+          <p>Explore harmonic motion with a swinging pendulum</p>
+          <span class="sample-exp-tag">Mechanics</span>
+        </a>
+        <a href="simulations/projectile.html" class="sample-exp-card">
+          <div class="sample-exp-icon">🚀</div>
+          <h3>Projectile Motion</h3>
+          <p>Launch projectiles and study trajectories</p>
+          <span class="sample-exp-tag">Mechanics</span>
+        </a>
+        <a href="simulations/boyle.html" class="sample-exp-card">
+          <div class="sample-exp-icon">⚗️</div>
+          <h3>Boyle's Law</h3>
+          <p>Explore pressure-volume relationship in gases</p>
+          <span class="sample-exp-tag">Thermal</span>
+        </a>
+        <a href="simulations/series-parallel.html" class="sample-exp-card">
+          <div class="sample-exp-icon">💡</div>
+          <h3>Series & Parallel</h3>
+          <p>Understand circuit combinations and resistance</p>
+          <span class="sample-exp-tag">Electricity</span>
+        </a>
+      </div>
+      <div class="sample-cta">
+        <p>Ready for unlimited access?</p>
+        <a href="pricing.html" class="sample-upgrade-btn">Upgrade to Pro · 50 EGP/month</a>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>Explore physics through <span class="accent">interactive</span> simulations.</h1>
+        <p>
+          From pendulum motion to quantum tunneling—adjust parameters, visualize concepts,
+          and discover how physics laws govern the world around us.
+        </p>
+        <div class="hero-actions">
+          <a class="btn primary" href="#simulations">Browse Experiments</a>
+          <a class="btn ghost" href="simulations/double-slit.html">Try Double Slit</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hero-card-header">Lab Status</div>
+        <div class="hero-card-body">
+          <div class="stat">
+            <span class="stat-label">Simulations</span>
+            <span class="stat-value"><span class="highlight">156</span> Available, <span class="highlight-2">196</span> Coming Soon</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Domains</span>
+            <span class="stat-value"><span class="highlight-2">20</span> Physics Fields</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Last Update</span>
+            <span class="stat-value">March 26, 2026</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="favorites" id="favorites">
+      <div class="favorites-header">
+        <h2>Favorite Experiments</h2>
+        <button class="btn ghost" id="clearFavorites">Clear All</button>
+      </div>
+      <div class="favorites-grid" id="favoritesGrid">
+        <p class="no-favorites">No favorites yet. Click the star on any experiment to add it here.</p>
+      </div>
+      <div class="sim-library-actions">
+        <button class="btn ghost" id="favoritesToggleBtn" type="button">Show more</button>
+      </div>
+    </section>
+
+      <section id="simulations" class="experiments">
+        <div class="picker-bar">
+          <div class="picker-left">
+            <h2>Simulation Library</h2>
+            <p>All simulations — single‑click launch.</p>
+          </div>
+          <div class="picker-right">
+            <input type="text" id="simSearch" placeholder="Search topics, e.g. orbit, wave, circuit" />
+            <div id="simCount">0 simulations found</div>
+          </div>
+        </div>
+        <div id="simList" class="sim-grid"></div>
+        <div class="sim-library-actions">
+          <button class="btn ghost" id="simToggleBtn" type="button">Show more</button>
+        </div>
+      </section>
+
+
+    <section id="about" class="about">
+      <h2>About This Lab</h2>
+      <p>
+        Physics Experiments Lab is an interactive platform featuring <span class="accent">156 simulations</span> across <span class="accent-2">20 physics domains</span>—from <span class="accent">classical mechanics</span> and <span class="accent">fluid dynamics</span> to <span class="accent-2">quantum physics</span> and <span class="accent-2">astrophysics</span>. Each experiment includes adjustable parameters, real-time visualization, guided questions, and theory explanations. The goal is to make fundamental physics concepts tangible through hands-on exploration rather than static diagrams.
+      </p>
+    </section>
+
+      </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="refund.html">Refund Policy</a>
+      </div>
+      <div class="footer-contact">
+        Contact: <a href="mailto:awork5814@gmail.com">awork5814@gmail.com</a>
+      </div>
+      <span>© 2026 Physics Experiments Lab · Built for interactive learning</span>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/physicsexperimentslab/" target="_blank" rel="noopener" class="social-link" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+          </svg>
+        </a>
+        <a href="https://x.com/physicsexplab" target="_blank" rel="noopener" class="social-link" title="X">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+          </svg>
+        </a>
+        <a href="https://www.reddit.com/user/physicsexplab/" target="_blank" rel="noopener" class="social-link" title="Reddit">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.965-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="suggest-modal" id="suggestModal">
+    <div class="suggest-modal-content">
+      <div class="suggest-modal-header">
+        <div>
+          <h2>Share Your Ideas</h2>
+          <p>Help us improve! Submit your suggestions below.</p>
+        </div>
+        <button class="suggest-modal-close" id="suggestModalClose">×</button>
+      </div>
+      
+      <div class="suggest-tabs">
+        <button class="suggest-tab active" data-tab="experiment">
+          <span class="tab-icon">🔬</span>
+          <span class="tab-label">Experiment</span>
+        </button>
+        <button class="suggest-tab" data-tab="feature">
+          <span class="tab-icon">⚡</span>
+          <span class="tab-label">Feature</span>
+        </button>
+        <button class="suggest-tab" data-tab="question">
+          <span class="tab-icon">📝</span>
+          <span class="tab-label">Question</span>
+        </button>
+      </div>
+      
+      <form class="suggest-form" id="suggestExperimentForm" data-type="experiment">
+        <div class="suggest-form-group">
+          <label>Experiment Name <span>*</span></label>
+          <input type="text" id="suggestName" placeholder="e.g., Gravitational Wave Detector" required />
+        </div>
+        
+        <div class="suggest-form-row">
+          <div class="suggest-form-group">
+            <label>Physics Category <span>*</span></label>
+            <select id="suggestCategory" required>
+              <option value="">Select category</option>
+              <option value="mechanics">Mechanics</option>
+              <option value="thermodynamics">Thermodynamics</option>
+              <option value="electromagnetism">Electromagnetism</option>
+              <option value="optics">Optics</option>
+              <option value="quantum">Quantum Physics</option>
+              <option value="relativity">Relativity</option>
+              <option value="astrophysics">Astrophysics</option>
+              <option value="nuclear">Nuclear Physics</option>
+              <option value="biophysics">Biophysics</option>
+              <option value="engineering">Engineering</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="suggest-form-group">
+            <label>Your Name</label>
+            <input type="text" id="suggestAuthor" placeholder="Optional" />
+          </div>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Priority Level</label>
+          <div class="suggest-priority-group">
+            <div class="suggest-priority-option low">
+              <input type="radio" name="priority" id="priorityLow" value="low" />
+              <label for="priorityLow">
+                <span class="priority-icon">📚</span>
+                <span class="priority-label">Learning</span>
+                <span class="priority-desc">For education</span>
+              </label>
+            </div>
+            <div class="suggest-priority-option medium">
+              <input type="radio" name="priority" id="priorityMedium" value="medium" checked />
+              <label for="priorityMedium">
+                <span class="priority-icon">🔬</span>
+                <span class="priority-label">Research</span>
+                <span class="priority-desc">Scientific interest</span>
+              </label>
+            </div>
+            <div class="suggest-priority-option high">
+              <input type="radio" name="priority" id="priorityHigh" value="high" />
+              <label for="priorityHigh">
+                <span class="priority-icon">💡</span>
+                <span class="priority-label">Cool!</span>
+                <span class="priority-desc">Just interesting</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Description <span>*</span></label>
+          <textarea id="suggestDescription" placeholder="Describe what this simulation should show, what parameters to adjust, and how it relates to real-world physics..." required></textarea>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Real-World Application</label>
+          <input type="text" id="suggestApplication" placeholder="e.g., GPS satellites, MRI machines, Bridge engineering" />
+        </div>
+        
+        <div class="suggest-form-submit">
+          <button type="submit" class="btn primary">Submit Experiment</button>
+        </div>
+      </form>
+      
+      <form class="suggest-form hidden" id="suggestFeatureForm" data-type="feature">
+        <div class="suggest-form-group">
+          <label>Feature Name <span>*</span></label>
+          <input type="text" id="featureName" placeholder="e.g., Dark Mode, Mobile App, Progress Tracking" required />
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Category</label>
+          <select id="featureCategory">
+            <option value="">Select category</option>
+            <option value="ui">User Interface</option>
+            <option value="ux">User Experience</option>
+            <option value="performance">Performance</option>
+            <option value="mobile">Mobile Support</option>
+            <option value="social">Social Features</option>
+            <option value="gamification">Gamification</option>
+            <option value="content">Content</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Description <span>*</span></label>
+          <textarea id="featureDescription" placeholder="Describe the feature or enhancement you'd like to see. What problem does it solve?" required></textarea>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>How would this help you?</label>
+          <textarea id="featureBenefit" placeholder="Explain the benefit this feature would provide..." style="min-height:80px;"></textarea>
+        </div>
+        
+        <div class="suggest-form-submit">
+          <button type="submit" class="btn primary">Submit Feature</button>
+        </div>
+      </form>
+      
+      <form class="suggest-form hidden" id="suggestQuestionForm" data-type="question">
+        <div class="suggest-form-group">
+          <label>Question <span>*</span></label>
+          <textarea id="questionText" placeholder="Write your physics question here..." required style="min-height:80px;"></textarea>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Answer <span>*</span></label>
+          <textarea id="questionAnswer" placeholder="Write the correct answer..." required style="min-height:80px;"></textarea>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Explanation</label>
+          <textarea id="questionExplanation" placeholder="Explain why this is the correct answer..." style="min-height:80px;"></textarea>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Physics Topic</label>
+          <select id="questionTopic">
+            <option value="">Select topic</option>
+            <option value="mechanics">Mechanics</option>
+            <option value="thermodynamics">Thermodynamics</option>
+            <option value="electromagnetism">Electromagnetism</option>
+            <option value="optics">Optics</option>
+            <option value="quantum">Quantum Physics</option>
+            <option value="relativity">Relativity</option>
+            <option value="waves">Waves & Sound</option>
+            <option value="nuclear">Nuclear Physics</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        
+        <div class="suggest-form-group">
+          <label>Difficulty</label>
+          <select id="questionDifficulty">
+            <option value="easy">Easy</option>
+            <option value="medium" selected>Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+        
+        <div class="suggest-form-submit">
+          <button type="submit" class="btn primary">Submit Question</button>
+        </div>
+      </form>
+      
+      <div class="suggest-success" id="suggestSuccess">
+        <div class="suggest-success-icon">🎉</div>
+        <h3>Thanks for your suggestion!</h3>
+        <p>We've received your experiment idea and will review it. Popular suggestions get added faster!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-modal" id="authModal">
+    <div class="auth-modal-overlay"></div>
+    <div class="auth-modal-content">
+      <button class="auth-modal-close" id="authModalClose">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 6L6 18M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="signin">Sign In</button>
+        <button class="auth-tab" data-tab="signup">Sign Up</button>
+      </div>
+
+      <div class="auth-form-container">
+        <form class="auth-form" id="signinForm">
+          <div class="auth-header">
+            <h3>Welcome Back</h3>
+            <p>Sign in to access your account</p>
+          </div>
+          
+          <div class="auth-field">
+            <label for="signinEmail">Email</label>
+            <input type="email" id="signinEmail" placeholder="your@email.com" required />
+          </div>
+          
+          <div class="auth-field">
+            <label for="signinPassword">
+              Password
+              <a href="#" class="auth-link" id="showForgotPassword">Forgot?</a>
+            </label>
+            <div class="auth-password-field">
+              <input type="password" id="signinPassword" placeholder="Enter password" required />
+              <button type="button" class="auth-toggle-password" data-target="signinPassword">
+                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-error" id="signinError" style="display:none"></div>
+
+          <button type="submit" class="auth-submit-btn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader" style="display:none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <form class="auth-form" id="signupForm" style="display:none">
+          <div class="auth-header">
+            <h3>Create Account</h3>
+            <p>Join Physics Experiments Lab</p>
+          </div>
+          
+          <div class="auth-field">
+            <label for="signupEmail">Email</label>
+            <input type="email" id="signupEmail" placeholder="your@email.com" required />
+          </div>
+          
+          <div class="auth-field">
+            <label for="signupPassword">Password</label>
+            <div class="auth-password-field">
+              <input type="password" id="signupPassword" placeholder="Min 6 characters" required minlength="6" />
+              <button type="button" class="auth-toggle-password" data-target="signupPassword">
+                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <div class="auth-field">
+            <label for="signupConfirm">Confirm Password</label>
+            <div class="auth-password-field">
+              <input type="password" id="signupConfirm" placeholder="Repeat password" required />
+              <button type="button" class="auth-toggle-password" data-target="signupConfirm">
+                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-error" id="signupError" style="display:none"></div>
+
+          <button type="submit" class="auth-submit-btn">
+            <span class="btn-text">Create Account</span>
+            <span class="btn-loader" style="display:none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            </span>
+          </button>
+        </form>
+
+        <form class="auth-form" id="forgotForm" style="display:none">
+          <div class="auth-header">
+            <h3>Reset Password</h3>
+            <p>Enter your email to receive reset instructions</p>
+          </div>
+          
+          <div class="auth-field">
+            <label for="forgotEmail">Email</label>
+            <input type="email" id="forgotEmail" placeholder="your@email.com" required />
+          </div>
+
+          <div class="auth-error" id="forgotError" style="display:none"></div>
+          <div class="auth-success" id="forgotSuccess" style="display:none"></div>
+
+          <button type="submit" class="auth-submit-btn">
+            <span class="btn-text">Send Reset Link</span>
+            <span class="btn-loader" style="display:none">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                  <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            </span>
+          </button>
+          
+          <a href="#" class="auth-link auth-back-link" id="backToSignin">Back to Sign In</a>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .auth-dropdown-wrapper {
+      position: relative;
+    }
+    .auth-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(106, 215, 255, 0.15);
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      border-radius: 12px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .auth-btn:hover {
+      background: rgba(106, 215, 255, 0.25);
+      border-color: rgba(106, 215, 255, 0.5);
+    }
+    .auth-btn .user-avatar {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      color: #0a0a0f;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .auth-btn .sub-badge {
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #0a0a0f;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      margin-left: 4px;
+    }
+    .auth-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px;
+      min-width: 220px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+      display: none;
+      z-index: 100;
+    }
+    .auth-dropdown.show {
+      display: block;
+    }
+    .auth-dropdown-info {
+      padding: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .auth-dropdown-email {
+      font-weight: 500;
+      color: var(--text);
+      font-size: 14px;
+      word-break: break-all;
+    }
+    .auth-dropdown-plan {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .auth-dropdown-warning {
+      font-size: 11px;
+      color: #ffaa00;
+      margin-top: 6px;
+      padding: 4px 8px;
+      background: rgba(255, 170, 0, 0.15);
+      border-radius: 6px;
+    }
+    .auth-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 13px;
+      transition: background 0.2s;
+      background: none;
+      border: none;
+      width: 100%;
+      cursor: pointer;
+      text-align: left;
+    }
+    .auth-dropdown-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+    .auth-dropdown-item svg {
+      color: var(--muted);
+    }
+    .auth-modal { display: none; position: fixed; inset: 0; z-index: 10001; align-items: center; justify-content: center; padding: 20px; }
+    .auth-modal.active { display: flex; }
+    .auth-modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px); }
+    .auth-modal-content { position: relative; background: var(--bg-2); border: 1px solid var(--border); border-radius: 24px; max-width: 420px; width: 100%; padding: 32px; box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5); animation: authSlideIn 0.3s ease; }
+    @keyframes authSlideIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .auth-modal-close { position: absolute; top: 16px; right: 16px; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); transition: all 0.2s ease; }
+    .auth-modal-close:hover { background: rgba(255, 255, 255, 0.2); color: var(--text); }
+    .auth-tabs { display: flex; gap: 8px; margin-bottom: 28px; background: rgba(0,0,0,0.2); padding: 4px; border-radius: 12px; }
+    .auth-tab { flex: 1; padding: 12px; background: transparent; border: none; border-radius: 8px; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s ease; }
+    .auth-tab.active { background: var(--accent); color: #0a0a0f; }
+    .auth-form-container { min-height: 320px; }
+    .auth-header { text-align: center; margin-bottom: 24px; }
+    .auth-header h3 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+    .auth-header p { color: var(--muted); font-size: 14px; }
+    .auth-field { margin-bottom: 20px; }
+    .auth-field label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 8px; }
+    .auth-field input { width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; font-size: 15px; color: var(--text); transition: all 0.2s ease; box-sizing: border-box; }
+    .auth-field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(106, 215, 255, 0.15); }
+    .auth-field input::placeholder { color: var(--muted); opacity: 0.6; }
+    .auth-password-field { position: relative; }
+    .auth-toggle-password { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); padding: 4px; }
+    .auth-toggle-password:hover { color: var(--text); }
+    .auth-error { background: rgba(255, 68, 68, 0.15); border: 1px solid rgba(255, 68, 68, 0.3); color: #ff6464; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+    .auth-success { background: rgba(68, 255, 100, 0.15); border: 1px solid rgba(68, 255, 100, 0.3); color: #44ff64; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
+    .auth-submit-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--accent), #4ab8e8); border: none; border-radius: 12px; color: #0a0a0f; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .auth-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(106, 215, 255, 0.3); }
+    .auth-submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .auth-link { color: var(--accent); text-decoration: none; font-size: 12px; }
+    .auth-link:hover { text-decoration: underline; }
+    .auth-back-link { display: block; text-align: center; margin-top: 16px; }
+    .btn-loader svg { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    [data-theme="light"] .auth-modal-overlay { background: rgba(10, 15, 22, 0.35); }
+    [data-theme="light"] .auth-modal-content { box-shadow: 0 25px 80px rgba(10, 15, 22, 0.2); }
+    [data-theme="light"] .auth-modal-close { background: rgba(10, 15, 22, 0.06); }
+    [data-theme="light"] .auth-modal-close:hover { background: rgba(10, 15, 22, 0.12); }
+    [data-theme="light"] .auth-tabs { background: rgba(10, 15, 22, 0.06); }
+    [data-theme="light"] .auth-field input { background: rgba(255, 255, 255, 0.9); }
+    [data-theme="light"] .auth-dropdown { box-shadow: 0 20px 50px rgba(10, 15, 22, 0.15); }
+    [data-theme="light"] .auth-dropdown-item:hover { background: rgba(10, 15, 22, 0.06); }
+  </style>
+
+  <script src="auth.js"></script>
+  <script src="achievements.js"></script>
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const iconMap = {
+        mechanics: ['🚀','🛸','🏹','🎯','🛞','🛰️','🧗','🏎️'],
+        waves: ['🌊','🔊','🎛️','📶','🫧','🎼','🎚️','🌀'],
+        electricity: ['⚡','🔌','💡','🔋','🧲','📟','💥','🪫'],
+        electronics: ['💡','🧩','🧠','🧰','🧮','📟','🪛','🧯'],
+        thermal: ['🔥','🌡️','🧯','☀️','🧊','🧪','🥵','❄️'],
+        quantum: ['🧪','⚛️','🌀','🧬','🧿','✨','🪐','🔭'],
+        modern: ['🛰️','🧭','🪐','🌌','🧑‍🚀','🔭','📡','🛰️'],
+        astrophysics: ['🌌','🌠','🪐','🔭','☄️','✨','🌙','⭐'],
+        fluids: ['💧','🌊','🫧','🚿','🧴','🌬️','🌀','🧪'],
+        measurement: ['🔎','📐','📏','🧭','⏱️','🧮','🧰','🪪'],
+        medical: ['🩺','🫀','🧬','🧪','🫁','🧫','🩻','💉'],
+        communications: ['📡','📶','🛰️','📻','🗼','🔊','🧭','📣'],
+        materials: ['🧱','🧲','🧰','🪨','🏗️','⚙️','🧪','🧵'],
+        geophysics: ['⛰️','🌋','🪨','🌎','🧭','🗺️','🧊','🏔️'],
+        energy: ['🔋','⚡','🔆','🛢️','☀️','🌬️','🔌','🪫'],
+        other: ['🧩','✨','🔭','🧠','📎','🪄','🎛️','🧪']
+      };
+
+      const iconFor = (exp, index) => {
+        const pool = iconMap[exp.category] || iconMap.other;
+        const seed = (exp.name || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+        return pool[(seed + index) % pool.length];
+      };
+
+      const durationFor = (exp) => {
+        const base = 12 + (exp.name.length % 10);
+        return `${base} min`;
+      };
+
+      const MAX_CARDS = 12;
+      let showAll = false;
+      let currentQuery = '';
+      let currentList = [];
+
+      const render = (experiments) => {
+        const container = document.getElementById('simList');
+        if (!container) return;
+        const isSearching = currentQuery.trim().length > 0;
+        const list = (!showAll && !isSearching) ? experiments.slice(0, MAX_CARDS) : experiments;
+        const cards = list.map((exp, idx) => {
+          const icon = iconFor(exp, idx);
+          const tags = exp.tags.slice(0, 3).map(t => `#${t}`).join(' ');
+          return `
+            <div class="sim-card" data-exp="${exp.id}">
+              <div class="sim-card-top">${icon}</div>
+              <div class="sim-card-body">
+                <h3>${exp.name}</h3>
+                <p>${exp.desc}</p>
+                <div class="sim-tags">
+                  <span class="tag category">${(exp.category || 'other').replace(/-/g, ' ')}</span>
+                </div>
+                <div class="sim-meta">⏱ ${durationFor(exp)}</div>
+                <div style="color: rgba(125, 211, 252, 0.6); font-size: 12px;">${tags}</div>
+                <a href="simulations/${exp.id}.html">Open Solo View</a>
+              </div>
+            </div>
+          `;
+        }).join('');
+        container.innerHTML = cards;
+        const count = document.getElementById('simCount');
+        if (count) count.textContent = `${experiments.length} simulations found`;
+        const toggleBtn = document.getElementById('simToggleBtn');
+        if (toggleBtn) {
+          if (isSearching || experiments.length <= MAX_CARDS) {
+            toggleBtn.style.display = 'none';
+          } else {
+            toggleBtn.style.display = 'inline-flex';
+            toggleBtn.textContent = showAll ? 'Show less' : 'Show more';
+          }
+        }
+        if (typeof initFavoriteButtons === 'function') initFavoriteButtons();
+        if (typeof updateAllFavoriteButtons === 'function') updateAllFavoriteButtons();
+      };
+
+      const data = window.EXPERIMENTS || [];
+      currentList = data;
+      render(currentList);
+
+      const searchInput = document.getElementById('simSearch');
+      const toggleBtn = document.getElementById('simToggleBtn');
+      toggleBtn?.addEventListener('click', () => {
+        showAll = !showAll;
+        render(currentList);
+      });
+      const normalize = (str) => (str || '').toLowerCase().replace(/[^a-z0-9\\s]/g, ' ').replace(/\\s+/g, ' ').trim();
+      const scoreMatch = (exp, tokens) => {
+        const name = normalize(exp.name);
+        const desc = normalize(exp.desc);
+        const tags = normalize((exp.tags || []).join(' '));
+        const cat = normalize(exp.category || '');
+        let score = 0;
+        tokens.forEach(t => {
+          if (!t) return;
+          if (name.startsWith(t)) score += 8;
+          if (name.includes(t)) score += 6;
+          if (tags.includes(t)) score += 4;
+          if (desc.includes(t)) score += 2;
+          if (cat.includes(t)) score += 1;
+        });
+        return score;
+      };
+
+      let searchTimer = null;
+      searchInput?.addEventListener('input', (e) => {
+        const query = e.target.value;
+        currentQuery = query;
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          const q = normalize(query);
+          if (!q) {
+            currentList = data;
+            render(currentList);
+            return;
+          }
+          const tokens = q.split(' ');
+          const ranked = data.map(exp => ({ exp, score: scoreMatch(exp, tokens) }))
+            .filter(item => item.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(item => item.exp);
+          currentList = ranked;
+          render(currentList);
+        }, 120);
+      });
+    });
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      BadgeUI.updateHeaderBadgeIcon();
+      
+      const authModal = document.getElementById('authModal');
+      const authModalClose = document.getElementById('authModalClose');
+      const authModalOverlay = document.querySelector('.auth-modal-overlay');
+      const authTabs = document.querySelectorAll('.auth-tab');
+      const signinForm = document.getElementById('signinForm');
+      const signupForm = document.getElementById('signupForm');
+      const forgotForm = document.getElementById('forgotForm');
+      const authBtn = document.getElementById('authBtn');
+      const authDropdown = document.getElementById('authDropdown');
+      
+      window.showAuthModal = function(tab = 'signin') {
+        authModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        switchAuthTab(tab);
+      };
+      
+      function closeAuthModal() {
+        authModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      
+      function switchAuthTab(tab) {
+        authTabs.forEach(t => t.classList.remove('active'));
+        document.querySelector('.auth-tab[data-tab="' + tab + '"]')?.classList.add('active');
+        signinForm.style.display = tab === 'signin' ? 'block' : 'none';
+        signupForm.style.display = tab === 'signup' ? 'block' : 'none';
+        forgotForm.style.display = tab === 'forgot' ? 'block' : 'none';
+        clearAuthErrors();
+      }
+      
+      function clearAuthErrors() {
+        document.querySelectorAll('.auth-error, .auth-success').forEach(el => {
+          el.style.display = 'none';
+        });
+      }
+      
+      authModalClose?.addEventListener('click', closeAuthModal);
+      authModalOverlay?.addEventListener('click', closeAuthModal);
+      
+      authTabs.forEach(tab => {
+        tab.addEventListener('click', () => switchAuthTab(tab.dataset.tab));
+      });
+      
+      document.getElementById('showForgotPassword')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchAuthTab('forgot');
+      });
+      
+      document.getElementById('backToSignin')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchAuthTab('signin');
+      });
+      
+      document.querySelectorAll('.auth-toggle-password').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.dataset.target;
+          const input = document.getElementById(targetId);
+          if (input) input.type = input.type === 'password' ? 'text' : 'password';
+        });
+      });
+      
+      signinForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearAuthErrors();
+        const email = document.getElementById('signinEmail').value;
+        const password = document.getElementById('signinPassword').value;
+        const btn = signinForm.querySelector('.auth-submit-btn');
+        const text = btn.querySelector('.btn-text');
+        const loader = btn.querySelector('.btn-loader');
+        btn.disabled = true; text.style.display = 'none'; loader.style.display = 'inline-flex';
+        const result = await Auth.signin(email, password);
+        btn.disabled = false; text.style.display = 'inline'; loader.style.display = 'none';
+        if (result.success) { closeAuthModal(); window.location.reload(); }
+        else { document.getElementById('signinError').textContent = result.error; document.getElementById('signinError').style.display = 'block'; }
+      });
+      
+      signupForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearAuthErrors();
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('signupConfirm').value;
+        if (password !== confirm) { document.getElementById('signupError').textContent = 'Passwords do not match'; document.getElementById('signupError').style.display = 'block'; return; }
+        const btn = signupForm.querySelector('.auth-submit-btn');
+        const text = btn.querySelector('.btn-text');
+        const loader = btn.querySelector('.btn-loader');
+        btn.disabled = true; text.style.display = 'none'; loader.style.display = 'inline-flex';
+        const result = await Auth.signup(email, password);
+        btn.disabled = false; text.style.display = 'inline'; loader.style.display = 'none';
+        if (result.success) { closeAuthModal(); window.location.reload(); }
+        else { document.getElementById('signupError').textContent = result.error; document.getElementById('signupError').style.display = 'block'; }
+      });
+      
+      forgotForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearAuthErrors();
+        const email = document.getElementById('forgotEmail').value;
+        const result = await Auth.forgotPassword(email);
+        if (result.success) { document.getElementById('forgotSuccess').textContent = 'Check your email for reset instructions'; document.getElementById('forgotSuccess').style.display = 'block'; }
+        else { document.getElementById('forgotError').textContent = result.error; document.getElementById('forgotError').style.display = 'block'; }
+      });
+      
+      if (authBtn) {
+        authBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (Auth.isLoggedIn()) {
+            authDropdown.classList.toggle('show');
+          } else {
+            showAuthModal('signin');
+          }
+        });
+      }
+      
+      document.addEventListener('click', function(e) {
+        if (!authDropdown?.contains(e.target)) {
+          authDropdown?.classList.remove('show');
+        }
+      });
+      
+      const achievementsBtn = document.getElementById('achievementsBtn');
+      if (achievementsBtn) {
+        achievementsBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          BadgeUI.showDropdown();
+        });
+      }
+      
+      // Mobile navigation hamburger menu
+      const hamburgerBtn = document.getElementById('hamburgerBtn');
+      const mainNav = document.getElementById('mainNav');
+      const navOverlay = document.getElementById('navOverlay');
+      
+      function toggleMobileNav() {
+        const isOpen = mainNav.classList.contains('mobile-open');
+        if (isOpen) {
+          mainNav.classList.remove('mobile-open');
+          hamburgerBtn.classList.remove('active');
+          navOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        } else {
+          mainNav.classList.add('mobile-open');
+          hamburgerBtn.classList.add('active');
+          navOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+      
+      function closeMobileNav() {
+        mainNav.classList.remove('mobile-open');
+        hamburgerBtn.classList.remove('active');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      
+      if (hamburgerBtn) {
+        hamburgerBtn.addEventListener('click', toggleMobileNav);
+      }
+      
+      if (navOverlay) {
+        navOverlay.addEventListener('click', closeMobileNav);
+      }
+      
+      // Mobile dropdown tap-to-toggle
+      const navDropdowns = document.querySelectorAll('.nav-dropdown');
+      navDropdowns.forEach(dropdown => {
+        const trigger = dropdown.querySelector('.nav-trigger');
+        if (trigger) {
+          trigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Close other dropdowns
+            navDropdowns.forEach(d => {
+              if (d !== dropdown) d.classList.remove('expanded');
+            });
+            dropdown.classList.toggle('expanded');
+          });
+        }
+      });
+      
+      // Close mobile nav when clicking a nav link
+      mainNav?.querySelectorAll('a:not(.nav-trigger)').forEach(link => {
+        link.addEventListener('click', closeMobileNav);
+      });
+      
+      // Close mobile nav on escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeMobileNav();
+      });
+      
+      Auth.updateUI();
+    });
+  </script>
+</body>
+</html>

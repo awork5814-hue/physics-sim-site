@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ideal Gas Law</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.72);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #f59e0b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.85);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(56,189,248,0.5); box-shadow: 0 0 12px rgba(56,189,248,0.25); }
+    header {
+      padding: 24px 20px 8px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(340px, 50vh, 520px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+    .pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill {
+      border: 1px solid var(--line); color: var(--ink); background: rgba(12, 18, 28, 0.9);
+      padding: 6px 10px; border-radius: 999px; font-size: 12px; cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .pill:hover { transform: translateY(-1px); border-color: rgba(56,189,248,0.45); box-shadow: 0 0 10px rgba(56,189,248,0.2); }
+    .pill.active { border-color: rgba(56,189,248,0.7); box-shadow: 0 0 12px rgba(56,189,248,0.25); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(245,158,11,0.7); box-shadow: 0 0 12px rgba(245,158,11,0.2); }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Ideal Gas Law</h1>
+    <div class="subtitle">PV = nRT with particles and a movable piston</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Simulation Speed</label>
+          <input id="speed" type="range" min="0.25" max="2" step="0.05" value="1" />
+          <div class="row"><span>0.25x</span><span id="speedVal" class="value">1.00x</span><span>2.00x</span></div>
+        </div>
+        <div class="control">
+          <label>Lock Variable</label>
+          <select id="lock">
+            <option value="T" selected>Lock T</option>
+            <option value="V">Lock V</option>
+            <option value="n">Lock n</option>
+            <option value="P">Lock P</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Temperature (K)</label>
+          <input id="temp" type="range" min="100" max="1000" step="10" value="300" />
+          <div class="row"><span>100</span><span id="tempVal" class="value">300 K</span><span>1000</span></div>
+        </div>
+        <div class="control">
+          <label>Volume (L)</label>
+          <input id="vol" type="range" min="1" max="20" step="0.5" value="10" />
+          <div class="row"><span>1</span><span id="volVal" class="value">10 L</span><span>20</span></div>
+        </div>
+        <div class="control">
+          <label>Amount of Gas n (mol)</label>
+          <input id="moles" type="range" min="0.5" max="5" step="0.1" value="1" />
+          <div class="row"><span>0.5</span><span id="molesVal" class="value">1.0</span><span>5</span></div>
+        </div>
+        <div class="control">
+          <label>Gas Type</label>
+          <select id="gas">
+            <option value="he">Helium</option>
+            <option value="ne">Neon</option>
+            <option value="ar">Argon</option>
+            <option value="n2">Nitrogen</option>
+            <option value="o2">Oxygen</option>
+            <option value="co2">CO2</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showParticles" type="checkbox" checked /> Particles</label>
+            <label><input id="showVel" type="checkbox" checked /> Velocities</label>
+            <label><input id="showPV" type="checkbox" checked /> P-V Plot</label>
+            <label><input id="showHeat" type="checkbox" checked /> Heat Glow</label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    Ideal Gas Law: <span style="font-family: var(--mono);">PV = nRT</span> with
+    <span style="font-family: var(--mono);">R = 0.0821 L·atm·mol⁻¹·K⁻¹</span>.
+    Molecular speed: <span style="font-family: var(--mono);">v<sub>rms</sub> = √(3RT/M)</span>.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const R = 0.0821;
+    const R_SI = 8.314;
+
+    const COLORS = {
+      cool: { fill: '#38bdf8', glow: 'rgba(56,189,248,0.35)' },
+      warm: { fill: '#f59e0b', glow: 'rgba(245,158,11,0.35)' },
+      hot: { fill: '#f97316', glow: 'rgba(249,115,22,0.35)' }
+    };
+
+    const molarMass = {
+      he: 0.004,
+      ne: 0.020,
+      ar: 0.040,
+      n2: 0.028,
+      o2: 0.032,
+      co2: 0.044
+    };
+
+    const state = {
+      T: 300,
+      V: 10,
+      n: 1,
+      lock: 'T',
+      gas: 'he',
+      showParticles: true,
+      showVel: true,
+      showPV: true,
+      showHeat: true,
+      particles: [],
+      speed: 1,
+      running: true,
+      lockP: null
+    };
+
+    function pressure() {
+      return (state.n * R * state.T) / state.V;
+    }
+
+    function rmsVelocity() {
+      const M = molarMass[state.gas];
+      return Math.sqrt(3 * R_SI * state.T / M) / 1000;
+    }
+
+    function temperatureColor() {
+      if (state.T < 300) return COLORS.cool;
+      if (state.T < 650) return COLORS.warm;
+      return COLORS.hot;
+    }
+
+    function initParticles() {
+      state.particles = [];
+      const count = Math.max(30, Math.round(state.n * 50));
+      const baseLeft = 140;
+      const baseTop = 90;
+      for (let i = 0; i < count; i++) {
+        state.particles.push({
+          x: baseLeft + Math.random() * 320,
+          y: baseTop + Math.random() * 220,
+          vx: (Math.random() - 0.5),
+          vy: (Math.random() - 0.5)
+        });
+      }
+    }
+
+    function updateParticles() {
+      if (!state.showParticles) return;
+      const bounds = containerBounds();
+      const speedScale = (rmsVelocity() * 35 + state.T * 0.002) * state.speed;
+      for (const p of state.particles) {
+        p.x += p.vx * speedScale * 0.016;
+        p.y += p.vy * speedScale * 0.016;
+        if (p.x < bounds.left + 6 || p.x > bounds.left + bounds.width - 6) p.vx *= -1;
+        if (p.y < bounds.top + 6 || p.y > bounds.top + bounds.height - 6) p.vy *= -1;
+      }
+    }
+
+    function containerBounds() {
+      const left = 140;
+      const top = 90;
+      const width = 320 + (state.V - 10) * 9;
+      const height = 230;
+      return { left, top, width, height };
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.5, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.5, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawContainer() {
+      const { left, top, width, height } = containerBounds();
+      const tempColor = temperatureColor();
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(8, 12, 20, 0.75)';
+      ctx.fillRect(left - 14, top - 22, width + 28, height + 44);
+
+      ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left - 12, top - 20, width + 24, height + 40);
+      ctx.restore();
+
+      const glass = ctx.createLinearGradient(left, top, left + width, top + height);
+      glass.addColorStop(0, 'rgba(56,189,248,0.08)');
+      glass.addColorStop(0.5, 'rgba(255,255,255,0.03)');
+      glass.addColorStop(1, 'rgba(148,163,184,0.12)');
+      ctx.fillStyle = glass;
+      ctx.fillRect(left, top, width, height);
+
+      ctx.strokeStyle = 'rgba(226,232,240,0.5)';
+      ctx.lineWidth = 2.2;
+      ctx.strokeRect(left, top, width, height);
+
+      const pistonGrad = ctx.createLinearGradient(left, top - 22, left, top - 4);
+      pistonGrad.addColorStop(0, '#0b1c2e');
+      pistonGrad.addColorStop(1, '#1f2937');
+      ctx.fillStyle = pistonGrad;
+      ctx.fillRect(left, top - 22, width, 14);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(left + width * 0.15, top - 28, width * 0.7, 5);
+
+      if (state.showHeat) {
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        const glow = ctx.createRadialGradient(left + width * 0.55, top + height * 0.5, 20, left + width * 0.55, top + height * 0.5, height);
+        glow.addColorStop(0, tempColor.glow);
+        glow.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(left, top, width, height);
+        ctx.restore();
+      }
+
+      if (state.showParticles) {
+        ctx.fillStyle = tempColor.fill;
+        for (const p of state.particles) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+          if (state.showVel) {
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + p.vx * 0.5, p.y + p.vy * 0.5);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    function drawPV() {
+      if (!state.showPV) return;
+      const x = 570, y = 90, w = 360, h = 190;
+      ctx.save();
+      ctx.fillStyle = 'rgba(10, 14, 24, 0.75)';
+      ctx.fillRect(x - 10, y - 16, w + 20, h + 32);
+      ctx.strokeStyle = 'rgba(148,163,184,0.3)';
+      ctx.strokeRect(x - 10, y - 16, w + 20, h + 32);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const gx = x + (w / 4) * i;
+        const gy = y + (h / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(gx, y);
+        ctx.lineTo(gx, y + h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, gy);
+        ctx.lineTo(x + w, gy);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(56,189,248,0.75)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText('P-V Diagram', x + 10, y - 6);
+
+      const P = pressure();
+      const vMin = 1;
+      const vMax = 20;
+      const pMax = 10;
+      ctx.strokeStyle = 'rgba(56,189,248,0.4)';
+      ctx.beginPath();
+      for (let v = vMin; v <= vMax; v += 0.2) {
+        const p = (state.n * R * state.T) / v;
+        const px = x + ((v - vMin) / (vMax - vMin)) * w;
+        const py = y + h - (Math.min(p, pMax) / pMax) * h;
+        if (v === vMin) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      const px = x + ((state.V - vMin) / (vMax - vMin)) * w;
+      const py = y + h - (Math.min(P, pMax) / pMax) * h;
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.arc(px, py, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      drawBackground();
+      drawContainer();
+      drawPV();
+    }
+
+    function updateReadout() {
+      const P = pressure();
+      const vRms = rmsVelocity();
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Pressure</span><span class="data-value orange">${P.toFixed(2)} atm</span></div>
+          <div class="data-card"><span class="data-label">Temperature</span><span class="data-value blue">${state.T.toFixed(0)} K</span></div>
+          <div class="data-card"><span class="data-label">Volume</span><span class="data-value blue">${state.V.toFixed(1)} L</span></div>
+          <div class="data-card"><span class="data-label">Moles</span><span class="data-value blue">${state.n.toFixed(2)} mol</span></div>
+          <div class="data-card"><span class="data-label">v_rms</span><span class="data-value orange">${vRms.toFixed(2)} km/s</span></div>
+          <div class="data-card"><span class="data-label">Gas</span><span class="data-value green">${state.gas.toUpperCase()}</span></div>
+        </div>
+      `;
+    }
+
+    function enforceLock(changed) {
+      const P = pressure();
+      if (state.lock === 'T' && changed !== 'T') {
+        state.T = (P * state.V) / (state.n * R);
+      }
+      if (state.lock === 'V' && changed !== 'V') {
+        state.V = (state.n * R * state.T) / P;
+      }
+      if (state.lock === 'n' && changed !== 'n') {
+        state.n = (P * state.V) / (R * state.T);
+      }
+      if (state.lock === 'P') {
+        const targetP = state.lockP ?? P;
+        if (changed === 'V') {
+          state.T = (targetP * state.V) / (state.n * R);
+        } else {
+          state.V = (state.n * R * state.T) / targetP;
+        }
+      }
+    }
+
+    function tick() {
+      if (state.running) {
+        updateParticles();
+      }
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI
+    document.getElementById('lock').addEventListener('change', e => {
+      state.lock = e.target.value;
+      if (state.lock === 'P') state.lockP = pressure();
+    });
+    document.getElementById('temp').addEventListener('input', e => {
+      state.T = parseFloat(e.target.value);
+      document.getElementById('tempVal').textContent = `${state.T.toFixed(0)} K`;
+      enforceLock('T');
+      initParticles();
+    });
+    document.getElementById('vol').addEventListener('input', e => {
+      state.V = parseFloat(e.target.value);
+      document.getElementById('volVal').textContent = `${state.V.toFixed(1)} L`;
+      enforceLock('V');
+    });
+    document.getElementById('moles').addEventListener('input', e => {
+      state.n = parseFloat(e.target.value);
+      document.getElementById('molesVal').textContent = state.n.toFixed(1);
+      enforceLock('n');
+      initParticles();
+    });
+    document.getElementById('gas').addEventListener('change', e => {
+      state.gas = e.target.value;
+      initParticles();
+    });
+
+    document.getElementById('showParticles').addEventListener('change', e => state.showParticles = e.target.checked);
+    document.getElementById('showVel').addEventListener('change', e => state.showVel = e.target.checked);
+    document.getElementById('showPV').addEventListener('change', e => state.showPV = e.target.checked);
+    document.getElementById('showHeat').addEventListener('change', e => state.showHeat = e.target.checked);
+
+    document.getElementById('speed').addEventListener('input', e => {
+      state.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      state.running = !state.running;
+      e.target.textContent = state.running ? 'Pause' : 'Play';
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      state.T = 300;
+      state.V = 10;
+      state.n = 1;
+      state.lock = 'T';
+      state.lockP = null;
+      state.speed = 1;
+      document.getElementById('temp').value = 300;
+      document.getElementById('vol').value = 10;
+      document.getElementById('moles').value = 1;
+      document.getElementById('lock').value = 'T';
+      document.getElementById('speed').value = 1;
+      document.getElementById('tempVal').textContent = '300 K';
+      document.getElementById('volVal').textContent = '10 L';
+      document.getElementById('molesVal').textContent = '1.0';
+      document.getElementById('speedVal').textContent = '1.00x';
+      initParticles();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    initParticles();
+    tick();
+  </script>
+</body>
+</html>

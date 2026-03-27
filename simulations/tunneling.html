@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Tunneling</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    .tunnel-stat { background: rgba(6, 10, 18, 0.5); border-radius: 10px; padding: 12px; text-align: center; }
+    .tunnel-stat .value { font-size: 1.8rem; font-weight: 700; color: var(--accent-2); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Tunneling</span></div>
+    <header class="hero"><h1>Quantum Tunneling</h1><p>Particles can tunnel through classically forbidden barriers</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">T ≈ e<sup>-2κd</sup></div>
+        <div class="control-group">
+          <label>Particle Energy (eV)</label>
+          <input type="range" id="energySlider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Barrier Width (nm)</label>
+          <input type="range" id="widthSlider" min="1" max="50" value="20">
+        </div>
+        <div class="control-group">
+          <label>Barrier Height (eV)</label>
+          <input type="range" id="barrierSlider" min="10" max="200" value="50">
+        </div>
+        <div class="tunnel-stat">
+          <div class="label">Tunneling Probability</div>
+          <div class="value" id="probVal">0.00%</div>
+        </div>
+        <div class="data-panel">
+          <div>Wavefunction decay: <strong id="decayVal">α = 5.12 /nm</strong></div>
+          <div>Barrier type: <strong id="barrierType">Thin</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const energySlider = document.getElementById('energySlider');
+    const widthSlider = document.getElementById('widthSlider');
+    const barrierSlider = document.getElementById('barrierSlider');
+    let particles = [];
+    let time = 0;
+    function update() {
+      const E = energySlider.value / 10;
+      const d = widthSlider.value / 10;
+      const V0 = barrierSlider.value / 10;
+      const me = 9.109e-31;
+      const hbar = 1.0546e-34;
+      const kappa = Math.sqrt(2 * me * (V0 - E) * 1.602e-19) / hbar / 1e9;
+      const T = Math.exp(-2 * kappa * d) * 100;
+      document.getElementById('probVal').textContent = T.toFixed(4) + '%';
+      document.getElementById('decayVal').textContent = 'α = ' + kappa.toFixed(2) + ' /nm';
+      document.getElementById('barrierType').textContent = d < 2 ? 'Thin' : d < 4 ? 'Medium' : 'Thick';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const E = energySlider.value / 10;
+      const d = widthSlider.value;
+      const V0 = barrierSlider.value / 10;
+      const cx = w / 2, cy = h / 2;
+      const barrierLeft = cx - d * 3;
+      const barrierRight = cx + d * 3;
+      const barrierTop = cy - 80;
+      const barrierBottom = cy + 80;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.15)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.2)';
+      ctx.fillRect(barrierLeft, barrierTop, barrierRight - barrierLeft, barrierBottom - barrierTop);
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([8, 4]);
+      ctx.strokeRect(barrierLeft, barrierTop, barrierRight - barrierLeft, barrierBottom - barrierTop);
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('V₀ = ' + V0.toFixed(1) + ' eV', barrierLeft + 5, barrierTop - 10);
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(30, cy + 40);
+      ctx.lineTo(barrierLeft - 10, cy + 40);
+      ctx.stroke();
+      ctx.fillText('E = ' + E.toFixed(1) + ' eV', 30, cy + 30);
+      if (Math.random() < parseFloat(energySlider.value) / 500) {
+        particles.push({ x: 50, y: cy + (Math.random() - 0.5) * 60, tunneled: false });
+      }
+      particles.forEach((p, i) => {
+        p.x += 3;
+        const inBarrier = p.x > barrierLeft && p.x < barrierRight;
+        if (inBarrier && !p.tunneled && Math.random() > parseFloat(document.getElementById('probVal').textContent) / 10) {
+          p.tunneled = true;
+        }
+        if (p.x > w + 20 || (p.tunneled && p.x < barrierLeft)) particles.splice(i, 1);
+        ctx.fillStyle = p.tunneled ? '#f6c76b' : '#6ad7ff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Incident particles →', 60, h - 20);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('← Tunneled particles', w - 180, h - 20);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    energySlider.addEventListener('input', update);
+    widthSlider.addEventListener('input', update);
+    barrierSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

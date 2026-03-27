@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compton Scattering</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Compton Scattering</h1>
+        <p>Photon-electron collision and wavelength shift</p>
+      </div>
+      <div class="pill">Δλ = λC (1 - cosθ)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Collision View</h2>
+        <canvas id="collisionCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Spectrum Shift</h2>
+            <canvas id="spectrumCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Energy Bars</h2>
+            <canvas id="energyCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Incident Wavelength (nm)</label>
+            <input type="range" id="lambda" min="0.02" max="0.2" step="0.001" value="0.071" />
+            <div class="row"><span class="muted">λ</span><span class="value" id="lambdaValue">0.071 nm</span></div>
+          </div>
+          <div class="control">
+            <label>Scattering Angle (°)</label>
+            <input type="range" id="theta" min="0" max="180" step="1" value="90" />
+            <div class="row"><span class="muted">θ</span><span class="value" id="thetaValue">90°</span></div>
+          </div>
+          <div class="control">
+            <label>Target Particle</label>
+            <select id="target">
+              <option value="electron" selected>Electron</option>
+              <option value="proton">Proton</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Show Momentum Vectors</label>
+            <div class="toggle">
+              <input type="checkbox" id="showVectors" checked />
+              <span>Momentum arrows</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Animation</label>
+            <button id="animate">Play</button>
+          </div>
+          <div class="control">
+            <label>Show Calculation</label>
+            <div class="toggle">
+              <input type="checkbox" id="showCalc" checked />
+              <span>Equation readout</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>Δλ</span><span class="value" id="shiftValue">0.0024 nm</span></div>
+            <div class="row"><span>λ'</span><span class="value" id="lambdaPValue">0.0734 nm</span></div>
+            <div class="row"><span>E'</span><span class="value" id="ePrimeValue">17.0 keV</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Energy</div>
+            <div class="row"><span>Photon E</span><span class="value" id="eValue">17.5 keV</span></div>
+            <div class="row"><span>Electron E</span><span class="value" id="eElectronValue">0.5 keV</span></div>
+            <div class="row"><span id="calcValue">Δλ = λC(1 - cosθ)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Maximum wavelength shift occurs at 180° backscatter.</div>
+  </div>
+
+  <script>
+    const HC = 1.239841984; // keV·nm
+    const LAMBDA_C = 2.43e-12; // m
+    const state = {
+      lambda: 0.071,
+      theta: 90,
+      target: 'electron',
+      showVectors: true,
+      showCalc: true,
+      anim: false,
+      t: 0
+    };
+
+    const dom = {
+      lambda: document.getElementById('lambda'),
+      theta: document.getElementById('theta'),
+      target: document.getElementById('target'),
+      showVectors: document.getElementById('showVectors'),
+      showCalc: document.getElementById('showCalc'),
+      animate: document.getElementById('animate'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      thetaValue: document.getElementById('thetaValue'),
+      shiftValue: document.getElementById('shiftValue'),
+      lambdaPValue: document.getElementById('lambdaPValue'),
+      eValue: document.getElementById('eValue'),
+      ePrimeValue: document.getElementById('ePrimeValue'),
+      eElectronValue: document.getElementById('eElectronValue'),
+      calcValue: document.getElementById('calcValue'),
+      collisionCanvas: document.getElementById('collisionCanvas'),
+      spectrumCanvas: document.getElementById('spectrumCanvas'),
+      energyCanvas: document.getElementById('energyCanvas')
+    };
+
+    const colCtx = dom.collisionCanvas.getContext('2d');
+    const specCtx = dom.spectrumCanvas.getContext('2d');
+    const energyCtx = dom.energyCanvas.getContext('2d');
+
+    function comptonShift() {
+      const thetaRad = state.theta * Math.PI / 180;
+      const lambdaC = state.target === 'electron' ? LAMBDA_C : LAMBDA_C / 1836;
+      return lambdaC * (1 - Math.cos(thetaRad)) * 1e9;
+    }
+
+    function energyFromLambda(lambdaNm) {
+      return HC / lambdaNm;
+    }
+
+    function updateReadouts() {
+      dom.lambdaValue.textContent = `${state.lambda.toFixed(3)} nm`;
+      dom.thetaValue.textContent = `${state.theta}°`;
+      const shift = comptonShift();
+      const lambdaP = state.lambda + shift;
+      const E = energyFromLambda(state.lambda);
+      const Eprime = energyFromLambda(lambdaP);
+      dom.shiftValue.textContent = `${shift.toFixed(4)} nm`;
+      dom.lambdaPValue.textContent = `${lambdaP.toFixed(4)} nm`;
+      dom.eValue.textContent = `${E.toFixed(2)} keV`;
+      dom.ePrimeValue.textContent = `${Eprime.toFixed(2)} keV`;
+      dom.eElectronValue.textContent = `${(E - Eprime).toFixed(2)} keV`;
+      dom.calcValue.textContent = state.showCalc ? `Δλ = ${shift.toFixed(4)} nm` : 'Calculations hidden';
+    }
+
+    function drawCollision() {
+      const w = dom.collisionCanvas.width;
+      const h = dom.collisionCanvas.height;
+      colCtx.clearRect(0, 0, w, h);
+      colCtx.fillStyle = '#0b1420';
+      colCtx.fillRect(0, 0, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      colCtx.fillStyle = '#ff6b6b';
+      colCtx.beginPath();
+      colCtx.arc(cx, cy, 8, 0, Math.PI * 2);
+      colCtx.fill();
+      colCtx.strokeStyle = '#6ad7ff';
+      colCtx.lineWidth = 2;
+      colCtx.beginPath();
+      colCtx.moveTo(60, cy);
+      colCtx.lineTo(cx, cy);
+      colCtx.stroke();
+      const theta = state.theta * Math.PI / 180;
+      colCtx.strokeStyle = '#f6c76b';
+      colCtx.beginPath();
+      colCtx.moveTo(cx, cy);
+      colCtx.lineTo(cx + 120 * Math.cos(theta), cy - 120 * Math.sin(theta));
+      colCtx.stroke();
+      if (state.showVectors) {
+        colCtx.fillStyle = '#8aa0b8';
+        colCtx.fillText('photon', 70, cy - 10);
+        colCtx.fillText("photon'", cx + 120 * Math.cos(theta) + 10, cy - 120 * Math.sin(theta));
+      }
+    }
+
+    function drawSpectrum() {
+      const w = dom.spectrumCanvas.width;
+      const h = dom.spectrumCanvas.height;
+      specCtx.clearRect(0, 0, w, h);
+      specCtx.fillStyle = '#0b1420';
+      specCtx.fillRect(0, 0, w, h);
+      const shift = comptonShift();
+      const x1 = w * 0.3;
+      const x2 = w * 0.3 + (shift / 0.02) * w * 0.4;
+      specCtx.fillStyle = '#6ad7ff';
+      specCtx.fillRect(x1, 40, 10, h - 80);
+      specCtx.fillStyle = '#f6c76b';
+      specCtx.fillRect(x2, 40, 10, h - 80);
+      specCtx.fillStyle = '#8aa0b8';
+      specCtx.fillText('λ', x1 - 6, h - 10);
+      specCtx.fillText("λ'", x2 - 6, h - 10);
+    }
+
+    function drawEnergy() {
+      const w = dom.energyCanvas.width;
+      const h = dom.energyCanvas.height;
+      energyCtx.clearRect(0, 0, w, h);
+      energyCtx.fillStyle = '#0b1420';
+      energyCtx.fillRect(0, 0, w, h);
+      const E = energyFromLambda(state.lambda);
+      const Eprime = energyFromLambda(state.lambda + comptonShift());
+      const eMax = Math.max(E, 30);
+      const bar = (x, val, color, label) => {
+        const height = (val / eMax) * (h - 40);
+        energyCtx.fillStyle = color;
+        energyCtx.fillRect(x, h - 20 - height, 30, height);
+        energyCtx.fillStyle = '#8aa0b8';
+        energyCtx.fillText(label, x - 2, h - 4);
+      };
+      bar(50, E, '#6ad7ff', 'E');
+      bar(110, Eprime, '#f6c76b', "E'");
+      bar(170, E - Eprime, '#ff6b6b', 'e⁻');
+    }
+
+    function render() {
+      updateReadouts();
+      drawCollision();
+      drawSpectrum();
+      drawEnergy();
+    }
+
+    function tick() {
+      if (state.anim) {
+        state.t += 0.02;
+      }
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.lambda.addEventListener('input', () => { state.lambda = Number(dom.lambda.value); render(); });
+      dom.theta.addEventListener('input', () => { state.theta = Number(dom.theta.value); render(); });
+      dom.target.addEventListener('change', () => { state.target = dom.target.value; render(); });
+      dom.showVectors.addEventListener('change', () => { state.showVectors = dom.showVectors.checked; render(); });
+      dom.showCalc.addEventListener('change', () => { state.showCalc = dom.showCalc.checked; render(); });
+      dom.animate.addEventListener('click', () => {
+        state.anim = !state.anim;
+        dom.animate.textContent = state.anim ? 'Pause' : 'Play';
+      });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

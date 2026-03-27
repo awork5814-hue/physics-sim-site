@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bernoulli's Principle</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6ad7ff;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #f6c76b;
+      --fast: #ff6b6b;
+      --slow: #6bff6b;
+      --high-pressure: #3b82f6;
+      --low-pressure: #ef4444;
+      
+      --bg-deep: #0a1628;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
+    *::-webkit-scrollbar { width: 8px; height: 8px; }
+    *::-webkit-scrollbar-track { background: var(--bg-deep); }
+    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 22, 40, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before { content: '←'; transition: transform 0.3s; }
+    .topbar a:hover { color: var(--primary); background: rgba(106, 215, 255, 0.1); }
+
+    header.hero {
+      text-align: center;
+      padding: 30px 20px 20px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+      gap: 20px;
+      padding: 12px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .canvas-wrap { display: flex; flex-direction: column; gap: 12px; }
+
+    canvas {
+      width: 100%;
+      height: 280px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    button {
+      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(129, 140, 248, 0.15)); }
+    button:active { transform: scale(0.97); }
+    button.active { background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(129, 140, 248, 0.25)); border-color: var(--primary); }
+
+    .controls { display: flex; flex-direction: column; gap: 12px; }
+
+    .control-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #fff, #e2e8f0);
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236ad7ff' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:hover, select:focus { border-color: var(--primary); outline: none; }
+    select option { background: #0f1f35; color: var(--text); }
+
+    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(106, 215, 255, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(106, 215, 255, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
+    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
+
+    .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .data-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; }
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: var(--fast); }
+
+    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(106, 215, 255, 0.1));
+      border: 2px solid var(--primary);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .status-indicator .status-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 240px; }
+      .data-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Bernoulli's Principle</h1>
+      <p>Pressure decreases where velocity increases</p>
+    </header>
+
+  <section class="layout">
+    <div class="panel canvas-wrap">
+      <canvas id="scene" width="960" height="280"></canvas>
+      
+      <div class="btn-row">
+        <button id="playPause"><span>▶</span> Play</button>
+        <button id="reset"><span>↺</span> Reset</button>
+      </div>
+      
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-text" id="statusText">FLOWING</span>
+      </div>
+      
+      <div class="data-grid">
+        <div class="data-card">
+          <span class="data-label">Inlet Velocity</span>
+          <span class="data-value blue" id="v1Val">0 <small>m/s</small></span>
+        </div>
+        <div class="data-card">
+          <span class="data-label">Throat Velocity</span>
+          <span class="data-value red" id="v2Val">0 <small>m/s</small></span>
+        </div>
+        <div class="data-card">
+          <span class="data-label">Outlet Velocity</span>
+          <span class="data-value blue" id="v3Val">0 <small>m/s</small></span>
+        </div>
+        <div class="data-card">
+          <span class="data-label">Pressure Drop</span>
+          <span class="data-value yellow" id="dPVal">0 <small>Pa</small></span>
+        </div>
+        <div class="data-card">
+          <span class="data-label">Flow Rate Q</span>
+          <span class="data-value green" id="flowVal">0 <small>L/s</small></span>
+        </div>
+        <div class="data-card">
+          <span class="data-label">Reynolds #</span>
+          <span class="data-value yellow" id="reVal">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel controls">
+      <div class="formula-box" onclick="copyFormula(this)">
+        <div class="formula-main">P + ½ρv² + ρgh = const</div>
+        <div class="formula-desc">Bernoulli's Equation along a streamline</div>
+        <button class="copy-btn" title="Copy formula">📋</button>
+      </div>
+
+      <div class="control-group">
+        <label>Inlet Radius r₁ <strong id="r1Label">3.0 cm</strong></label>
+        <input type="range" id="r1" min="1" max="6" step="0.1" value="3">
+      </div>
+
+      <div class="control-group">
+        <label>Throat Radius r₂ <strong id="r2Label">1.5 cm</strong></label>
+        <input type="range" id="r2" min="0.5" max="4" step="0.1" value="1.5">
+      </div>
+
+      <div class="control-group">
+        <label>Outlet Radius r₃ <strong id="r3Label">3.0 cm</strong></label>
+        <input type="range" id="r3" min="1" max="6" step="0.1" value="3">
+      </div>
+
+      <div class="control-group">
+        <label>Flow Rate Q <strong id="flowLabel">2.0 L/s</strong></label>
+        <input type="range" id="flow" min="0.2" max="5" step="0.1" value="2">
+      </div>
+
+      <div class="control-group">
+        <label>Density ρ <strong id="rhoLabel">1000 kg/m³</strong></label>
+        <input type="range" id="rho" min="500" max="1300" step="10" value="1000">
+      </div>
+
+      <div class="control-group">
+        <label>Height Δh <strong id="dhLabel">0.0 m</strong></label>
+        <input type="range" id="dh" min="-2" max="2" step="0.1" value="0">
+      </div>
+
+      <div class="control-group">
+        <label>Background Theme</label>
+        <select id="bgTheme">
+          <option value="tunnel">Wind Tunnel</option>
+          <option value="water">Water Flow</option>
+          <option value="air">Air Stream</option>
+          <option value="lab">Lab Setup</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Display</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="showGauges" checked> Pressure gauges</label>
+          <label><input type="checkbox" id="showParticles" checked> Particles</label>
+          <label><input type="checkbox" id="showVelocity" checked> Velocity colors</label>
+          <label><input type="checkbox" id="showHeights"> Height markers</label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      r1: 3,
+      r2: 1.5,
+      r3: 3,
+      flowRate: 2,
+      density: 1000,
+      heightDiff: 0,
+      bgTheme: 'tunnel',
+      showGauges: true,
+      showParticles: true,
+      showVelocity: true,
+      showHeights: false,
+      playing: true,
+      particles: [],
+      time: 0
+    };
+
+    function area(r) {
+      const rm = r / 100; // cm to m
+      return Math.PI * rm * rm;
+    }
+
+    function velocity(r) {
+      const Q = state.flowRate / 1000; // L/s to m^3/s
+      return Q / area(r);
+    }
+
+    function pressure(v, h) {
+      const P0 = 101325;
+      const v0 = velocity(state.r1);
+      return P0 + 0.5 * state.density * (v0*v0 - v*v) + state.density * 9.81 * (0 - h);
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const time = Date.now() / 1000;
+
+      if (state.bgTheme === 'tunnel') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#1a1a2e');
+        grad.addColorStop(0.5, '#16213e');
+        grad.addColorStop(1, '#0f0f1a');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 20; i++) {
+          const x = (i * 60 + time * 20) % (w + 60) - 30;
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let i = 0; i < 12; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, i * 40);
+          ctx.lineTo(w, i * 40);
+          ctx.stroke();
+        }
+
+      } else if (state.bgTheme === 'water') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#0c4a6e');
+        grad.addColorStop(0.5, '#0a1628');
+        grad.addColorStop(1, '#040d18');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 8; i++) {
+          const rayX = w * 0.1 + i * w * 0.12;
+          const rayGrad = ctx.createLinearGradient(rayX, 0, rayX + 40, h);
+          const alpha = 0.05 + 0.02 * Math.sin(time * 0.5 + i);
+          rayGrad.addColorStop(0, `rgba(200, 240, 255, ${alpha})`);
+          rayGrad.addColorStop(0.5, `rgba(200, 240, 255, ${alpha * 0.3})`);
+          rayGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = rayGrad;
+          ctx.beginPath();
+          ctx.moveTo(rayX, 0);
+          ctx.lineTo(rayX + 30, 0);
+          ctx.lineTo(rayX + 60, h);
+          ctx.lineTo(rayX - 10, h);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+      } else if (state.bgTheme === 'air') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#e0f2fe');
+        grad.addColorStop(0.5, '#bae6fd');
+        grad.addColorStop(1, '#7dd3fc');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 5; i++) {
+          const cloudX = (i * 200 + time * 15) % (w + 150) - 75;
+          const cloudY = 30 + i * 25;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.beginPath();
+          ctx.arc(cloudX, cloudY, 25, 0, Math.PI * 2);
+          ctx.arc(cloudX + 25, cloudY - 10, 20, 0, Math.PI * 2);
+          ctx.arc(cloudX + 45, cloudY, 22, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+      } else if (state.bgTheme === 'lab') {
+        const labGrad = ctx.createLinearGradient(0, 0, 0, h);
+        labGrad.addColorStop(0, '#1e293b');
+        labGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = labGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
+        ctx.lineWidth = 1;
+        const gridSize = 30;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        const flicker = 0.9 + 0.1 * Math.abs(Math.sin(time * 5));
+        ctx.fillStyle = `rgba(200, 220, 255, ${0.05 * flicker})`;
+        ctx.fillRect(0, 0, w, 40);
+      }
+    }
+
+    function drawPipe() {
+      const mid = canvas.height / 2;
+      const left = 80, right = canvas.width - 80;
+      const w = right - left;
+      const seg = w / 3;
+
+      const r1 = state.r1 * 8;
+      const r2 = state.r2 * 8;
+      const r3 = state.r3 * 8;
+
+      const points = [
+        { x: left, y: mid - r1 },
+        { x: left + seg, y: mid - r2 },
+        { x: left + 2*seg, y: mid - r3 },
+        { x: right, y: mid - r3 }
+      ];
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      ctx.bezierCurveTo(left + seg*0.6, mid - r1, left + seg*0.4, mid - r2, points[1].x, points[1].y);
+      ctx.bezierCurveTo(left + seg*1.6, mid - r2, left + seg*1.4, mid - r3, points[2].x, points[2].y);
+      ctx.lineTo(points[3].x, points[3].y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, mid + r1);
+      ctx.bezierCurveTo(left + seg*0.6, mid + r1, left + seg*0.4, mid + r2, points[1].x, mid + r2);
+      ctx.bezierCurveTo(left + seg*1.6, mid + r2, left + seg*1.4, mid + r3, points[2].x, mid + r3);
+      ctx.lineTo(points[3].x, mid + r3);
+      ctx.stroke();
+
+      if (state.showHeights) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(left + seg, mid - r2 - 40);
+        ctx.lineTo(left + seg, mid + r2 + 40);
+        ctx.stroke();
+        ctx.fillStyle = '#a9b6c6';
+        ctx.fillText('Δh', left + seg + 6, mid - r2 - 20);
+      }
+    }
+
+    function velocityColor(v, vmax) {
+      const t = Math.min(1, v / vmax);
+      const r = Math.floor(106 + (255 - 106) * t);
+      const g = Math.floor(215 - (215 - 107) * t);
+      const b = Math.floor(255 - (255 - 107) * t);
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function drawVelocityBands() {
+      if (!state.showVelocity) return;
+      const mid = canvas.height / 2;
+      const left = 80, right = canvas.width - 80;
+      const w = right - left;
+      const seg = w / 3;
+      const v1 = velocity(state.r1);
+      const v2 = velocity(state.r2);
+      const v3 = velocity(state.r3);
+      const vmax = Math.max(v1, v2, v3);
+
+      ctx.fillStyle = velocityColor(v1, vmax);
+      ctx.fillRect(left, mid - state.r1 * 8, seg, state.r1 * 16);
+      ctx.fillStyle = velocityColor(v2, vmax);
+      ctx.fillRect(left + seg, mid - state.r2 * 8, seg, state.r2 * 16);
+      ctx.fillStyle = velocityColor(v3, vmax);
+      ctx.fillRect(left + 2*seg, mid - state.r3 * 8, seg, state.r3 * 16);
+    }
+
+    function spawnParticles() {
+      if (!state.showParticles) return;
+      if (state.particles.length > 120) return;
+      state.particles.push({ x: 80, y: canvas.height/2 + (Math.random()-0.5)*40 });
+    }
+
+    function updateParticles() {
+      if (!state.showParticles) return;
+      const left = 80, right = canvas.width - 80;
+      const w = right - left;
+      const seg = w / 3;
+      const v1 = velocity(state.r1);
+      const v2 = velocity(state.r2);
+      const v3 = velocity(state.r3);
+
+      state.particles.forEach(p => {
+        let v = v1;
+        if (p.x > left + seg) v = v2;
+        if (p.x > left + 2*seg) v = v3;
+        p.x += v * 20 * 0.016;
+      });
+      state.particles = state.particles.filter(p => p.x < right);
+    }
+
+    function drawParticles() {
+      if (!state.showParticles) return;
+      ctx.fillStyle = '#f6c76b';
+      for (const p of state.particles) {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    function drawGauges() {
+      if (!state.showGauges) return;
+      const base = 320;
+      const x = 140;
+      const y = 60;
+      const v1 = velocity(state.r1);
+      const v2 = velocity(state.r2);
+      const v3 = velocity(state.r3);
+      const P1 = pressure(v1, 0);
+      const P2 = pressure(v2, state.heightDiff);
+      const P3 = pressure(v3, 0);
+      const Ps = [P1, P2, P3];
+      const maxP = Math.max(...Ps);
+      const minP = Math.min(...Ps);
+
+      for (let i = 0; i < 3; i++) {
+        const h = 80 + (Ps[i] - minP) / (maxP - minP + 1) * 80;
+        ctx.strokeStyle = '#f6c76b';
+        ctx.strokeRect(x + i*120, y + base - h, 20, h);
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText(`P${i+1}`, x + i*120 - 2, y + base + 14);
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBackground();
+      drawVelocityBands();
+      drawPipe();
+      drawGauges();
+      drawParticles();
+      updateDataCards();
+    }
+
+    function updateDataCards() {
+      const v1 = velocity(state.r1);
+      const v2 = velocity(state.r2);
+      const v3 = velocity(state.r3);
+      const P1 = pressure(v1, 0);
+      const P2 = pressure(v2, state.heightDiff);
+      const dP = Math.abs(P1 - P2);
+      const Q = state.flowRate;
+      const mu = 0.001;
+      const Re = (state.density * v2 * (state.r2 / 100)) / mu;
+      
+      document.getElementById('v1Val').innerHTML = `${v1.toFixed(2)} <small>m/s</small>`;
+      document.getElementById('v2Val').innerHTML = `${v2.toFixed(2)} <small>m/s</small>`;
+      document.getElementById('v3Val').innerHTML = `${v3.toFixed(2)} <small>m/s</small>`;
+      document.getElementById('dPVal').innerHTML = `${(dP/1000).toFixed(1)} <small>kPa</small>`;
+      document.getElementById('flowVal').innerHTML = `${Q.toFixed(1)} <small>L/s</small>`;
+      document.getElementById('reVal').innerHTML = Re.toFixed(0);
+    }
+
+    function updateReadout() {
+      const v1 = velocity(state.r1);
+      const v2 = velocity(state.r2);
+      const v3 = velocity(state.r3);
+      const P1 = pressure(v1, 0);
+      const P2 = pressure(v2, state.heightDiff);
+      const P3 = pressure(v3, 0);
+      const dP = P1 - P2;
+      const text = `BERNOULLI READOUT\n` +
+        `----------------\n` +
+        `INLET\n` +
+        `v1 = ${v1.toFixed(2)} m/s\n` +
+        `P1 = ${(P1/1000).toFixed(1)} kPa\n` +
+        `\nTHROAT\n` +
+        `v2 = ${v2.toFixed(2)} m/s\n` +
+        `P2 = ${(P2/1000).toFixed(1)} kPa\n` +
+        `\nOUTLET\n` +
+        `v3 = ${v3.toFixed(2)} m/s\n` +
+        `P3 = ${(P3/1000).toFixed(1)} kPa\n` +
+        `\nΔP (1-2) = ${(dP/1000).toFixed(2)} kPa\n`;
+      const readoutEl = document.getElementById('readout');
+      if (readoutEl) readoutEl.textContent = text;
+    }
+
+    function tick() {
+      state.time += 0.016;
+      if (state.playing) {
+        spawnParticles();
+        updateParticles();
+      }
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI bindings
+    // (Event listeners defined below with new controls)
+    const r1Input = document.getElementById('r1');
+    const r2Input = document.getElementById('r2');
+    const r3Input = document.getElementById('r3');
+    const flowInput = document.getElementById('flow');
+    const rhoInput = document.getElementById('rho');
+    const dhInput = document.getElementById('dh');
+    const bgSelect = document.getElementById('bgTheme');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+
+    function updateLabels() {
+      document.getElementById('r1Label').textContent = r1Input.value + ' cm';
+      document.getElementById('r2Label').textContent = r2Input.value + ' cm';
+      document.getElementById('r3Label').textContent = r3Input.value + ' cm';
+      document.getElementById('flowLabel').textContent = parseFloat(flowInput.value).toFixed(1) + ' L/s';
+      document.getElementById('rhoLabel').textContent = rhoInput.value + ' kg/m³';
+      document.getElementById('dhLabel').textContent = parseFloat(dhInput.value).toFixed(1) + ' m';
+    }
+
+    r1Input.addEventListener('input', () => { state.r1 = parseFloat(r1Input.value); updateLabels(); });
+    r2Input.addEventListener('input', () => { state.r2 = parseFloat(r2Input.value); updateLabels(); });
+    r3Input.addEventListener('input', () => { state.r3 = parseFloat(r3Input.value); updateLabels(); });
+    flowInput.addEventListener('input', () => { state.flowRate = parseFloat(flowInput.value); updateLabels(); });
+    rhoInput.addEventListener('input', () => { state.density = parseFloat(rhoInput.value); updateLabels(); });
+    dhInput.addEventListener('input', () => { state.heightDiff = parseFloat(dhInput.value); updateLabels(); });
+    bgSelect.addEventListener('change', () => { state.bgTheme = bgSelect.value; });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.particles = [];
+      state.r1 = 3;
+      state.r2 = 1.5;
+      state.r3 = 3;
+      state.flowRate = 2;
+      state.density = 1000;
+      state.heightDiff = 0;
+      r1Input.value = 3;
+      r2Input.value = 1.5;
+      r3Input.value = 3;
+      flowInput.value = 2;
+      rhoInput.value = 1000;
+      dhInput.value = 0;
+      updateLabels();
+    });
+
+    updateLabels();
+    tick();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

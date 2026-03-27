@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brownian Motion</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --hot: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Brownian Motion</h1>
+        <p>Random walk from molecular collisions</p>
+      </div>
+      <div class="pill">⟨x²⟩ = 2Dt · D = kBT / (6πηr)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Microscope View</h2>
+        <canvas id="motionCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Speed vs Time</h2>
+            <canvas id="speedCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Parameters</h2>
+            <canvas id="paramCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Temperature (K)</label>
+            <input type="range" id="temp" min="250" max="400" step="5" value="300" />
+            <div class="row"><span class="muted">T</span><span class="value" id="tempValue">300 K</span></div>
+          </div>
+          <div class="control">
+            <label>Particle Size (μm)</label>
+            <input type="range" id="size" min="0.5" max="5" step="0.1" value="1.0" />
+            <div class="row"><span class="muted">r</span><span class="value" id="sizeValue">1.0 μm</span></div>
+          </div>
+          <div class="control">
+            <label>Show Molecules</label>
+            <div class="toggle">
+              <input type="checkbox" id="showMol" checked />
+              <span>Collision particles</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Trail</label>
+            <div class="toggle">
+              <input type="checkbox" id="showTrail" checked />
+              <span>Random walk path</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Number of Particles</label>
+            <input type="range" id="count" min="1" max="5" step="1" value="1" />
+            <div class="row"><span class="muted">N</span><span class="value" id="countValue">1</span></div>
+          </div>
+          <div class="control">
+            <label>Animation Speed</label>
+            <input type="range" id="speed" min="0.5" max="2.5" step="0.1" value="1" />
+            <div class="row"><span class="muted">Rate</span><span class="value" id="speedValue">1.0×</span></div>
+          </div>
+          <div class="control">
+            <label>Mass Ratio</label>
+            <input type="range" id="massRatio" min="1" max="50" step="1" value="10" />
+            <div class="row"><span class="muted">m ratio</span><span class="value" id="massValue">10</span></div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Statistics</div>
+            <div class="row"><span>D</span><span class="value" id="diffValue">0.44 μm²/s</span></div>
+            <div class="row"><span>⟨x²⟩</span><span class="value" id="msdValue">0.88 μm²</span></div>
+            <div class="row"><span>⟨v⟩</span><span class="value" id="speedValue2">0.65 μm/s</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span>Einstein (1905) explained Brownian motion as diffusion.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Higher temperature increases diffusion; larger particles move less.</div>
+  </div>
+
+  <script>
+    const state = {
+      temp: 300,
+      size: 1.0,
+      showMol: true,
+      showTrail: true,
+      count: 1,
+      speed: 1,
+      massRatio: 10,
+      time: 0
+    };
+
+    const dom = {
+      temp: document.getElementById('temp'),
+      size: document.getElementById('size'),
+      showMol: document.getElementById('showMol'),
+      showTrail: document.getElementById('showTrail'),
+      count: document.getElementById('count'),
+      speed: document.getElementById('speed'),
+      massRatio: document.getElementById('massRatio'),
+      tempValue: document.getElementById('tempValue'),
+      sizeValue: document.getElementById('sizeValue'),
+      countValue: document.getElementById('countValue'),
+      speedValue: document.getElementById('speedValue'),
+      massValue: document.getElementById('massValue'),
+      diffValue: document.getElementById('diffValue'),
+      msdValue: document.getElementById('msdValue'),
+      speedValue2: document.getElementById('speedValue2'),
+      motionCanvas: document.getElementById('motionCanvas'),
+      speedCanvas: document.getElementById('speedCanvas'),
+      paramCanvas: document.getElementById('paramCanvas')
+    };
+
+    const motionCtx = dom.motionCanvas.getContext('2d');
+    const speedCtx = dom.speedCanvas.getContext('2d');
+    const paramCtx = dom.paramCanvas.getContext('2d');
+
+    const particles = [{ x: 320, y: 130, vx: 0, vy: 0, trail: [] }];
+
+    function diffusionCoeff() {
+      const kB = 1.38e-23;
+      const eta = 1e-3;
+      const r = state.size * 1e-6;
+      return (kB * state.temp) / (6 * Math.PI * eta * r) * 1e12;
+    }
+
+    function updateReadouts() {
+      dom.tempValue.textContent = `${state.temp} K`;
+      dom.sizeValue.textContent = `${state.size.toFixed(1)} μm`;
+      dom.countValue.textContent = state.count;
+      dom.speedValue.textContent = `${state.speed.toFixed(1)}×`;
+      dom.massValue.textContent = state.massRatio;
+      const D = diffusionCoeff();
+      dom.diffValue.textContent = `${D.toFixed(2)} μm²/s`;
+      dom.msdValue.textContent = `${(2 * D * state.time).toFixed(2)} μm²`;
+      dom.speedValue2.textContent = `${(Math.sqrt(D) * 0.8).toFixed(2)} μm/s`;
+    }
+
+    function stepParticles() {
+      const D = diffusionCoeff();
+      const step = Math.sqrt(2 * D * 0.016) * state.speed;
+      particles.length = state.count;
+      for (let i = 0; i < state.count; i++) {
+        if (!particles[i]) particles[i] = { x: 320, y: 130, trail: [] };
+        const p = particles[i];
+        p.x += (Math.random() - 0.5) * step * 50;
+        p.y += (Math.random() - 0.5) * step * 50;
+        p.trail.push({ x: p.x, y: p.y });
+        if (p.trail.length > 80) p.trail.shift();
+        if (p.x < 40) p.x = 40;
+        if (p.x > 600) p.x = 600;
+        if (p.y < 40) p.y = 220;
+        if (p.y > 220) p.y = 40;
+      }
+    }
+
+    function drawMotion() {
+      const w = dom.motionCanvas.width;
+      const h = dom.motionCanvas.height;
+      motionCtx.clearRect(0, 0, w, h);
+      motionCtx.fillStyle = '#0b1420';
+      motionCtx.fillRect(0, 0, w, h);
+      motionCtx.strokeStyle = '#20324a';
+      motionCtx.beginPath();
+      motionCtx.arc(w / 2, h / 2, 110, 0, Math.PI * 2);
+      motionCtx.stroke();
+      if (state.showMol) {
+        motionCtx.fillStyle = 'rgba(106,215,255,0.3)';
+        for (let i = 0; i < 60; i++) {
+          motionCtx.beginPath();
+          motionCtx.arc(80 + Math.random() * 480, 60 + Math.random() * 140, 2, 0, Math.PI * 2);
+          motionCtx.fill();
+        }
+      }
+      particles.forEach((p) => {
+        if (state.showTrail) {
+          motionCtx.strokeStyle = '#f6c76b';
+          motionCtx.beginPath();
+          p.trail.forEach((pt, idx) => {
+            if (idx === 0) motionCtx.moveTo(pt.x, pt.y); else motionCtx.lineTo(pt.x, pt.y);
+          });
+          motionCtx.stroke();
+        }
+        motionCtx.fillStyle = '#ff6b6b';
+        motionCtx.beginPath();
+        motionCtx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        motionCtx.fill();
+      });
+    }
+
+    function drawSpeed() {
+      const w = dom.speedCanvas.width;
+      const h = dom.speedCanvas.height;
+      speedCtx.clearRect(0, 0, w, h);
+      speedCtx.fillStyle = '#0b1420';
+      speedCtx.fillRect(0, 0, w, h);
+      speedCtx.strokeStyle = '#6ad7ff';
+      speedCtx.beginPath();
+      speedCtx.moveTo(40, h - 40);
+      speedCtx.lineTo(w - 40, 40);
+      speedCtx.stroke();
+    }
+
+    function drawParams() {
+      const w = dom.paramCanvas.width;
+      const h = dom.paramCanvas.height;
+      paramCtx.clearRect(0, 0, w, h);
+      paramCtx.fillStyle = '#0b1420';
+      paramCtx.fillRect(0, 0, w, h);
+      paramCtx.fillStyle = '#8aa0b8';
+      paramCtx.fillText(`T = ${state.temp} K`, 20, 30);
+      paramCtx.fillText(`r = ${state.size.toFixed(1)} μm`, 20, 55);
+      paramCtx.fillText(`D = ${diffusionCoeff().toFixed(2)} μm²/s`, 20, 80);
+    }
+
+    function render() {
+      updateReadouts();
+      drawMotion();
+      drawSpeed();
+      drawParams();
+    }
+
+    function tick() {
+      state.time += 0.016 * state.speed;
+      stepParticles();
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.temp.addEventListener('input', () => { state.temp = Number(dom.temp.value); render(); });
+      dom.size.addEventListener('input', () => { state.size = Number(dom.size.value); render(); });
+      dom.showMol.addEventListener('change', () => { state.showMol = dom.showMol.checked; render(); });
+      dom.showTrail.addEventListener('change', () => { state.showTrail = dom.showTrail.checked; render(); });
+      dom.count.addEventListener('input', () => { state.count = Number(dom.count.value); render(); });
+      dom.speed.addEventListener('input', () => { state.speed = Number(dom.speed.value); render(); });
+      dom.massRatio.addEventListener('input', () => { state.massRatio = Number(dom.massRatio.value); render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

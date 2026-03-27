@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Magnetic Fields</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #59d0ff;
+      --accent-2: #f6c76b;
+      --accent-3: #fb7185;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(89,208,255,0.5); box-shadow: 0 0 12px rgba(89,208,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(340px, 50vh, 520px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+    .canvas-tooltip {
+      position: absolute;
+      pointer-events: none;
+      padding: 6px 10px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(12, 18, 30, 0.9);
+      color: var(--ink);
+      font-size: 12px;
+      font-family: var(--mono);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+      z-index: 2;
+    }
+    .canvas-tooltip.show { opacity: 1; transform: translateY(0); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.rose { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(89,208,255,0.18), rgba(89,208,255,0.05));
+      border: 1px solid rgba(89,208,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .legend { display: flex; gap: 10px; align-items: center; font-size: 12px; color: var(--muted); }
+    .legend-item { display: inline-flex; gap: 6px; align-items: center; }
+    .legend-dot, .legend-cross {
+      width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line);
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--accent); font-weight: 700; font-size: 11px; background: rgba(15,23,42,0.7);
+    }
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Magnetic Fields</h1>
+    <div class="subtitle">Parallel current-carrying wires and field line structure</div>
+  </header>
+
+    <div class="wrap">
+      <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+        <div class="canvas-tooltip" id="fieldTooltip">B = 0.00 μT</div>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Animation Speed</label>
+          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
+          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
+        </div>
+        <div class="control">
+          <label>Current (A)</label>
+          <input id="current" type="range" min="1" max="60" step="1" value="20" />
+          <div class="row"><span>1</span><span id="currentVal" class="value">20 A</span><span>60</span></div>
+        </div>
+        <div class="control">
+          <label>Wire Separation (cm)</label>
+          <input id="sep" type="range" min="10" max="120" step="1" value="40" />
+          <div class="row"><span>10</span><span id="sepVal" class="value">40 cm</span><span>120</span></div>
+        </div>
+        <div class="control">
+          <label>Field Line Density</label>
+          <input id="density" type="range" min="0.6" max="2.2" step="0.1" value="1" />
+          <div class="row"><span>Low</span><span id="densityVal" class="value">1.0x</span><span>High</span></div>
+        </div>
+        <div class="control">
+          <label>Current Direction</label>
+          <select id="direction">
+            <option value="same">Same Direction</option>
+            <option value="opposite">Opposite Direction</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showGrid" type="checkbox" checked /> Grid</label>
+            <label><input id="showField" type="checkbox" checked /> Field Lines</label>
+            <label><input id="showCompasses" type="checkbox" checked /> Compasses</label>
+            <label><input id="showForces" type="checkbox" checked /> Force Arrows</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Wire Direction Legend</label>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-dot">•</span> Out of page</span>
+            <span class="legend-item"><span class="legend-cross">×</span> Into page</span>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Field around a wire:</strong> <span style="font-family: var(--mono);">B = μ₀I / (2πr)</span></div>
+            <div><strong>Force per length:</strong> <span style="font-family: var(--mono);">F/L = μ₀I₁I₂ / (2πd)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Tip: Same-direction currents attract; opposite-direction currents repel.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      I: 20,
+      sep: 40,
+      direction: 'same',
+      showGrid: true,
+      showField: true,
+      showCompasses: true,
+      showForces: true,
+      density: 1,
+      speed: 1,
+      running: true,
+      t: 0
+    };
+
+    const mu0 = 4 * Math.PI * 1e-7;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function fieldAtMidpoint() {
+      const d = state.sep / 100;
+      const r = d / 2;
+      const base = mu0 * state.I / (2 * Math.PI * r);
+      return state.direction === 'same' ? 0 : 2 * base;
+    }
+
+    function forcePerLength() {
+      const d = state.sep / 100;
+      return mu0 * state.I * state.I / (2 * Math.PI * d);
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.5, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.55, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      if (!state.showGrid) return;
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.clientWidth; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.clientHeight; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+      }
+    }
+
+    function drawWire(x, y, radius, direction, color) {
+      ctx.save();
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.beginPath(); ctx.arc(x, y, radius + 6, 0, Math.PI * 2); ctx.fill();
+      const grad = ctx.createRadialGradient(x - radius * 0.2, y - radius * 0.2, 2, x, y, radius);
+      grad.addColorStop(0, '#f8fafc');
+      grad.addColorStop(0.4, '#94a3b8');
+      grad.addColorStop(1, '#1f2937');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = color; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.arc(x, y, radius + 1, 0, Math.PI * 2); ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 15px Inter, sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (direction === 'out') {
+        ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4); ctx.moveTo(x + 4, y - 4); ctx.lineTo(x - 4, y + 4); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawFieldLoops(cx, cy, sign, color, phase) {
+      if (!state.showField) return;
+      const loopCount = Math.max(3, Math.round(5 * state.density));
+      for (let idx = 0; idx < loopCount; idx += 1) {
+        const r = 40 + idx * (22 + 6 / state.density);
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.6;
+        ctx.setLineDash([6, 8]);
+        ctx.lineDashOffset = -phase * 12 - idx * 6;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+
+        const angle = phase * 0.7 + idx;
+        const px = cx + r * Math.cos(angle);
+        const py = cy + r * Math.sin(angle);
+        const dir = sign;
+        const arrowAngle = angle + (dir > 0 ? Math.PI / 2 : -Math.PI / 2);
+        const ax = px + Math.cos(arrowAngle) * 10;
+        const ay = py + Math.sin(arrowAngle) * 10;
+        ctx.strokeStyle = color;
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ax, ay); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(ax - 5 * Math.cos(arrowAngle - Math.PI / 6), ay - 5 * Math.sin(arrowAngle - Math.PI / 6));
+        ctx.lineTo(ax - 5 * Math.cos(arrowAngle + Math.PI / 6), ay - 5 * Math.sin(arrowAngle + Math.PI / 6));
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function drawCompasses(points, color) {
+      if (!state.showCompasses) return;
+      points.forEach(p => {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 5, p.y + 2);
+        ctx.lineTo(p.x + 6, p.y - 2);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    function drawForceArrows(x1, x2, cy) {
+      if (!state.showForces) return;
+      const attract = state.direction === 'same';
+      const arrowColor = attract ? '#59d0ff' : '#fb7185';
+      const offset = attract ? 1 : -1;
+      const len = 26;
+      ctx.save();
+      ctx.strokeStyle = arrowColor;
+      ctx.fillStyle = arrowColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(x1, cy + 48); ctx.lineTo(x1 + offset * len, cy + 48); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x1 + offset * len, cy + 48);
+      ctx.lineTo(x1 + offset * (len - 6), cy + 44);
+      ctx.lineTo(x1 + offset * (len - 6), cy + 52);
+      ctx.closePath(); ctx.fill();
+
+      ctx.beginPath(); ctx.moveTo(x2, cy + 48); ctx.lineTo(x2 - offset * len, cy + 48); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x2 - offset * len, cy + 48);
+      ctx.lineTo(x2 - offset * (len - 6), cy + 44);
+      ctx.lineTo(x2 - offset * (len - 6), cy + 52);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    function draw() {
+      drawBackground();
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      const sep = state.sep;
+      const x1 = cx - sep;
+      const x2 = cx + sep;
+      const same = state.direction === 'same';
+
+      const glow = ctx.createRadialGradient(cx, cy, 20, cx, cy, 260);
+      glow.addColorStop(0, 'rgba(89,208,255,0.15)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, w, h);
+
+      drawFieldLoops(x1, cy, same ? 1 : 1, 'rgba(89,208,255,0.6)', state.t * state.speed);
+      drawFieldLoops(x2, cy, same ? 1 : -1, 'rgba(246,199,107,0.55)', state.t * state.speed + 0.6);
+
+      drawWire(x1, cy, 16, same ? 'out' : 'out', '#59d0ff');
+      drawWire(x2, cy, 16, same ? 'out' : 'in', '#f6c76b');
+
+      drawForceArrows(x1, x2, cy);
+
+      const compassCount = Math.max(4, Math.round(4 * state.density));
+      const compasses = [];
+      for (let i = 0; i < compassCount; i += 1) {
+        const angle = (Math.PI * 2 * i) / compassCount;
+        const radius = 90 + (i % 2) * 25;
+        compasses.push({ x: cx + Math.cos(angle) * radius, y: cy + Math.sin(angle) * radius });
+      }
+      drawCompasses(compasses, same ? '#59d0ff' : '#fb7185');
+
+      ctx.fillStyle = 'rgba(248,250,252,0.9)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText('Wire 1', x1 - 20, cy - 28);
+      ctx.fillText('Wire 2', x2 - 20, cy - 28);
+    }
+
+    function updateReadout() {
+      const Bmid = fieldAtMidpoint() * 1e6;
+      const F = forcePerLength();
+      const behavior = state.direction === 'same' ? 'Attraction' : 'Repulsion';
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Midpoint B</span><span class="data-value blue">${Bmid.toFixed(2)} μT</span></div>
+          <div class="data-card"><span class="data-label">Force / Length</span><span class="data-value orange">${F.toExponential(3)} N/m</span></div>
+          <div class="data-card"><span class="data-label">Interaction</span><span class="data-value rose">${behavior}</span></div>
+          <div class="data-card"><span class="data-label">Current</span><span class="data-value blue">${state.I.toFixed(0)} A</span></div>
+          <div class="data-card"><span class="data-label">Separation</span><span class="data-value blue">${state.sep.toFixed(0)} cm</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      if (state.running) state.t += 0.015 * state.speed;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('current').addEventListener('input', e => {
+      state.I = parseFloat(e.target.value);
+      document.getElementById('currentVal').textContent = `${state.I.toFixed(0)} A`;
+    });
+    document.getElementById('sep').addEventListener('input', e => {
+      state.sep = parseFloat(e.target.value);
+      document.getElementById('sepVal').textContent = `${state.sep.toFixed(0)} cm`;
+    });
+    document.getElementById('density').addEventListener('input', e => {
+      state.density = parseFloat(e.target.value);
+      document.getElementById('densityVal').textContent = `${state.density.toFixed(1)}x`;
+    });
+    document.getElementById('direction').addEventListener('change', e => state.direction = e.target.value);
+
+    document.getElementById('showGrid').addEventListener('change', e => state.showGrid = e.target.checked);
+    document.getElementById('showField').addEventListener('change', e => state.showField = e.target.checked);
+    document.getElementById('showCompasses').addEventListener('change', e => state.showCompasses = e.target.checked);
+    document.getElementById('showForces').addEventListener('change', e => state.showForces = e.target.checked);
+
+    document.getElementById('speed').addEventListener('input', e => {
+      state.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      state.running = !state.running;
+      e.target.textContent = state.running ? 'Pause' : 'Play';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.I = 20;
+      state.sep = 40;
+      state.direction = 'same';
+      state.density = 1;
+      state.speed = 1;
+      state.t = 0;
+      state.showGrid = true;
+      state.showField = true;
+      state.showCompasses = true;
+      state.showForces = true;
+      document.getElementById('current').value = 20;
+      document.getElementById('sep').value = 40;
+      document.getElementById('direction').value = 'same';
+      document.getElementById('density').value = 1;
+      document.getElementById('densityVal').textContent = '1.0x';
+      document.getElementById('speed').value = 1;
+      document.getElementById('speedVal').textContent = '1.00x';
+      document.getElementById('currentVal').textContent = '20 A';
+      document.getElementById('sepVal').textContent = '40 cm';
+      document.getElementById('showGrid').checked = true;
+      document.getElementById('showField').checked = true;
+      document.getElementById('showCompasses').checked = true;
+      document.getElementById('showForces').checked = true;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    const tooltip = document.getElementById('fieldTooltip');
+    function fieldVectorAtPoint(px, py) {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      const sep = state.sep;
+      const x1 = cx - sep;
+      const x2 = cx + sep;
+      const toMeters = 0.01;
+      const calcWire = (wx, wy, currentOut) => {
+        const dx = px - wx;
+        const dy = py - wy;
+        const r2 = dx * dx + dy * dy;
+        if (r2 < 25) return { bx: 0, by: 0 };
+        const rMeters = Math.sqrt(r2) * toMeters;
+        const factor = mu0 * state.I / (2 * Math.PI * rMeters * rMeters);
+        if (currentOut) {
+          return { bx: -dy * factor, by: dx * factor };
+        }
+        return { bx: dy * factor, by: -dx * factor };
+      };
+      const same = state.direction === 'same';
+      const v1 = calcWire(x1, cy, true);
+      const v2 = calcWire(x2, cy, same ? true : false);
+      return { bx: v1.bx + v2.bx, by: v1.by + v2.by };
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const v = fieldVectorAtPoint(x, y);
+      const mag = Math.sqrt(v.bx * v.bx + v.by * v.by);
+      const microT = mag * 1e6;
+      tooltip.textContent = `B = ${microT.toFixed(2)} μT`;
+      tooltip.style.left = `${x + 12}px`;
+      tooltip.style.top = `${y + 12}px`;
+      tooltip.classList.add('show');
+    });
+    canvas.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+
+    window.addEventListener('resize', resize);
+    resize();
+    tick();
+  </script>
+</body>
+</html>

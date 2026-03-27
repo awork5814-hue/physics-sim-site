@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logic Gates</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --on: #6ad7ff;
+      --off: #39485f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 260px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #2a3f59;
+      cursor: pointer;
+      background: #0b1420;
+      color: var(--muted);
+      font-size: 12px;
+      user-select: none;
+    }
+    .switch.on {
+      color: #0b1420;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .truth {
+      margin-top: 12px;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .truth table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .truth th, .truth td {
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid #20324a;
+    }
+    .truth th {
+      background: #0b1420;
+      color: var(--accent-2);
+    }
+    .truth tr.active {
+      background: rgba(106, 215, 255, 0.12);
+    }
+    .gates-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .gate-card {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+      display: grid;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .gate-card .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .led {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--off);
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      display: inline-block;
+    }
+    .led.on {
+      background: var(--accent-2);
+      box-shadow: 0 0 10px rgba(246,199,107,0.8);
+    }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .toggles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Logic Gates</h1>
+        <p>Boolean logic with live truth tables and gate symbols</p>
+      </div>
+      <div class="pill">AND · OR · NOT · NAND · NOR · XOR</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Gate Diagram</h2>
+        <canvas id="gateCanvas" width="520" height="260" aria-label="Logic gate diagram"></canvas>
+
+        <div class="truth" id="truthTable"></div>
+
+        <div class="readout" style="margin-top:12px;">
+          <div class="title">Formula Box</div>
+          <div class="formula" id="formulaText"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Gate Type</label>
+            <select id="gateType">
+              <option>AND</option>
+              <option>OR</option>
+              <option>NOT</option>
+              <option>NAND</option>
+              <option>NOR</option>
+              <option>XOR</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Input A</label>
+            <div class="switch" id="inputA">0</div>
+          </div>
+          <div class="control">
+            <label>Input B</label>
+            <div class="switch" id="inputB">0</div>
+          </div>
+          <div class="control">
+            <label>Input C (optional)</label>
+            <div class="switch" id="inputC">0</div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showTruth" checked> Show truth table</label>
+            <label class="toggle"><input type="checkbox" id="showTiming"> Show timing diagram</label>
+          </div>
+          <div class="control">
+            <label>Gate Builder</label>
+            <button id="addGate">Add Gate</button>
+            <button id="clearGates" style="margin-top:8px;">Clear All</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Gate Output</div>
+            <div class="row"><span>Inputs</span><span class="value" id="inputsLabel">A=0, B=0</span></div>
+            <div class="row"><span>Output Q</span><span class="value" id="outputLabel">0</span></div>
+            <div class="row"><span>Expression</span><span class="value" id="exprLabel">Q = A · B</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Extra Gates</div>
+            <div class="gates-list" id="gatesList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Input C is provided for extensions. Current gate logic uses A and B (NOT uses only A).</div>
+  </div>
+
+  <script>
+    const state = {
+      gateType: 'AND',
+      inputA: 0,
+      inputB: 0,
+      inputC: 0,
+      showTruth: true,
+      showTiming: false,
+      gates: []
+    };
+
+    const gateLogic = {
+      AND: (a, b) => a && b,
+      OR: (a, b) => a || b,
+      NOT: (a) => !a,
+      NAND: (a, b) => !(a && b),
+      NOR: (a, b) => !(a || b),
+      XOR: (a, b) => a !== b,
+    };
+
+    const formulas = {
+      AND: 'AND:  Q = A · B',
+      OR: 'OR:   Q = A + B',
+      NOT: 'NOT:  Q = Ā',
+      NAND: 'NAND: Q = (A · B)̄',
+      NOR: 'NOR:  Q = (A + B)̄',
+      XOR: 'XOR:  Q = A ⊕ B'
+    };
+
+    const dom = {
+      gateType: document.getElementById('gateType'),
+      inputA: document.getElementById('inputA'),
+      inputB: document.getElementById('inputB'),
+      inputC: document.getElementById('inputC'),
+      showTruth: document.getElementById('showTruth'),
+      showTiming: document.getElementById('showTiming'),
+      truthTable: document.getElementById('truthTable'),
+      formulaText: document.getElementById('formulaText'),
+      inputsLabel: document.getElementById('inputsLabel'),
+      outputLabel: document.getElementById('outputLabel'),
+      exprLabel: document.getElementById('exprLabel'),
+      gatesList: document.getElementById('gatesList'),
+      addGate: document.getElementById('addGate'),
+      clearGates: document.getElementById('clearGates')
+    };
+
+    const canvas = document.getElementById('gateCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function getOutput(type, a, b) {
+      if (type === 'NOT') return gateLogic[type](!!a) ? 1 : 0;
+      return gateLogic[type](!!a, !!b) ? 1 : 0;
+    }
+
+    function generateTruthTable(type) {
+      const rows = [];
+      if (type === 'NOT') {
+        for (let a = 0; a <= 1; a++) rows.push({ a, b: '-', q: getOutput(type, a, 0) });
+        return rows;
+      }
+      for (let a = 0; a <= 1; a++) {
+        for (let b = 0; b <= 1; b++) {
+          rows.push({ a, b, q: getOutput(type, a, b) });
+        }
+      }
+      return rows;
+    }
+
+    function drawGate() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      const a = state.inputA;
+      const b = state.inputB;
+      const out = getOutput(state.gateType, a, b);
+
+      ctx.strokeStyle = '#23344a';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(20, h / 2);
+      ctx.lineTo(w - 20, h / 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f5f8fd';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(70, h / 2 - 50);
+      ctx.lineTo(140, h / 2 - 50);
+      ctx.moveTo(70, h / 2 + 50);
+      ctx.lineTo(140, h / 2 + 50);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(140, h / 2 - 70);
+      ctx.lineTo(140, h / 2 + 70);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(140, h / 2 - 70);
+      ctx.lineTo(220, h / 2);
+      ctx.lineTo(140, h / 2 + 70);
+      ctx.closePath();
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(220, h / 2);
+      ctx.lineTo(300, h / 2);
+      ctx.stroke();
+
+      if (state.gateType === 'NOT') {
+        ctx.clearRect(120, h / 2 - 70, 120, 140);
+        ctx.strokeStyle = '#f5f8fd';
+        ctx.beginPath();
+        ctx.moveTo(140, h / 2 - 70);
+        ctx.lineTo(220, h / 2);
+        ctx.lineTo(140, h / 2 + 70);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(232, h / 2, 10, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(242, h / 2);
+        ctx.lineTo(300, h / 2);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.font = '14px Trebuchet MS';
+      ctx.fillText('A', 40, h / 2 - 54);
+      ctx.fillText(state.gateType === 'NOT' ? '' : 'B', 40, h / 2 + 54);
+      ctx.fillText('Q', 310, h / 2 + 4);
+
+      const ledX = 340;
+      const ledY = h / 2;
+      ctx.fillStyle = out ? '#f6c76b' : '#39485f';
+      ctx.beginPath();
+      ctx.arc(ledX, ledY, 10, 0, Math.PI * 2);
+      ctx.fill();
+      if (out) {
+        ctx.shadowColor = '#f6c76b';
+        ctx.shadowBlur = 12;
+        ctx.beginPath();
+        ctx.arc(ledX, ledY, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillText(state.gateType, 160, 36);
+    }
+
+    function renderTruthTable() {
+      if (!state.showTruth) {
+        dom.truthTable.innerHTML = '';
+        return;
+      }
+      const rows = generateTruthTable(state.gateType);
+      let html = '<table><thead><tr><th>A</th><th>B</th><th>Q</th></tr></thead><tbody>';
+      rows.forEach(r => {
+        const active = (state.gateType === 'NOT')
+          ? (r.a === state.inputA)
+          : (r.a === state.inputA && r.b === state.inputB);
+        html += `<tr class="${active ? 'active' : ''}"><td>${r.a}</td><td>${r.b}</td><td>${r.q}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      dom.truthTable.innerHTML = html;
+    }
+
+    function updateReadouts() {
+      const out = getOutput(state.gateType, state.inputA, state.inputB);
+      const expr = formulas[state.gateType].replace(':', '');
+      dom.inputsLabel.textContent = `A=${state.inputA}, B=${state.inputB}`;
+      dom.outputLabel.textContent = out;
+      dom.exprLabel.textContent = expr;
+      dom.formulaText.textContent = Object.values(formulas).join('\n');
+    }
+
+    function renderGateList() {
+      dom.gatesList.innerHTML = '';
+      state.gates.forEach(g => {
+        const out = getOutput(g.type, g.a, g.b);
+        const card = document.createElement('div');
+        card.className = 'gate-card';
+        card.innerHTML = `
+          <div class="title">${g.type} Gate</div>
+          <div class="row"><span>Inputs</span><span class="value">A=${g.a}, B=${g.b}</span></div>
+          <div class="row"><span>Output</span><span class="value">${out}</span></div>
+          <div class="row"><span>Status</span><span class="led ${out ? 'on' : ''}"></span></div>
+        `;
+        dom.gatesList.appendChild(card);
+      });
+    }
+
+    function update() {
+      drawGate();
+      renderTruthTable();
+      updateReadouts();
+      renderGateList();
+    }
+
+    function toggleSwitch(el, key) {
+      state[key] = state[key] ? 0 : 1;
+      el.textContent = state[key];
+      el.classList.toggle('on', state[key] === 1);
+      update();
+    }
+
+    function bind() {
+      dom.gateType.addEventListener('change', () => {
+        state.gateType = dom.gateType.value;
+        update();
+      });
+      dom.inputA.addEventListener('click', () => toggleSwitch(dom.inputA, 'inputA'));
+      dom.inputB.addEventListener('click', () => toggleSwitch(dom.inputB, 'inputB'));
+      dom.inputC.addEventListener('click', () => toggleSwitch(dom.inputC, 'inputC'));
+      dom.showTruth.addEventListener('change', () => {
+        state.showTruth = dom.showTruth.checked;
+        update();
+      });
+      dom.showTiming.addEventListener('change', () => {
+        state.showTiming = dom.showTiming.checked;
+        update();
+      });
+      dom.addGate.addEventListener('click', () => {
+        state.gates.push({
+          type: state.gateType,
+          a: state.inputA,
+          b: state.inputB
+        });
+        update();
+      });
+      dom.clearGates.addEventListener('click', () => {
+        state.gates = [];
+        update();
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

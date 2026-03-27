@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sound Echoes</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas {
+      width: 100%; height: 300px; background: #0b1420;
+      border: 1px solid #20324a; border-radius: 10px;
+    }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px;
+    }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px;
+      padding: 10px 12px; display: grid; gap: 6px; font-size: 13px;
+    }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Sound Echoes</h1>
+        <p>Echo delay from reflected sound waves</p>
+      </div>
+      <div class="pill">Echo vs reverberation · Absorption</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Wave Visualization</h2>
+        <canvas id="sceneCanvas" width="600" height="300"></canvas>
+        <canvas id="graphCanvas" width="600" height="200" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Source Distance (m)</label>
+            <input type="range" id="distance" min="5" max="100" step="1" value="40" />
+            <div class="row"><span class="muted">d</span><span class="value" id="distValue">40 m</span></div>
+          </div>
+          <div class="control">
+            <label>Wall Material</label>
+            <select id="material">
+              <option value="concrete">Concrete</option>
+              <option value="wood">Wood</option>
+              <option value="carpet">Carpet</option>
+              <option value="glass">Glass</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Speed of Sound (m/s)</label>
+            <input type="range" id="speed" min="300" max="360" step="1" value="343" />
+            <div class="row"><span class="muted">v</span><span class="value" id="speedValue">343 m/s</span></div>
+          </div>
+          <div class="control">
+            <label>Wall Angle (°)</label>
+            <input type="range" id="angle" min="-30" max="30" step="1" value="0" />
+            <div class="row"><span class="muted">θ</span><span class="value" id="angleValue">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Options</label>
+            <label class="toggle"><input type="checkbox" id="showPaths" checked> Show paths</label>
+            <label class="toggle"><input type="checkbox" id="multi"> Multiple reflections</label>
+          </div>
+          <div class="control">
+            <label>Play Sound</label>
+            <button id="play">Emit Pulse</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Echo Timing</div>
+            <div class="row"><span>Delay</span><span class="value" id="delayValue">0.23 s</span></div>
+            <div class="row"><span>Status</span><span class="value" id="statusValue">Echo</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Attenuation</div>
+            <div class="row"><span>Absorption</span><span class="value" id="absValue">0.20</span></div>
+            <div class="row"><span>Echo Strength</span><span class="value" id="strengthValue">80%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Echo audible if delay > 0.1s (distance > 17m).</div>
+  </div>
+
+  <script>
+    const materials = {
+      concrete: { absorption: 0.2 },
+      wood: { absorption: 0.35 },
+      carpet: { absorption: 0.7 },
+      glass: { absorption: 0.1 }
+    };
+
+    const state = {
+      distance: 40,
+      speed: 343,
+      angle: 0,
+      material: 'concrete',
+      showPaths: true,
+      multi: false,
+      pulseTime: null
+    };
+
+    const dom = {
+      distance: document.getElementById('distance'),
+      material: document.getElementById('material'),
+      speed: document.getElementById('speed'),
+      angle: document.getElementById('angle'),
+      showPaths: document.getElementById('showPaths'),
+      multi: document.getElementById('multi'),
+      play: document.getElementById('play'),
+      distValue: document.getElementById('distValue'),
+      speedValue: document.getElementById('speedValue'),
+      angleValue: document.getElementById('angleValue'),
+      delayValue: document.getElementById('delayValue'),
+      statusValue: document.getElementById('statusValue'),
+      absValue: document.getElementById('absValue'),
+      strengthValue: document.getElementById('strengthValue')
+    };
+
+    const sceneCanvas = document.getElementById('sceneCanvas');
+    const sceneCtx = sceneCanvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const graphCtx = graphCanvas.getContext('2d');
+
+    function delay() {
+      return (2 * state.distance) / state.speed;
+    }
+
+    function drawScene(t) {
+      const w = sceneCanvas.width;
+      const h = sceneCanvas.height;
+      sceneCtx.clearRect(0, 0, w, h);
+      sceneCtx.fillStyle = '#0b1420';
+      sceneCtx.fillRect(0, 0, w, h);
+
+      const wallX = w - 80;
+      sceneCtx.fillStyle = '#243247';
+      sceneCtx.fillRect(wallX, 40, 20, h - 80);
+
+      sceneCtx.fillStyle = '#6ad7ff';
+      sceneCtx.beginPath();
+      sceneCtx.arc(80, h / 2, 10, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.fillStyle = '#8aa0b8';
+      sceneCtx.fillText('Source', 60, h / 2 - 20);
+
+      sceneCtx.fillStyle = '#f6c76b';
+      sceneCtx.beginPath();
+      sceneCtx.arc(140, h / 2 + 60, 8, 0, Math.PI * 2);
+      sceneCtx.fill();
+      sceneCtx.fillStyle = '#8aa0b8';
+      sceneCtx.fillText('Listener', 120, h / 2 + 90);
+
+      if (state.showPaths) {
+        sceneCtx.strokeStyle = '#6ad7ff';
+        sceneCtx.beginPath();
+        sceneCtx.moveTo(80, h / 2);
+        sceneCtx.lineTo(140, h / 2 + 60);
+        sceneCtx.stroke();
+
+        sceneCtx.strokeStyle = '#f6c76b';
+        sceneCtx.beginPath();
+        sceneCtx.moveTo(80, h / 2);
+        sceneCtx.lineTo(wallX, h / 2);
+        sceneCtx.lineTo(140, h / 2 + 60);
+        sceneCtx.stroke();
+      }
+
+      if (state.pulseTime !== null) {
+        const elapsed = t - state.pulseTime;
+        const radius = elapsed * state.speed * 2;
+        sceneCtx.strokeStyle = 'rgba(106,215,255,0.6)';
+        sceneCtx.lineWidth = 2;
+        sceneCtx.beginPath();
+        sceneCtx.arc(80, h / 2, radius, 0, Math.PI * 2);
+        sceneCtx.stroke();
+      }
+    }
+
+    function drawGraph(t) {
+      const w = graphCanvas.width;
+      const h = graphCanvas.height;
+      graphCtx.clearRect(0, 0, w, h);
+      graphCtx.fillStyle = '#0b1420';
+      graphCtx.fillRect(0, 0, w, h);
+
+      graphCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 40) {
+        graphCtx.beginPath();
+        graphCtx.moveTo(x, 0);
+        graphCtx.lineTo(x, h);
+        graphCtx.stroke();
+      }
+
+      if (state.pulseTime !== null) {
+        const d = delay();
+        const time = t - state.pulseTime;
+        const absorption = materials[state.material].absorption;
+        const echoAmp = Math.max(0, 1 - absorption);
+        const pulses = [0, d];
+        if (state.multi) pulses.push(2*d, 3*d);
+
+        graphCtx.strokeStyle = '#6ad7ff';
+        graphCtx.lineWidth = 2;
+        graphCtx.beginPath();
+        graphCtx.moveTo(0, h/2);
+        for (let x = 0; x <= w; x++) {
+          const tt = (x / w) * 2;
+          let y = 0;
+          pulses.forEach((p, idx) => {
+            const amp = idx === 0 ? 1 : Math.pow(echoAmp, idx);
+            y += amp * Math.exp(-Math.pow((tt - p) * 3, 2));
+          });
+          graphCtx.lineTo(x, h/2 - y * 60);
+        }
+        graphCtx.stroke();
+      }
+    }
+
+    function updateReadouts() {
+      const d = delay();
+      const absorption = materials[state.material].absorption;
+      dom.distValue.textContent = `${state.distance} m`;
+      dom.speedValue.textContent = `${state.speed} m/s`;
+      dom.angleValue.textContent = `${state.angle}°`;
+      dom.delayValue.textContent = `${d.toFixed(2)} s`;
+      dom.statusValue.textContent = d > 0.1 ? 'Echo' : 'Reverberation';
+      dom.absValue.textContent = absorption.toFixed(2);
+      dom.strengthValue.textContent = `${Math.round((1-absorption)*100)}%`;
+    }
+
+    function update() {
+      updateReadouts();
+      drawScene(performance.now()/1000);
+      drawGraph(performance.now()/1000);
+    }
+
+    function tick() {
+      const t = performance.now() / 1000;
+      drawScene(t);
+      drawGraph(t);
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.distance.addEventListener('input', () => { state.distance = Number(dom.distance.value); update(); });
+      dom.material.addEventListener('change', () => { state.material = dom.material.value; update(); });
+      dom.speed.addEventListener('input', () => { state.speed = Number(dom.speed.value); update(); });
+      dom.angle.addEventListener('input', () => { state.angle = Number(dom.angle.value); update(); });
+      dom.showPaths.addEventListener('change', () => { state.showPaths = dom.showPaths.checked; });
+      dom.multi.addEventListener('change', () => { state.multi = dom.multi.checked; });
+      dom.play.addEventListener('click', () => { state.pulseTime = performance.now() / 1000; });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

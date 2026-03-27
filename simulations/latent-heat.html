@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Latent Heat</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --ice: #a5d8ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Latent Heat</h1>
+        <p>Phase changes and energy without temperature change</p>
+      </div>
+      <div class="pill">Q = mcΔT · Q = mL</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Substance View</h2>
+        <canvas id="subCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Heating Curve</h2>
+            <canvas id="curveCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Energy Breakdown</h2>
+            <canvas id="energyCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Substance</label>
+            <select id="substance">
+              <option value="water" selected>Water</option>
+              <option value="ethanol">Ethanol</option>
+              <option value="iron">Iron</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Mass (kg)</label>
+            <input type="range" id="mass" min="0.1" max="5" step="0.1" value="1" />
+            <div class="row"><span class="muted">m</span><span class="value" id="massValue">1.0 kg</span></div>
+          </div>
+          <div class="control">
+            <label>Initial Temperature (°C)</label>
+            <input type="range" id="t0" min="-50" max="50" step="1" value="-20" />
+            <div class="row"><span class="muted">T₀</span><span class="value" id="t0Value">-20°C</span></div>
+          </div>
+          <div class="control">
+            <label>Final Temperature (°C)</label>
+            <input type="range" id="t1" min="0" max="150" step="1" value="120" />
+            <div class="row"><span class="muted">T₁</span><span class="value" id="t1Value">120°C</span></div>
+          </div>
+          <div class="control">
+            <label>Heating Rate (kW)</label>
+            <input type="range" id="rate" min="0.1" max="5" step="0.1" value="1" />
+            <div class="row"><span class="muted">P</span><span class="value" id="rateValue">1.0 kW</span></div>
+          </div>
+          <div class="control">
+            <label>Show Graph</label>
+            <div class="toggle">
+              <input type="checkbox" id="showGraph" checked />
+              <span>Heating curve</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Reset</label>
+            <button id="reset">Reset</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Phase</div>
+            <div class="row"><span>State</span><span class="value" id="phaseValue">Melting</span></div>
+            <div class="row"><span>Temperature</span><span class="value" id="tempValue">0°C</span></div>
+            <div class="row"><span>Energy</span><span class="value" id="energyValue">0 kJ</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Totals</div>
+            <div class="row"><span>Total Q</span><span class="value" id="totalValue">0 kJ</span></div>
+            <div class="row"><span>Time</span><span class="value" id="timeValue">0 s</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">During phase change, temperature stays constant while energy increases.</div>
+  </div>
+
+  <script>
+    const substances = {
+      water: {
+        name: 'Water', cSolid: 2.1, cLiquid: 4.18, cGas: 2.0,
+        melt: 0, boil: 100, Lf: 334, Lv: 2260
+      },
+      ethanol: {
+        name: 'Ethanol', cSolid: 2.4, cLiquid: 2.44, cGas: 1.6,
+        melt: -114, boil: 78, Lf: 108, Lv: 846
+      },
+      iron: {
+        name: 'Iron', cSolid: 0.45, cLiquid: 0.82, cGas: 0.45,
+        melt: 1538, boil: 2862, Lf: 247, Lv: 6090
+      }
+    };
+
+    const state = {
+      substance: 'water',
+      mass: 1,
+      t0: -20,
+      t1: 120,
+      rate: 1,
+      showGraph: true
+    };
+
+    const dom = {
+      substance: document.getElementById('substance'),
+      mass: document.getElementById('mass'),
+      t0: document.getElementById('t0'),
+      t1: document.getElementById('t1'),
+      rate: document.getElementById('rate'),
+      showGraph: document.getElementById('showGraph'),
+      reset: document.getElementById('reset'),
+      massValue: document.getElementById('massValue'),
+      t0Value: document.getElementById('t0Value'),
+      t1Value: document.getElementById('t1Value'),
+      rateValue: document.getElementById('rateValue'),
+      phaseValue: document.getElementById('phaseValue'),
+      tempValue: document.getElementById('tempValue'),
+      energyValue: document.getElementById('energyValue'),
+      totalValue: document.getElementById('totalValue'),
+      timeValue: document.getElementById('timeValue'),
+      subCanvas: document.getElementById('subCanvas'),
+      curveCanvas: document.getElementById('curveCanvas'),
+      energyCanvas: document.getElementById('energyCanvas')
+    };
+
+    const subCtx = dom.subCanvas.getContext('2d');
+    const curveCtx = dom.curveCanvas.getContext('2d');
+    const energyCtx = dom.energyCanvas.getContext('2d');
+
+    function computeEnergy() {
+      const s = substances[state.substance];
+      const m = state.mass;
+      let Q = 0;
+      let phase = 'Solid';
+      let T = state.t0;
+      if (state.t0 < s.melt) {
+        Q += m * s.cSolid * (s.melt - state.t0);
+        T = s.melt;
+        phase = 'Melting';
+      }
+      if (state.t1 >= s.melt) {
+        Q += m * s.Lf;
+        phase = 'Liquid';
+        if (state.t1 > s.melt) {
+          Q += m * s.cLiquid * Math.min(state.t1, s.boil) - m * s.cLiquid * s.melt;
+          T = Math.min(state.t1, s.boil);
+        }
+      }
+      if (state.t1 >= s.boil) {
+        phase = 'Boiling';
+        Q += m * s.Lv;
+        if (state.t1 > s.boil) {
+          Q += m * s.cGas * (state.t1 - s.boil);
+          T = state.t1;
+          phase = 'Gas';
+        }
+      }
+      return { Q, T, phase };
+    }
+
+    function updateReadouts() {
+      dom.massValue.textContent = `${state.mass.toFixed(1)} kg`;
+      dom.t0Value.textContent = `${state.t0}°C`;
+      dom.t1Value.textContent = `${state.t1}°C`;
+      dom.rateValue.textContent = `${state.rate.toFixed(1)} kW`;
+      const { Q, T, phase } = computeEnergy();
+      dom.phaseValue.textContent = phase;
+      dom.tempValue.textContent = `${T.toFixed(0)}°C`;
+      dom.energyValue.textContent = `${Q.toFixed(0)} kJ`;
+      dom.totalValue.textContent = `${Q.toFixed(0)} kJ`;
+      dom.timeValue.textContent = `${(Q / (state.rate)).toFixed(0)} s`;
+    }
+
+    function drawSubstance() {
+      const w = dom.subCanvas.width;
+      const h = dom.subCanvas.height;
+      subCtx.clearRect(0, 0, w, h);
+      subCtx.fillStyle = '#0b1420';
+      subCtx.fillRect(0, 0, w, h);
+      subCtx.fillStyle = '#8aa0b8';
+      subCtx.fillText('Ice', 80, 40);
+      subCtx.fillText('Water', w / 2 - 20, 40);
+      subCtx.fillText('Steam', w - 120, 40);
+      subCtx.fillStyle = 'rgba(165,216,255,0.6)';
+      subCtx.fillRect(60, h / 2 - 40, 120, 80);
+      subCtx.fillStyle = 'rgba(106,215,255,0.5)';
+      subCtx.fillRect(w / 2 - 60, h / 2 - 40, 120, 80);
+      subCtx.fillStyle = 'rgba(255,255,255,0.3)';
+      subCtx.fillRect(w - 180, h / 2 - 40, 120, 80);
+    }
+
+    function drawCurve() {
+      const w = dom.curveCanvas.width;
+      const h = dom.curveCanvas.height;
+      curveCtx.clearRect(0, 0, w, h);
+      curveCtx.fillStyle = '#0b1420';
+      curveCtx.fillRect(0, 0, w, h);
+      curveCtx.strokeStyle = '#6ad7ff';
+      curveCtx.beginPath();
+      curveCtx.moveTo(20, h - 30);
+      curveCtx.lineTo(w * 0.3, h * 0.6);
+      curveCtx.lineTo(w * 0.45, h * 0.6);
+      curveCtx.lineTo(w * 0.7, h * 0.3);
+      curveCtx.lineTo(w * 0.85, h * 0.3);
+      curveCtx.lineTo(w - 20, 30);
+      curveCtx.stroke();
+    }
+
+    function drawEnergy() {
+      const w = dom.energyCanvas.width;
+      const h = dom.energyCanvas.height;
+      energyCtx.clearRect(0, 0, w, h);
+      energyCtx.fillStyle = '#0b1420';
+      energyCtx.fillRect(0, 0, w, h);
+      const { Q } = computeEnergy();
+      energyCtx.fillStyle = '#f6c76b';
+      energyCtx.fillRect(40, h - 40, (Q / 4000) * (w - 80), 20);
+      energyCtx.fillStyle = '#8aa0b8';
+      energyCtx.fillText(`${Q.toFixed(0)} kJ`, 40, 30);
+    }
+
+    function render() {
+      updateReadouts();
+      drawSubstance();
+      if (state.showGraph) {
+        drawCurve();
+        drawEnergy();
+      }
+    }
+
+    function bind() {
+      dom.substance.addEventListener('change', () => { state.substance = dom.substance.value; render(); });
+      dom.mass.addEventListener('input', () => { state.mass = Number(dom.mass.value); render(); });
+      dom.t0.addEventListener('input', () => { state.t0 = Number(dom.t0.value); render(); });
+      dom.t1.addEventListener('input', () => { state.t1 = Number(dom.t1.value); render(); });
+      dom.rate.addEventListener('input', () => { state.rate = Number(dom.rate.value); render(); });
+      dom.showGraph.addEventListener('change', () => { state.showGraph = dom.showGraph.checked; render(); });
+      dom.reset.addEventListener('click', () => {
+        state.mass = 1; state.t0 = -20; state.t1 = 120; state.rate = 1;
+        dom.mass.value = state.mass; dom.t0.value = state.t0; dom.t1.value = state.t1; dom.rate.value = state.rate;
+        render();
+      });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

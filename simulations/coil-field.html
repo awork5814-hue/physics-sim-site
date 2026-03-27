@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solenoid Magnetic Field</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Solenoid Magnetic Field</h1>
+        <p>Uniform field inside: B = μ₀ n I</p>
+      </div>
+      <div class="pill">Field lines · Turn density · End effects</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Solenoid Diagram</h2>
+        <canvas id="sCanvas" width="560" height="320" aria-label="Solenoid"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Turns (N)</label>
+            <input type="range" id="turns" min="10" max="500" step="10" value="100" />
+            <div class="row"><span class="muted">N</span><span class="value" id="turnsValue">100</span></div>
+          </div>
+          <div class="control">
+            <label>Coil Length (m)</label>
+            <input type="range" id="length" min="0.1" max="1" step="0.01" value="0.3" />
+            <div class="row"><span class="muted">L</span><span class="value" id="lengthValue">0.30 m</span></div>
+          </div>
+          <div class="control">
+            <label>Coil Radius (m)</label>
+            <input type="range" id="radius" min="0.01" max="0.1" step="0.001" value="0.03" />
+            <div class="row"><span class="muted">r</span><span class="value" id="radiusValue">0.030 m</span></div>
+          </div>
+          <div class="control">
+            <label>Current (A)</label>
+            <input type="range" id="current" min="0" max="10" step="0.1" value="2" />
+            <div class="row"><span class="muted">I</span><span class="value" id="currentValue">2.0 A</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showLines" checked> Show field lines</label>
+            <label class="toggle"><input type="checkbox" id="showVectors" checked> Show vectors</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Inside Solenoid</div>
+            <div class="row"><span>B</span><span class="value" id="bInside">0.00 T</span></div>
+            <div class="row"><span>n = N/L</span><span class="value" id="nValue">0 turns/m</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Outside</div>
+            <div class="row"><span>B</span><span class="value">≈ 0 (ideal)</span></div>
+            <div class="row"><span>End effects</span><span class="value">Weaker field</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              B = μ₀ n I
+              <br>n = N / L
+              <br>μ₀ = 4π×10⁻⁷ T·m/A
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Field lines outside are curved and weaker due to end effects.</div>
+  </div>
+
+  <script>
+    const mu0 = 4 * Math.PI * 1e-7;
+    const state = {
+      turns: 100,
+      length: 0.3,
+      radius: 0.03,
+      current: 2,
+      showLines: true,
+      showVectors: true
+    };
+
+    const dom = {
+      turns: document.getElementById('turns'),
+      length: document.getElementById('length'),
+      radius: document.getElementById('radius'),
+      current: document.getElementById('current'),
+      showLines: document.getElementById('showLines'),
+      showVectors: document.getElementById('showVectors'),
+      turnsValue: document.getElementById('turnsValue'),
+      lengthValue: document.getElementById('lengthValue'),
+      radiusValue: document.getElementById('radiusValue'),
+      currentValue: document.getElementById('currentValue'),
+      bInside: document.getElementById('bInside'),
+      nValue: document.getElementById('nValue')
+    };
+
+    const canvas = document.getElementById('sCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function calculateB() {
+      const n = state.turns / state.length;
+      return { n, B: mu0 * n * state.current };
+    }
+
+    function drawSolenoid() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      const coilLeft = 100;
+      const coilRight = w - 100;
+      const coilTop = 110;
+      const coilBottom = 210;
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      for (let x = coilLeft; x <= coilRight; x += 18) {
+        ctx.beginPath();
+        ctx.arc(x, (coilTop + coilBottom) / 2, (coilBottom - coilTop) / 2, Math.PI / 2, -Math.PI / 2, true);
+        ctx.stroke();
+      }
+
+      if (state.showLines) {
+        ctx.strokeStyle = '#2d8dd6';
+        ctx.lineWidth = 1.5;
+        for (let y = coilTop + 10; y <= coilBottom - 10; y += 20) {
+          ctx.beginPath();
+          ctx.moveTo(coilLeft, y);
+          ctx.lineTo(coilRight, y);
+          ctx.stroke();
+        }
+      }
+
+      if (state.showVectors) {
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        for (let x = coilLeft + 10; x < coilRight; x += 60) {
+          ctx.beginPath();
+          ctx.moveTo(x, (coilTop + coilBottom) / 2);
+          ctx.lineTo(x + 30, (coilTop + coilBottom) / 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(x + 30, (coilTop + coilBottom) / 2);
+          ctx.lineTo(x + 24, (coilTop + coilBottom) / 2 - 6);
+          ctx.lineTo(x + 24, (coilTop + coilBottom) / 2 + 6);
+          ctx.closePath();
+          ctx.fillStyle = '#6ad7ff';
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText('Current ⊙ out of page (top)', coilLeft, coilTop - 20);
+      ctx.fillText('Current ⊗ into page (bottom)', coilLeft, coilBottom + 20);
+    }
+
+    function updateReadouts() {
+      const { n, B } = calculateB();
+      dom.turnsValue.textContent = state.turns;
+      dom.lengthValue.textContent = `${state.length.toFixed(2)} m`;
+      dom.radiusValue.textContent = `${state.radius.toFixed(3)} m`;
+      dom.currentValue.textContent = `${state.current.toFixed(1)} A`;
+      dom.bInside.textContent = `${(B * 1000).toFixed(2)} mT`;
+      dom.nValue.textContent = `${n.toFixed(0)} turns/m`;
+    }
+
+    function update() {
+      updateReadouts();
+      drawSolenoid();
+    }
+
+    function bind() {
+      dom.turns.addEventListener('input', () => {
+        state.turns = Number(dom.turns.value);
+        update();
+      });
+      dom.length.addEventListener('input', () => {
+        state.length = Number(dom.length.value);
+        update();
+      });
+      dom.radius.addEventListener('input', () => {
+        state.radius = Number(dom.radius.value);
+        update();
+      });
+      dom.current.addEventListener('input', () => {
+        state.current = Number(dom.current.value);
+        update();
+      });
+      dom.showLines.addEventListener('change', () => {
+        state.showLines = dom.showLines.checked;
+        update();
+      });
+      dom.showVectors.addEventListener('change', () => {
+        state.showVectors = dom.showVectors.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

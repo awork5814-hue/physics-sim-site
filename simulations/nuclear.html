@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nuclear Decay</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Nuclear Physics</span></div>
+    <header class="hero"><h1>Nuclear Decay</h1><p>Alpha, Beta, and Gamma decay types</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">N = N₀e<sup>-λt</sup></div>
+        <div class="control-group">
+          <label>Decay Type</label>
+          <select id="decayType" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="alpha">Alpha (α)</option>
+            <option value="beta">Beta (β)</option>
+            <option value="gamma">Gamma (γ)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Half-life (s)</label>
+          <input type="range" id="halflifeSlider" min="1" max="30" value="10">
+        </div>
+        <button id="startBtn">Start Decay</button>
+        <button id="resetBtn">Reset</button>
+        <div class="data-panel">
+          <div>Nuclei remaining: <strong id="nVal">100</strong></div>
+          <div>Decayed: <strong id="dVal">0</strong></div>
+          <div>Time elapsed: <strong id="tVal">0</strong> s</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const decayType = document.getElementById('decayType');
+    const halflifeSlider = document.getElementById('halflifeSlider');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    let nuclei = [];
+    let decaying = false;
+    let time = 0;
+    let decayed = 0;
+    function init() {
+      nuclei = [];
+      for (let i = 0; i < 100; i++) {
+        nuclei.push({ x: 50 + Math.random() * (canvas.offsetWidth - 100), y: 50 + Math.random() * (canvas.offsetHeight - 100), decayed: false });
+      }
+      decaying = false; time = 0; decayed = 0;
+      updateData();
+    }
+    function updateData() {
+      const remaining = nuclei.filter(n => !n.decayed).length;
+      document.getElementById('nVal').textContent = remaining;
+      document.getElementById('dVal').textContent = decayed;
+      document.getElementById('tVal').textContent = time.toFixed(1);
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const type = decayType.value;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      if (decaying) {
+        const t = time;
+        const t12 = parseFloat(halflifeSlider.value);
+        const prob = 1 - Math.exp(-Math.log(2) * t / t12);
+        nuclei.forEach(n => {
+          if (!n.decayed && Math.random() < prob / 100) { n.decayed = true; decayed++; }
+        });
+        time += 0.1;
+        updateData();
+      }
+      nuclei.forEach(n => {
+        ctx.fillStyle = n.decayed ? (type === 'alpha' ? '#ff6b6b' : type === 'beta' ? '#f6c76b' : '#6ad7ff') : '#4a5568';
+        ctx.globalAlpha = n.decayed ? 0.3 : 1;
+        const size = type === 'alpha' ? 8 : type === 'beta' ? 4 : 3;
+        ctx.beginPath(); ctx.arc(n.x, n.y, size, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(draw);
+    }
+    startBtn.addEventListener('click', () => { decaying = true; });
+    resetBtn.addEventListener('click', init);
+    init(); draw();
+  </script>
+</body>
+</html>

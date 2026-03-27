@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nuclear Fission</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 350px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+    button.active { border-color: var(--accent); color: var(--accent); }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/index.html">← Back to Library</a></div>
+    <header class="hero"><h1>Nuclear Fission</h1><p>Splitting atomic nuclei & releasing energy</p></header>
+    <div class="layout">
+      <div><canvas id="fissionCanvas"></canvas>
+        <div class="panel" style="margin-top:16px"><div class="results-grid"><div class="data-panel"><div>Neutrons: <strong id="neutronText">0</strong></div><div>Energy: <strong id="energyText">0 MeV</strong></div><div>Status: <strong id="statusText">Ready</strong></div></div><div class="data-panel"><div>U-235: <strong id="u235Text">100%</strong></div><div>U-238: <strong id="u238Text">0%</strong></div><div>Criticality: <strong id="critText">Subcritical</strong></div></div></div></div></div>
+      <div class="controls">
+        <div class="panel"><div class="control-group"><label>Uranium-235 % <span id="u235Val">100%</span></label><input type="range" id="u235" min="0" max="100" value="100"/></div></div>
+        <div class="panel"><div class="control-group"><label>Neutron Energy <span id="neutronEVal">0.025 eV</span></label><input type="range" id="neutronE" min="0.001" max="10" value="0.025" step="0.001"/></div></div>
+        <div class="panel"><div class="control-group"><label>Critical Mass <span id="massVal">10 kg</span></label><input type="range" id="criticalMass" min="1" max="100" value="10"/></div></div>
+        <div class="panel"><button id="btnFire">Fire Neutron</button><button id="btnReset" style="margin-left:8px">Reset</button></div>
+        <div class="panel"><div class="data-panel"><div>Typical fission yields ~200 MeV per event</div><div>Energy released: E = mc²</div></div></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas=document.getElementById('fissionCanvas'),ctx=canvas.getContext('2d');
+    let neutrons=[],time=0,u235=100,critMass=10;
+    function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width*devicePixelRatio;canvas.height=r.height*devicePixelRatio;ctx.scale(devicePixelRatio,devicePixelRatio);}
+    function draw(){
+      const w=canvas.width/devicePixelRatio,h=canvas.height/devicePixelRatio;
+      ctx.fillStyle='rgba(6,10,18,0.95)';ctx.fillRect(0,0,w,h);
+      const cx=w/2,cy=h/2;
+      ctx.fillStyle='#444';ctx.beginPath();ctx.arc(cx,cy,80,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#6ad7ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy,80,0,Math.PI*2);ctx.stroke();
+      ctx.fillStyle='#f6c76b';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('Uranium-235',cx,cy+100);
+      neutrons.forEach((n,i)=>{n.x+=n.vx;n.y+=n.vy;n.t++;
+        if(n.t>10) neutrons.splice(i,1);
+        ctx.fillStyle=n.fission?'#ff6b6b':'#6ad7ff';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=10;ctx.beginPath();ctx.arc(n.x,n.y,6,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+        if(Math.hypot(n.x-cx,n.y-cy)<80&&!n.fission&&Math.random()<0.3){n.fission=true;n.vx=n.vy=0;drawFission(cx,cy);}
+      });
+    }
+    function drawFission(cx,cy){
+      for(let i=0;i<8;i++){const a=Math.random()*Math.PI*2;neutrons.push({x:cx,y:cy,vx:Math.cos(a)*3,vy:Math.sin(a)*3,t:0,fission:false});}
+      document.getElementById('neutronText').textContent=neutrons.length;
+      document.getElementById('energyText').textContent=(neutrons.length*200).toFixed(0)+' MeV';
+      document.getElementById('statusText').textContent='FISSION!';
+      document.getElementById('statusText').style.color='#ff6b6b';
+    }
+    document.getElementById('u235').oninput=e=>{u235=parseInt(e.target.value);document.getElementById('u235Val').textContent=u235+'%';document.getElementById('u235Text').textContent=u235+'%';document.getElementById('u238Text').textContent=(100-u235)+'%';};
+    document.getElementById('btnFire').onclick=()=>{neutrons.push({x:50,y:canvas.height/devicePixelRatio/2,vx:4,vy:0,t:0,fission:false});};
+    document.getElementById('btnReset').onclick=()=>{neutrons=[];document.getElementById('neutronText').textContent='0';document.getElementById('energyText').textContent='0 MeV';document.getElementById('statusText').textContent='Ready';document.getElementById('statusText').style.color='#9fb0c5';};
+    function loop(){time++;draw();requestAnimationFrame(loop);}
+    window.onresize=resize;resize();loop();
+  </script>
+</body>
+</html>

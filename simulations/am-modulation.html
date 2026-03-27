@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AM Modulation</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #6bff6b;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .status-ok { color: var(--green); font-weight: 700; }
+    .status-bad { color: var(--red); font-weight: 700; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>AM Modulation</h1>
+        <p>Envelope modulation and sidebands</p>
+      </div>
+      <div class="pill">AM(t)=Ac[1+m sin(2πfₘt)] sin(2πfct)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Time Domain</h2>
+        <canvas id="timeCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Spectrum</h2>
+            <canvas id="spectrumCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Power Distribution</h2>
+            <canvas id="powerCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Carrier Amplitude (Ac)</label>
+            <input type="range" id="ac" min="0.5" max="2" step="0.1" value="1" />
+            <div class="row"><span class="muted">Ac</span><span class="value" id="acValue">1.0</span></div>
+          </div>
+          <div class="control">
+            <label>Carrier Frequency (kHz)</label>
+            <input type="range" id="fc" min="10" max="200" step="5" value="50" />
+            <div class="row"><span class="muted">fₙ</span><span class="value" id="fcValue">50 kHz</span></div>
+          </div>
+          <div class="control">
+            <label>Message Amplitude (Am)</label>
+            <input type="range" id="am" min="0" max="2" step="0.1" value="0.7" />
+            <div class="row"><span class="muted">Am</span><span class="value" id="amValue">0.7</span></div>
+          </div>
+          <div class="control">
+            <label>Message Frequency (kHz)</label>
+            <input type="range" id="fm" min="0.5" max="10" step="0.1" value="2" />
+            <div class="row"><span class="muted">fₘ</span><span class="value" id="fmValue">2.0 kHz</span></div>
+          </div>
+          <div class="control">
+            <label>Signal Type</label>
+            <select id="signalType">
+              <option value="sine" selected>Sine</option>
+              <option value="square">Square</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Show Envelope</label>
+            <div class="toggle">
+              <input type="checkbox" id="showEnv" checked />
+              <span>Envelope overlay</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Spectrum</label>
+            <div class="toggle">
+              <input type="checkbox" id="showSpec" checked />
+              <span>Sidebands</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Modulation</div>
+            <div class="row"><span>Index m</span><span class="value" id="mValue">0.70</span></div>
+            <div class="row"><span>Bandwidth</span><span class="value" id="bwValue">4.0 kHz</span></div>
+            <div class="row"><span>Envelope</span><span class="value" id="envValue">Good</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Sidebands</div>
+            <div class="row"><span>USB</span><span class="value" id="usbValue">52 kHz</span></div>
+            <div class="row"><span>LSB</span><span class="value" id="lsbValue">48 kHz</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Overmodulation (m &gt; 1) causes envelope distortion and spectral splatter.</div>
+  </div>
+
+  <script>
+    const state = {
+      ac: 1,
+      fc: 50,
+      am: 0.7,
+      fm: 2,
+      signalType: 'sine',
+      showEnv: true,
+      showSpec: true,
+      time: 0
+    };
+
+    const dom = {
+      ac: document.getElementById('ac'),
+      fc: document.getElementById('fc'),
+      am: document.getElementById('am'),
+      fm: document.getElementById('fm'),
+      signalType: document.getElementById('signalType'),
+      showEnv: document.getElementById('showEnv'),
+      showSpec: document.getElementById('showSpec'),
+      acValue: document.getElementById('acValue'),
+      fcValue: document.getElementById('fcValue'),
+      amValue: document.getElementById('amValue'),
+      fmValue: document.getElementById('fmValue'),
+      mValue: document.getElementById('mValue'),
+      bwValue: document.getElementById('bwValue'),
+      envValue: document.getElementById('envValue'),
+      usbValue: document.getElementById('usbValue'),
+      lsbValue: document.getElementById('lsbValue'),
+      timeCanvas: document.getElementById('timeCanvas'),
+      spectrumCanvas: document.getElementById('spectrumCanvas'),
+      powerCanvas: document.getElementById('powerCanvas')
+    };
+
+    const timeCtx = dom.timeCanvas.getContext('2d');
+    const specCtx = dom.spectrumCanvas.getContext('2d');
+    const powerCtx = dom.powerCanvas.getContext('2d');
+
+    function modulationIndex() {
+      return state.am / state.ac;
+    }
+
+    function drawTime() {
+      const w = dom.timeCanvas.width;
+      const h = dom.timeCanvas.height;
+      timeCtx.clearRect(0, 0, w, h);
+      timeCtx.fillStyle = '#0b1420';
+      timeCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      const scale = 60;
+      const m = modulationIndex();
+      timeCtx.strokeStyle = '#6ad7ff';
+      timeCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = x / w * 0.02;
+        const msg = state.signalType === 'square'
+          ? Math.sign(Math.sin(2 * Math.PI * state.fm * t * 1000))
+          : Math.sin(2 * Math.PI * state.fm * t * 1000);
+        const carrier = Math.sin(2 * Math.PI * state.fc * t * 1000);
+        const y = state.ac * (1 + m * msg) * carrier;
+        const yPlot = mid - y * scale;
+        if (x === 0) timeCtx.moveTo(x, yPlot); else timeCtx.lineTo(x, yPlot);
+      }
+      timeCtx.stroke();
+
+      if (state.showEnv) {
+        timeCtx.strokeStyle = '#f6c76b';
+        timeCtx.setLineDash([6, 6]);
+        timeCtx.beginPath();
+        for (let x = 0; x <= w; x++) {
+          const t = x / w * 0.02;
+          const msg = state.signalType === 'square'
+            ? Math.sign(Math.sin(2 * Math.PI * state.fm * t * 1000))
+            : Math.sin(2 * Math.PI * state.fm * t * 1000);
+          const env = state.ac * (1 + m * msg);
+          const y = mid - env * scale;
+          if (x === 0) timeCtx.moveTo(x, y); else timeCtx.lineTo(x, y);
+        }
+        timeCtx.stroke();
+        timeCtx.setLineDash([]);
+      }
+    }
+
+    function drawSpectrum() {
+      const w = dom.spectrumCanvas.width;
+      const h = dom.spectrumCanvas.height;
+      specCtx.clearRect(0, 0, w, h);
+      specCtx.fillStyle = '#0b1420';
+      specCtx.fillRect(0, 0, w, h);
+      if (!state.showSpec) return;
+      const fc = state.fc;
+      const fm = state.fm;
+      const m = modulationIndex();
+      const bar = (x, height, color) => {
+        specCtx.fillStyle = color;
+        specCtx.fillRect(x - 6, h - height, 12, height);
+      };
+      const scale = h * 0.7;
+      bar(w * 0.5, scale, '#6ad7ff');
+      bar(w * 0.5 - 60, scale * (m / 2), '#f6c76b');
+      bar(w * 0.5 + 60, scale * (m / 2), '#f6c76b');
+      specCtx.fillStyle = '#8aa0b8';
+      specCtx.fillText(`${(fc - fm).toFixed(1)}k`, w * 0.5 - 80, h - 8);
+      specCtx.fillText(`${fc.toFixed(1)}k`, w * 0.5 - 12, h - 8);
+      specCtx.fillText(`${(fc + fm).toFixed(1)}k`, w * 0.5 + 40, h - 8);
+    }
+
+    function drawPower() {
+      const w = dom.powerCanvas.width;
+      const h = dom.powerCanvas.height;
+      powerCtx.clearRect(0, 0, w, h);
+      powerCtx.fillStyle = '#0b1420';
+      powerCtx.fillRect(0, 0, w, h);
+      const m = modulationIndex();
+      const carrierP = 1;
+      const sideP = m * m / 4;
+      const total = carrierP + 2 * sideP;
+      const barHeight = (val) => (val / total) * (h - 40);
+      const draw = (x, val, label, color) => {
+        const bh = barHeight(val);
+        powerCtx.fillStyle = color;
+        powerCtx.fillRect(x, h - 20 - bh, 40, bh);
+        powerCtx.fillStyle = '#8aa0b8';
+        powerCtx.fillText(label, x - 4, h - 4);
+      };
+      draw(40, carrierP, 'C', '#6ad7ff');
+      draw(110, sideP, 'LSB', '#f6c76b');
+      draw(180, sideP, 'USB', '#f6c76b');
+    }
+
+    function updateReadouts() {
+      dom.acValue.textContent = state.ac.toFixed(1);
+      dom.fcValue.textContent = `${state.fc} kHz`;
+      dom.amValue.textContent = state.am.toFixed(1);
+      dom.fmValue.textContent = `${state.fm.toFixed(1)} kHz`;
+      const m = modulationIndex();
+      dom.mValue.textContent = m.toFixed(2);
+      dom.bwValue.textContent = `${(2 * state.fm).toFixed(1)} kHz`;
+      dom.envValue.innerHTML = m > 1 ? '<span class="status-bad">Overmod</span>' : '<span class="status-ok">Good</span>';
+      dom.usbValue.textContent = `${(state.fc + state.fm).toFixed(1)} kHz`;
+      dom.lsbValue.textContent = `${(state.fc - state.fm).toFixed(1)} kHz`;
+    }
+
+    function render() {
+      updateReadouts();
+      drawTime();
+      drawSpectrum();
+      drawPower();
+    }
+
+    function tick() {
+      state.time += 0.016;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.ac.addEventListener('input', () => { state.ac = Number(dom.ac.value); render(); });
+      dom.fc.addEventListener('input', () => { state.fc = Number(dom.fc.value); render(); });
+      dom.am.addEventListener('input', () => { state.am = Number(dom.am.value); render(); });
+      dom.fm.addEventListener('input', () => { state.fm = Number(dom.fm.value); render(); });
+      dom.signalType.addEventListener('change', () => { state.signalType = dom.signalType.value; render(); });
+      dom.showEnv.addEventListener('change', () => { state.showEnv = dom.showEnv.checked; render(); });
+      dom.showSpec.addEventListener('change', () => { state.showSpec = dom.showSpec.checked; render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

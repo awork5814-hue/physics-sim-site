@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vibrating String</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .harmonics { display: flex; gap: 8px; margin-top: 8px; }
+    .harmonics button { flex: 1; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Vibrating String</h1>
+        <p>Standing waves, harmonics, and pitch</p>
+      </div>
+      <div class="pill">v = √(T/μ) · fₙ = n v/2L</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>String Motion</h2>
+        <canvas id="stringCanvas" width="640" height="260"></canvas>
+        <div class="harmonics">
+          <button data-harmonic="1">1st</button>
+          <button data-harmonic="2">2nd</button>
+          <button data-harmonic="3">3rd</button>
+          <button data-harmonic="4">4th</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Driving Frequency (Hz)</label>
+            <input type="range" id="freq" min="50" max="1200" step="1" value="440" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">440 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Tension (N)</label>
+            <input type="range" id="tension" min="10" max="200" step="1" value="100" />
+            <div class="row"><span class="muted">T</span><span class="value" id="tensionValue">100 N</span></div>
+          </div>
+          <div class="control">
+            <label>Length (m)</label>
+            <input type="range" id="length" min="0.2" max="1.2" step="0.01" value="0.65" />
+            <div class="row"><span class="muted">L</span><span class="value" id="lengthValue">0.65 m</span></div>
+          </div>
+          <div class="control">
+            <label>Linear Density (kg/m)</label>
+            <input type="range" id="density" min="0.002" max="0.05" step="0.001" value="0.01" />
+            <div class="row"><span class="muted">μ</span><span class="value" id="densityValue">0.010 kg/m</span></div>
+          </div>
+          <div class="control">
+            <label>Pluck Position</label>
+            <input type="range" id="pluck" min="0.1" max="0.9" step="0.05" value="0.5" />
+            <div class="row"><span class="muted">x/L</span><span class="value" id="pluckValue">0.50</span></div>
+          </div>
+          <div class="control">
+            <label>Show Nodes</label>
+            <div class="toggle">
+              <input type="checkbox" id="nodes" checked />
+              <span>Highlight nodes</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Play Sound</label>
+            <button id="play">Pluck String</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">String Properties</div>
+            <div class="row"><span>Wave speed</span><span class="value" id="speedValue">100 m/s</span></div>
+            <div class="row"><span>Fundamental</span><span class="value" id="f1Value">77 Hz</span></div>
+            <div class="row"><span>Mode</span><span class="value" id="modeValue">n = 1</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Pitch</div>
+            <div class="row"><span>Selected note</span><span class="value" id="noteValue">A4</span></div>
+            <div class="row"><span>Harmonic freq</span><span class="value" id="harmonicValue">77 Hz</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Doubling tension raises frequency by √2. Longer and heavier strings lower pitch.</div>
+  </div>
+
+  <script>
+    const state = {
+      frequency: 440,
+      tension: 100,
+      length: 0.65,
+      density: 0.01,
+      harmonic: 1,
+      pluck: 0.5,
+      showNodes: true,
+      time: 0,
+      pluckPhase: 0
+    };
+
+    const dom = {
+      freq: document.getElementById('freq'),
+      tension: document.getElementById('tension'),
+      length: document.getElementById('length'),
+      density: document.getElementById('density'),
+      pluck: document.getElementById('pluck'),
+      nodes: document.getElementById('nodes'),
+      play: document.getElementById('play'),
+      freqValue: document.getElementById('freqValue'),
+      tensionValue: document.getElementById('tensionValue'),
+      lengthValue: document.getElementById('lengthValue'),
+      densityValue: document.getElementById('densityValue'),
+      pluckValue: document.getElementById('pluckValue'),
+      speedValue: document.getElementById('speedValue'),
+      f1Value: document.getElementById('f1Value'),
+      modeValue: document.getElementById('modeValue'),
+      noteValue: document.getElementById('noteValue'),
+      harmonicValue: document.getElementById('harmonicValue')
+    };
+
+    const canvas = document.getElementById('stringCanvas');
+    const ctx = canvas.getContext('2d');
+    const harmonicButtons = Array.from(document.querySelectorAll('.harmonics button'));
+
+    let audioCtx, osc, gain;
+
+    function getWaveSpeed() {
+      return Math.sqrt(state.tension / state.density);
+    }
+
+    function getFundamental() {
+      return getWaveSpeed() / (2 * state.length);
+    }
+
+    function getHarmonicFrequency() {
+      return state.harmonic * getFundamental();
+    }
+
+    function freqToNoteName(freq) {
+      const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+      const A4 = 440;
+      const semitones = Math.round(12 * Math.log2(freq / A4));
+      const noteIndex = (semitones + 9 + 1200) % 12;
+      const octave = 4 + Math.floor((semitones + 9) / 12);
+      return `${noteNames[noteIndex]}${octave}`;
+    }
+
+    function drawString() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      const midY = h / 2;
+      const amplitude = 50 * Math.exp(-state.pluckPhase * 0.6);
+      const omega = 2 * Math.PI * state.frequency;
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const xNorm = x / w;
+        const spatial = Math.sin(state.harmonic * Math.PI * xNorm);
+        const pluckShape = Math.sin(Math.PI * xNorm) * Math.sin(Math.PI * state.pluck);
+        const y = midY + amplitude * spatial * Math.sin(omega * state.time) * pluckShape;
+        if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(20, midY, 6, 0, Math.PI * 2);
+      ctx.arc(w - 20, midY, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (state.showNodes) {
+        ctx.fillStyle = '#f6c76b';
+        for (let n = 0; n <= state.harmonic; n++) {
+          const x = 20 + (w - 40) * (n / state.harmonic);
+          ctx.beginPath();
+          ctx.arc(x, midY, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function updateReadouts() {
+      const speed = getWaveSpeed();
+      const f1 = getFundamental();
+      const harmonicFreq = getHarmonicFrequency();
+      dom.freqValue.textContent = `${state.frequency.toFixed(0)} Hz`;
+      dom.tensionValue.textContent = `${state.tension.toFixed(0)} N`;
+      dom.lengthValue.textContent = `${state.length.toFixed(2)} m`;
+      dom.densityValue.textContent = `${state.density.toFixed(3)} kg/m`;
+      dom.pluckValue.textContent = state.pluck.toFixed(2);
+      dom.speedValue.textContent = `${speed.toFixed(1)} m/s`;
+      dom.f1Value.textContent = `${f1.toFixed(1)} Hz`;
+      dom.modeValue.textContent = `n = ${state.harmonic}`;
+      dom.harmonicValue.textContent = `${harmonicFreq.toFixed(1)} Hz`;
+      dom.noteValue.textContent = freqToNoteName(state.frequency);
+    }
+
+    function ensureAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.connect(gain).connect(audioCtx.destination);
+        gain.gain.value = 0;
+        osc.start();
+      }
+    }
+
+    function pluckSound() {
+      ensureAudio();
+      osc.frequency.value = state.frequency;
+      const now = audioCtx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.2);
+    }
+
+    function render() {
+      drawString();
+      updateReadouts();
+    }
+
+    function tick() {
+      state.time += 0.016;
+      state.pluckPhase += 0.016;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function setHarmonic(n) {
+      state.harmonic = n;
+      state.frequency = getHarmonicFrequency();
+      dom.freq.value = Math.min(dom.freq.max, Math.max(dom.freq.min, state.frequency));
+      harmonicButtons.forEach((btn) => {
+        btn.style.borderColor = btn.dataset.harmonic === String(n) ? '#6ad7ff' : '#2a3f59';
+      });
+      render();
+    }
+
+    function bind() {
+      dom.freq.addEventListener('input', () => { state.frequency = Number(dom.freq.value); render(); });
+      dom.tension.addEventListener('input', () => { state.tension = Number(dom.tension.value); render(); });
+      dom.length.addEventListener('input', () => { state.length = Number(dom.length.value); render(); });
+      dom.density.addEventListener('input', () => { state.density = Number(dom.density.value); render(); });
+      dom.pluck.addEventListener('input', () => { state.pluck = Number(dom.pluck.value); render(); });
+      dom.nodes.addEventListener('change', () => { state.showNodes = dom.nodes.checked; render(); });
+      dom.play.addEventListener('click', () => {
+        state.pluckPhase = 0;
+        pluckSound();
+      });
+      harmonicButtons.forEach((btn) => {
+        btn.addEventListener('click', () => setHarmonic(Number(btn.dataset.harmonic)));
+      });
+    }
+
+    bind();
+    setHarmonic(1);
+    render();
+    tick();
+  </script>
+</body>
+</html>

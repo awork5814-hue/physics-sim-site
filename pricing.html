@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Physics Experiments Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+<link rel="stylesheet" href="simulation-theme.css" />
+  <script>!function(){var t=localStorage.getItem('physicsSimTheme')||'dark';document.documentElement.setAttribute('data-theme',t)}();
+  </script>
+</head>
+<body data-paged="true" data-page="1" data-total-pages="20" data-paged="false">
+  <div class="background">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">λ</span>
+      <div>
+        <div class="brand-title">Physics Experiments Lab</div>
+        <div class="brand-subtitle">Interactive simulations for fundamental discoveries</div>
+      </div>
+    </div>
+    <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Toggle navigation">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav" id="mainNav">
+      <div class="nav-dropdown">
+        <a href="index.html#" class="nav-trigger">Experiments ▾</a>
+        <div class="nav-menu">
+          <div class="nav-section">
+            <h4>Mechanics</h4>
+            <a href="index.html#pendulum">Simple Pendulum</a>
+            <a href="index.html#hooke">Hooke's Law</a>
+            <a href="index.html#projectile">Projectile Motion</a>
+            <a href="index.html#circular">Circular Motion</a>
+            <a href="index.html#shm">Simple Harmonic Motion</a>
+            <a href="index.html#moments">Moments</a>
+            <a href="index.html#freefall">Free Fall (Air Resistance)</a>
+            <a href="index.html#satellite">Satellite Orbits</a>
+          </div>
+          <div class="nav-section">
+            <h4>Advanced Mechanics</h4>
+            <a href="index.html#energy">Conservation of Energy</a>
+            <a href="index.html#friction">Friction</a>
+            <a href="index.html#pulley">Pulley Systems</a>
+            <a href="index.html#relative">Relative Motion</a>
+            <a href="index.html#range">Projectile Range</a>
+            <a href="index.html#orbitalvel">Orbital Velocity</a>
+            <a href="index.html#escapevel">Escape Velocity</a>
+            <a href="index.html#levers">Simple Machines</a>
+            <a href="index.html#equilibrium">Static Equilibrium</a>
+          </div>
+          <div class="nav-section">
+            <h4>Geophysics</h4>
+            <a href="index.html#seismic">Seismic Waves</a>
+            <a href="index.html#earthquake">Earthquake</a>
+            <a href="index.html#mantle">Mantle Convection</a>
+            <a href="index.html#plate">Plate Tectonics</a>
+            <a href="index.html#gravity">Gravity Anomaly</a>
+            <a href="index.html#magnetic">Earth's Magnetic Field</a>
+            <a href="index.html#tides">Ocean Tides</a>
+            <a href="index.html#erosion">Erosion</a>
+            <a href="index.html#weathering">Weathering</a>
+            <a href="index.html#geothermal">Geothermal Energy</a>
+          </div>
+          <div class="nav-section">
+            <h4>Fluid Dynamics</h4>
+            <a href="index.html#flow">Fluid Flow</a>
+            <a href="index.html#bernoulli">Bernoulli's Principle</a>
+            <a href="index.html#pressure">Pressure</a>
+            <a href="index.html#archimedes">Buoyancy</a>
+            <a href="index.html#viscosity">Viscosity</a>
+            <a href="index.html#surface">Surface Tension</a>
+            <a href="index.html#laminar">Laminar vs Turbulent</a>
+            <a href="index.html#capillary">Capillary Action</a>
+            <a href="index.html#venturi">Venturi Effect</a>
+            <a href="index.html#pascal">Pascal's Principle</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electricity</h4>
+            <a href="index.html#ohm-law">Ohm's Law</a>
+            <a href="index.html#coulomb">Coulomb's Law</a>
+            <a href="index.html#oersted">Oersted's Experiment</a>
+            <a href="index.html#series-parallel">Series vs Parallel</a>
+            <a href="index.html#iv-curve">I-V Characteristics</a>
+            <a href="index.html#wheatstone">Wheatstone Bridge</a>
+          </div>
+          <div class="nav-section">
+            <h4>Electronics</h4>
+            <a href="index.html#capacitor">Capacitors</a>
+            <a href="index.html#rc-circuit">RC Circuits</a>
+            <a href="index.html#rl-circuit">RL Circuits</a>
+            <a href="index.html#rlc-circuit">RLC Circuits</a>
+            <a href="index.html#opamp">Op-Amp Basics</a>
+            <a href="index.html#voltage-divider">Voltage Dividers</a>
+            <a href="index.html#filters">Filters</a>
+            <a href="index.html#transistor-amp">Transistor Amplifier</a>
+            <a href="index.html#logic-gates">Logic Gates</a>
+          </div>
+          <div class="nav-section">
+            <h4>Waves & Optics</h4>
+            <a href="simulations/double-slit.html">Double Slit</a>
+            <a href="index.html#polarization">Polarization of Light</a>
+            <a href="index.html#refraction">Refraction & Lenses</a>
+            <a href="index.html#waves">Wave Motion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Sound & Acoustics</h4>
+            <a href="index.html#standing-string">Standing Waves (String)</a>
+            <a href="index.html#standing-pipe">Standing Waves (Pipe)</a>
+            <a href="index.html#beat-frequency">Beat Frequency</a>
+            <a href="index.html#sound-intensity">Sound Intensity</a>
+            <a href="index.html#mech-resonance">Mechanical Resonance</a>
+            <a href="index.html#wave-type">Wave Types</a>
+            <a href="index.html#echo-sound">Echo & Reflection</a>
+            <a href="index.html#ultrasound">Ultrasound</a>
+            <a href="index.html#acoustic-impedance">Acoustic Impedance</a>
+          </div>
+          <div class="nav-section">
+            <h4>Modern Physics</h4>
+            <a href="index.html#rutherford">Rutherford Scattering</a>
+            <a href="index.html#michelson">Michelson-Morley</a>
+            <a href="index.html#bohr">Bohr Model (Hydrogen)</a>
+            <a href="index.html#photoelectric">Photoelectric Effect</a>
+            <a href="index.html#millikan">Millikan Oil Drop</a>
+            <a href="index.html#brownian">Brownian Motion</a>
+            <a href="index.html#blackbody">Blackbody Radiation</a>
+            <a href="index.html#compton">Compton Scattering</a>
+            <a href="index.html#hall">Hall Effect</a>
+            <a href="index.html#thermoelectric">Thermoelectric Effect</a>
+            <a href="index.html#joule">Joule Heating</a>
+          </div>
+          <div class="nav-section">
+            <h4>Quantum Physics</h4>
+            <a href="index.html#waveparticle">Wave-Particle Duality</a>
+            <a href="index.html#tunneling">Quantum Tunneling</a>
+            <a href="index.html#heisenberg">Heisenberg Uncertainty</a>
+            <a href="index.html#spin">Quantum Spin</a>
+            <a href="index.html#schrodinger">Schrödinger's Cat</a>
+            <a href="index.html#superposition">Quantum Superposition</a>
+            <a href="index.html#debroglie">de Broglie Wavelength</a>
+            <a href="index.html#entanglement">Quantum Entanglement</a>
+            <a href="index.html#quantumnumbers">Quantum Numbers</a>
+            <a href="index.html#quantumhamiltonian">Quantum Hamiltonian</a>
+            <a href="index.html#frank-hertz">Frank-Hertz Experiment</a>
+            <a href="index.html#zeeman">Zeeman Effect</a>
+          </div>
+          <div class="nav-section">
+            <h4>Astrophysics</h4>
+            <a href="index.html#kepler">Kepler's Laws</a>
+            <a href="index.html#eclipse">Eclipse Simulation</a>
+            <a href="index.html#stellar">Stellar Evolution</a>
+            <a href="index.html#hrdiagram">HR Diagram</a>
+            <a href="index.html#blackhole">Black Holes</a>
+            <a href="index.html#orbital">Orbital Mechanics</a>
+            <a href="index.html#tidal">Tidal Forces</a>
+            <a href="index.html#doppler">Doppler in Space</a>
+            <a href="index.html#solarscale">Solar System Scale</a>
+            <a href="index.html#neutron-star">Neutron Stars</a>
+            <a href="index.html#dark-matter">Dark Matter</a>
+            <a href="index.html#big-bang">Big Bang / CMB</a>
+          </div>
+          <div class="nav-section">
+            <h4>Nuclear Physics</h4>
+            <a href="index.html#radioactive">Radioactive Decay</a>
+            <a href="index.html#halflife">Half-life Simulation</a>
+            <a href="index.html#fission">Nuclear Fission</a>
+            <a href="index.html#fission-chain">Fission Chain Reaction</a>
+            <a href="index.html#fusion">Nuclear Fusion</a>
+            <a href="index.html#geiger">Geiger Counter</a>
+            <a href="index.html#carbon Dating">Carbon Dating</a>
+            <a href="index.html#binding">Binding Energy</a>
+            <a href="index.html#accelerator">Particle Accelerator</a>
+            <a href="index.html#cloud">Cloud Chamber</a>
+            <a href="index.html#shielding">Radiation Shielding</a>
+          </div>
+          <div class="nav-section">
+            <h4>Biophysics</h4>
+            <a href="index.html#nerve">Nerve Impulses</a>
+            <a href="index.html#muscle">Muscle Contraction</a>
+            <a href="index.html#vision">Vision Physics</a>
+            <a href="index.html#hearing">Hearing Physics</a>
+            <a href="index.html#diffusion">Diffusion</a>
+            <a href="index.html#osmosis">Osmosis</a>
+            <a href="index.html#membrane">Cell Membrane</a>
+            <a href="index.html#biomech">Biomechanics</a>
+            <a href="index.html#bloodflow">Fluid Flow in Vessels</a>
+            <a href="index.html#medical">Medical Imaging</a>
+          </div>
+          <div class="nav-section">
+            <h4>Materials Science</h4>
+            <a href="index.html#stressstrain">Stress-Strain</a>
+            <a href="index.html#shear">Shear Modulus</a>
+            <a href="index.html#poisson">Poisson's Ratio</a>
+            <a href="index.html#elasticity">Elasticity</a>
+            <a href="index.html#plastic">Plastic Deformation</a>
+            <a href="index.html#hardness">Hardness Testing</a>
+            <a href="index.html#fatigue">Fatigue</a>
+            <a href="index.html#creep">Creep</a>
+            <a href="index.html#thermal-expansion">Thermal Expansion</a>
+          </div>
+          <div class="nav-section">
+            <h4>Communications</h4>
+            <a href="index.html#am-modulation">AM Modulation</a>
+            <a href="index.html#fm-modulation">FM Modulation</a>
+            <a href="index.html#signal-encoding">Signal Encoding</a>
+            <a href="index.html#antennas">Antennas</a>
+            <a href="index.html#waveguides">Waveguides</a>
+            <a href="index.html#fiber-optics">Fiber Optics</a>
+            <a href="index.html#signal-propagation">Signal Propagation</a>
+            <a href="index.html#signal-superposition">Signal Superposition</a>
+            <a href="index.html#shannon">Shannon Limit</a>
+          </div>
+          <div class="nav-section">
+            <h4>Thermal</h4>
+            <a href="index.html#boyle">Boyle's Law</a>
+            <a href="index.html#ideal-gas">Ideal Gas Law</a>
+            <a href="index.html#heat-capacity">Specific Heat</a>
+            <a href="index.html#carnot">Carnot Engine</a>
+            <a href="index.html#heatengine">Heat Engine Efficiency</a>
+          </div>
+        </div>
+      </div>
+      <a href="index.html#favorites">Favorites</a>
+      <a href="index.html#about">About</a>
+      <a href="questions.html">Question Bank</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="index.html#tryfree" class="try-free-btn" id="tryFreeBtn">Try Free</a>
+    </nav>
+    <div class="global-toggle">
+      <label class="theme-toggle">
+        <input type="checkbox" id="themeToggle" />
+        <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+        <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </label>
+    </div>
+    <div class="header-actions"></div>
+  </header>
+
+  <main class="pricing-page-main">
+    <section id="pricing" class="pricing">
+      <div class="pricing-header">
+        <div class="pricing-header-row">
+          <h2>Support Physics Experiments Lab</h2>
+          <a class="return-link inline" id="returnToLab" href="index.html">← Back to Experiments</a>
+        </div>
+        <p>Choose how you want to support the project. All subscribers get full access to all 147+ simulations.</p>
+        <div class="pricing-notice" id="paytabsNotice" style="display:none;"></div>
+        <div class="currency-selector">
+          <span class="currency-label">Currency:</span>
+          <label class="currency-option">
+            <input type="radio" name="currency" value="USD" checked />
+            <span>USD ($)</span>
+          </label>
+          <label class="currency-option">
+            <input type="radio" name="currency" value="EGP" />
+            <span>EGP (ج.م)</span>
+          </label>
+        </div>
+      </div>
+      
+      <div class="pricing-grid">
+        <div class="pricing-card featured" data-currency="USD">
+          <div class="pricing-card-header">
+            <div class="pricing-card-name">Yearly</div>
+            <div class="pricing-card-desc">Best value - save $2</div>
+          </div>
+          <div class="pricing-card-price">
+            <div class="pricing-price-amount">$10 <span>/year</span></div>
+            <div class="pricing-price-period">Less than $1/month</div>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>All 147+ simulations</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Full parameter controls</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Teacher mode</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Data export & CSV</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Question bank access</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Lab sheet generator</span>
+            </li>
+          </ul>
+          <div class="pricing-card-cta">
+            <button class="btn primary subscribe-btn" data-plan="yearly" data-currency="USD">Continue to payment — $10/year</button>
+          </div>
+        </div>
+
+        <div class="pricing-card" data-currency="USD">
+          <div class="pricing-card-header">
+            <div class="pricing-card-name">Monthly</div>
+            <div class="pricing-card-desc">Flexible - cancel anytime</div>
+          </div>
+          <div class="pricing-card-price">
+            <div class="pricing-price-amount">$1 <span>/month</span></div>
+            <div class="pricing-price-period">Cancel anytime</div>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>All 147+ simulations</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Full parameter controls</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Teacher mode</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Data export & CSV</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Question bank access</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Lab sheet generator</span>
+            </li>
+          </ul>
+          <div class="pricing-card-cta">
+            <button class="btn ghost subscribe-btn" data-plan="monthly" data-currency="USD">Continue to payment — $1/month</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pricing-grid egp-pricing" style="display: none;">
+        <div class="pricing-card featured" data-currency="EGP">
+          <div class="pricing-card-header">
+            <div class="pricing-card-name">Yearly</div>
+            <div class="pricing-card-desc">أفضل قيمة</div>
+          </div>
+          <div class="pricing-card-price">
+            <div class="pricing-price-amount">300 <span>/year</span></div>
+            <div class="pricing-price-period">25 EGP/month</div>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>جميع التجارب 147+</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Full parameter controls</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Teacher mode</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Data export & CSV</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Question bank access</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Lab sheet generator</span>
+            </li>
+          </ul>
+          <div class="pricing-card-cta">
+            <button class="btn primary subscribe-btn" data-plan="yearly" data-currency="EGP">Continue to payment — 300 EGP/year</button>
+          </div>
+        </div>
+
+        <div class="pricing-card" data-currency="EGP">
+          <div class="pricing-card-header">
+            <div class="pricing-card-name">Monthly</div>
+            <div class="pricing-card-desc">إلغاء في أي وقت</div>
+          </div>
+          <div class="pricing-card-price">
+            <div class="pricing-price-amount">50 <span>/month</span></div>
+            <div class="pricing-price-period">إلغاء في أي وقت</div>
+          </div>
+          <ul class="pricing-features">
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>جميع التجارب 147+</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Full parameter controls</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Teacher mode</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Data export & CSV</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Question bank access</span>
+            </li>
+            <li class="pricing-feature">
+              <span class="pricing-feature-icon check">✓</span>
+              <span>Lab sheet generator</span>
+            </li>
+          </ul>
+          <div class="pricing-card-cta">
+            <button class="btn ghost subscribe-btn" data-plan="monthly" data-currency="EGP">Continue to payment — 50 EGP/month</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pricing-faq">
+        <h3>Frequently Asked Questions</h3>
+        <div class="pricing-faq-grid">
+          <div class="pricing-faq-item">
+            <div class="pricing-faq-question">Can I cancel anytime?</div>
+            <div class="pricing-faq-answer">Yes! Monthly subscribers can cancel anytime. Yearly subscribers get access for the full year.</div>
+          </div>
+          <div class="pricing-faq-item">
+            <div class="pricing-faq-question">Is there a free trial?</div>
+            <div class="pricing-faq-answer">At just $1/month (or 50 EGP), we keep things simple. If you truly cannot afford it, contact us for free access.</div>
+          </div>
+          <div class="pricing-faq-item">
+            <div class="pricing-faq-question">What payment methods do you accept?</div>
+            <div class="pricing-faq-answer">USD: Credit/Debit cards via PayTabs. EGP: Credit/Debit cards, Fawry, Mobile Wallets via Paymob.</div>
+          </div>
+          <div class="pricing-faq-item">
+            <div class="pricing-faq-question">Is my payment secure?</div>
+            <div class="pricing-faq-answer">Yes! All payments are processed through secure payment providers (PayTabs for USD, Paymob for EGP).</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pricing-guarantee">
+        <div class="pricing-guarantee-icon">💛</div>
+        <h4>Support Open Education</h4>
+        <p>Your subscription helps keep this project alive and growing. Thank you for your support!</p>
+      </div>
+    </section>
+</main>
+
+<!-- Paymob Payment Modal -->
+<div class="payment-modal" id="paymobModal">
+  <div class="payment-modal-overlay"></div>
+  <div class="payment-modal-content">
+    <button class="payment-modal-close" id="paymobModalClose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+    
+    <div class="payment-modal-header">
+      <div class="payment-modal-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      </div>
+      <h3>Complete Your Payment</h3>
+      <p id="paymobPlanSummary">Yearly Subscription - 300 EGP</p>
+    </div>
+    
+    <div class="payment-modal-body">
+      <!-- Step 1: User Info -->
+      <div class="payment-step active" id="paymobStep1">
+        <h4>Enter Your Details</h4>
+        <div class="payment-form">
+          <div class="payment-form-group">
+            <label for="paymobName">Full Name</label>
+            <input type="text" id="paymobName" placeholder="Ahmed Mohamed" required />
+          </div>
+          <div class="payment-form-group">
+            <label for="paymobEmail">Email Address</label>
+            <input type="email" id="paymobEmail" placeholder="ahmed@example.com" required />
+          </div>
+          <div class="payment-form-group">
+            <label for="paymobPhone">Phone Number</label>
+            <input type="tel" id="paymobPhone" placeholder="01xxxxxxxxx" required />
+          </div>
+        </div>
+        <button class="btn primary payment-next-btn" id="paymobNextStep">
+          Continue to Payment
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Step 2: Payment Method -->
+      <div class="payment-step" id="paymobStep2">
+        <h4>Select Payment Method</h4>
+        <div class="payment-methods">
+          <label class="payment-method-option">
+            <input type="radio" name="paymobMethod" value="card" checked />
+            <div class="payment-method-card">
+              <div class="payment-method-icon card-brands">
+                <img src="https://cdn.simpleicons.org/visa/1a1f71" alt="Visa" width="40" height="26" />
+                <img src="https://cdn.simpleicons.org/mastercard/eb001b" alt="Mastercard" width="40" height="26" />
+              </div>
+              <div class="payment-method-info">
+                <span class="payment-method-name">Credit/Debit Card</span>
+                <span class="payment-method-desc">Visa, Mastercard, Meeza</span>
+              </div>
+              <div class="payment-method-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+            </div>
+          </label>
+          
+          <label class="payment-method-option">
+            <input type="radio" name="paymobMethod" value="fawry" />
+            <div class="payment-method-card">
+              <div class="payment-method-icon fawry-icon">
+                <img src="https://cdn.prod.website-files.com/64199d190fc7afa82666d89c/6491beca2dbd96fc127671d3_fawry-1.webp" alt="Fawry" width="40" height="40" />
+              </div>
+              <div class="payment-method-info">
+                <span class="payment-method-name">Fawry</span>
+                <span class="payment-method-desc">Pay at Fawry outlets or via app</span>
+              </div>
+              <div class="payment-method-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+            </div>
+          </label>
+          
+          <label class="payment-method-option">
+            <input type="radio" name="paymobMethod" value="wallet" />
+            <div class="payment-method-card">
+              <div class="payment-method-icon instapay-icon">
+                <img src="https://ms.hsoubcdn.com/uploads/thumbnails/2941398/66f2b696ccd4f/Screenshot-2024-09-24-153134.png" alt="InstaPay" width="40" height="40" />
+              </div>
+              <div class="payment-method-info">
+                <span class="payment-method-name">Mobile Wallet</span>
+                <span class="payment-method-desc">InstaPay, Vodafone Cash, etc.</span>
+              </div>
+              <div class="payment-method-check">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              </div>
+            </div>
+          </label>
+          
+        </div>
+        
+        <div class="payment-actions">
+          <button class="btn ghost payment-back-btn" id="paymobBackStep">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back
+          </button>
+          <button class="btn primary payment-pay-btn" id="paymobPayBtn">
+            <span class="pay-btn-text">Pay Now</span>
+            <span class="pay-btn-amount" id="paymobAmount">300 EGP</span>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Step 3: Processing -->
+      <div class="payment-step" id="paymobStep3">
+        <div class="payment-processing">
+          <div class="payment-spinner" id="paymobSpinner">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20">
+                <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+          </div>
+          <h4 id="paymobStep3Title">Processing Payment...</h4>
+          <p id="paymobStep3Text">Please wait while we connect to Paymob</p>
+        </div>
+        <div id="paymobIframeContainer" style="display: none; width: 100%; margin-top: 20px;"></div>
+      </div>
+      
+      <!-- Step 4: Success -->
+      <div class="payment-step" id="paymobStep4">
+        <div class="payment-success">
+          <div class="payment-success-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <h4>Payment Successful!</h4>
+          <p>Thank you for subscribing to Physics Experiments Lab</p>
+          <div class="payment-success-details">
+            <div class="payment-detail-row">
+              <span>Plan</span>
+              <span id="paymobSuccessPlan">Yearly</span>
+            </div>
+            <div class="payment-detail-row">
+              <span>Amount</span>
+              <span id="paymobSuccessAmount">300 EGP</span>
+            </div>
+            <div class="payment-detail-row">
+              <span>Transaction ID</span>
+              <span id="paymobSuccessTxn">-</span>
+            </div>
+          <a href="index.html" class="btn primary">Start Exploring</a>
+        </div>
+      
+      <!-- Step 5: Error -->
+      <div class="payment-step" id="paymobStep5">
+        <div class="payment-error">
+          <div class="payment-error-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M15 9l-6 6M9 9l6 6"/>
+            </svg>
+          </div>
+          <h4>Payment Failed</h4>
+          <p id="paymobErrorMsg">Something went wrong. Please try again.</p>
+          <button class="btn ghost" id="paymobRetryBtn">Try Again</button>
+        </div>
+    </div>
+    
+    <div class="payment-modal-footer">
+      <div class="payment-security">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span>Secured by Paymob</span>
+      </div>
+      <div class="payment-methods-list">
+        <span>accepted</span>
+        <div class="payment-methods-icons payment-methods-row">
+          <img src="https://cdn.simpleicons.org/vodafone/ff3b30" alt="Vodafone Cash" width="44" height="28" />
+          <img src="https://cdn.prod.website-files.com/64199d190fc7afa82666d89c/6491beca2dbd96fc127671d3_fawry-1.webp" alt="Fawry" width="44" height="28" />
+          <img src="https://cdn.simpleicons.org/visa/1a1f71" alt="Visa" width="44" height="28" />
+          <img src="https://ms.hsoubcdn.com/uploads/thumbnails/2941398/66f2b696ccd4f/Screenshot-2024-09-24-153134.png" alt="InstaPay" width="44" height="28" />
+        </div>
+    </div>
+</div>
+
+<!-- PayTabs USD Payment Modal -->
+<div class="payment-modal" id="paytabsModal">
+  <div class="payment-modal-overlay"></div>
+  <div class="payment-modal-content">
+    <button class="payment-modal-close" id="paytabsModalClose">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+
+    <div class="payment-modal-header">
+      <div class="payment-modal-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <path d="M2 10h20"/>
+        </svg>
+      </div>
+      <h3>Pay in USD</h3>
+      <p id="paytabsPlanSummary">Yearly Subscription - $10</p>
+    </div>
+
+    <div class="payment-modal-body">
+      <div class="payment-step active" id="paytabsStep1">
+        <h4>Enter Your Details</h4>
+        <div class="payment-form">
+          <div class="payment-form-group">
+            <label for="paytabsName">Full Name</label>
+            <input type="text" id="paytabsName" placeholder="Alex Johnson" required />
+          </div>
+          <div class="payment-form-group">
+            <label for="paytabsEmail">Email Address</label>
+            <input type="email" id="paytabsEmail" placeholder="alex@example.com" required />
+          </div>
+          <div class="payment-form-group">
+            <label for="paytabsPhone">Phone Number</label>
+            <input type="tel" id="paytabsPhone" placeholder="+1 555 123 4567" required />
+          </div>
+        <div class="payment-actions">
+          <button class="btn primary payment-pay-btn" id="paytabsPayBtn">
+            <span>Continue to PayTabs</span>
+            <span class="pay-btn-amount" id="paytabsAmount">$10</span>
+          </button>
+        </div>
+
+      <div class="payment-step" id="paytabsStep2">
+        <div class="payment-processing">
+          <div class="payment-spinner"></div>
+          <h4>Redirecting to PayTabs...</h4>
+          <p>Please wait while we open the secure payment page.</p>
+        </div>
+
+      <div class="payment-step" id="paytabsStep3">
+        <div class="payment-error">
+          <div class="payment-error-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v6M12 17h.01"/>
+            </svg>
+          </div>
+          <h4>Payment Error</h4>
+          <p id="paytabsErrorMsg">Something went wrong. Please try again.</p>
+          <button class="btn ghost" id="paytabsRetryBtn">Try Again</button>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Payment Modal Styles */
+.payment-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.payment-modal.active {
+  display: flex;
+}
+
+.payment-modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(8px);
+}
+
+.payment-modal-content {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.payment-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.payment-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text);
+}
+
+.payment-modal-header {
+  text-align: center;
+  padding: 40px 32px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.payment-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, rgba(106, 215, 255, 0.2), rgba(106, 215, 255, 0.05));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.payment-modal-header h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  background: none;
+  -webkit-text-fill-color: var(--text);
+}
+
+.payment-modal-header p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.payment-modal-body {
+  padding: 24px 32px;
+}
+
+.payment-step {
+  display: none;
+}
+
+.payment-step.active {
+  display: block;
+}
+
+.payment-step h4 {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 20px;
+  color: var(--text);
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.payment-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.payment-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.payment-form-group input {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--text);
+  transition: all 0.2s ease;
+}
+
+.payment-form-group input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(106, 215, 255, 0.15);
+}
+
+.payment-form-group input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.payment-method-option {
+  cursor: pointer;
+}
+
+.payment-method-option input {
+  display: none;
+}
+
+.payment-method-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  background: #1a2536;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.payment-method-option:hover .payment-method-card {
+  border-color: rgba(106, 215, 255, 0.35);
+  background: rgba(24, 40, 60, 0.9);
+}
+
+.payment-method-option input:checked + .payment-method-card {
+  border-color: rgba(106, 215, 255, 0.8);
+  background: rgba(20, 45, 70, 0.6);
+}
+
+.payment-method-icon {
+  width: 46px;
+  height: 46px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.payment-method-icon.card-brands {
+  background: rgba(10, 16, 24, 0.8);
+  width: 46px;
+  height: 46px;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.payment-method-icon.card-brands img {
+  border-radius: 4px;
+  height: 20px;
+  width: auto;
+}
+
+.payment-method-icon img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.payment-method-icon.fawry-icon,
+.payment-method-icon.instapay-icon {
+  background: transparent;
+}
+
+.payment-method-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-method-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.payment-method-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.payment-method-check {
+  width: 26px;
+  height: 26px;
+  background: rgba(106, 215, 255, 0.2);
+  border: 2px solid rgba(106, 215, 255, 0.6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccecff;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.2s ease;
+}
+
+.payment-method-option input:checked + .payment-method-card .payment-method-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.payment-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.payment-back-btn {
+  flex-shrink: 0;
+}
+
+.payment-pay-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pay-btn-amount {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+}
+
+/* Processing State */
+.payment-processing {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.payment-spinner {
+  margin-bottom: 24px;
+  color: var(--accent);
+}
+
+.payment-processing h4 {
+  margin-bottom: 8px;
+}
+
+.payment-processing p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Success State */
+.payment-success {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.payment-success-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, rgba(60, 200, 100, 0.2), rgba(60, 200, 100, 0.05));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3cc864;
+  animation: successPop 0.5s ease;
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.payment-success h4 {
+  color: #3cc864;
+  margin-bottom: 8px;
+}
+
+.payment-success p {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+.payment-success-details {
+  background: var(--bg-3);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.payment-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.payment-detail-row:last-child {
+  border-bottom: none;
+}
+
+.payment-detail-row span:first-child {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.payment-detail-row span:last-child {
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Error State */
+.payment-error {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.payment-error-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, rgba(255, 100, 100, 0.2), rgba(255, 100, 100, 0.05));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6464;
+}
+
+.payment-error h4 {
+  color: #ff6464;
+  margin-bottom: 8px;
+}
+
+.payment-error p {
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* Footer */
+.payment-modal-footer {
+  padding: 16px 32px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.payment-security {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.payment-methods-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.payment-methods-icons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.payment-methods-icons img {
+  width: 36px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.payment-methods-row {
+  gap: 18px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.payment-methods-row img {
+  width: 48px;
+  height: 28px;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+
+.payment-methods-list > span {
+  text-transform: lowercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.payment-method-badge {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pricing-notice {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(106, 215, 255, 0.1);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.pricing-notice.info {
+  border-color: rgba(106, 215, 255, 0.4);
+}
+
+.pricing-notice.success {
+  border-color: rgba(96, 220, 160, 0.5);
+  background: rgba(96, 220, 160, 0.12);
+}
+
+.pricing-notice.error {
+  border-color: rgba(255, 120, 120, 0.45);
+  background: rgba(255, 120, 120, 0.12);
+}
+
+/* Light theme overrides */
+[data-theme="light"] .payment-modal-content {
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .payment-form-group input {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .payment-method-card {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .payment-success-details {
+  background: rgba(0, 0, 0, 0.03);
+}
+</style>
+
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="refund.html">Refund Policy</a>
+      </div>
+      <div class="footer-contact">
+        Contact: <a href="mailto:awork5814@gmail.com">awork5814@gmail.com</a>
+      </div>
+      <span>© 2026 Physics Experiments Lab · Built for interactive learning</span>
+      <div class="footer-social">
+        <a href="https://www.instagram.com/physicsexperimentslab/" target="_blank" rel="noopener" class="social-link" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="m16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="https://x.com/physicsexplab" target="_blank" rel="noopener" class="social-link" title="X">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://www.reddit.com/user/physicsexplab/" target="_blank" rel="noopener" class="social-link" title="Reddit">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.965-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+        </a>
+      </div>
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const supportEmail = 'awork5814@gmail.com';
+      const currencyRadios = document.querySelectorAll('input[name="currency"]');
+      const usdPricing = document.querySelector('.pricing-page-main .pricing-grid');
+      const egpPricing = document.querySelector('.pricing-page-main .egp-pricing');
+      const paytabsNotice = document.getElementById('paytabsNotice');
+      
+      // Paymob Modal Elements
+      const paymobModal = document.getElementById('paymobModal');
+      const paymobModalClose = document.getElementById('paymobModalClose');
+      const paymobModalOverlay = paymobModal.querySelector('.payment-modal-overlay');
+
+      // PayTabs Modal Elements
+      const paytabsModal = document.getElementById('paytabsModal');
+      const paytabsModalClose = document.getElementById('paytabsModalClose');
+      const paytabsModalOverlay = paytabsModal.querySelector('.payment-modal-overlay');
+      const showNotice = (message, type = 'info') => {
+        if (!paytabsNotice) return;
+        paytabsNotice.textContent = message;
+        paytabsNotice.classList.remove('success', 'error', 'info');
+        paytabsNotice.classList.add(type);
+        paytabsNotice.style.display = 'block';
+      };
+      const clearNotice = () => {
+        if (!paytabsNotice) return;
+        paytabsNotice.style.display = 'none';
+        paytabsNotice.textContent = '';
+        paytabsNotice.classList.remove('success', 'error', 'info');
+      };
+      
+      let currentPlan = '';
+      let currentAmount = 0;
+      let currentCurrency = 'USD';
+      
+      function updateCurrency() {
+        const selected = document.querySelector('input[name="currency"]:checked').value;
+        if (selected === 'USD') {
+          usdPricing.style.display = 'grid';
+          egpPricing.style.display = 'none';
+          currentCurrency = 'USD';
+        } else {
+          usdPricing.style.display = 'none';
+          egpPricing.style.display = 'grid';
+          currentCurrency = 'EGP';
+        }
+        localStorage.setItem('preferredCurrency', selected);
+      }
+      
+      currencyRadios.forEach(radio => {
+        radio.addEventListener('change', updateCurrency);
+      });
+      
+      const savedCurrency = localStorage.getItem('preferredCurrency');
+      if (savedCurrency) {
+        const radio = document.querySelector(`input[name="currency"][value="${savedCurrency}"]`);
+        if (radio) radio.checked = true;
+      }
+      updateCurrency();
+      
+      // Paymob Modal Functions
+      function openPaymobModal(plan, amount) {
+        currentPlan = plan;
+        currentAmount = amount;
+        
+        const planName = plan === 'yearly' ? 'Yearly' : 'Monthly';
+        document.getElementById('paymobPlanSummary').textContent = `${planName} Subscription - ${amount} ${currentCurrency}`;
+        document.getElementById('paymobAmount').textContent = `${amount} ${currentCurrency}`;
+        
+        // Reset to step 1
+        paymobModal.querySelectorAll('.payment-step').forEach(step => step.classList.remove('active'));
+        document.getElementById('paymobStep1').classList.add('active');
+        
+        paymobModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+      
+      function closePaymobModal() {
+        paymobModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      
+      function showPaymobStep(stepId) {
+        paymobModal.querySelectorAll('.payment-step').forEach(step => step.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+      }
+      
+      // Event Listeners for Modal
+      paymobModalClose.addEventListener('click', closePaymobModal);
+      paymobModalOverlay.addEventListener('click', closePaymobModal);
+      
+      document.getElementById('paymobNextStep').addEventListener('click', function() {
+        const name = document.getElementById('paymobName').value;
+        const email = document.getElementById('paymobEmail').value;
+        const phone = document.getElementById('paymobPhone').value;
+        
+        if (!name || !email || !phone) {
+          alert('Please fill in all fields');
+          return;
+        }
+        
+        // Store user info
+        localStorage.setItem('paymobUser', JSON.stringify({ name, email, phone }));
+        
+        showPaymobStep('paymobStep2');
+      });
+      
+      document.getElementById('paymobBackStep').addEventListener('click', function() {
+        showPaymobStep('paymobStep1');
+      });
+      
+      document.getElementById('paymobPayBtn').addEventListener('click', async function() {
+        showPaymobStep('paymobStep3');
+        
+        document.getElementById('paymobStep3Title').textContent = 'Processing Payment...';
+        document.getElementById('paymobStep3Text').textContent = 'Please wait while we connect to Paymob';
+        
+        const userData = {
+          name: document.getElementById('paymobName').value,
+          email: document.getElementById('paymobEmail').value,
+          phone: document.getElementById('paymobPhone').value
+        };
+        
+        const token = Auth?.getToken();
+        const payload = {
+          plan: currentPlan,
+          currency: 'EGP',
+          user: userData
+        };
+        if (token) payload.token = token;
+        
+        try {
+          const response = await fetch('/api/paymob/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await response.json();
+          
+          if (data.success && data.iframeToken) {
+            const iframeContainer = document.getElementById('paymobIframeContainer');
+            iframeContainer.innerHTML = `
+              <iframe 
+                id="paymobIframe"
+                src="https://accept.paymob.com/api/acceptance/iframes/${data.integrationId}?payment_token=${data.iframeToken}" 
+                width="100%" 
+                height="500" 
+                frameborder="0"
+                allowpaymentrequest
+              ></iframe>
+            `;
+            iframeContainer.style.display = 'block';
+            document.getElementById('paymobSpinner').style.display = 'none';
+            document.getElementById('paymobStep3Title').textContent = 'Complete Payment';
+            document.getElementById('paymobStep3Text').textContent = 'Enter your card details in the form below';
+            
+            // Poll for iframe completion
+            const checkPayment = setInterval(async () => {
+              try {
+                const iframe = document.getElementById('paymobIframe');
+                if (!iframe || iframe.src.includes('success') || iframe.contentWindow?.location?.href?.includes('success')) {
+                  clearInterval(checkPayment);
+                  await completeSubscription(data.paymobOrderId);
+                }
+              } catch (e) {}
+            }, 2000);
+            
+            // Timeout after 30 minutes
+            setTimeout(() => clearInterval(checkPayment), 30 * 60 * 1000);
+          } else {
+            throw new Error(data.error || 'Failed to get payment token');
+          }
+        } catch (err) {
+          console.error('Paymob error:', err);
+          const paymobError = err.message || 'Failed to connect to payment system. Please try again.';
+          document.getElementById('paymobErrorMsg').textContent = `${paymobError} If this keeps happening, contact ${supportEmail}.`;
+          showPaymobStep('paymobStep5');
+        }
+      });
+      
+      async function completeSubscription(paymobOrderId) {
+        const token = Auth?.getToken();
+        if (!token) {
+          // For guest users, save to localStorage
+          const subscription = {
+            plan: currentPlan,
+            currency: 'EGP',
+            amount: currentAmount,
+            txnId: paymobOrderId || 'TXN' + Date.now().toString().slice(-8),
+            startDate: new Date().toISOString(),
+            status: 'active'
+          };
+          localStorage.setItem('subscription', JSON.stringify(subscription));
+          showSuccess();
+          return;
+        }
+        
+        try {
+          const response = await fetch('/api/paymob/complete-subscription', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              plan: currentPlan,
+              amount: currentAmount,
+              paymobOrderId: paymobOrderId
+            })
+          });
+          
+          const data = await response.json();
+          if (data.success) {
+            Auth.setAuth(token, data.user);
+            showSuccess();
+          } else {
+            throw new Error(data.error);
+          }
+        } catch (err) {
+          console.error('Complete subscription error:', err);
+          document.getElementById('paymobErrorMsg').textContent = `Payment successful but failed to activate subscription. Contact ${supportEmail}.`;
+          showPaymobStep('paymobStep5');
+        }
+      }
+      
+      function showSuccess() {
+        document.getElementById('paymobSuccessPlan').textContent = currentPlan === 'yearly' ? 'Yearly (300 EGP)' : 'Monthly (50 EGP)';
+        document.getElementById('paymobSuccessAmount').textContent = `${currentAmount} EGP`;
+        document.getElementById('paymobSuccessTxn').textContent = 'TXN' + Date.now().toString().slice(-8);
+        showPaymobStep('paymobStep4');
+      }
+      
+      document.getElementById('paymobRetryBtn').addEventListener('click', function() {
+        showPaymobStep('paymobStep2');
+      });
+
+      // PayTabs Modal Functions
+      function openPaytabsModal(plan, amount) {
+        currentPlan = plan;
+        currentAmount = amount;
+        const planName = plan === 'yearly' ? 'Yearly' : 'Monthly';
+        document.getElementById('paytabsPlanSummary').textContent = `${planName} Subscription - $${amount}`;
+        document.getElementById('paytabsAmount').textContent = `$${amount}`;
+        showPaytabsStep('paytabsStep1');
+        paytabsModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closePaytabsModal() {
+        paytabsModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+
+      function showPaytabsStep(stepId) {
+        paytabsModal.querySelectorAll('.payment-step').forEach(step => step.classList.remove('active'));
+        document.getElementById(stepId).classList.add('active');
+      }
+
+      paytabsModalClose.addEventListener('click', closePaytabsModal);
+      paytabsModalOverlay.addEventListener('click', closePaytabsModal);
+
+      document.getElementById('paytabsRetryBtn').addEventListener('click', function() {
+        showPaytabsStep('paytabsStep1');
+      });
+
+      document.getElementById('paytabsPayBtn').addEventListener('click', async function() {
+        const name = document.getElementById('paytabsName').value;
+        const email = document.getElementById('paytabsEmail').value;
+        const phone = document.getElementById('paytabsPhone').value;
+
+        if (!name || !email || !phone) {
+          alert('Please fill in all fields');
+          return;
+        }
+
+        showPaytabsStep('paytabsStep2');
+
+        const token = Auth?.getToken();
+        const payload = {
+          plan: currentPlan,
+          currency: 'USD',
+          user: { name, email, phone }
+        };
+        if (token) payload.token = token;
+
+        try {
+          const response = await fetch('/api/paytabs/create-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+          if (data.success && data.redirect_url) {
+            window.location.href = data.redirect_url;
+            return;
+          }
+
+          throw new Error(data.error || 'Failed to create PayTabs payment');
+        } catch (err) {
+          console.error('PayTabs error:', err);
+          const paytabsError = err.message || 'Failed to connect to payment system. Please try again.';
+          document.getElementById('paytabsErrorMsg').textContent = `${paytabsError} If this keeps happening, contact ${supportEmail}.`;
+          showPaytabsStep('paytabsStep3');
+        }
+      });
+      
+      // Handle EGP subscribe buttons
+      document.querySelectorAll('.subscribe-btn[data-currency="EGP"]').forEach(btn => {
+        if (!btn.disabled) {
+          btn.addEventListener('click', function() {
+            showNotice('Preparing checkout…', 'info');
+            const plan = this.dataset.plan;
+            const amount = plan === 'yearly' ? 300 : 50;
+            openPaymobModal(plan, amount);
+            setTimeout(clearNotice, 1500);
+          });
+        }
+      });
+
+      // Handle USD subscribe buttons
+      document.querySelectorAll('.subscribe-btn[data-currency="USD"]').forEach(btn => {
+        if (!btn.disabled) {
+          btn.addEventListener('click', function() {
+            showNotice('Preparing checkout…', 'info');
+            const plan = this.dataset.plan;
+            const amount = plan === 'yearly' ? 10 : 1;
+            openPaytabsModal(plan, amount);
+            setTimeout(clearNotice, 1500);
+          });
+        }
+      });
+      
+      // Update UI for logged-in users
+      if (typeof Auth !== 'undefined') {
+        Auth.updateUI?.();
+      }
+
+      // Handle PayTabs return result
+      const paytabsParams = new URLSearchParams(window.location.search);
+      const paytabsStatus = paytabsParams.get('paytabs');
+      if (paytabsStatus) {
+        const plan = paytabsParams.get('plan') || '';
+        const amount = paytabsParams.get('amount') || '';
+        const tranRef = paytabsParams.get('tran_ref') || '';
+
+        if (paytabsStatus === 'success') {
+          showNotice(`Payment successful${tranRef ? ` (Ref: ${tranRef})` : ''}. Your USD subscription is now active.`, 'success');
+
+          const token = Auth?.getToken();
+          if (token) {
+            try {
+              fetch('/api/user/subscription', {
+                headers: { 'Authorization': `Bearer ${token}` }
+              })
+                .then(response => response.json())
+                .then(data => {
+                  if (data.subscribed) {
+                    const user = Auth.getUser?.() || {};
+                    user.plan = data.plan;
+                    user.planExpiry = data.expiry;
+                    Auth.setAuth(token, user);
+                  }
+                })
+                .catch(() => {});
+            } catch (e) {}
+          } else {
+            const subscription = {
+              plan: plan || currentPlan,
+              currency: 'USD',
+              amount: amount ? parseFloat(amount) : currentAmount,
+              txnId: tranRef || 'TXN' + Date.now().toString().slice(-8),
+              startDate: new Date().toISOString(),
+              status: 'active'
+            };
+            localStorage.setItem('subscription', JSON.stringify(subscription));
+          }
+        } else {
+          const code = paytabsParams.get('code');
+          showNotice(`Payment failed${code ? ` (code: ${code})` : ''}. Please try again or contact ${supportEmail}.`, 'error');
+        }
+      }
+    });
+  </script>
+  <script src="auth.js"></script>
+  <script src="achievements.js"></script>
+  <script src="app.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var hamburgerBtn = document.getElementById('hamburgerBtn');
+      var mainNav = document.getElementById('mainNav');
+      var navOverlay = document.getElementById('navOverlay');
+      function toggleMobileNav() {
+        if (mainNav.classList.contains('mobile-open')) {
+          mainNav.classList.remove('mobile-open');
+          hamburgerBtn.classList.remove('active');
+          navOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        } else {
+          mainNav.classList.add('mobile-open');
+          hamburgerBtn.classList.add('active');
+          navOverlay.classList.add('active');
+          document.body.style.overflow = 'hidden';
+        }
+      }
+      function closeMobileNav() {
+        mainNav.classList.remove('mobile-open');
+        hamburgerBtn.classList.remove('active');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+      if (hamburgerBtn) hamburgerBtn.addEventListener('click', toggleMobileNav);
+      if (navOverlay) navOverlay.addEventListener('click', closeMobileNav);
+      document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+        var t = d.querySelector('.nav-trigger');
+        if (t) t.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.querySelectorAll('.nav-dropdown').forEach(function(x) { if (x !== d) x.classList.remove('expanded'); });
+          d.classList.toggle('expanded');
+        });
+      });
+      if (mainNav) mainNav.querySelectorAll('a:not(.nav-trigger)').forEach(function(l) { l.addEventListener('click', closeMobileNav); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeMobileNav(); });
+    });
+  </script>
+</body>
+</html>

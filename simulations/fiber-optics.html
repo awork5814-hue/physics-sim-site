@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fiber Optics</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #6bff6b;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .status-ok { color: var(--green); font-weight: 700; }
+    .status-bad { color: var(--red); font-weight: 700; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Fiber Optics</h1>
+        <p>Total internal reflection and guided modes</p>
+      </div>
+      <div class="pill">NA = √(n₁² - n₂²) · V = (2πa/λ) NA</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Fiber & Rays</h2>
+        <canvas id="fiberCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Acceptance Cone</h2>
+            <canvas id="coneCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Pulse Dispersion</h2>
+            <canvas id="dispersionCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Core Index (n₁)</label>
+            <input type="range" id="n1" min="1.40" max="1.60" step="0.01" value="1.48" />
+            <div class="row"><span class="muted">n₁</span><span class="value" id="n1Value">1.48</span></div>
+          </div>
+          <div class="control">
+            <label>Cladding Index (n₂)</label>
+            <input type="range" id="n2" min="1.30" max="1.59" step="0.01" value="1.46" />
+            <div class="row"><span class="muted">n₂</span><span class="value" id="n2Value">1.46</span></div>
+          </div>
+          <div class="control">
+            <label>Core Radius (μm)</label>
+            <input type="range" id="radius" min="4" max="50" step="1" value="25" />
+            <div class="row"><span class="muted">a</span><span class="value" id="radiusValue">25 μm</span></div>
+          </div>
+          <div class="control">
+            <label>Wavelength (nm)</label>
+            <input type="range" id="lambda" min="450" max="1650" step="10" value="850" />
+            <div class="row"><span class="muted">λ</span><span class="value" id="lambdaValue">850 nm</span></div>
+          </div>
+          <div class="control">
+            <label>Fiber Type</label>
+            <select id="fiberType">
+              <option value="step" selected>Step-index</option>
+              <option value="graded">Graded-index</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Launch Angle (°)</label>
+            <input type="range" id="launch" min="0" max="30" step="1" value="10" />
+            <div class="row"><span class="muted">θ</span><span class="value" id="launchValue">10°</span></div>
+          </div>
+          <div class="control">
+            <label>Show Modes</label>
+            <div class="toggle">
+              <input type="checkbox" id="showModes" checked />
+              <span>Mode labels</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Dispersion</label>
+            <div class="toggle">
+              <input type="checkbox" id="showDispersion" checked />
+              <span>Pulse spread</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Guiding</div>
+            <div class="row"><span>NA</span><span class="value" id="naValue">0.24</span></div>
+            <div class="row"><span>Acceptance</span><span class="value" id="acceptValue">13.9°</span></div>
+            <div class="row"><span>Critical θc</span><span class="value" id="criticalValue">80.1°</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Modes</div>
+            <div class="row"><span>V-number</span><span class="value" id="vValue">15.2</span></div>
+            <div class="row"><span>Mode</span><span class="value" id="modeValue">Multimode</span></div>
+            <div class="row"><span>Status</span><span class="value" id="statusValue"><span class="status-ok">Guided</span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Higher NA increases light capture but also modal dispersion. Graded-index reduces pulse spreading.</div>
+  </div>
+
+  <script>
+    const state = {
+      n1: 1.48,
+      n2: 1.46,
+      radiusUm: 25,
+      lambdaNm: 850,
+      fiberType: 'step',
+      launch: 10,
+      showModes: true,
+      showDispersion: true,
+      time: 0
+    };
+
+    const dom = {
+      n1: document.getElementById('n1'),
+      n2: document.getElementById('n2'),
+      radius: document.getElementById('radius'),
+      lambda: document.getElementById('lambda'),
+      fiberType: document.getElementById('fiberType'),
+      launch: document.getElementById('launch'),
+      showModes: document.getElementById('showModes'),
+      showDispersion: document.getElementById('showDispersion'),
+      n1Value: document.getElementById('n1Value'),
+      n2Value: document.getElementById('n2Value'),
+      radiusValue: document.getElementById('radiusValue'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      launchValue: document.getElementById('launchValue'),
+      naValue: document.getElementById('naValue'),
+      acceptValue: document.getElementById('acceptValue'),
+      criticalValue: document.getElementById('criticalValue'),
+      vValue: document.getElementById('vValue'),
+      modeValue: document.getElementById('modeValue'),
+      statusValue: document.getElementById('statusValue'),
+      fiberCanvas: document.getElementById('fiberCanvas'),
+      coneCanvas: document.getElementById('coneCanvas'),
+      dispersionCanvas: document.getElementById('dispersionCanvas')
+    };
+
+    const fiberCtx = dom.fiberCanvas.getContext('2d');
+    const coneCtx = dom.coneCanvas.getContext('2d');
+    const dispCtx = dom.dispersionCanvas.getContext('2d');
+
+    function calcNA() {
+      return Math.sqrt(Math.max(0, state.n1 ** 2 - state.n2 ** 2));
+    }
+
+    function calcAcceptance() {
+      const na = calcNA();
+      return Math.asin(Math.min(1, na)) * 180 / Math.PI;
+    }
+
+    function calcCritical() {
+      return Math.asin(state.n2 / state.n1) * 180 / Math.PI;
+    }
+
+    function calcVNumber() {
+      const a = state.radiusUm * 1e-6;
+      const lambda = state.lambdaNm * 1e-9;
+      return (2 * Math.PI * a / lambda) * calcNA();
+    }
+
+    function isGuided() {
+      return state.launch <= calcAcceptance();
+    }
+
+    function updateReadouts() {
+      dom.n1Value.textContent = state.n1.toFixed(2);
+      dom.n2Value.textContent = state.n2.toFixed(2);
+      dom.radiusValue.textContent = `${state.radiusUm} μm`;
+      dom.lambdaValue.textContent = `${state.lambdaNm} nm`;
+      dom.launchValue.textContent = `${state.launch}°`;
+      dom.naValue.textContent = calcNA().toFixed(2);
+      dom.acceptValue.textContent = `${calcAcceptance().toFixed(1)}°`;
+      dom.criticalValue.textContent = `${calcCritical().toFixed(1)}°`;
+      const v = calcVNumber();
+      dom.vValue.textContent = v.toFixed(1);
+      dom.modeValue.textContent = v < 2.405 ? 'Single-mode' : 'Multimode';
+      dom.statusValue.innerHTML = isGuided() ? '<span class="status-ok">Guided</span>' : '<span class="status-bad">Lost</span>';
+    }
+
+    function drawFiber() {
+      const w = dom.fiberCanvas.width;
+      const h = dom.fiberCanvas.height;
+      fiberCtx.clearRect(0, 0, w, h);
+      fiberCtx.fillStyle = '#0b1420';
+      fiberCtx.fillRect(0, 0, w, h);
+
+      const coreY = h / 2;
+      fiberCtx.fillStyle = 'rgba(106,215,255,0.18)';
+      fiberCtx.fillRect(80, coreY - 40, w - 160, 80);
+      fiberCtx.strokeStyle = '#6ad7ff';
+      fiberCtx.strokeRect(80, coreY - 40, w - 160, 80);
+
+      fiberCtx.fillStyle = 'rgba(106,215,255,0.08)';
+      fiberCtx.fillRect(60, coreY - 60, w - 120, 120);
+      fiberCtx.strokeStyle = '#33546b';
+      fiberCtx.strokeRect(60, coreY - 60, w - 120, 120);
+
+      fiberCtx.fillStyle = '#8aa0b8';
+      fiberCtx.fillText(`Core n₁=${state.n1.toFixed(2)}`, 90, coreY - 50);
+      fiberCtx.fillText(`Cladding n₂=${state.n2.toFixed(2)}`, 90, coreY + 70);
+
+      fiberCtx.strokeStyle = '#f6c76b';
+      fiberCtx.lineWidth = 2;
+      const maxAngle = Math.min(calcAcceptance(), 30);
+      const angle = (state.launch / 180) * Math.PI;
+      const startX = 90;
+      let rayY = coreY;
+      let dir = angle;
+      for (let i = 0; i < 8; i++) {
+        const dx = 70;
+        const dy = Math.tan(dir) * dx;
+        fiberCtx.beginPath();
+        fiberCtx.moveTo(startX + i * dx, rayY);
+        fiberCtx.lineTo(startX + (i + 1) * dx, rayY + dy);
+        fiberCtx.stroke();
+        rayY += dy;
+        if (rayY > coreY + 35 || rayY < coreY - 35) {
+          dir = -dir;
+        }
+      }
+
+      if (state.fiberType === 'graded') {
+        fiberCtx.strokeStyle = '#6ad7ff';
+        for (let i = 0; i < 6; i++) {
+          fiberCtx.beginPath();
+          fiberCtx.moveTo(100, coreY - 35 + i * 14);
+          fiberCtx.lineTo(w - 100, coreY - 35 + i * 14);
+          fiberCtx.stroke();
+        }
+      }
+    }
+
+    function drawCone() {
+      const w = dom.coneCanvas.width;
+      const h = dom.coneCanvas.height;
+      coneCtx.clearRect(0, 0, w, h);
+      coneCtx.fillStyle = '#0b1420';
+      coneCtx.fillRect(0, 0, w, h);
+      const center = { x: w / 2, y: h - 20 };
+      const theta = calcAcceptance() * Math.PI / 180;
+      const length = 120;
+      coneCtx.strokeStyle = '#6ad7ff';
+      coneCtx.beginPath();
+      coneCtx.moveTo(center.x, center.y);
+      coneCtx.lineTo(center.x - Math.tan(theta) * length, center.y - length);
+      coneCtx.lineTo(center.x + Math.tan(theta) * length, center.y - length);
+      coneCtx.closePath();
+      coneCtx.stroke();
+
+      coneCtx.fillStyle = '#f6c76b';
+      coneCtx.fillText(`θₐ = ${calcAcceptance().toFixed(1)}°`, 12, 20);
+    }
+
+    function drawDispersion() {
+      const w = dom.dispersionCanvas.width;
+      const h = dom.dispersionCanvas.height;
+      dispCtx.clearRect(0, 0, w, h);
+      dispCtx.fillStyle = '#0b1420';
+      dispCtx.fillRect(0, 0, w, h);
+      if (!state.showDispersion) {
+        dispCtx.fillStyle = '#8aa0b8';
+        dispCtx.fillText('Dispersion hidden', 20, h / 2);
+        return;
+      }
+      const spread = state.fiberType === 'graded' ? 0.4 : 1.0;
+      dispCtx.strokeStyle = '#f6c76b';
+      dispCtx.beginPath();
+      dispCtx.moveTo(20, h / 2);
+      for (let x = 20; x < w - 20; x++) {
+        const t = (x - 20) / (w - 40);
+        const envelope = Math.exp(-Math.pow((t - 0.4) / (0.1 + spread * 0.15), 2));
+        const y = h / 2 - envelope * 50;
+        if (x === 20) dispCtx.moveTo(x, y); else dispCtx.lineTo(x, y);
+      }
+      dispCtx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawFiber();
+      drawCone();
+      drawDispersion();
+    }
+
+    function tick() {
+      state.time += 0.016;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.n1.addEventListener('input', () => { state.n1 = Number(dom.n1.value); render(); });
+      dom.n2.addEventListener('input', () => { state.n2 = Number(dom.n2.value); render(); });
+      dom.radius.addEventListener('input', () => { state.radiusUm = Number(dom.radius.value); render(); });
+      dom.lambda.addEventListener('input', () => { state.lambdaNm = Number(dom.lambda.value); render(); });
+      dom.fiberType.addEventListener('change', () => { state.fiberType = dom.fiberType.value; render(); });
+      dom.launch.addEventListener('input', () => { state.launch = Number(dom.launch.value); render(); });
+      dom.showModes.addEventListener('change', () => { state.showModes = dom.showModes.checked; render(); });
+      dom.showDispersion.addEventListener('change', () => { state.showDispersion = dom.showDispersion.checked; render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

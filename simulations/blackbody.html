@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blackbody Radiation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-card.peak-color { grid-column: span 2; min-height: 64px; }
+    .data-card.peak-color .data-value { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; word-break: break-word; }
+    @media (max-width: 700px) {
+      .data-card.peak-color { grid-column: span 1; }
+    }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .color-chip {
+      display: inline-flex;
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      box-shadow: 0 0 8px rgba(255,255,255,0.25);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    .preset-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Blackbody Radiation</h1>
+    <div class="subtitle">Planck spectrum, Wien peak, and Stefan‑Boltzmann power</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+      <div style="margin-top: 10px;" class="preset-row">
+        <button class="btn" data-temp="300">300 K</button>
+        <button class="btn" data-temp="1500">1500 K</button>
+        <button class="btn" data-temp="2500">2500 K</button>
+        <button class="btn" data-temp="5800">Sun (5800 K)</button>
+        <button class="btn" data-temp="10000">10000 K</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Animation Speed</label>
+          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
+          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
+        </div>
+        <div class="control">
+          <label>Temperature (K)</label>
+          <input id="temp" type="range" min="300" max="20000" step="50" value="5800" />
+          <div class="row"><span>300</span><span id="tempVal" class="value">5800 K</span><span>20000</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showSpectrum" type="checkbox" checked /> Spectrum graph</label>
+            <label><input id="showVisible" type="checkbox" checked /> Visible band</label>
+            <label><input id="showPeak" type="checkbox" checked /> Peak marker</label>
+            <label><input id="animateGlow" type="checkbox" checked /> Glow animation</label>
+            <label><input id="showLegend" type="checkbox" checked /> Wavelength legend</label>
+            <label><input id="useLog" type="checkbox" /> Log scale</label>
+            <label><input id="showEmitter" type="checkbox" checked /> Show emitter</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Wien:</strong> <span style="font-family: var(--mono);">λ<sub>max</sub> = b/T</span></div>
+            <div><strong>Stefan‑Boltzmann:</strong> <span style="font-family: var(--mono);">P = σT⁴</span></div>
+            <div><strong>Planck:</strong> <span style="font-family: var(--mono);">I(λ,T) ∝ 1/(e^{hc/λkT}-1)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Tip: As temperature rises, the peak shifts to shorter wavelengths and total power rises rapidly. The spectrum window auto-scales to keep the peak visible.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const h = 6.626e-34;
+    const c = 3e8;
+    const k = 1.381e-23;
+    const b = 2.898e-3;
+    const sigma = 5.67e-8;
+
+    const state = {
+      T: 5800,
+      showSpectrum: true,
+      showVisible: true,
+      showPeak: true,
+      animateGlow: true,
+      showLegend: true,
+      useLog: false,
+      showEmitter: true,
+      speed: 1,
+      running: true,
+      t: 0
+    };
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function planck(lambda, T) {
+      const a = 2 * h * c * c / Math.pow(lambda, 5);
+      const exponent = h * c / (lambda * k * T);
+      const denom = Math.exp(Math.min(700, exponent)) - 1;
+      return a / denom;
+    }
+
+    function temperatureColor(T) {
+      const t = clamp(T, 1000, 12000);
+      const x = t / 100;
+      let r, g, bcol;
+      if (x <= 66) {
+        r = 255;
+        g = 99.47 * Math.log(x) - 161.12;
+        bcol = x <= 19 ? 0 : 138.52 * Math.log(x - 10) - 305.04;
+      } else {
+        r = 329.7 * Math.pow(x - 60, -0.133);
+        g = 288.1 * Math.pow(x - 60, -0.0755);
+        bcol = 255;
+      }
+      return `rgb(${clamp(r,0,255)},${clamp(g,0,255)},${clamp(bcol,0,255)})`;
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.55, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.6, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.clientWidth; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.clientHeight; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+      }
+    }
+
+    function drawEmitter(cx, cy) {
+      if (!state.showEmitter) return;
+      const color = temperatureColor(state.T);
+      const glow = state.animateGlow ? 18 + 6 * Math.sin(state.t) : 18;
+      const grad = ctx.createRadialGradient(cx, cy, 20, cx, cy, 140 + glow);
+      grad.addColorStop(0, color);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(cx, cy, 140, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = color;
+      ctx.beginPath(); ctx.arc(cx, cy, 60, 0, Math.PI * 2); ctx.fill();
+
+      ctx.fillStyle = 'rgba(248,250,252,0.9)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(`T = ${state.T.toFixed(0)} K`, cx - 40, cy + 90);
+    }
+
+    function drawSpectrum() {
+      if (!state.showSpectrum) return { peakNm: 0, power: 0, visibleFrac: 0 };
+      const compact = state.showEmitter;
+      const left = compact ? 420 : 160;
+      const top = 60;
+      const w = compact ? 460 : (canvas.clientWidth - 220);
+      const h = 300;
+      const peakNm = (b / state.T) * 1e9;
+      const wlMin = 200;
+      const wlMax = clamp(Math.max(3000, peakNm * 2), 3000, 20000);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(8,12,20,0.7)';
+      ctx.fillRect(left - 12, top - 16, w + 24, h + 36);
+      ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+      ctx.strokeRect(left - 12, top - 16, w + 24, h + 36);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const gx = left + (w / 4) * i;
+        const gy = top + (h / 4) * i;
+        ctx.beginPath(); ctx.moveTo(gx, top); ctx.lineTo(gx, top + h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(left, gy); ctx.lineTo(left + w, gy); ctx.stroke();
+      }
+
+      ctx.strokeStyle = 'rgba(106,215,255,0.7)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left, top, w, h);
+
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText('Intensity', left - 48, top + 10);
+      ctx.fillText('Wavelength (nm)', left + 120, top + h + 22);
+
+      if (state.showVisible && wlMax >= 700) {
+        const visStart = left + (400 - wlMin) / (wlMax - wlMin) * w;
+        const visEnd = left + (700 - wlMin) / (wlMax - wlMin) * w;
+        const visGrad = ctx.createLinearGradient(visStart, 0, visEnd, 0);
+        visGrad.addColorStop(0, 'rgba(122,208,255,0.2)');
+        visGrad.addColorStop(0.5, 'rgba(123,255,179,0.18)');
+        visGrad.addColorStop(1, 'rgba(255,206,106,0.2)');
+        ctx.fillStyle = visGrad;
+        ctx.fillRect(visStart, top, visEnd - visStart, h);
+        ctx.fillStyle = '#6ad7ff';
+        ctx.fillText('Visible', visStart + 10, top + 20);
+      }
+
+      const samples = [];
+      for (let i = 0; i <= 260; i++) {
+        const nm = wlMin + (wlMax - wlMin) * (i / 260);
+        const lambda = nm * 1e-9;
+        const val = planck(lambda, state.T);
+        samples.push({ nm, val });
+      }
+      const maxVal = Math.max(...samples.map(s => s.val));
+      const minVal = Math.min(...samples.map(s => s.val));
+      const toY = (val) => {
+        if (!state.useLog) return top + h - (val / maxVal) * (h - 10);
+        const safe = Math.max(val, maxVal * 1e-6);
+        const logMax = Math.log10(maxVal);
+        const logMin = Math.log10(maxVal * 1e-6);
+        const logVal = Math.log10(safe);
+        const norm = (logVal - logMin) / (logMax - logMin);
+        return top + h - norm * (h - 10);
+      };
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      samples.forEach((s, i) => {
+        const x = left + (s.nm - wlMin) / (wlMax - wlMin) * w;
+        const y = toY(s.val);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const xPeak = left + (peakNm - wlMin) / (wlMax - wlMin) * w;
+      if (state.showPeak) {
+        ctx.strokeStyle = '#22c55e';
+        ctx.beginPath(); ctx.moveTo(xPeak, top); ctx.lineTo(xPeak, top + h); ctx.stroke();
+        ctx.fillStyle = '#22c55e';
+        ctx.fillText(`λmax ${peakNm.toFixed(0)} nm`, xPeak - 30, top + h + 14);
+      }
+
+      if (state.showLegend) {
+        const grad = ctx.createLinearGradient(left, 0, left + w, 0);
+        grad.addColorStop(0, '#6b4eff');
+        grad.addColorStop(0.2, '#4fa3ff');
+        grad.addColorStop(0.4, '#52f5ff');
+        grad.addColorStop(0.55, '#7dff7a');
+        grad.addColorStop(0.7, '#ffd166');
+        grad.addColorStop(0.85, '#ff9f6b');
+        grad.addColorStop(1, '#ff5f5f');
+        ctx.fillStyle = grad;
+        ctx.fillRect(left, top + h + 24, w, 8);
+        ctx.strokeStyle = 'rgba(148,163,184,0.5)';
+        ctx.strokeRect(left, top + h + 24, w, 8);
+        ctx.fillStyle = 'rgba(248,250,252,0.75)';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText('400 nm', left, top + h + 40);
+        ctx.fillText('700 nm', left + w - 40, top + h + 40);
+      }
+
+      let visSum = 0;
+      let totalSum = 0;
+      samples.forEach(s => {
+        totalSum += s.val;
+        if (s.nm >= 400 && s.nm <= 700) visSum += s.val;
+      });
+      const visibleFrac = totalSum > 0 ? visSum / totalSum : 0;
+
+      ctx.restore();
+      ctx.fillStyle = 'rgba(248,250,252,0.7)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText(`${wlMin.toFixed(0)}–${wlMax.toFixed(0)} nm`, left + w - 92, top - 6);
+      return { peakNm, power: sigma * Math.pow(state.T, 4), visibleFrac };
+    }
+
+    function draw() {
+      drawBackground();
+      const cx = 220;
+      const cy = 200;
+      if (state.showEmitter) drawEmitter(cx, cy);
+      return drawSpectrum();
+    }
+
+    function updateReadout(info) {
+      const lambdaMax = b / state.T;
+      const peakNm = lambdaMax * 1e9;
+      const power = info.power;
+      const visibleFrac = info.visibleFrac;
+      const color = temperatureColor(state.T);
+      const rgbMatch = color.match(/rgb\\((\\d+),(\\d+),(\\d+)\\)/);
+      const rgbNice = rgbMatch ? `rgb(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]})` : color;
+      const hex = rgbMatch
+        ? `#${Number(rgbMatch[1]).toString(16).padStart(2,'0')}${Number(rgbMatch[2]).toString(16).padStart(2,'0')}${Number(rgbMatch[3]).toString(16).padStart(2,'0')}`
+        : '';
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Temperature</span><span class="data-value blue">${state.T.toFixed(0)} K</span></div>
+          <div class="data-card"><span class="data-label">λmax</span><span class="data-value green">${peakNm.toFixed(0)} nm</span></div>
+          <div class="data-card"><span class="data-label">Radiant Power</span><span class="data-value orange">${power.toExponential(2)} W/m²</span></div>
+          <div class="data-card"><span class="data-label">Visible Fraction</span><span class="data-value blue">${(visibleFrac * 100).toFixed(1)}%</span></div>
+          <div class="data-card peak-color"><span class="data-label">Peak Color</span><span class="data-value"><span class="color-chip" style="background:${color}"></span>${hex || rgbNice}</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      if (state.running) {
+        state.t += 0.04 * state.speed;
+      }
+      const info = draw();
+      updateReadout(info);
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('temp').addEventListener('input', e => {
+      state.T = parseFloat(e.target.value);
+      document.getElementById('tempVal').textContent = `${state.T.toFixed(0)} K`;
+    });
+
+    document.getElementById('showSpectrum').addEventListener('change', e => state.showSpectrum = e.target.checked);
+    document.getElementById('showVisible').addEventListener('change', e => state.showVisible = e.target.checked);
+    document.getElementById('showPeak').addEventListener('change', e => state.showPeak = e.target.checked);
+    document.getElementById('animateGlow').addEventListener('change', e => state.animateGlow = e.target.checked);
+    document.getElementById('showLegend').addEventListener('change', e => state.showLegend = e.target.checked);
+    document.getElementById('useLog').addEventListener('change', e => state.useLog = e.target.checked);
+    document.getElementById('showEmitter').addEventListener('change', e => state.showEmitter = e.target.checked);
+
+    document.getElementById('speed').addEventListener('input', e => {
+      state.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    document.getElementById('playPause').addEventListener('click', e => {
+      state.running = !state.running;
+      e.target.textContent = state.running ? 'Pause' : 'Play';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.T = 5800;
+      state.speed = 1;
+      state.running = true;
+      state.showSpectrum = true;
+      state.showVisible = true;
+      state.showPeak = true;
+      state.animateGlow = true;
+      state.showLegend = true;
+      state.useLog = false;
+      state.showEmitter = true;
+      document.getElementById('temp').value = 5800;
+      document.getElementById('tempVal').textContent = '5800 K';
+      document.getElementById('speed').value = 1;
+      document.getElementById('speedVal').textContent = '1.00x';
+      document.getElementById('showSpectrum').checked = true;
+      document.getElementById('showVisible').checked = true;
+      document.getElementById('showPeak').checked = true;
+      document.getElementById('animateGlow').checked = true;
+      document.getElementById('showLegend').checked = true;
+      document.getElementById('useLog').checked = false;
+      document.getElementById('showEmitter').checked = true;
+      document.getElementById('playPause').textContent = 'Pause';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    document.querySelectorAll('.btn[data-temp]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.T = parseFloat(btn.dataset.temp);
+        document.getElementById('temp').value = state.T;
+        document.getElementById('tempVal').textContent = `${state.T.toFixed(0)} K`;
+      });
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    tick();
+  </script>
+</body>
+</html>

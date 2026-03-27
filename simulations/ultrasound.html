@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ultrasound Simulation</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #6bff6b;
+      --red: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .status { font-weight: 700; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Ultrasound</h1>
+        <p>Resolution, penetration, and pulse-echo imaging</p>
+      </div>
+      <div class="pill">λ = c / f · B-mode · Beam Focus</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Probe & Tissue View</h2>
+        <canvas id="beamCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">B-Mode Image</h2>
+            <canvas id="bmodeCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Echo Trace</h2>
+            <canvas id="traceCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Frequency (MHz)</label>
+            <input type="range" id="freq" min="1" max="20" step="0.5" value="5" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">5 MHz</span></div>
+          </div>
+          <div class="control">
+            <label>Imaging Depth (cm)</label>
+            <input type="range" id="depth" min="2" max="30" step="1" value="10" />
+            <div class="row"><span class="muted">Depth</span><span class="value" id="depthValue">10 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Focus Depth (cm)</label>
+            <input type="range" id="focus" min="1" max="25" step="1" value="5" />
+            <div class="row"><span class="muted">Focus</span><span class="value" id="focusValue">5 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Probe Type</label>
+            <select id="probe">
+              <option value="linear" selected>Linear</option>
+              <option value="convex">Convex</option>
+              <option value="phased">Phased array</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Show Tissue Layers</label>
+            <div class="toggle">
+              <input type="checkbox" id="layers" checked />
+              <span>Skin · Fat · Muscle · Bone</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Beam</label>
+            <div class="toggle">
+              <input type="checkbox" id="beam" checked />
+              <span>Beam pattern overlay</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Fire Pulse</label>
+            <button id="pulse">Fire</button>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Physics</div>
+            <div class="row"><span>Wavelength</span><span class="value" id="lambdaValue">0.31 mm</span></div>
+            <div class="row"><span>Near field</span><span class="value" id="nearValue">4.1 cm</span></div>
+            <div class="row"><span>Attenuation</span><span class="value" id="attValue">2.5 dB</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Trade-Offs</div>
+            <div class="row"><span>Resolution</span><span class="value" id="resValue">High</span></div>
+            <div class="row"><span>Penetration</span><span class="value" id="penValue">Medium</span></div>
+            <div class="row"><span>Safety</span><span class="value status" id="safeValue">OK</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Higher frequency improves resolution but increases attenuation. Click “Fire” to send a pulse and see echoes.</div>
+  </div>
+
+  <script>
+    const state = {
+      frequency: 5,
+      depthCm: 10,
+      focusCm: 5,
+      probe: 'linear',
+      showLayers: true,
+      showBeam: true,
+      time: 0,
+      pulse: false
+    };
+
+    const dom = {
+      freq: document.getElementById('freq'),
+      depth: document.getElementById('depth'),
+      focus: document.getElementById('focus'),
+      probe: document.getElementById('probe'),
+      layers: document.getElementById('layers'),
+      beam: document.getElementById('beam'),
+      pulse: document.getElementById('pulse'),
+      freqValue: document.getElementById('freqValue'),
+      depthValue: document.getElementById('depthValue'),
+      focusValue: document.getElementById('focusValue'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      nearValue: document.getElementById('nearValue'),
+      attValue: document.getElementById('attValue'),
+      resValue: document.getElementById('resValue'),
+      penValue: document.getElementById('penValue'),
+      safeValue: document.getElementById('safeValue')
+    };
+
+    const beamCanvas = document.getElementById('beamCanvas');
+    const beamCtx = beamCanvas.getContext('2d');
+    const bmodeCanvas = document.getElementById('bmodeCanvas');
+    const bmodeCtx = bmodeCanvas.getContext('2d');
+    const traceCanvas = document.getElementById('traceCanvas');
+    const traceCtx = traceCanvas.getContext('2d');
+
+    const C_SOFT = 1540; // m/s
+
+    const tissueLayers = [
+      { name: 'Skin', depth: 0.5, color: '#263347', impedance: 1.6 },
+      { name: 'Fat', depth: 2.0, color: '#1b2738', impedance: 1.4 },
+      { name: 'Muscle', depth: 6.0, color: '#222f42', impedance: 1.7 },
+      { name: 'Bone', depth: 9.0, color: '#2b394f', impedance: 7.8 }
+    ];
+
+    function calcWavelength() {
+      const fHz = state.frequency * 1e6;
+      return (C_SOFT / fHz) * 1000; // mm
+    }
+
+    function calcNearField() {
+      const aperture = state.probe === 'phased' ? 8 : state.probe === 'convex' ? 18 : 12; // mm
+      const fHz = state.frequency * 1e6;
+      return (Math.pow(aperture / 1000, 2) * fHz) / (4 * C_SOFT) * 100; // cm
+    }
+
+    function calcAttenuation() {
+      const alpha = 0.6; // dB/cm/MHz
+      return alpha * state.depthCm * state.frequency;
+    }
+
+    function updateReadouts() {
+      dom.freqValue.textContent = `${state.frequency.toFixed(1)} MHz`;
+      dom.depthValue.textContent = `${state.depthCm} cm`;
+      dom.focusValue.textContent = `${state.focusCm} cm`;
+      dom.lambdaValue.textContent = `${calcWavelength().toFixed(2)} mm`;
+      dom.nearValue.textContent = `${calcNearField().toFixed(1)} cm`;
+      dom.attValue.textContent = `${calcAttenuation().toFixed(1)} dB`;
+
+      const resolution = state.frequency >= 10 ? 'High' : state.frequency >= 4 ? 'Medium' : 'Low';
+      const penetration = state.frequency <= 3 ? 'High' : state.frequency <= 8 ? 'Medium' : 'Low';
+      dom.resValue.textContent = resolution;
+      dom.penValue.textContent = penetration;
+      dom.safeValue.textContent = state.frequency > 15 ? 'Caution' : 'OK';
+      dom.safeValue.style.color = state.frequency > 15 ? 'var(--red)' : 'var(--green)';
+    }
+
+    function drawBeam() {
+      const w = beamCanvas.width;
+      const h = beamCanvas.height;
+      beamCtx.clearRect(0, 0, w, h);
+      beamCtx.fillStyle = '#0b1420';
+      beamCtx.fillRect(0, 0, w, h);
+
+      const depthPx = (state.depthCm / 30) * h;
+      const focusPx = (state.focusCm / 30) * h;
+      const probeX = w * 0.15;
+
+      if (state.showLayers) {
+        let currentY = 0;
+        for (const layer of tissueLayers) {
+          const layerHeight = (layer.depth / state.depthCm) * depthPx;
+          beamCtx.fillStyle = layer.color;
+          beamCtx.fillRect(0, currentY, w, layerHeight);
+          beamCtx.fillStyle = '#8aa0b8';
+          beamCtx.fillText(layer.name, 10, currentY + 14);
+          currentY += layerHeight;
+          if (currentY >= depthPx) break;
+        }
+      }
+
+      beamCtx.fillStyle = '#121b28';
+      beamCtx.fillRect(probeX - 18, 10, 36, 22);
+      beamCtx.strokeStyle = '#6ad7ff';
+      beamCtx.strokeRect(probeX - 18, 10, 36, 22);
+
+      if (state.showBeam) {
+        beamCtx.save();
+        beamCtx.globalAlpha = 0.6;
+        beamCtx.fillStyle = '#6ad7ff';
+        beamCtx.beginPath();
+        if (state.probe === 'phased') {
+          beamCtx.moveTo(probeX, 30);
+          beamCtx.lineTo(probeX - 35, focusPx);
+          beamCtx.lineTo(probeX + 35, focusPx);
+        } else if (state.probe === 'convex') {
+          beamCtx.moveTo(probeX - 40, 30);
+          beamCtx.lineTo(probeX - 70, focusPx);
+          beamCtx.lineTo(probeX + 70, focusPx);
+          beamCtx.lineTo(probeX + 40, 30);
+        } else {
+          beamCtx.moveTo(probeX - 30, 30);
+          beamCtx.lineTo(probeX - 50, focusPx);
+          beamCtx.lineTo(probeX + 50, focusPx);
+          beamCtx.lineTo(probeX + 30, 30);
+        }
+        beamCtx.closePath();
+        beamCtx.fill();
+        beamCtx.restore();
+      }
+
+      beamCtx.strokeStyle = '#f6c76b';
+      beamCtx.setLineDash([6, 6]);
+      beamCtx.beginPath();
+      beamCtx.moveTo(probeX - 70, focusPx);
+      beamCtx.lineTo(probeX + 70, focusPx);
+      beamCtx.stroke();
+      beamCtx.setLineDash([]);
+
+      if (state.pulse) {
+        const pulseY = (state.time % 1) * depthPx;
+        beamCtx.strokeStyle = '#f6c76b';
+        beamCtx.globalAlpha = 0.8;
+        beamCtx.beginPath();
+        beamCtx.arc(probeX, pulseY + 30, 30 + pulseY * 0.35, Math.PI * 1.1, Math.PI * 1.9);
+        beamCtx.stroke();
+        beamCtx.globalAlpha = 1;
+      }
+    }
+
+    function drawTrace() {
+      const w = traceCanvas.width;
+      const h = traceCanvas.height;
+      traceCtx.clearRect(0, 0, w, h);
+      traceCtx.fillStyle = '#0b1420';
+      traceCtx.fillRect(0, 0, w, h);
+
+      traceCtx.strokeStyle = '#1c2c43';
+      for (let y = 0; y <= h; y += 30) {
+        traceCtx.beginPath();
+        traceCtx.moveTo(0, y);
+        traceCtx.lineTo(w, y);
+        traceCtx.stroke();
+      }
+
+      const depthPx = (state.depthCm / 30) * h;
+      let currentDepth = 0;
+      traceCtx.strokeStyle = '#f6c76b';
+      traceCtx.beginPath();
+      traceCtx.moveTo(10, h - 10);
+      for (const layer of tissueLayers) {
+        currentDepth += layer.depth;
+        const y = (currentDepth / state.depthCm) * depthPx;
+        traceCtx.lineTo(20 + layer.impedance * 12, y);
+        traceCtx.lineTo(10, y);
+      }
+      traceCtx.stroke();
+    }
+
+    function drawBMode() {
+      const w = bmodeCanvas.width;
+      const h = bmodeCanvas.height;
+      bmodeCtx.clearRect(0, 0, w, h);
+      bmodeCtx.fillStyle = '#0b1420';
+      bmodeCtx.fillRect(0, 0, w, h);
+
+      const depthPx = (state.depthCm / 30) * h;
+      const cols = 60;
+      for (let x = 0; x < cols; x++) {
+        let currentDepth = 0;
+        for (const layer of tissueLayers) {
+          currentDepth += layer.depth;
+          const y = (currentDepth / state.depthCm) * depthPx;
+          const intensity = Math.min(1, layer.impedance / 8);
+          const shade = Math.floor(40 + intensity * 200);
+          bmodeCtx.fillStyle = `rgb(${shade},${shade},${shade})`;
+          bmodeCtx.fillRect(x * (w / cols), y, w / cols, 2 + intensity * 3);
+        }
+      }
+
+      if (state.pulse) {
+        bmodeCtx.fillStyle = 'rgba(106, 215, 255, 0.12)';
+        bmodeCtx.fillRect(0, 0, w, depthPx);
+      }
+    }
+
+    function render() {
+      drawBeam();
+      drawBMode();
+      drawTrace();
+      updateReadouts();
+    }
+
+    function tick() {
+      if (state.pulse) {
+        state.time += 0.012;
+      }
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.freq.addEventListener('input', () => { state.frequency = Number(dom.freq.value); render(); });
+      dom.depth.addEventListener('input', () => { state.depthCm = Number(dom.depth.value); render(); });
+      dom.focus.addEventListener('input', () => { state.focusCm = Number(dom.focus.value); render(); });
+      dom.probe.addEventListener('change', () => { state.probe = dom.probe.value; render(); });
+      dom.layers.addEventListener('change', () => { state.showLayers = dom.layers.checked; render(); });
+      dom.beam.addEventListener('change', () => { state.showBeam = dom.beam.checked; render(); });
+      dom.pulse.addEventListener('click', () => {
+        state.pulse = true;
+        state.time = 0;
+        setTimeout(() => { state.pulse = false; }, 1200);
+      });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

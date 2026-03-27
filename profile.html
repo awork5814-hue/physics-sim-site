@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Account - Physics Experiments Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.min.css">
+  <link rel="icon" href="logo.png" type="image/png">
+  <style>
+    .profile-page { max-width: 900px; margin: 0 auto; padding: 40px 20px 60px; }
+    
+    .profile-hero {
+      text-align: center;
+      padding: 48px 32px;
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.08), rgba(106, 215, 255, 0.02));
+      border: 1px solid rgba(106, 215, 255, 0.15);
+      border-radius: 28px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(106, 215, 255, 0.06) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.1); opacity: 1; }
+    }
+    .avatar-container {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .avatar-large {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #9b59b6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 40px;
+      font-weight: 600;
+      color: #0a0a0f;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 8px 32px rgba(106, 215, 255, 0.3);
+    }
+    .avatar-badge {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: linear-gradient(135deg, #ffd700, #ff8c00);
+      color: #0a0a0f;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+      display: none;
+    }
+    .avatar-badge.visible { display: block; }
+    .avatar-upload-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #4fc3f7);
+      border: 3px solid var(--bg-1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 2;
+    }
+    .avatar-upload-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(106, 215, 255, 0.4);
+    }
+    .avatar-upload-btn svg { width: 16px; height: 16px; color: #0a0a0f; }
+    .avatar-remove-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 68, 68, 0.9);
+      border: 2px solid var(--bg-1);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      z-index: 2;
+    }
+    .avatar-remove-btn.visible { display: flex; }
+    .avatar-remove-btn:hover { transform: scale(1.1); background: #ff6464; }
+    .avatar-remove-btn svg { width: 14px; height: 14px; color: white; }
+    .avatar-large { display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .avatar-large img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .avatar-img { display: none; }
+    .avatar-img.visible { display: block; }
+    #avatarInitial { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 600; color: #0a0a0f; }
+    .avatar-loading {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 3;
+    }
+    .avatar-loading.visible { display: flex; }
+    .avatar-loading .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    #avatarInput { display: none; }
+    .profile-hero h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .profile-hero .subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      position: relative;
+      z-index: 1;
+    }
+    .verified-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(68, 255, 100, 0.12);
+      border: 1px solid rgba(68, 255, 100, 0.25);
+      color: #44ff64;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 12px;
+    }
+    
+    .verification-banner {
+      background: linear-gradient(135deg, rgba(255, 170, 0, 0.12), rgba(255, 170, 0, 0.05));
+      border: 1px solid rgba(255, 170, 0, 0.25);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: none;
+      align-items: center;
+      gap: 16px;
+    }
+    .verification-banner.visible { display: flex; }
+    .verification-banner svg { color: #ffaa00; flex-shrink: 0; }
+    .verification-banner .content { flex: 1; }
+    .verification-banner h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .verification-banner p { font-size: 13px; color: var(--muted); margin: 0; }
+    
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    @media (max-width: 700px) {
+      .section-grid { grid-template-columns: 1fr; }
+    }
+    
+    .profile-section {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      position: relative;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .profile-section:hover {
+      border-color: rgba(106, 215, 255, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+    .profile-section h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+    .profile-section h2 svg { color: var(--accent); }
+    
+    .profile-form { display: flex; flex-direction: column; gap: 18px; }
+    .profile-field { display: flex; flex-direction: column; gap: 8px; }
+    .profile-field label { 
+      font-size: 12px; 
+      font-weight: 600; 
+      color: var(--muted); 
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .profile-field input { 
+      background: var(--bg-1); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 14px 16px; 
+      font-size: 15px; 
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .profile-field input:focus { 
+      outline: none; 
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(106, 215, 255, 0.15);
+    }
+    .profile-field input:disabled { 
+      opacity: 0.5; 
+      cursor: not-allowed;
+      background: rgba(255,255,255,0.03);
+    }
+    
+    .btn {
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary { 
+      background: linear-gradient(135deg, var(--accent), #4fc3f7); 
+      color: #0a0a0f;
+    }
+    .btn-primary:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(106, 215, 255, 0.4);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      transform: none;
+      cursor: not-allowed;
+    }
+    .btn-secondary { 
+      background: rgba(255,255,255,0.08); 
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { 
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .btn-danger { 
+      background: rgba(255, 68, 68, 0.1); 
+      color: #ff6464; 
+      border: 1px solid rgba(255, 68, 68, 0.25);
+    }
+    .btn-danger:hover { 
+      background: rgba(255, 68, 68, 0.2);
+      border-color: rgba(255, 68, 68, 0.4);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--accent);
+      padding: 10px 16px;
+    }
+    .btn-ghost:hover {
+      background: rgba(106, 215, 255, 0.1);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat-card { 
+      background: var(--bg-1); 
+      border-radius: 16px; 
+      padding: 20px 16px; 
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      opacity: 0.5;
+    }
+    .stat-value { 
+      font-family: 'Space Grotesk', sans-serif; 
+      font-size: 32px; 
+      font-weight: 700; 
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label { 
+      font-size: 11px; 
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .full-section { grid-column: 1 / -1; }
+    
+    .danger-zone { 
+      border-color: rgba(255, 68, 68, 0.2);
+      background: linear-gradient(135deg, rgba(255, 68, 68, 0.03), transparent);
+    }
+    .danger-zone:hover {
+      border-color: rgba(255, 68, 68, 0.35);
+    }
+    .danger-zone h2 { color: #ff6464; }
+    .danger-zone h2 svg { color: #ff6464; }
+    .delete-warning { 
+      font-size: 14px; 
+      color: var(--muted); 
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .modal-overlay { 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0,0,0,0.85); 
+      backdrop-filter: blur(8px);
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      z-index: 1000; 
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+    .modal-overlay:not(.hidden) {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal { 
+      background: var(--bg-2); 
+      border: 1px solid var(--border); 
+      border-radius: 24px; 
+      padding: 36px; 
+      max-width: 420px; 
+      width: 100%;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.3s;
+    }
+    .modal-overlay:not(.hidden) .modal {
+      transform: scale(1) translateY(0);
+    }
+    .modal-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255, 68, 68, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .modal-icon svg { color: #ff6464; }
+    .modal h3 { 
+      font-family: 'Space Grotesk', sans-serif; 
+      font-size: 22px; 
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .modal p { 
+      color: var(--muted); 
+      font-size: 14px; 
+      text-align: center;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+    .modal-actions { 
+      display: flex; 
+      gap: 12px;
+    }
+    .modal-actions .btn { flex: 1; }
+    
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 1001;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(120%);
+      transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-success { 
+      background: linear-gradient(135deg, rgba(68, 255, 100, 0.15), rgba(68, 255, 100, 0.08));
+      border: 1px solid rgba(68, 255, 100, 0.3);
+      color: #44ff64;
+    }
+    .toast-error { 
+      background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(255, 68, 68, 0.08));
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      color: #ff6464;
+    }
+    .toast svg { flex-shrink: 0; }
+    
+    .loading-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 500px) {
+      .input-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-content">
+      <a href="index.html" class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="var(--accent)" stroke-width="2"/>
+          <path d="M10 16 L16 10 L22 16 L16 22 Z" fill="var(--accent)"/>
+        </svg>
+        <span>Physics Lab</span>
+      </a>
+      <nav class="main-nav">
+        <a href="index.html">Experiments</a>
+        <a href="questions.html">Questions</a>
+        <a href="pricing.html">Pricing</a>
+      </nav>
+      <div class="auth-dropdown-wrapper">
+        <button class="auth-btn" id="authBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>Sign In</span>
+        </button>
+        <div class="auth-dropdown" id="authDropdown"></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="profile-page">
+    <div class="profile-hero">
+      <div class="avatar-container">
+        <div class="avatar-large" id="avatarLarge"><span id="avatarInitial">?</span><img id="avatarImg" class="avatar-img" alt="Profile avatar"></div>
+        <span class="avatar-badge" id="avatarBadge">PRO</span>
+        <button class="avatar-upload-btn" id="avatarUploadBtn" title="Change photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </button>
+        <button class="avatar-remove-btn" id="avatarRemoveBtn" title="Remove photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <div class="avatar-loading" id="avatarLoading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+      <h1 id="heroName">Loading...</h1>
+      <p class="subtitle" id="heroEmail">Loading...</p>
+      <div class="verified-badge" id="verifiedBadge" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Email Verified
+      </div>
+    </div>
+    <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp">
+
+    <div class="verification-banner" id="verificationBanner">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div class="content">
+        <h3>Verify Your Email</h3>
+        <p>Please verify your email to unlock all features and secure your account.</p>
+      </div>
+      <button class="btn btn-ghost" id="resendVerifyBtn">Send Verification</button>
+    </div>
+
+    <div class="section-grid">
+      <div class="profile-section">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Profile Information
+        </h2>
+        <form class="profile-form" id="profileForm">
+          <div class="profile-field">
+            <label for="profileName">Display Name</label>
+            <input type="text" id="profileName" placeholder="Enter your name" />
+          </div>
+          <div class="profile-field">
+            <label for="profileEmail">Email Address</label>
+            <input type="email" id="profileEmail" placeholder="your@email.com" />
+          </div>
+          <div class="profile-field">
+            <label for="profilePlan">Subscription</label>
+            <input type="text" id="profilePlan" disabled />
+          </div>
+          <button type="submit" class="btn btn-primary" id="saveProfileBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
+            Save Changes
+          </button>
+        </form>
+      </div>
+
+      <div class="profile-section">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Change Password
+        </h2>
+        <form class="profile-form" id="passwordForm">
+          <div class="input-row">
+            <div class="profile-field">
+              <label for="currentPassword">Current Password</label>
+              <input type="password" id="currentPassword" placeholder="Enter current password" />
+            </div>
+            <div class="profile-field">
+              <label for="newPassword">New Password</label>
+              <input type="password" id="newPassword" placeholder="Enter new password" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-secondary" id="changePasswordBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Update Password
+          </button>
+        </form>
+      </div>
+
+      <div class="profile-section full-section">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20V10"/>
+            <path d="M18 20V4"/>
+            <path d="M6 20v-4"/>
+          </svg>
+          Your Progress
+        </h2>
+        <div class="stats-grid" id="profileStats">
+          <div class="stat-card">
+            <div class="stat-value" id="statQuestions">0</div>
+            <div class="stat-label">Questions</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statStreak">0</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statBadges">0</div>
+            <div class="stat-label">Badges</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statFavorites">0</div>
+            <div class="stat-label">Favorites</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-section danger-zone full-section">
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          Danger Zone
+        </h2>
+        <p class="delete-warning">Once you delete your account, there is no going back. All your data, progress, achievements, and subscription will be permanently removed.</p>
+        <button class="btn btn-danger" id="deleteAccountBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          </svg>
+          Delete My Account
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal-overlay hidden" id="deleteModal">
+    <div class="modal">
+      <div class="modal-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+          <line x1="10" y1="11" x2="10" y2="17"/>
+          <line x1="14" y1="11" x2="14" y2="17"/>
+        </svg>
+      </div>
+      <h3>Delete Account?</h3>
+      <p>This action cannot be undone. All your data will be permanently deleted from our servers.</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (typeof Auth === 'undefined') {
+        showToast('Error: Authentication system not loaded', 'error');
+        return;
+      }
+      
+      if (!Auth.isLoggedIn()) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      await loadProfile();
+      setupEventListeners();
+
+      async function loadProfile() {
+        const result = await Auth.getProfile();
+        if (!result.success) {
+          showToast(result.error || 'Failed to load profile', 'error');
+          return;
+        }
+
+        const { profile, userData } = result;
+        const name = profile.name || profile.email.split('@')[0];
+        const initial = name[0].toUpperCase();
+        const avatarImg = document.getElementById('avatarImg');
+        const avatarInitial = document.getElementById('avatarInitial');
+        const currentUser = Auth.getUser && Auth.getUser();
+        if (currentUser) {
+          currentUser.avatar = profile.avatar || null;
+          localStorage.setItem(Auth.USER_KEY, JSON.stringify(currentUser));
+          Auth.updateUI();
+        }
+        
+        if (profile.avatar) {
+          const avatarUrl = Auth.getAvatarUrl(profile.avatar) + '?t=' + Date.now();
+          avatarImg.onload = () => {
+            avatarImg.classList.add('visible');
+            avatarInitial.style.display = 'none';
+          };
+          avatarImg.onerror = () => {
+            avatarImg.classList.remove('visible');
+            avatarImg.src = '';
+            avatarInitial.style.display = 'block';
+            avatarInitial.textContent = initial;
+          };
+          avatarImg.src = avatarUrl;
+          document.getElementById('avatarRemoveBtn').classList.add('visible');
+        } else {
+          avatarImg.classList.remove('visible');
+          avatarImg.src = '';
+          avatarInitial.style.display = 'block';
+          avatarInitial.textContent = initial;
+          document.getElementById('avatarRemoveBtn').classList.remove('visible');
+        }
+        
+        document.getElementById('heroName').textContent = name;
+        document.getElementById('heroEmail').textContent = profile.email;
+        document.getElementById('profileName').value = profile.name || '';
+        document.getElementById('profileEmail').value = profile.email || '';
+        
+        const isPro = profile.plan && profile.plan !== 'free';
+        document.getElementById('profilePlan').value = isPro ? `Pro (${profile.plan})` : 'Free Plan';
+        document.getElementById('avatarBadge').classList.toggle('visible', isPro);
+
+        if (profile.emailVerified) {
+          document.getElementById('verifiedBadge').style.display = 'inline-flex';
+          document.getElementById('verificationBanner').classList.remove('visible');
+        } else {
+          document.getElementById('verificationBanner').classList.add('visible');
+        }
+
+        if (userData) {
+          animateNumber('statQuestions', userData.quizProgress?.questionsAnswered || 0);
+          animateNumber('statStreak', userData.streakCount || 0);
+          animateNumber('statBadges', (userData.achievements || []).length);
+          animateNumber('statFavorites', (userData.favorites || []).length);
+        }
+      }
+
+      function animateNumber(elementId, target) {
+        const element = document.getElementById(elementId);
+        const duration = 800;
+        const start = 0;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = Math.floor(start + (target - start) * eased);
+          element.textContent = current;
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      }
+
+      function setupEventListeners() {
+        document.getElementById('avatarUploadBtn').addEventListener('click', () => {
+          document.getElementById('avatarInput').click();
+        });
+
+        document.getElementById('avatarInput').addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          const loadingEl = document.getElementById('avatarLoading');
+          const uploadBtn = document.getElementById('avatarUploadBtn');
+          loadingEl.classList.add('visible');
+          uploadBtn.style.pointerEvents = 'none';
+          
+          const result = await Auth.uploadAvatar(file);
+          
+          loadingEl.classList.remove('visible');
+          uploadBtn.style.pointerEvents = '';
+          e.target.value = '';
+          
+          if (result.success) {
+            const avatarUrl = Auth.getAvatarUrl(result.avatar) + '?t=' + Date.now();
+            const avatarImg = document.getElementById('avatarImg');
+            const avatarInitial = document.getElementById('avatarInitial');
+            avatarImg.onload = () => {
+              avatarImg.classList.add('visible');
+              avatarInitial.style.display = 'none';
+            };
+            avatarImg.onerror = () => {
+              avatarImg.classList.remove('visible');
+              avatarImg.src = '';
+              avatarInitial.style.display = 'block';
+            };
+            avatarImg.src = avatarUrl;
+            document.getElementById('avatarRemoveBtn').classList.add('visible');
+            const user = Auth.getUser && Auth.getUser();
+            if (user) {
+              user.avatar = result.avatar;
+              localStorage.setItem(Auth.USER_KEY, JSON.stringify(user));
+              Auth.updateUI();
+            }
+            showToast('Photo updated!', 'success');
+          } else {
+            showToast(result.error || 'Failed to upload photo', 'error');
+          }
+        });
+
+        document.getElementById('avatarRemoveBtn').addEventListener('click', async () => {
+          if (!confirm('Remove your profile photo?')) return;
+          
+          const result = await Auth.deleteAvatar();
+          
+          if (result.success) {
+            const name = document.getElementById('heroName').textContent;
+            const avatarImg = document.getElementById('avatarImg');
+            const avatarInitial = document.getElementById('avatarInitial');
+            avatarImg.classList.remove('visible');
+            avatarImg.src = '';
+            avatarInitial.style.display = 'block';
+            avatarInitial.textContent = name[0].toUpperCase();
+            document.getElementById('avatarRemoveBtn').classList.remove('visible');
+            const user = Auth.getUser && Auth.getUser();
+            if (user) {
+              user.avatar = null;
+              localStorage.setItem(Auth.USER_KEY, JSON.stringify(user));
+              Auth.updateUI();
+            }
+            showToast('Photo removed', 'success');
+          } else {
+            showToast(result.error || 'Failed to remove photo', 'error');
+          }
+        });
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById('saveProfileBtn');
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+          btn.disabled = true;
+
+          const name = document.getElementById('profileName').value;
+          const email = document.getElementById('profileEmail').value;
+
+          const result = await Auth.updateProfile({ name, email });
+
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+
+          if (result.success) {
+            document.getElementById('heroName').textContent = name || email.split('@')[0];
+            showToast('Profile updated successfully!', 'success');
+          } else {
+            showToast(result.error || 'Failed to update profile', 'error');
+          }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = document.getElementById('changePasswordBtn');
+          const current = document.getElementById('currentPassword').value;
+          const newPass = document.getElementById('newPassword').value;
+
+          if (newPass.length < 6) {
+            showToast('Password must be at least 6 characters', 'error');
+            return;
+          }
+
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="loading-spinner"></span> Updating...';
+          btn.disabled = true;
+
+          const result = await Auth.changePassword(current, newPass);
+
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+
+          if (result.success) {
+            showToast('Password changed successfully!', 'success');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+          } else {
+            showToast(result.error || 'Failed to change password', 'error');
+          }
+        });
+
+        document.getElementById('resendVerifyBtn').addEventListener('click', async () => {
+          const btn = document.getElementById('resendVerifyBtn');
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="loading-spinner"></span>';
+          btn.disabled = true;
+
+          const result = await Auth.sendVerificationEmail();
+
+          btn.innerHTML = originalHTML;
+          btn.disabled = false;
+
+          if (result.success) {
+            showToast('Verification email sent! Check your inbox.', 'success');
+          } else {
+            showToast(result.error || 'Failed to send email', 'error');
+          }
+        });
+
+        document.getElementById('deleteAccountBtn').addEventListener('click', () => {
+          document.getElementById('deleteModal').classList.remove('hidden');
+          document.getElementById('deleteModal').style.opacity = '1';
+          document.getElementById('deleteModal').style.visibility = 'visible';
+        });
+
+        document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteModal);
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+          const btn = document.getElementById('confirmDeleteBtn');
+          const originalHTML = btn.innerHTML;
+          btn.innerHTML = '<span class="loading-spinner"></span>';
+          btn.disabled = true;
+
+          const result = await Auth.deleteAccount();
+
+          if (result.success) {
+            showToast('Account deleted', 'success');
+            setTimeout(() => window.location.href = 'index.html', 1500);
+          } else {
+            showToast(result.error || 'Failed to delete account', 'error');
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
+            closeDeleteModal();
+          }
+        });
+
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+          if (e.target.classList.contains('modal-overlay')) closeDeleteModal();
+        });
+      }
+
+      function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        modal.style.opacity = '0';
+        modal.style.visibility = 'hidden';
+        setTimeout(() => modal.classList.add('hidden'), 300);
+      }
+
+      function showToast(message, type) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            ${type === 'success' 
+              ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'
+              : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+          </svg>
+          ${message}
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doppler Effect</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Waves</span></div>
+    <header class="hero"><h1>Doppler Effect</h1><p>f' = f(v ± vo)/(v ∓ vs) — Frequency shift with motion</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">f' = f × (v ± vo)/v</div>
+        <div class="control-group">
+          <label>Source Frequency (Hz)</label>
+          <input type="range" id="freqSlider" min="100" max="2000" value="440">
+        </div>
+        <div class="control-group">
+          <label>Source Velocity (m/s)</label>
+          <input type="range" id="velSlider" min="-50" max="50" value="20">
+        </div>
+        <div class="control-group">
+          <label>Observer Velocity (m/s)</label>
+          <input type="range" id="obsSlider" min="-30" max="30" value="0">
+        </div>
+        <div class="data-panel">
+          <div>Observed Frequency: <strong id="fObsVal">440 Hz</strong></div>
+          <div>Wave Speed: <strong id="waveSpeed">340 m/s</strong></div>
+          <div>Wavelength Shift: <strong id="waveShift">0%</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const freqSlider = document.getElementById('freqSlider');
+    const velSlider = document.getElementById('velSlider');
+    const obsSlider = document.getElementById('obsSlider');
+    let time = 0;
+    const v = 340;
+    function update() {
+      const f = parseFloat(freqSlider.value);
+      const vs = parseFloat(velSlider.value);
+      const vo = parseFloat(obsSlider.value);
+      const fObs = f * (v + vo) / (v - vs);
+      const shift = ((fObs - f) / f * 100);
+      document.getElementById('fObsVal').textContent = fObs.toFixed(0) + ' Hz';
+      document.getElementById('waveSpeed').textContent = v + ' m/s';
+      document.getElementById('waveShift').textContent = (shift > 0 ? '+' : '') + shift.toFixed(1) + '%';
+      document.getElementById('fObsVal').style.color = shift > 0 ? '#ff6b6b' : shift < 0 ? '#6ad7ff' : '#fff';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const f = parseFloat(freqSlider.value);
+      const vs = parseFloat(velSlider.value);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const sourceX = 100;
+      const sourceY = cy;
+      const sourceGrad = ctx.createRadialGradient(sourceX, sourceY, 0, sourceX, sourceY, 25);
+      sourceGrad.addColorStop(0, '#f6c76b');
+      sourceGrad.addColorStop(1, '#c9a030');
+      ctx.fillStyle = sourceGrad;
+      ctx.beginPath(); ctx.arc(sourceX, sourceY, 20, 0, Math.PI * 2); ctx.fill();
+      const wavelength = (v - vs) / f * 50;
+      const wavelengthObs = (v - vs) / ((f * (v + 0) / (v - vs))) * 50;
+      const waveColor = wavelengthObs < wavelength ? '#ff6b6b' : '#6ad7ff';
+      for (let i = 0; i < 8; i++) {
+        const offset = (time * 2 + i * wavelengthObs) % (w - 150);
+        const x = sourceX + offset;
+        const alpha = 1 - offset / (w - 150);
+        ctx.strokeStyle = `rgba(106, 215, 255, ${alpha * 0.5})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(sourceX, sourceY, offset, -Math.PI/3, Math.PI/3); ctx.stroke();
+      }
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.fillText('Source', sourceX - 20, sourceY + 35);
+      ctx.fillText('v_s = ' + vs + ' m/s', sourceX - 30, sourceY - 30);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillText('λ observed: ' + wavelengthObs.toFixed(1) + ' (blue-shifted →)', 20, 30);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('λ original: ' + wavelength.toFixed(1), 20, h - 20);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    freqSlider.addEventListener('input', update);
+    velSlider.addEventListener('input', update);
+    obsSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

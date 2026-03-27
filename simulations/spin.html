@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Electron Spin</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Physics</span></div>
+    <header class="hero"><h1>Electron Spin</h1><p>Intrinsic angular momentum — s = ±½ℏ</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">m<sub>s</sub> = ±½</div>
+        <div class="control-group">
+          <label>Spin State</label>
+          <select id="spinState" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="up">Spin Up (↑)</option>
+            <option value="down">Spin Down (↓)</option>
+          </select>
+        </div>
+        <button id="flipBtn">Flip Spin</button>
+        <div class="data-panel">
+          <div>Spin: <strong id="spinVal">+½</strong> ℏ</div>
+          <div>m<sub>s</sub>: <strong id="msVal">+½</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const spinState = document.getElementById('spinState');
+    const flipBtn = document.getElementById('flipBtn');
+    let angle = 0;
+    function update() {
+      const s = spinState.value;
+      document.getElementById('spinVal').textContent = s === 'up' ? '+½' : '-½';
+      document.getElementById('msVal').textContent = s === 'up' ? '+½' : '-½';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const s = spinState.value;
+      const dir = s === 'up' ? -1 : 1;
+      angle += dir * 0.1;
+      ctx.fillStyle = '#666';
+      ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, 50, 0, Math.PI * 2); ctx.stroke();
+      const arrowLen = 35;
+      const ax = cx + Math.sin(angle) * arrowLen;
+      const ay = cy - Math.cos(angle) * arrowLen;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ax, ay); ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - 8, ay - 5 * dir); ctx.lineTo(ax - 8, ay + 5 * dir); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.fillText(s === 'up' ? '↑' : '↓', cx - 5, cy + 5);
+      ctx.fillText('Electron spin', cx - 50, cy + 70);
+      requestAnimationFrame(draw);
+    }
+    spinState.addEventListener('change', update);
+    flipBtn.addEventListener('click', () => { spinState.value = spinState.value === 'up' ? 'down' : 'up'; update(); });
+    update(); draw();
+  </script>
+</body>
+</html>

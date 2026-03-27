@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Franck-Hertz Experiment</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Physics</span></div>
+    <header class="hero"><h1>Franck-Hertz Experiment</h1><p>Discrete energy levels in atoms</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">eV₁ = 4.9 eV (Hg)</div>
+        <div class="control-group">
+          <label>Accelerating Voltage (V)</label>
+          <input type="range" id="voltSlider" min="0" max="100" value="30">
+        </div>
+        <div class="data-panel">
+          <div>Current: <strong id="currentVal">0</strong> μA</div>
+          <div>Excitation: <strong id="excVal">None</strong></div>
+          <div>Peak spacing: <strong>~4.9 V</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const voltSlider = document.getElementById('voltSlider');
+    let electrons = [];
+    let photons = [];
+    function update() {
+      const V = parseFloat(voltSlider.value);
+      let current = V * 0.5;
+      if (V > 4.9) {
+        const peaks = Math.floor(V / 4.9);
+        current = V * 0.5 + peaks * 20 * Math.sin(V / 4.9 * Math.PI);
+      }
+      document.getElementById('currentVal').textContent = current.toFixed(1);
+      document.getElementById('excVal').textContent = V > 4.9 ? 'n=2 excited' : 'Ground state';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      const V = parseFloat(voltSlider.value);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.fillStyle = '#666';
+      ctx.fillRect(40, cy - 40, 15, 80);
+      ctx.fillRect(w - 55, cy - 30, 15, 60);
+      ctx.fillStyle = '#aaa';
+      ctx.fillRect(w/2 - 30, 50, 60, h - 100);
+      ctx.fillStyle = '#f6c76b';
+      if (Math.random() < V / 50) {
+        electrons.push({ x: 55, y: cy + (Math.random() - 0.5) * 60, vx: V / 10 });
+      }
+      electrons.forEach((e, i) => {
+        e.x += e.vx;
+        if (e.x > w/2 - 30 && e.x < w/2 + 30) {
+          if (V > 4.9 && Math.random() < 0.1) {
+            photons.push({ x: e.x, y: e.y, age: 0 });
+            e.vx *= 0.3;
+          }
+        }
+        if (e.x > w - 55) electrons.splice(i, 1);
+        ctx.fillStyle = '#6ad7ff';
+        ctx.beginPath(); ctx.arc(e.x, e.y, 3, 0, Math.PI * 2); ctx.fill();
+      });
+      photons.forEach((p, i) => {
+        p.age++;
+        if (p.age > 30) photons.splice(i, 1);
+        ctx.fillStyle = `rgba(246, 199, 107, ${1 - p.age/30})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+      });
+      update();
+      requestAnimationFrame(draw);
+    }
+    voltSlider.addEventListener('input', update);
+    draw();
+  </script>
+</body>
+</html>

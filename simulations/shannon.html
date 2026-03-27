@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shannon Capacity</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Shannon Capacity</h1>
+        <p>Bandwidth, SNR, and theoretical limits</p>
+      </div>
+      <div class="pill">C = B log₂(1 + S/N)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Channel Visualization</h2>
+        <canvas id="channelCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Capacity vs Bandwidth</h2>
+            <canvas id="bwCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Capacity vs SNR</h2>
+            <canvas id="snrCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Bandwidth (MHz)</label>
+            <input type="range" id="bandwidth" min="0.05" max="20" step="0.05" value="1" />
+            <div class="row"><span class="muted">B</span><span class="value" id="bandwidthValue">1.00 MHz</span></div>
+          </div>
+          <div class="control">
+            <label>Signal Power (mW)</label>
+            <input type="range" id="signal" min="0.1" max="100" step="0.1" value="10" />
+            <div class="row"><span class="muted">S</span><span class="value" id="signalValue">10 mW</span></div>
+          </div>
+          <div class="control">
+            <label>Noise Power (mW)</label>
+            <input type="range" id="noise" min="0.01" max="20" step="0.01" value="0.1" />
+            <div class="row"><span class="muted">N</span><span class="value" id="noiseValue">0.10 mW</span></div>
+          </div>
+          <div class="control">
+            <label>SNR Display</label>
+            <div class="toggle">
+              <input type="checkbox" id="showSNR" checked />
+              <span>Show dB and linear</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Preset Channels</label>
+            <div style="display:flex; gap:6px;">
+              <button data-preset="phone">Phone</button>
+              <button data-preset="dsl">DSL</button>
+              <button data-preset="fiber">Fiber</button>
+              <button data-preset="sat">Satellite</button>
+            </div>
+          </div>
+          <div class="control">
+            <label>Show Formula</label>
+            <div class="toggle">
+              <input type="checkbox" id="showFormula" checked />
+              <span>Show calculation</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>Capacity</span><span class="value" id="capacityValue">6.66 Mbps</span></div>
+            <div class="row"><span>SNR</span><span class="value" id="snrValue">20 dB</span></div>
+            <div class="row"><span>Efficiency</span><span class="value" id="effValue">66%</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formula</div>
+            <div class="row"><span id="formulaValue">C = B log₂(1+S/N)</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Doubling bandwidth doubles capacity; +3 dB SNR boosts capacity ~50% when SNR is high.</div>
+  </div>
+
+  <script>
+    const state = {
+      bandwidth: 1,
+      signal: 10,
+      noise: 0.1,
+      showSNR: true,
+      showFormula: true
+    };
+
+    const dom = {
+      bandwidth: document.getElementById('bandwidth'),
+      signal: document.getElementById('signal'),
+      noise: document.getElementById('noise'),
+      showSNR: document.getElementById('showSNR'),
+      showFormula: document.getElementById('showFormula'),
+      bandwidthValue: document.getElementById('bandwidthValue'),
+      signalValue: document.getElementById('signalValue'),
+      noiseValue: document.getElementById('noiseValue'),
+      capacityValue: document.getElementById('capacityValue'),
+      snrValue: document.getElementById('snrValue'),
+      effValue: document.getElementById('effValue'),
+      formulaValue: document.getElementById('formulaValue'),
+      channelCanvas: document.getElementById('channelCanvas'),
+      bwCanvas: document.getElementById('bwCanvas'),
+      snrCanvas: document.getElementById('snrCanvas')
+    };
+
+    const channelCtx = dom.channelCanvas.getContext('2d');
+    const bwCtx = dom.bwCanvas.getContext('2d');
+    const snrCtx = dom.snrCanvas.getContext('2d');
+
+    function snrLinear() {
+      return state.signal / state.noise;
+    }
+
+    function snrDb() {
+      return 10 * Math.log10(snrLinear());
+    }
+
+    function capacity() {
+      const B = state.bandwidth * 1e6;
+      return B * Math.log2(1 + snrLinear());
+    }
+
+    function updateReadouts() {
+      dom.bandwidthValue.textContent = `${state.bandwidth.toFixed(2)} MHz`;
+      dom.signalValue.textContent = `${state.signal.toFixed(2)} mW`;
+      dom.noiseValue.textContent = `${state.noise.toFixed(2)} mW`;
+      dom.capacityValue.textContent = `${(capacity() / 1e6).toFixed(2)} Mbps`;
+      dom.snrValue.textContent = state.showSNR
+        ? `${snrDb().toFixed(1)} dB (${snrLinear().toFixed(1)}×)`
+        : `${snrDb().toFixed(1)} dB`;
+      dom.effValue.textContent = `${Math.min(100, (capacity() / (state.bandwidth * 1e6 * 10)).toFixed(0))}%`;
+      dom.formulaValue.textContent = state.showFormula
+        ? `C = ${state.bandwidth.toFixed(2)}×10⁶ × log₂(1+${snrLinear().toFixed(1)})`
+        : 'Formula hidden';
+    }
+
+    function drawChannel() {
+      const w = dom.channelCanvas.width;
+      const h = dom.channelCanvas.height;
+      channelCtx.clearRect(0, 0, w, h);
+      channelCtx.fillStyle = '#0b1420';
+      channelCtx.fillRect(0, 0, w, h);
+      const mid = h / 2;
+      channelCtx.strokeStyle = '#6ad7ff';
+      channelCtx.lineWidth = 3;
+      channelCtx.beginPath();
+      channelCtx.moveTo(60, mid);
+      channelCtx.lineTo(w - 60, mid);
+      channelCtx.stroke();
+      channelCtx.fillStyle = '#f6c76b';
+      channelCtx.fillRect(50, mid - 20, 20, 40);
+      channelCtx.fillRect(w - 70, mid - 20, 20, 40);
+      channelCtx.fillStyle = '#8aa0b8';
+      channelCtx.fillText('Tx', 44, mid - 30);
+      channelCtx.fillText('Rx', w - 78, mid - 30);
+      channelCtx.fillStyle = 'rgba(255,107,107,0.4)';
+      for (let i = 0; i < 40; i++) {
+        channelCtx.beginPath();
+        channelCtx.arc(100 + i * 12, mid + (Math.random() - 0.5) * 60, 2, 0, Math.PI * 2);
+        channelCtx.fill();
+      }
+      channelCtx.fillStyle = '#8aa0b8';
+      channelCtx.fillText(`B = ${state.bandwidth.toFixed(2)} MHz`, w / 2 - 40, mid + 40);
+    }
+
+    function drawCapacityCurve(ctx, mode) {
+      const w = ctx.canvas.width;
+      const h = ctx.canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#1c2c43';
+      for (let y = 0; y <= h; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.beginPath();
+      for (let i = 1; i <= 50; i++) {
+        const x = (i / 50) * w;
+        let cap;
+        if (mode === 'bw') {
+          const B = (i / 50) * 20 * 1e6;
+          cap = B * Math.log2(1 + snrLinear());
+        } else {
+          const snr = i / 5;
+          cap = state.bandwidth * 1e6 * Math.log2(1 + snr);
+        }
+        const y = h - (cap / (20e6)) * h;
+        if (i === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawChannel();
+      drawCapacityCurve(bwCtx, 'bw');
+      drawCapacityCurve(snrCtx, 'snr');
+    }
+
+    function bind() {
+      dom.bandwidth.addEventListener('input', () => { state.bandwidth = Number(dom.bandwidth.value); render(); });
+      dom.signal.addEventListener('input', () => { state.signal = Number(dom.signal.value); render(); });
+      dom.noise.addEventListener('input', () => { state.noise = Number(dom.noise.value); render(); });
+      dom.showSNR.addEventListener('change', () => { state.showSNR = dom.showSNR.checked; render(); });
+      dom.showFormula.addEventListener('change', () => { state.showFormula = dom.showFormula.checked; render(); });
+      document.querySelectorAll('button[data-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const preset = btn.dataset.preset;
+          if (preset === 'phone') {
+            state.bandwidth = 0.0034; state.signal = 1; state.noise = 0.05;
+          } else if (preset === 'dsl') {
+            state.bandwidth = 1.1; state.signal = 10; state.noise = 0.2;
+          } else if (preset === 'fiber') {
+            state.bandwidth = 20; state.signal = 50; state.noise = 0.05;
+          } else if (preset === 'sat') {
+            state.bandwidth = 36; state.signal = 5; state.noise = 1;
+          }
+          dom.bandwidth.value = state.bandwidth;
+          dom.signal.value = state.signal;
+          dom.noise.value = state.noise;
+          render();
+        });
+      });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

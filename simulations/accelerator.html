@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Particle Accelerators</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .tabs { display: flex; gap: 10px; padding: 0 28px 10px; flex-wrap: wrap; }
+    .tab { border: 1px solid var(--sim-border); border-radius: 999px; padding: 8px 14px; cursor: pointer; background: rgba(12, 18, 28, 0.8); color: var(--sim-text); font-weight: 600; }
+    .tab.active { border-color: var(--accent); color: var(--accent); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 24px; padding: 12px 28px 18px; }
+
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+
+    canvas { width: 100%; height: 400px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"], select { width: 100%; }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+    button.active { border-color: var(--accent); color: var(--accent); }
+
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+
+    .accordion { display: grid; gap: 12px; margin: 0 28px 40px; }
+
+    details { border: 1px solid var(--sim-border); border-radius: 14px; background: rgba(12, 18, 28, 0.8); padding: 12px 16px; }
+    summary { cursor: pointer; font-weight: 600; color: var(--accent); list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    details p, details li { color: var(--sim-muted); }
+
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .particle-info {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(6, 10, 18, 0.5);
+      border-radius: 8px;
+    }
+    .particle-stat {
+      flex: 1;
+      text-align: center;
+    }
+    .particle-stat-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+    .particle-stat-label {
+      font-size: 0.75rem;
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Particle Accelerators</h1>
+      <p>Cyclotrons, Synchrotrons & Linear Accelerators</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="cyclotron">Cyclotron</button>
+      <button class="tab" data-mode="synchrotron">Synchrotron</button>
+      <button class="tab" data-mode="linac">Linear Accelerator</button>
+    </div>
+
+    <div class="layout">
+      <div>
+        <canvas id="acceleratorCanvas"></canvas>
+        <div class="panel" style="margin-top: 16px;">
+          <div class="results-grid">
+            <div class="data-panel">
+              <div>Particle: <strong id="particleText">Proton</strong></div>
+              <div>Energy: <strong id="energyText">0 MeV</strong></div>
+              <div>Velocity: <strong id="velocityText">0 m/s</strong></div>
+            </div>
+            <div class="data-panel">
+              <div>Type: <strong id="typeText">Cyclotron</strong></div>
+              <div>Radius: <strong id="radiusText">0 m</strong></div>
+              <div>Frequency: <strong id="freqText">0 MHz</strong></div>
+            </div>
+          </div>
+          <div class="particle-info">
+            <div class="particle-stat">
+              <div class="particle-stat-value" id="gammaText">1.00</div>
+              <div class="particle-stat-label">γ (Lorentz)</div>
+            </div>
+            <div class="particle-stat">
+              <div class="particle-stat-value" id="betaText">0.00</div>
+              <div class="particle-stat-label">v/c</div>
+            </div>
+            <div class="particle-stat">
+              <div class="particle-stat-value" id="momText">0</div>
+              <div class="particle-stat-label">p (GeV/c)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="panel">
+          <div class="control-group">
+            <label>Accelerator Type</label>
+            <select id="accelType">
+              <option value="cyclotron">Cyclotron</option>
+              <option value="synchrotron">Synchrotron</option>
+              <option value="linac">Linear Accelerator</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="control-group">
+            <label>Particle</label>
+            <select id="particle">
+              <option value="proton">Proton (p)</option>
+              <option value="electron">Electron (e⁻)</option>
+              <option value="alpha">Alpha (α)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="control-group">
+            <label>Magnetic Field (B) <span id="bVal">1.0 T</span></label>
+            <input type="range" id="bField" min="0.1" max="5" value="1" step="0.1" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="control-group">
+            <label>RF Frequency <span id="freqVal">10 MHz</span></label>
+            <input type="range" id="rfFreq" min="1" max="100" value="10" step="1" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="control-group">
+            <label>Accelerator Radius <span id="radVal">1.0 m</span></label>
+            <input type="range" id="accelRadius" min="0.1" max="5" value="1" step="0.1" />
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="btn-row">
+            <button id="btnStart">▶ Start</button>
+            <button id="btnReset">↺ Reset</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="data-panel">
+            <div>Cyclotron freq: <strong id="cycFreqText">16.0 MHz</strong></div>
+            <div>Max energy: <strong id="maxEnergyText">0 MeV</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <details>
+        <summary>Cyclotron</summary>
+        <p>A cyclotron uses a constant magnetic field and alternating electric field to accelerate particles in a spiral path.</p>
+        <ul>
+          <li><strong>Frequency:</strong> f = qB/2πm (constant)</li>
+          <li><strong>Radius:</strong> r = mv/qB</li>
+          <li><strong>Energy:</strong> E = q²B²r²/2m</li>
+        </ul>
+      </details>
+      
+      <details>
+        <summary>Synchrotron</summary>
+        <p>A synchrotron uses varying magnetic fields and RF to keep particles in a fixed-radius orbit as they accelerate.</p>
+        <ul>
+          <li><strong>Orbit:</strong> Constant radius</li>
+          <li><strong>B-field:</strong> Increases with energy</li>
+          <li><strong>RF:</strong> Synchronized to particle</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>Linear Accelerator (Linac)</summary>
+        <p>A linac accelerates particles in a straight line through a series of accelerating electrodes.</p>
+        <ul>
+          <li><strong>Structure:</strong> Drift tubes</li>
+          <li><strong>Advantage:</strong> No synchrotron radiation</li>
+          <li><strong>Use:</strong> Electron accelerators</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('acceleratorCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const bFieldSlider = document.getElementById('bField');
+    const rfFreqSlider = document.getElementById('rfFreq');
+    const radiusSlider = document.getElementById('accelRadius');
+    const accelTypeSelect = document.getElementById('accelType');
+    const particleSelect = document.getElementById('particle');
+    const btnStart = document.getElementById('btnStart');
+    const btnReset = document.getElementById('btnReset');
+
+    let currentMode = 'cyclotron';
+    let isRunning = false;
+    let time = 0;
+    let particleAngle = 0;
+    let particleRadius = 0;
+    let particleEnergy = 0;
+    let particleX = 0;
+    let particleY = 0;
+
+    const particles = {
+      proton: { mass: 938.27, charge: 1, name: 'Proton', color: '#ff6b6b' },
+      electron: { mass: 0.511, charge: -1, name: 'Electron', color: '#6ad7ff' },
+      alpha: { mass: 3727.4, charge: 2, name: 'Alpha', color: '#f6c76b' }
+    };
+
+    let currentParticle = particles.proton;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+
+    function calculateCyclotronFreq(B, m, q) {
+      return (q * B * 1e6) / (2 * Math.PI * m);
+    }
+
+    function calculateMaxEnergy(B, r, m, q) {
+      const v = (q * B * r) / (m / 938.27);
+      const gamma = Math.sqrt(1 + (v / 299792458) ** 2);
+      return (gamma - 1) * 938.27;
+    }
+
+    function updateResults() {
+      const B = parseFloat(bFieldSlider.value);
+      const radius = parseFloat(radiusSlider.value);
+      const freq = parseFloat(rfFreqSlider.value);
+      
+      const cycFreq = calculateCyclotronFreq(B, currentParticle.mass, Math.abs(currentParticle.charge));
+      const maxEnergy = calculateMaxEnergy(B, radius, currentParticle.mass, Math.abs(currentParticle.charge));
+      
+      document.getElementById('particleText').textContent = currentParticle.name;
+      document.getElementById('energyText').textContent = particleEnergy.toFixed(2) + ' MeV';
+      
+      const v = Math.min(299792458, particleEnergy * 1e6 * 1.602 / currentParticle.mass);
+      document.getElementById('velocityText').textContent = (v / 1e6).toFixed(2) + ' ×10⁶ m/s';
+      
+      document.getElementById('typeText').textContent = currentMode.charAt(0).toUpperCase() + currentMode.slice(1);
+      document.getElementById('radiusText').textContent = particleRadius.toFixed(2) + ' m';
+      document.getElementById('freqText').textContent = freq.toFixed(1) + ' MHz';
+      
+      const beta = particleEnergy > 0 ? Math.sqrt(1 - Math.pow(938.27 / (particleEnergy + 938.27), 2)) : 0;
+      const gamma = particleEnergy > 0 ? (particleEnergy + 938.27) / 938.27 : 1;
+      const p = particleEnergy > 0 ? Math.sqrt(Math.pow(gamma, 2) - 1) * 0.938 : 0;
+      
+      document.getElementById('betaText').textContent = beta.toFixed(3);
+      document.getElementById('gammaText').textContent = gamma.toFixed(3);
+      document.getElementById('momText').textContent = p.toFixed(3);
+      
+      document.getElementById('cycFreqText').textContent = cycFreq.toFixed(1) + ' MHz';
+      document.getElementById('maxEnergyText').textContent = maxEnergy.toFixed(1) + ' MeV';
+    }
+
+    function drawCyclotron() {
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+      const centerX = w / 2;
+      const centerY = h / 2;
+      const maxRadius = Math.min(w, h) * 0.35;
+      const radiusScale = maxRadius / parseFloat(radiusSlider.value);
+      
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.95)';
+      ctx.fillRect(0, 0, w, h);
+      
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 1;
+      for (let r = 0.25; r <= 1; r += 0.25) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, r * maxRadius, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, maxRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(centerX - maxRadius - 20, centerY);
+      ctx.lineTo(centerX - maxRadius + 20, centerY);
+      ctx.moveTo(centerX, centerY - maxRadius - 20);
+      ctx.lineTo(centerX, centerY - maxRadius + 20);
+      ctx.stroke();
+      
+      const DeeRadius = maxRadius;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.1)';
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, DeeRadius, -Math.PI / 2, Math.PI / 2);
+      ctx.arc(centerX, centerY, DeeRadius, Math.PI / 2, -Math.PI / 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY - DeeRadius);
+      ctx.lineTo(centerX, centerY + DeeRadius);
+      ctx.stroke();
+      
+      if (isRunning && particleRadius > 0) {
+        const px = centerX + particleX;
+        const py = centerY - particleY;
+        
+        ctx.fillStyle = currentParticle.color;
+        ctx.shadowColor = currentParticle.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(px, py);
+        ctx.stroke();
+        
+        const labelR = particleRadius + 20;
+        const labelX = centerX + labelR * Math.cos(particleAngle);
+        const labelY = centerY - labelR * Math.sin(particleAngle);
+        ctx.fillStyle = '#666';
+        ctx.font = '10px sans-serif';
+        ctx.fillText(`r=${particleRadius.toFixed(2)}m`, labelX - 20, labelY);
+      }
+      
+      ctx.fillStyle = '#666';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Dees', centerX, centerY - maxRadius - 10);
+      ctx.fillText('Magnet poles', centerX, centerY + maxRadius + 25);
+    }
+
+    function drawSynchrotron() {
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+      const centerX = w / 2;
+      const centerY = h / 2;
+      const orbitRadius = Math.min(w, h) * 0.3;
+      
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.95)';
+      ctx.fillRect(0, 0, w, h);
+      
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, orbitRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      const numMagnets = 8;
+      for (let i = 0; i < numMagnets; i++) {
+        const angle = (i / numMagnets) * Math.PI * 2;
+        const mx = centerX + Math.cos(angle) * orbitRadius;
+        const my = centerY + Math.sin(angle) * orbitRadius;
+        
+        ctx.save();
+        ctx.translate(mx, my);
+        ctx.rotate(-angle + Math.PI / 2);
+        
+        ctx.fillStyle = '#444';
+        ctx.fillRect(-15, -10, 30, 20);
+        ctx.strokeStyle = '#6ad7ff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-15, -10, 30, 20);
+        
+        ctx.restore();
+      }
+      
+      const rfAngle = (time * 0.05) % (Math.PI * 2);
+      const rfX = centerX + Math.cos(rfAngle) * (orbitRadius + 40);
+      const rfY = centerY + Math.sin(rfAngle) * (orbitRadius + 40);
+      
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(rfX - 15, rfY - 8, 30, 16);
+      ctx.fillStyle = '#0a0e17';
+      ctx.font = '8px sans-serif';
+      ctx.fillText('RF', rfX - 5, rfY + 3);
+      
+      if (isRunning && particleRadius > 0) {
+        const angle = particleAngle;
+        const px = centerX + orbitRadius * Math.cos(angle);
+        const py = centerY + orbitRadius * Math.sin(angle);
+        
+        ctx.fillStyle = currentParticle.color;
+        ctx.shadowColor = currentParticle.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(px, py, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, orbitRadius, 0, angle);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      
+      ctx.fillStyle = '#666';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Storage Ring', centerX, centerY - orbitRadius - 15);
+    }
+
+    function drawLinac() {
+      const w = canvas.width / window.devicePixelRatio;
+      const h = canvas.height / window.devicePixelRatio;
+      
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.95)';
+      ctx.fillRect(0, 0, w, h);
+      
+      const startX = 50;
+      const endX = w - 50;
+      const tubeY = h / 2;
+      const tubeHeight = 60;
+      
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.1)';
+      ctx.fillRect(startX, tubeY - tubeHeight / 2, endX - startX, tubeHeight);
+      
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(startX, tubeY - tubeHeight / 2, endX - startX, tubeHeight);
+      
+      const numTubes = 12;
+      const tubeLength = (endX - startX - 40) / numTubes;
+      
+      for (let i = 0; i <= numTubes; i++) {
+        const x = startX + 20 + i * tubeLength;
+        
+        ctx.strokeStyle = i % 2 === 0 ? '#333' : '#f6c76b';
+        ctx.lineWidth = 2;
+        
+        if (i < numTubes) {
+          ctx.fillStyle = 'rgba(106, 215, 255, 0.2)';
+          ctx.fillRect(x, tubeY - 15, tubeLength - 5, 30);
+          ctx.strokeRect(x, tubeY - 15, tubeLength - 5, 30);
+        }
+        
+        ctx.beginPath();
+        ctx.moveTo(x, tubeY - tubeHeight / 2);
+        ctx.lineTo(x, tubeY + tubeHeight / 2);
+        ctx.stroke();
+      }
+      
+      if (isRunning) {
+        const progress = (particleEnergy / 100) % 1;
+        const px = startX + 20 + progress * (endX - startX - 40);
+        
+        ctx.fillStyle = currentParticle.color;
+        ctx.shadowColor = currentParticle.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(px, tubeY, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        const beamProgress = Math.floor(progress * numTubes);
+        for (let i = 0; i < beamProgress; i++) {
+          const bx = startX + 20 + (i + 0.5) * tubeLength;
+          ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+          ctx.beginPath();
+          ctx.arc(bx, tubeY, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        ctx.fillStyle = '#666';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Energy: ${particleEnergy.toFixed(1)} MeV`, w / 2, tubeY + tubeHeight / 2 + 30);
+      }
+      
+      ctx.fillStyle = '#666';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Drift Tubes', w / 2, tubeY - tubeHeight / 2 - 10);
+      ctx.fillText('→', endX + 10, tubeY);
+    }
+
+    function animate() {
+      time++;
+      
+      if (isRunning) {
+        const B = parseFloat(bFieldSlider.value);
+        const freq = parseFloat(rfFreqSlider.value);
+        const radius = parseFloat(radiusSlider.value);
+        const maxRadius = Math.min(canvas.width, canvas.height) * 0.35 * 0.9;
+        const radiusScale = maxRadius / radius;
+        
+        if (currentMode === 'cyclotron') {
+          particleAngle += freq * 0.1;
+          
+          const speed = Math.min(0.02, 0.005 + particleEnergy * 0.0001);
+          particleRadius += speed * radiusScale;
+          
+          if (particleRadius >= maxRadius) {
+            particleRadius = maxRadius;
+          }
+          
+          particleX = particleRadius * Math.cos(particleAngle);
+          particleY = particleRadius * Math.sin(particleAngle);
+          
+          const energyGain = 0.5;
+          particleEnergy = Math.min(particleEnergy + energyGain, 100);
+        } else if (currentMode === 'synchrotron') {
+          const speed = 0.02 + particleEnergy * 0.001;
+          particleAngle += speed;
+          particleRadius = 1;
+          
+          particleEnergy = Math.min(particleEnergy + 0.3, 100);
+        } else if (currentMode === 'linac') {
+          particleEnergy = Math.min(particleEnergy + 2, 100);
+          particleRadius = particleEnergy / 100;
+        }
+      }
+      
+      if (currentMode === 'cyclotron') {
+        drawCyclotron();
+      } else if (currentMode === 'synchrotron') {
+        drawSynchrotron();
+      } else {
+        drawLinac();
+      }
+      
+      updateResults();
+      requestAnimationFrame(animate);
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentMode = tab.dataset.mode;
+        resetParticle();
+      });
+    });
+
+    particleSelect.addEventListener('change', (e) => {
+      currentParticle = particles[e.target.value];
+    });
+
+    bFieldSlider.addEventListener('input', (e) => {
+      document.getElementById('bVal').textContent = parseFloat(e.target.value).toFixed(1) + ' T';
+    });
+
+    rfFreqSlider.addEventListener('input', (e) => {
+      document.getElementById('freqVal').textContent = parseFloat(e.target.value) + ' MHz';
+    });
+
+    radiusSlider.addEventListener('input', (e) => {
+      document.getElementById('radVal').textContent = parseFloat(e.target.value).toFixed(1) + ' m';
+    });
+
+    accelTypeSelect.addEventListener('change', (e) => {
+      currentMode = e.target.value;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`[data-mode="${currentMode}"]`).classList.add('active');
+      resetParticle();
+    });
+
+    btnStart.addEventListener('click', () => {
+      isRunning = !isRunning;
+      btnStart.textContent = isRunning ? '⏸ Pause' : '▶ Start';
+    });
+
+    btnReset.addEventListener('click', () => {
+      resetParticle();
+    });
+
+    function resetParticle() {
+      isRunning = false;
+      particleAngle = 0;
+      particleRadius = 0;
+      particleEnergy = 0;
+      particleX = 0;
+      particleY = 0;
+      btnStart.textContent = '▶ Start';
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    animate();
+  </script>
+</body>
+</html>

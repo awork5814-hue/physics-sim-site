@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lenz's Law</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --blue: #6ad7ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 320px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Lenz's Law</h1>
+        <p>Induced current opposes the change in magnetic flux</p>
+      </div>
+      <div class="pill">Right-hand grip · Opposes change</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Experiment View</h2>
+        <canvas id="lCanvas" width="560" height="320" aria-label="Lenz setup"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Magnet Position (cm)</label>
+            <input type="range" id="position" min="-20" max="20" step="0.5" value="-5" />
+            <div class="row"><span class="muted">x</span><span class="value" id="posValue">-5.0 cm</span></div>
+          </div>
+          <div class="control">
+            <label>Magnet Speed (m/s)</label>
+            <input type="range" id="speed" min="-10" max="10" step="0.5" value="2" />
+            <div class="row"><span class="muted">v</span><span class="value" id="speedValue">2.0 m/s</span></div>
+          </div>
+          <div class="control">
+            <label>Magnet Polarity</label>
+            <div class="toggle"><input type="checkbox" id="polarity" checked> N toward coil</div>
+          </div>
+          <div class="control">
+            <label>Coil Resistance (Ω)</label>
+            <input type="range" id="resistance" min="1" max="100" step="1" value="10" />
+            <div class="row"><span class="muted">R</span><span class="value" id="rValue">10 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Number of Turns</label>
+            <input type="range" id="turns" min="10" max="500" step="10" value="100" />
+            <div class="row"><span class="muted">N</span><span class="value" id="nValue">100</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showB" checked> Show induced B</label>
+            <label class="toggle"><input type="checkbox" id="showI" checked> Show current arrows</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Flux Change</div>
+            <div class="row"><span>dΦ/dt</span><span class="value" id="dphiValue">0.00 Wb/s</span></div>
+            <div class="row"><span>Induced EMF</span><span class="value" id="emfValue">0.00 V</span></div>
+            <div class="row"><span>Induced Current</span><span class="value" id="iValue">0.00 A</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Direction</div>
+            <div class="row"><span>Induced B</span><span class="value" id="bDirValue">Opposes change</span></div>
+            <div class="row"><span>Force</span><span class="value" id="forceValue">Repels motion</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              ε = -dΦ/dt
+              <br>I = ε / R
+              <br>Induced B opposes change
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Induced current direction follows the right-hand grip rule and opposes flux changes.</div>
+  </div>
+
+  <script>
+    const state = {
+      position: -5,
+      speed: 2,
+      polarityNorth: true,
+      resistance: 10,
+      turns: 100,
+      showB: true,
+      showI: true,
+      time: 0
+    };
+
+    const dom = {
+      position: document.getElementById('position'),
+      speed: document.getElementById('speed'),
+      polarity: document.getElementById('polarity'),
+      resistance: document.getElementById('resistance'),
+      turns: document.getElementById('turns'),
+      showB: document.getElementById('showB'),
+      showI: document.getElementById('showI'),
+      posValue: document.getElementById('posValue'),
+      speedValue: document.getElementById('speedValue'),
+      rValue: document.getElementById('rValue'),
+      nValue: document.getElementById('nValue'),
+      dphiValue: document.getElementById('dphiValue'),
+      emfValue: document.getElementById('emfValue'),
+      iValue: document.getElementById('iValue'),
+      bDirValue: document.getElementById('bDirValue'),
+      forceValue: document.getElementById('forceValue')
+    };
+
+    const canvas = document.getElementById('lCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function flux(positionCm) {
+      const x = positionCm / 10;
+      const spread = 0.08;
+      const base = Math.exp(-(x * x) / spread);
+      const sign = state.polarityNorth ? 1 : -1;
+      return sign * base;
+    }
+
+    function updatePhysics(dt) {
+      state.position += state.speed * dt;
+      if (state.position > 20) state.position = -20;
+      if (state.position < -20) state.position = 20;
+      const phiNow = flux(state.position) * state.turns;
+      const phiPrev = flux(state.position - state.speed * dt) * state.turns;
+      const dphi = (phiNow - phiPrev) / dt;
+      const emf = -dphi;
+      const current = emf / state.resistance;
+      return { dphi, emf, current };
+    }
+
+    function drawScene(dphi, current) {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#2a3f59';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(w / 2 - 90, 90, 180, 140);
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 7; i++) {
+        ctx.beginPath();
+        ctx.arc(w / 2 - 80 + i * 25, 160, 12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      const magnetX = (state.position + 20) / 40 * (w - 80) + 40;
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(magnetX - 20, 60, 40, 60);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(magnetX - 20, 120, 40, 60);
+      ctx.fillStyle = '#f5f8fd';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText(state.polarityNorth ? 'N' : 'S', magnetX - 6, 95);
+      ctx.fillText(state.polarityNorth ? 'S' : 'N', magnetX - 6, 150);
+
+      if (state.showB) {
+        ctx.strokeStyle = '#2d8dd6';
+        ctx.lineWidth = 1.5;
+        const dir = dphi > 0 ? -1 : 1;
+        for (let y = 100; y <= 220; y += 20) {
+          ctx.beginPath();
+          ctx.moveTo(w / 2 + 100 * dir, y);
+          ctx.lineTo(w / 2 - 100 * dir, y);
+          ctx.stroke();
+        }
+      }
+
+      if (state.showI) {
+        ctx.strokeStyle = current >= 0 ? '#6ad7ff' : '#f6c76b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(w / 2, 160, 60, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = current >= 0 ? '#6ad7ff' : '#f6c76b';
+        ctx.fillText(current >= 0 ? 'CCW' : 'CW', w / 2 - 12, 160);
+      }
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText(`Magnet moving ${state.speed > 0 ? '→' : '←'}`, 20, h - 20);
+    }
+
+    function updateReadouts(dphi, emf, current) {
+      dom.posValue.textContent = `${state.position.toFixed(1)} cm`;
+      dom.speedValue.textContent = `${state.speed.toFixed(1)} m/s`;
+      dom.rValue.textContent = `${state.resistance} Ω`;
+      dom.nValue.textContent = `${state.turns}`;
+      dom.dphiValue.textContent = `${dphi.toFixed(2)} Wb/s`;
+      dom.emfValue.textContent = `${emf.toFixed(2)} V`;
+      dom.iValue.textContent = `${current.toFixed(3)} A`;
+      dom.bDirValue.textContent = dphi > 0 ? 'Opposes increase' : (dphi < 0 ? 'Opposes decrease' : 'No change');
+      dom.forceValue.textContent = dphi > 0 ? 'Repels motion' : (dphi < 0 ? 'Attracts back' : 'No force');
+    }
+
+    function tick() {
+      const dt = 0.02;
+      const { dphi, emf, current } = updatePhysics(dt);
+      updateReadouts(dphi, emf, current);
+      drawScene(dphi, current);
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.position.addEventListener('input', () => {
+        state.position = Number(dom.position.value);
+      });
+      dom.speed.addEventListener('input', () => {
+        state.speed = Number(dom.speed.value);
+      });
+      dom.polarity.addEventListener('change', () => {
+        state.polarityNorth = dom.polarity.checked;
+      });
+      dom.resistance.addEventListener('input', () => {
+        state.resistance = Number(dom.resistance.value);
+      });
+      dom.turns.addEventListener('input', () => {
+        state.turns = Number(dom.turns.value);
+      });
+      dom.showB.addEventListener('change', () => {
+        state.showB = dom.showB.checked;
+      });
+      dom.showI.addEventListener('change', () => {
+        state.showI = dom.showI.checked;
+      });
+    }
+
+    bind();
+    tick();
+  </script>
+</body>
+</html>

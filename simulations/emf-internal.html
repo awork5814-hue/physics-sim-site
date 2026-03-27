@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Internal Resistance</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    canvas {
+      width: 100%;
+      height: 280px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Internal Resistance</h1>
+        <p>Terminal voltage drop: V = ε − I r</p>
+      </div>
+      <div class="pill">V-I graph · power loss · max power transfer</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Circuit & V-I Curve</h2>
+        <canvas id="circuitCanvas" width="560" height="280" aria-label="Circuit"></canvas>
+        <canvas id="viCanvas" width="560" height="200" aria-label="V-I graph" style="margin-top:12px;"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>EMF (V)</label>
+            <input type="range" id="emf" min="1" max="24" step="0.1" value="12" />
+            <div class="row"><span class="muted">ε</span><span class="value" id="emfValue">12.0 V</span></div>
+          </div>
+          <div class="control">
+            <label>Internal Resistance (Ω)</label>
+            <input type="range" id="rint" min="0.1" max="10" step="0.1" value="0.5" />
+            <div class="row"><span class="muted">r</span><span class="value" id="rintValue">0.5 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Load Resistance (Ω)</label>
+            <input type="range" id="rload" min="1" max="100" step="1" value="10" />
+            <div class="row"><span class="muted">R</span><span class="value" id="rloadValue">10 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Battery Type</label>
+            <select id="batteryType">
+              <option value="alkaline">Alkaline</option>
+              <option value="leadacid">Lead-acid</option>
+              <option value="liion">Li-ion</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showGraph" checked> Show V-I graph</label>
+            <label class="toggle"><input type="checkbox" id="showLoss" checked> Show power loss</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Circuit Values</div>
+            <div class="row"><span>Terminal V</span><span class="value" id="vtermValue">0.0 V</span></div>
+            <div class="row"><span>Current I</span><span class="value" id="iValue">0.0 A</span></div>
+            <div class="row"><span>Efficiency</span><span class="value" id="effValue">0%</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Power</div>
+            <div class="row"><span>P<sub>load</sub></span><span class="value" id="ploadValue">0.0 W</span></div>
+            <div class="row"><span>P<sub>loss</sub></span><span class="value" id="plossValue">0.0 W</span></div>
+            <div class="row"><span>P<sub>total</sub></span><span class="value" id="ptotalValue">0.0 W</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              I = ε / (R + r)
+              <br>V = ε − I r
+              <br>η = R / (R + r)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Maximum power transfer occurs when R = r (efficiency 50%).</div>
+  </div>
+
+  <script>
+    const presets = {
+      alkaline: { emf: 12, r: 0.5 },
+      leadacid: { emf: 12, r: 0.2 },
+      liion: { emf: 12, r: 0.1 }
+    };
+
+    const state = {
+      emf: 12,
+      rInternal: 0.5,
+      rLoad: 10,
+      showGraph: true,
+      showLoss: true
+    };
+
+    const dom = {
+      emf: document.getElementById('emf'),
+      rint: document.getElementById('rint'),
+      rload: document.getElementById('rload'),
+      batteryType: document.getElementById('batteryType'),
+      showGraph: document.getElementById('showGraph'),
+      showLoss: document.getElementById('showLoss'),
+      emfValue: document.getElementById('emfValue'),
+      rintValue: document.getElementById('rintValue'),
+      rloadValue: document.getElementById('rloadValue'),
+      vtermValue: document.getElementById('vtermValue'),
+      iValue: document.getElementById('iValue'),
+      effValue: document.getElementById('effValue'),
+      ploadValue: document.getElementById('ploadValue'),
+      plossValue: document.getElementById('plossValue'),
+      ptotalValue: document.getElementById('ptotalValue')
+    };
+
+    const circuitCanvas = document.getElementById('circuitCanvas');
+    const circuitCtx = circuitCanvas.getContext('2d');
+    const viCanvas = document.getElementById('viCanvas');
+    const viCtx = viCanvas.getContext('2d');
+
+    function compute() {
+      const I = state.emf / (state.rLoad + state.rInternal);
+      const Vterm = state.emf - I * state.rInternal;
+      const pload = I * I * state.rLoad;
+      const ploss = I * I * state.rInternal;
+      const ptotal = state.emf * I;
+      const eff = state.rLoad / (state.rLoad + state.rInternal);
+      return { I, Vterm, pload, ploss, ptotal, eff };
+    }
+
+    function drawCircuit(values) {
+      const w = circuitCanvas.width;
+      const h = circuitCanvas.height;
+      circuitCtx.clearRect(0, 0, w, h);
+      circuitCtx.fillStyle = '#0b1420';
+      circuitCtx.fillRect(0, 0, w, h);
+
+      circuitCtx.strokeStyle = '#6ad7ff';
+      circuitCtx.lineWidth = 2;
+      circuitCtx.beginPath();
+      circuitCtx.moveTo(80, h / 2);
+      circuitCtx.lineTo(200, h / 2);
+      circuitCtx.lineTo(200, h / 2 - 40);
+      circuitCtx.lineTo(360, h / 2 - 40);
+      circuitCtx.lineTo(360, h / 2 + 40);
+      circuitCtx.lineTo(200, h / 2 + 40);
+      circuitCtx.lineTo(200, h / 2);
+      circuitCtx.lineTo(w - 80, h / 2);
+      circuitCtx.stroke();
+
+      circuitCtx.fillStyle = '#f6c76b';
+      circuitCtx.fillText(`ε = ${state.emf.toFixed(1)} V`, 90, h / 2 - 20);
+      circuitCtx.fillText(`r = ${state.rInternal.toFixed(1)} Ω`, 250, h / 2 - 50);
+      circuitCtx.fillText(`R = ${state.rLoad.toFixed(1)} Ω`, 250, h / 2 + 70);
+
+      circuitCtx.fillStyle = '#8aa0b8';
+      circuitCtx.fillText(`V_term = ${values.Vterm.toFixed(2)} V`, 80, h - 30);
+      circuitCtx.fillText(`I = ${values.I.toFixed(2)} A`, w - 160, h - 30);
+    }
+
+    function drawVIGraph() {
+      const w = viCanvas.width;
+      const h = viCanvas.height;
+      viCtx.clearRect(0, 0, w, h);
+      viCtx.fillStyle = '#0b1420';
+      viCtx.fillRect(0, 0, w, h);
+
+      if (!state.showGraph) {
+        viCtx.fillStyle = '#7e91a8';
+        viCtx.fillText('Graph hidden', 20, 20);
+        return;
+      }
+
+      viCtx.strokeStyle = '#1c2c43';
+      for (let x = 0; x <= w; x += 40) {
+        viCtx.beginPath();
+        viCtx.moveTo(x, 0);
+        viCtx.lineTo(x, h);
+        viCtx.stroke();
+      }
+      for (let y = 0; y <= h; y += 40) {
+        viCtx.beginPath();
+        viCtx.moveTo(0, y);
+        viCtx.lineTo(w, y);
+        viCtx.stroke();
+      }
+
+      const Imax = state.emf / state.rInternal;
+      viCtx.strokeStyle = '#6ad7ff';
+      viCtx.lineWidth = 2;
+      viCtx.beginPath();
+      viCtx.moveTo(20, h - 20);
+      viCtx.lineTo(w - 20, 20);
+      viCtx.stroke();
+
+      const values = compute();
+      const x = 20 + (values.I / Imax) * (w - 40);
+      const y = h - 20 - (values.Vterm / state.emf) * (h - 40);
+      viCtx.fillStyle = '#f6c76b';
+      viCtx.beginPath();
+      viCtx.arc(x, y, 4, 0, Math.PI * 2);
+      viCtx.fill();
+    }
+
+    function update() {
+      const values = compute();
+      dom.emfValue.textContent = `${state.emf.toFixed(1)} V`;
+      dom.rintValue.textContent = `${state.rInternal.toFixed(1)} Ω`;
+      dom.rloadValue.textContent = `${state.rLoad.toFixed(1)} Ω`;
+      dom.vtermValue.textContent = `${values.Vterm.toFixed(2)} V`;
+      dom.iValue.textContent = `${values.I.toFixed(2)} A`;
+      dom.effValue.textContent = `${(values.eff * 100).toFixed(1)}%`;
+      dom.ploadValue.textContent = `${values.pload.toFixed(2)} W`;
+      dom.plossValue.textContent = `${values.ploss.toFixed(2)} W`;
+      dom.ptotalValue.textContent = `${values.ptotal.toFixed(2)} W`;
+
+      drawCircuit(values);
+      drawVIGraph();
+    }
+
+    function bind() {
+      dom.emf.addEventListener('input', () => {
+        state.emf = Number(dom.emf.value);
+        update();
+      });
+      dom.rint.addEventListener('input', () => {
+        state.rInternal = Number(dom.rint.value);
+        update();
+      });
+      dom.rload.addEventListener('input', () => {
+        state.rLoad = Number(dom.rload.value);
+        update();
+      });
+      dom.batteryType.addEventListener('change', () => {
+        const preset = presets[dom.batteryType.value];
+        state.emf = preset.emf;
+        state.rInternal = preset.r;
+        dom.emf.value = state.emf;
+        dom.rint.value = state.rInternal;
+        update();
+      });
+      dom.showGraph.addEventListener('change', () => {
+        state.showGraph = dom.showGraph.checked;
+        update();
+      });
+      dom.showLoss.addEventListener('change', () => {
+        state.showLoss = dom.showLoss.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

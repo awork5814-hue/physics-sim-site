@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Numbers</title>
+  <style>
+    :root {
+      --bg: #0a0c12;
+      --bg-2: #111624;
+      --panel: rgba(16, 20, 30, 0.85);
+      --panel-2: rgba(10, 14, 22, 0.9);
+      --text: #f2f3f5;
+      --muted: #b6bcc8;
+      --line: rgba(255, 255, 255, 0.08);
+      --n-accent: #6fb7ff;
+      --l-accent: #7be0a7;
+      --m-accent: #ffb85c;
+      --s-accent: #b39bff;
+      --glow: 0 18px 40px rgba(0,0,0,0.45);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 600px at 15% 5%, rgba(111, 183, 255, 0.16), transparent 60%),
+        radial-gradient(800px 560px at 90% 10%, rgba(179, 155, 255, 0.14), transparent 60%),
+        linear-gradient(140deg, var(--bg), var(--bg-2));
+      color: var(--text);
+      font-family: "Sora", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; padding: 16px 28px;
+      border-bottom: 1px solid var(--line); backdrop-filter: blur(12px);
+      background: rgba(8, 10, 16, 0.7); position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 32px 20px 10px; }
+    header.hero h1 { margin: 0 0 10px; font-size: clamp(2rem, 3vw, 2.8rem); letter-spacing: 0.06em; text-transform: uppercase; }
+    header.hero p { margin: 0; color: var(--muted); }
+    .tabs {
+      margin: 18px auto 12px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    }
+    .tab {
+      border: 1px solid var(--line); background: rgba(10, 12, 18, 0.6); color: var(--text);
+      padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 0.9rem;
+      transition: 0.2s ease;
+    }
+    .tab.active { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); }
+
+    .layout {
+      display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+      gap: 20px; padding: 12px 28px 10px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--glow);
+      padding: 16px 18px;
+    }
+    .grid-visuals { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .viz-card {
+      border: 1px solid var(--line); border-radius: 16px; padding: 12px; background: rgba(10, 12, 18, 0.7);
+      display: grid; gap: 8px;
+    }
+    .viz-title { font-size: 0.95rem; color: var(--muted); display: flex; justify-content: space-between; }
+    .viz-title strong { color: var(--text); font-weight: 600; }
+    canvas { width: 100%; height: 220px; border-radius: 12px; background: rgba(6, 8, 12, 0.75); border: 1px solid var(--line); }
+    .caption { font-size: 0.85rem; color: var(--muted); }
+
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; accent-color: var(--n-accent); }
+    .pill { padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.04); text-align: center; }
+    .data-panel { display: grid; gap: 8px; font-size: 0.9rem; color: var(--muted); }
+    .data-panel strong { color: var(--text); font-weight: 600; }
+    .info-strip {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px;
+      padding: 12px 28px 24px;
+    }
+    .info-card {
+      background: rgba(12, 15, 22, 0.75); border: 1px solid var(--line); border-radius: 14px; padding: 12px;
+      color: var(--muted); font-size: 0.85rem; min-height: 92px;
+    }
+    .info-card strong { display: block; margin-bottom: 6px; color: var(--text); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      .grid-visuals { grid-template-columns: 1fr; }
+      .info-strip { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .info-strip { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="pill">Quantum Physics</span></div>
+    <header class="hero">
+      <h1>Quantum Numbers</h1>
+      <p>n, l, m<sub>l</sub>, m<sub>s</sub> — the full address of an electron state.</p>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="n">1. Principal (n)</button>
+        <button class="tab" data-tab="l">2. Azimuthal (l)</button>
+        <button class="tab" data-tab="m">3. Magnetic (m<sub>l</sub>)</button>
+        <button class="tab" data-tab="s">4. Spin (m<sub>s</sub>)</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="grid-visuals">
+          <div class="viz-card" data-card="n">
+            <div class="viz-title"><strong>Principal (n)</strong><span style="color:var(--n-accent)">Energy level</span></div>
+            <canvas id="nCanvas"></canvas>
+            <div class="caption">Distance from nucleus and shell energy.</div>
+          </div>
+          <div class="viz-card" data-card="l">
+            <div class="viz-title"><strong>Azimuthal (l)</strong><span style="color:var(--l-accent)">Orbital shape</span></div>
+            <canvas id="lCanvas"></canvas>
+            <div class="caption">Shape of the electron cloud (s, p, d, f).</div>
+          </div>
+          <div class="viz-card" data-card="m">
+            <div class="viz-title"><strong>Magnetic (m<sub>l</sub>)</strong><span style="color:var(--m-accent)">Orientation</span></div>
+            <canvas id="mCanvas"></canvas>
+            <div class="caption">Orientation of the orbital in space.</div>
+          </div>
+          <div class="viz-card" data-card="s">
+            <div class="viz-title"><strong>Spin (m<sub>s</sub>)</strong><span style="color:var(--s-accent)">Spin state</span></div>
+            <canvas id="sCanvas"></canvas>
+            <div class="caption">Intrinsic spin up/down with precession.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="pill">n, l, m<sub>l</sub>, m<sub>s</sub></div>
+        <div class="control-group">
+          <label>Principal (n) <span id="nVal">2</span></label>
+          <input type="range" id="nSlider" min="1" max="5" value="2">
+        </div>
+        <div class="control-group">
+          <label>Azimuthal (l) <span id="lVal">0</span></label>
+          <input type="range" id="lSlider" min="0" max="3" value="0">
+        </div>
+        <div class="control-group">
+          <label>Magnetic (m<sub>l</sub>) <span id="mVal">0</span></label>
+          <input type="range" id="mSlider" min="-2" max="2" value="0">
+        </div>
+        <div class="control-group">
+          <label>Spin (m<sub>s</sub>) <span id="sVal">+1/2</span></label>
+          <input type="range" id="sSlider" min="-1" max="1" step="2" value="1">
+        </div>
+        <div class="data-panel">
+          <div>Orbital: <strong id="orbVal">s</strong></div>
+          <div>Electrons: <strong id="eVal">2</strong></div>
+          <div>Notation: <strong id="notVal">2s²</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-strip">
+      <div class="info-card"><strong>Principal (n)</strong>Sets shell energy and average radius from the nucleus.</div>
+      <div class="info-card"><strong>Azimuthal (l)</strong>Determines orbital shape: s, p, d, f.</div>
+      <div class="info-card"><strong>Magnetic (m<sub>l</sub>)</strong>Chooses the orbital’s orientation in space.</div>
+      <div class="info-card"><strong>Spin (m<sub>s</sub>)</strong>Two allowed values: +1/2 or −1/2.</div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      n: 2,
+      l: 0,
+      m: 0,
+      s: 1,
+      time: 0,
+      active: 'n'
+    };
+
+    const lLabels = ['s', 'p', 'd', 'f'];
+
+    const nSlider = document.getElementById('nSlider');
+    const lSlider = document.getElementById('lSlider');
+    const mSlider = document.getElementById('mSlider');
+    const sSlider = document.getElementById('sSlider');
+
+    const nVal = document.getElementById('nVal');
+    const lVal = document.getElementById('lVal');
+    const mVal = document.getElementById('mVal');
+    const sVal = document.getElementById('sVal');
+
+    const orbVal = document.getElementById('orbVal');
+    const eVal = document.getElementById('eVal');
+    const notVal = document.getElementById('notVal');
+
+    const canvases = {
+      n: document.getElementById('nCanvas'),
+      l: document.getElementById('lCanvas'),
+      m: document.getElementById('mCanvas'),
+      s: document.getElementById('sCanvas')
+    };
+
+    const ctxs = {
+      n: canvases.n.getContext('2d'),
+      l: canvases.l.getContext('2d'),
+      m: canvases.m.getContext('2d'),
+      s: canvases.s.getContext('2d')
+    };
+
+    function resizeCanvases() {
+      Object.values(canvases).forEach((canvas) => {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      });
+    }
+
+    function updateValues() {
+      state.n = parseInt(nSlider.value, 10);
+      state.l = Math.min(parseInt(lSlider.value, 10), state.n - 1);
+      lSlider.max = state.n - 1;
+      if (parseInt(lSlider.value, 10) > state.n - 1) {
+        lSlider.value = state.n - 1;
+      }
+      state.m = parseInt(mSlider.value, 10);
+      const mLimit = state.l;
+      mSlider.min = -mLimit;
+      mSlider.max = mLimit;
+      state.m = Math.max(-mLimit, Math.min(mLimit, state.m));
+      mSlider.value = state.m;
+
+      state.s = parseInt(sSlider.value, 10);
+
+      nVal.textContent = state.n;
+      lVal.textContent = state.l;
+      mVal.textContent = state.m;
+      sVal.textContent = state.s === 1 ? '+1/2' : '-1/2';
+
+      orbVal.textContent = lLabels[state.l];
+      eVal.textContent = 2 * (2 * state.l + 1);
+      notVal.textContent = `${state.n}${lLabels[state.l]}²`;
+    }
+
+    function drawBackground(ctx, w, h) {
+      ctx.clearRect(0, 0, w, h);
+      const grad = ctx.createRadialGradient(w * 0.5, h * 0.3, 10, w * 0.5, h * 0.5, w * 0.8);
+      grad.addColorStop(0, 'rgba(255,255,255,0.04)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    function drawPrincipal() {
+      const canvas = canvases.n;
+      const ctx = ctxs.n;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      drawBackground(ctx, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      const maxR = Math.min(w, h) * 0.38;
+      for (let i = 1; i <= 5; i++) {
+        const r = (i / 5) * maxR;
+        ctx.strokeStyle = i === state.n ? 'rgba(111,183,255,0.9)' : 'rgba(111,183,255,0.2)';
+        ctx.lineWidth = i === state.n ? 2.5 : 1;
+        ctx.setLineDash(i === state.n ? [] : [6, 6]);
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#ff7a7a';
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+      const eCount = 2 * state.n;
+      for (let i = 0; i < eCount; i++) {
+        const angle = (i / eCount) * Math.PI * 2 + state.time * 0.7;
+        const r = (state.n / 5) * maxR;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        ctx.fillStyle = 'rgba(111,183,255,0.9)';
+        ctx.beginPath(); ctx.arc(x, y, 4.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    function drawAzimuthal() {
+      const canvas = canvases.l;
+      const ctx = ctxs.l;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      drawBackground(ctx, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.strokeStyle = 'rgba(123,224,167,0.5)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(-80, 0); ctx.lineTo(80, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -80); ctx.lineTo(0, 80); ctx.stroke();
+
+      ctx.fillStyle = 'rgba(123,224,167,0.6)';
+      ctx.strokeStyle = 'rgba(123,224,167,0.9)';
+      if (state.l === 0) {
+        ctx.beginPath(); ctx.arc(0, 0, 60, 0, Math.PI * 2); ctx.fill();
+      } else if (state.l === 1) {
+        ctx.beginPath(); ctx.ellipse(-40, 0, 32, 52, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(40, 0, 32, 52, 0, 0, Math.PI * 2); ctx.fill();
+      } else if (state.l === 2) {
+        const petals = 4;
+        for (let i = 0; i < petals; i++) {
+          const angle = (i / petals) * Math.PI / 2;
+          ctx.save();
+          ctx.rotate(angle);
+          ctx.beginPath(); ctx.ellipse(45, 0, 22, 44, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+      } else {
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI / 3;
+          ctx.save();
+          ctx.rotate(angle);
+          ctx.beginPath(); ctx.ellipse(48, 0, 16, 36, 0, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawMagnetic() {
+      const canvas = canvases.m;
+      const ctx = ctxs.m;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      drawBackground(ctx, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.strokeStyle = 'rgba(255,184,92,0.6)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-90, 0); ctx.lineTo(90, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -80); ctx.lineTo(0, 80); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-60, 60); ctx.lineTo(60, -60); ctx.stroke();
+
+      const angle = (state.m / Math.max(1, state.l)) * (Math.PI / 4);
+      ctx.rotate(angle + state.time * 0.15);
+      ctx.fillStyle = 'rgba(255,184,92,0.7)';
+      if (state.l === 0) {
+        ctx.beginPath(); ctx.arc(0, 0, 50, 0, Math.PI * 2); ctx.fill();
+      } else {
+        ctx.beginPath(); ctx.ellipse(-40, 0, 26, 44, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(40, 0, 26, 44, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawSpin() {
+      const canvas = canvases.s;
+      const ctx = ctxs.s;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      drawBackground(ctx, w, h);
+      const cx = w / 2;
+      const cy = h / 2 + 10;
+      const radius = 50;
+
+      const grad = ctx.createRadialGradient(cx - 12, cy - 12, 10, cx, cy, radius);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(1, '#7d6dff');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
+
+      ctx.strokeStyle = 'rgba(179,155,255,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 60, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      if (state.s === 1) {
+        ctx.moveTo(cx, cy + 40);
+        ctx.lineTo(cx, cy - 60);
+        ctx.lineTo(cx - 6, cy - 48);
+        ctx.moveTo(cx, cy - 60);
+        ctx.lineTo(cx + 6, cy - 48);
+      } else {
+        ctx.moveTo(cx, cy - 40);
+        ctx.lineTo(cx, cy + 60);
+        ctx.lineTo(cx - 6, cy + 48);
+        ctx.moveTo(cx, cy + 60);
+        ctx.lineTo(cx + 6, cy + 48);
+      }
+      ctx.stroke();
+    }
+
+    function highlightCards() {
+      document.querySelectorAll('.viz-card').forEach(card => {
+        const key = card.getAttribute('data-card');
+        if (key === state.active) {
+          card.style.borderColor = 'rgba(255,255,255,0.3)';
+          card.style.boxShadow = '0 0 0 1px rgba(255,255,255,0.15), 0 18px 40px rgba(0,0,0,0.4)';
+        } else {
+          card.style.borderColor = 'rgba(255,255,255,0.08)';
+          card.style.boxShadow = 'none';
+        }
+      });
+    }
+
+    function draw() {
+      state.time += 0.01;
+      drawPrincipal();
+      drawAzimuthal();
+      drawMagnetic();
+      drawSpin();
+      highlightCards();
+      requestAnimationFrame(draw);
+    }
+
+    document.getElementById('tabs').addEventListener('click', (e) => {
+      const btn = e.target.closest('.tab');
+      if (!btn) return;
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      btn.classList.add('active');
+      state.active = btn.getAttribute('data-tab');
+    });
+
+    nSlider.addEventListener('input', updateValues);
+    lSlider.addEventListener('input', updateValues);
+    mSlider.addEventListener('input', updateValues);
+    sSlider.addEventListener('input', updateValues);
+
+    window.addEventListener('resize', () => {
+      resizeCanvases();
+    });
+
+    resizeCanvases();
+    updateValues();
+    draw();
+  </script>
+</body>
+</html>

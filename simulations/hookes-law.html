@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hooke's Law</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --spring-coil: #e9f2ff;
+      --mass-color: #4a6fa5;
+      --equilibrium: rgba(255, 255, 255, 0.3);
+      --graph-line: #6ad7ff;
+      --graph-point: #f6c76b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 360px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select, input[type="number"] {
+      width: 100%;
+    }
+
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .inline > * {
+      flex: 1;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    button.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(106, 215, 255, 0.2);
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .energy-bars {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(120, 150, 190, 0.2);
+      overflow: hidden;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.2s ease;
+    }
+
+    .graph-panel {
+      margin: 0 28px 20px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="hookes-law">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Hooke's Law</h1>
+      <p>Force is proportional to displacement: F = -kx</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="springCanvas" width="900" height="420" aria-label="Spring simulation"></canvas>
+        <div class="btn-row">
+          <button id="playPause">Play</button>
+          <button id="reset">Reset</button>
+          <div class="inline" style="max-width: 220px;">
+            <label for="speed">Speed</label>
+            <select id="speed">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </div>
+          <div class="btn-row">
+            <button id="modeStatic" class="active">Static</button>
+            <button id="modeOsc">Oscillate</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="k">Spring Constant <strong id="kLabel">50 N/m</strong></label>
+          <input type="range" id="k" min="10" max="500" step="1" value="50" />
+        </div>
+
+        <div class="control-group">
+          <label for="mass">Mass <strong id="massLabel">1.0 kg</strong></label>
+          <input type="range" id="mass" min="0.1" max="20" step="0.1" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label for="damping">Damping <strong id="dampingLabel">0.0</strong></label>
+          <input type="range" id="damping" min="0" max="5" step="0.05" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="displacement">Displacement <strong id="xLabel">0.25 m</strong></label>
+          <input type="range" id="displacement" min="-0.5" max="0.5" step="0.01" value="0.25" />
+        </div>
+
+        <div class="control-group">
+          <label for="velocity">Initial Velocity <strong id="vLabel">0.0 m/s</strong></label>
+          <input type="range" id="velocity" min="-2" max="2" step="0.05" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showVectors" checked /> Show force vectors</label>
+          <label><input type="checkbox" id="showEnergy" checked /> Show energy bars</label>
+          <label><input type="checkbox" id="showTrail" checked /> Show position trail</label>
+          <label><input type="checkbox" id="showGraph" checked /> Show F-x graph</label>
+          <label><input type="checkbox" id="showEquilibrium" checked /> Show equilibrium marker</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+      <div class="energy-bars" id="energyBars">
+        <div>KE</div>
+        <div class="bar"><span id="keBar" style="background: var(--accent); width: 0%;"></span></div>
+        <div>PE</div>
+        <div class="bar"><span id="peBar" style="background: var(--accent-2); width: 0%;"></span></div>
+        <div>Total</div>
+        <div class="bar"><span id="totalBar" style="background: linear-gradient(90deg, var(--accent), var(--accent-2)); width: 100%;"></span></div>
+      </div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="graph-header">
+        <h3 style="margin:0;">Force vs Displacement</h3>
+        <div style="color: var(--sim-muted);">F = -kx</div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="220" aria-label="Force displacement graph"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Hooke's Law states that the force in an ideal spring is proportional to displacement: F = -kx. The negative sign means the force is restoring.</p>
+        <p><strong>Elastic potential energy:</strong> PE = 1/2 kx²</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Keep mass constant. Double k. How does force change for x = 0.3 m?</li>
+          <li>Set damping = 0. Start oscillation. Does total energy stay constant?</li>
+          <li>Keep k constant. Double mass. How does period change?</li>
+          <li>Keep mass constant. Double k. How does period change?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Linear relationship: F ∝ x for ideal springs.</li>
+          <li>Restoring force always opposes displacement.</li>
+          <li>Energy stored in the spring: PE = 1/2 kx².</li>
+          <li>Period: T = 2π√(m/k).</li>
+        </ul>
+      </details>
+
+      <details>
+        <summary>🌍 Real-World Examples</summary>
+        <ul>
+          <li>Pen springs</li>
+          <li>Car suspensions</li>
+          <li>Trampolines</li>
+          <li>Scales</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('springCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const kInput = document.getElementById('k');
+    const massInput = document.getElementById('mass');
+    const dampingInput = document.getElementById('damping');
+    const displacementInput = document.getElementById('displacement');
+    const velocityInput = document.getElementById('velocity');
+    const speedSelect = document.getElementById('speed');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const modeStaticBtn = document.getElementById('modeStatic');
+    const modeOscBtn = document.getElementById('modeOsc');
+
+    const kLabel = document.getElementById('kLabel');
+    const massLabel = document.getElementById('massLabel');
+    const dampingLabel = document.getElementById('dampingLabel');
+    const xLabel = document.getElementById('xLabel');
+    const vLabel = document.getElementById('vLabel');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const keBar = document.getElementById('keBar');
+    const peBar = document.getElementById('peBar');
+    const totalBar = document.getElementById('totalBar');
+    const energyBars = document.getElementById('energyBars');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const showVectors = document.getElementById('showVectors');
+    const showEnergy = document.getElementById('showEnergy');
+    const showTrail = document.getElementById('showTrail');
+    const showGraph = document.getElementById('showGraph');
+    const showEquilibrium = document.getElementById('showEquilibrium');
+
+    const state = {
+      k: 50,
+      mass: 1,
+      damping: 0,
+      displacement: 0.25,
+      velocity: 0,
+      playing: false,
+      speed: 1,
+      mode: 'static',
+      trail: []
+    };
+
+    function updateLabels() {
+      kLabel.textContent = `${state.k.toFixed(0)} N/m`;
+      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
+      dampingLabel.textContent = state.damping.toFixed(2);
+      xLabel.textContent = `${state.displacement.toFixed(2)} m`;
+      vLabel.textContent = `${state.velocity.toFixed(2)} m/s`;
+    }
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+
+    function compute() {
+      const force = -state.k * state.displacement;
+      const ke = 0.5 * state.mass * state.velocity * state.velocity;
+      const pe = 0.5 * state.k * state.displacement * state.displacement;
+      const total = ke + pe;
+      const period = 2 * Math.PI * Math.sqrt(state.mass / state.k);
+      return { force, ke, pe, total, period };
+    }
+
+    function updatePhysics(dt) {
+      const acc = (-state.k * state.displacement - state.damping * state.velocity) / state.mass;
+      state.velocity += acc * dt;
+      state.displacement += state.velocity * dt;
+      if (showTrail.checked) {
+        state.trail.push(state.displacement);
+        if (state.trail.length > 120) state.trail.shift();
+      } else {
+        state.trail = [];
+      }
+    }
+
+    function resetSim() {
+      state.displacement = parseFloat(displacementInput.value);
+      state.velocity = parseFloat(velocityInput.value);
+      state.trail = [];
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const centerY = canvas.height / 2;
+      const anchorX = 100;
+      const baseX = 360;
+      const scale = 180;
+      const x = baseX + state.displacement * scale;
+
+      ctx.fillStyle = 'rgba(233, 242, 255, 0.08)';
+      ctx.fillRect(40, 60, 40, canvas.height - 120);
+
+      if (showEquilibrium.checked) {
+        ctx.strokeStyle = 'rgba(233, 242, 255, 0.35)';
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(baseX, 60);
+        ctx.lineTo(baseX, canvas.height - 60);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      drawSpring(anchorX + 40, x - 40, centerY);
+
+      const massWidth = 80;
+      const massHeight = 60;
+      ctx.fillStyle = '#4a6fa5';
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x - massWidth / 2, centerY - massHeight / 2, massWidth, massHeight, 10);
+      ctx.fill();
+      ctx.stroke();
+
+      if (showVectors.checked) {
+        drawForceVector(x + 10, centerY, state.displacement > 0 ? -1 : 1);
+        drawForceVector(x + 10, centerY - 25, state.displacement > 0 ? 1 : -1, true);
+      }
+
+      if (showTrail.checked && state.trail.length > 2) {
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        state.trail.forEach((dx, i) => {
+          const tx = baseX + dx * scale;
+          const ty = centerY + (i - state.trail.length) * 0.3;
+          if (i === 0) ctx.moveTo(tx, ty);
+          else ctx.lineTo(tx, ty);
+        });
+        ctx.stroke();
+      }
+    }
+
+    function drawSpring(x1, x2, y) {
+      const coils = 12;
+      const amp = 16;
+      const length = x2 - x1 - 20;
+      const seg = length / coils;
+      ctx.strokeStyle = '#e9f2ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x1, y);
+      for (let i = 0; i < coils; i++) {
+        const yOffset = i % 2 === 0 ? -amp : amp;
+        ctx.lineTo(x1 + seg * (i + 0.5), y + yOffset);
+        ctx.lineTo(x1 + seg * (i + 1), y);
+      }
+      ctx.stroke();
+    }
+
+    function drawForceVector(x, y, dir, applied = false) {
+      const length = 70;
+      ctx.strokeStyle = applied ? 'rgba(246, 199, 107, 0.9)' : 'rgba(106, 215, 255, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dir * length, y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + dir * length, y);
+      ctx.lineTo(x + dir * length - dir * 10, y - 6);
+      ctx.lineTo(x + dir * length - dir * 10, y + 6);
+      ctx.closePath();
+      ctx.fillStyle = applied ? 'rgba(246, 199, 107, 0.9)' : 'rgba(106, 215, 255, 0.9)';
+      ctx.fill();
+    }
+
+    function updateDataPanel() {
+      const { force, ke, pe, total } = compute();
+      dataPanel.innerHTML = `
+        <div><strong>Spring Constant k:</strong> ${state.k.toFixed(1)} N/m</div>
+        <div><strong>Displacement x:</strong> ${state.displacement.toFixed(2)} m</div>
+        <div><strong>Applied Force F:</strong> ${(-force).toFixed(2)} N</div>
+        <div><strong>Spring Force Fs:</strong> ${force.toFixed(2)} N</div>
+        <div><strong>Net Force:</strong> ${(force - state.damping * state.velocity).toFixed(2)} N</div>
+        <div><strong>Velocity:</strong> ${state.velocity.toFixed(2)} m/s</div>
+        <div><strong>Kinetic Energy:</strong> ${ke.toFixed(2)} J</div>
+        <div><strong>Potential Energy:</strong> ${pe.toFixed(2)} J</div>
+        <div><strong>Total Energy:</strong> ${total.toFixed(2)} J</div>
+      `;
+
+      const maxE = Math.max(total, 0.001);
+      keBar.style.width = `${(ke / maxE) * 100}%`;
+      peBar.style.width = `${(pe / maxE) * 100}%`;
+      totalBar.style.width = '100%';
+      energyBars.style.display = showEnergy.checked ? 'grid' : 'none';
+    }
+
+    function drawGraph() {
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 30;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      const xMin = -0.5;
+      const xMax = 0.5;
+      const yMin = -state.k * xMax;
+      const yMax = -state.k * xMin;
+
+      gctx.strokeStyle = 'rgba(106, 215, 255, 0.9)';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      for (let i = 0; i <= 60; i++) {
+        const x = xMin + (i / 60) * (xMax - xMin);
+        const y = -state.k * x;
+        const px = padding + ((x - xMin) / (xMax - xMin)) * width;
+        const py = padding + height - ((y - yMin) / (yMax - yMin)) * height;
+        if (i === 0) gctx.moveTo(px, py);
+        else gctx.lineTo(px, py);
+      }
+      gctx.stroke();
+
+      const currentY = -state.k * state.displacement;
+      const cx = padding + ((state.displacement - xMin) / (xMax - xMin)) * width;
+      const cy = padding + height - ((currentY - yMin) / (yMax - yMin)) * height;
+      gctx.fillStyle = 'rgba(246, 199, 107, 0.9)';
+      gctx.beginPath();
+      gctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      gctx.fill();
+    }
+
+    function loop() {
+      const dt = 1 / 60;
+      if (state.playing && state.mode === 'oscillate') {
+        updatePhysics(dt * state.speed);
+      }
+      draw();
+      updateDataPanel();
+      if (showGraph.checked) {
+        graphPanel.style.display = 'block';
+        drawGraph();
+      } else {
+        graphPanel.style.display = 'none';
+      }
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousedown', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (event.clientX - rect.left) * (canvas.width / rect.width);
+      const my = (event.clientY - rect.top) * (canvas.height / rect.height);
+      const baseX = 360;
+      const centerY = canvas.height / 2;
+      const dx = mx - baseX;
+      const dy = Math.abs(my - centerY);
+      if (dy < 50) {
+        const onMove = (e) => {
+          const nx = (e.clientX - rect.left) * (canvas.width / rect.width);
+          const newDx = clamp((nx - baseX) / 180, -0.5, 0.5);
+          state.displacement = newDx;
+          displacementInput.value = state.displacement;
+          updateLabels();
+        };
+        const onUp = () => {
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      }
+    });
+
+    kInput.addEventListener('input', (e) => {
+      state.k = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    dampingInput.addEventListener('input', (e) => {
+      state.damping = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    displacementInput.addEventListener('input', (e) => {
+      state.displacement = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    velocityInput.addEventListener('input', (e) => {
+      state.velocity = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetSim();
+    });
+
+    modeStaticBtn.addEventListener('click', () => {
+      state.mode = 'static';
+      modeStaticBtn.classList.add('active');
+      modeOscBtn.classList.remove('active');
+    });
+
+    modeOscBtn.addEventListener('click', () => {
+      state.mode = 'oscillate';
+      modeOscBtn.classList.add('active');
+      modeStaticBtn.classList.remove('active');
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    resetSim();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

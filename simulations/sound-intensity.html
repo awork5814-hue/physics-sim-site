@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sound Intensity</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: "Trebuchet MS", "Segoe UI", sans-serif; color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas {
+      width: 100%; height: 300px; background: #0b1420;
+      border: 1px solid #20324a; border-radius: 10px;
+    }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px;
+    }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout {
+      background: #0f1a27; border: 1px solid #20324a; border-radius: 10px;
+      padding: 10px 12px; display: grid; gap: 6px; font-size: 13px;
+    }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .presets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .presets { grid-template-columns: 1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Sound Intensity</h1>
+        <p>Decibels, power, and inverse square law</p>
+      </div>
+      <div class="pill">I = P/4πr² · β = 10log(I/I₀)</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Intensity Visualization</h2>
+        <canvas id="sceneCanvas" width="600" height="300"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Amplitude (%)</label>
+            <input type="range" id="amp" min="0" max="100" step="1" value="50" />
+            <div class="row"><span class="muted">A</span><span class="value" id="ampValue">50%</span></div>
+          </div>
+          <div class="control">
+            <label>Distance (m)</label>
+            <input type="range" id="distance" min="1" max="100" step="1" value="10" />
+            <div class="row"><span class="muted">r</span><span class="value" id="distValue">10 m</span></div>
+          </div>
+          <div class="control">
+            <label>Source Power (W)</label>
+            <input type="range" id="power" min="0.1" max="10" step="0.1" value="1" />
+            <div class="row"><span class="muted">P</span><span class="value" id="powerValue">1.0 W</span></div>
+          </div>
+          <div class="control">
+            <label>Unit Display</label>
+            <label class="toggle"><input type="checkbox" id="unitToggle" checked> Show dB</label>
+          </div>
+          <div class="control">
+            <label>Play Sound</label>
+            <button id="play">Play</button>
+          </div>
+          <div class="control">
+            <label>Preset Sounds</label>
+            <div class="presets">
+              <button class="preset" data-db="30">Whisper</button>
+              <button class="preset" data-db="60">Talk</button>
+              <button class="preset" data-db="100">Jet</button>
+              <button class="preset" data-db="0">Threshold</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Measurements</div>
+            <div class="row"><span>Intensity</span><span class="value" id="intValue">0 W/m²</span></div>
+            <div class="row"><span>Level</span><span class="value" id="dbValue">0 dB</span></div>
+            <div class="row"><span>Pressure Δp</span><span class="value" id="pValue">0 Pa</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span>Status</span><span class="value" id="statusValue">Safe</span></div>
+            <div class="row"><span>Distance rule</span><span class="value">+6 dB per half distance</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Hearing damage risk above 85 dB for long exposure.</div>
+  </div>
+
+  <script>
+    const I0 = 1e-12;
+    const rho = 1.2;
+    const v = 343;
+
+    const state = {
+      amp: 0.5,
+      distance: 10,
+      power: 1,
+      showDb: true,
+      playing: false,
+      time: 0
+    };
+
+    const dom = {
+      amp: document.getElementById('amp'),
+      distance: document.getElementById('distance'),
+      power: document.getElementById('power'),
+      unitToggle: document.getElementById('unitToggle'),
+      play: document.getElementById('play'),
+      ampValue: document.getElementById('ampValue'),
+      distValue: document.getElementById('distValue'),
+      powerValue: document.getElementById('powerValue'),
+      intValue: document.getElementById('intValue'),
+      dbValue: document.getElementById('dbValue'),
+      pValue: document.getElementById('pValue'),
+      statusValue: document.getElementById('statusValue')
+    };
+
+    const canvas = document.getElementById('sceneCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let audioCtx, osc, gain;
+
+    function intensity() {
+      return state.power / (4 * Math.PI * state.distance * state.distance);
+    }
+
+    function decibel(I) {
+      return 10 * Math.log10(I / I0);
+    }
+
+    function pressureAmplitude(I) {
+      return Math.sqrt(2 * rho * v * I);
+    }
+
+    function updateAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        osc.frequency.value = 440;
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start();
+      }
+      gain.gain.value = state.playing ? 0.03 * state.amp : 0;
+    }
+
+    function drawScene() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      const srcX = 80;
+      const srcY = h / 2;
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(srcX, srcY, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText('Source', srcX - 20, srcY - 20);
+
+      const listenerX = w - 80;
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(listenerX, srcY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText('Listener', listenerX - 30, srcY - 20);
+
+      const waves = 4;
+      const intensityFactor = Math.max(0.1, state.amp);
+      for (let i = 1; i <= waves; i++) {
+        const r = i * 40 + (state.time % 40);
+        ctx.strokeStyle = `rgba(106,215,255,${0.4 / i * intensityFactor})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(srcX, srcY, r, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function updateReadouts() {
+      const I = intensity();
+      const db = decibel(I);
+      const p = pressureAmplitude(I);
+      dom.ampValue.textContent = `${Math.round(state.amp * 100)}%`;
+      dom.distValue.textContent = `${state.distance} m`;
+      dom.powerValue.textContent = `${state.power.toFixed(1)} W`;
+      dom.intValue.textContent = `${I.toExponential(2)} W/m²`;
+      dom.dbValue.textContent = `${db.toFixed(1)} dB`;
+      dom.pValue.textContent = `${p.toFixed(3)} Pa`;
+      dom.statusValue.textContent = db > 85 ? 'Warning' : 'Safe';
+    }
+
+    function update() {
+      updateReadouts();
+      updateAudio();
+      drawScene();
+    }
+
+    function tick() {
+      state.time += 0.5;
+      drawScene();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.amp.addEventListener('input', () => { state.amp = Number(dom.amp.value) / 100; update(); });
+      dom.distance.addEventListener('input', () => { state.distance = Number(dom.distance.value); update(); });
+      dom.power.addEventListener('input', () => { state.power = Number(dom.power.value); update(); });
+      dom.unitToggle.addEventListener('change', () => { state.showDb = dom.unitToggle.checked; update(); });
+      dom.play.addEventListener('click', () => { state.playing = !state.playing; dom.play.textContent = state.playing ? 'Stop' : 'Play'; update(); });
+      document.querySelectorAll('.preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetDb = Number(btn.dataset.db);
+          const I = I0 * Math.pow(10, targetDb / 10);
+          state.power = I * 4 * Math.PI * state.distance * state.distance;
+          dom.power.value = Math.min(10, Math.max(0.1, state.power));
+          update();
+        });
+      });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

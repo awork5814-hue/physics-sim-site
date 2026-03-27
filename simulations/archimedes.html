@@ -1,0 +1,1897 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Archimedes' Principle</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #38bdf8;
+      --secondary: #818cf8;
+      --accent: #34d399;
+      --accent-2: #fbbf24;
+      --sink: #f87171;
+      --float: #34d399;
+      
+      --bg-deep: #0a1628;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary) var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: var(--bg-deep);
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
+      color: var(--text);
+      font-family: 'Outfit', 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px clamp(20px, 4vw, 40px);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      background: rgba(10, 22, 40, 0.9);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 8px 16px;
+      border-radius: 10px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar a::before {
+      content: '←';
+      transition: transform 0.3s;
+    }
+
+    .topbar a:hover {
+      color: var(--primary);
+      background: rgba(56, 189, 248, 0.1);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 30px 20px 20px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin: 0 0 8px;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    header.hero p {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.6fr);
+      gap: 20px;
+      padding: 16px clamp(20px, 4vw, 24px);
+      align-items: start;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+
+    .canvas-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 900 / 220;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: block;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      border-color: var(--primary);
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(129, 140, 248, 0.15));
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button.active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.25));
+      border-color: var(--primary);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group > label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group > label strong {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      -webkit-appearance: none;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: linear-gradient(135deg, #fff, #e2e8f0);
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      cursor: pointer;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    select:hover, select:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    select option {
+      background: #0f1f35;
+      color: var(--text);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 6px;
+    }
+
+    .checkbox-group label:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 4px;
+      width: 5px;
+      height: 8px;
+      border: solid #0a1628;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(129, 140, 248, 0.05));
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+      padding-right: 50px;
+      text-align: center;
+      position: relative;
+    }
+
+    .formula-box .copy-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(56, 189, 248, 0.15);
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .formula-box:hover .copy-btn {
+      opacity: 1;
+    }
+
+    .formula-box .copy-btn:hover {
+      background: rgba(56, 189, 248, 0.3);
+    }
+
+    .formula-box.copied::after {
+      content: "✓ Copied!";
+      position: absolute;
+      right: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4ade80;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .formula-box .formula-main {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .formula-box .formula-desc {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.05));
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .info-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .info-text {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .info-values {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(251, 191, 36, 0.15);
+      font-size: 0.8rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .info-values .float { color: var(--float); }
+    .info-values .sink { color: var(--sink); }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .data-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .data-label {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .data-value {
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
+      line-height: 1.2;
+    }
+
+    .data-value.blue { color: var(--primary); }
+    .data-value.green { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.red { color: var(--sink); }
+
+    .data-value small {
+      font-size: 0.55rem;
+      opacity: 0.7;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .status-badge.float {
+      background: rgba(52, 211, 153, 0.2);
+      color: var(--float);
+    }
+
+    .status-badge.sink {
+      background: rgba(248, 113, 113, 0.2);
+      color: var(--sink);
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-indicator {
+      background: linear-gradient(135deg, rgba(52, 211, 153, 0.25), rgba(52, 211, 153, 0.1));
+      border: 2px solid var(--float);
+      border-radius: 10px;
+      padding: 8px 16px;
+      text-align: center;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+      animation: statusPulse 2s ease-in-out infinite;
+    }
+
+    .status-indicator.sinking {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.25), rgba(248, 113, 113, 0.1));
+      border-color: var(--sink);
+    }
+
+    @keyframes statusPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.5); }
+    }
+
+    .status-indicator.sinking {
+      animation-name: statusSinkPulse;
+    }
+
+    @keyframes statusSinkPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.5); }
+    }
+
+    .status-text {
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      color: var(--float);
+      text-shadow: 0 0 15px rgba(52, 211, 153, 0.5);
+    }
+
+    .status-indicator.sinking .status-text {
+      color: var(--sink);
+      text-shadow: 0 0 15px rgba(248, 113, 113, 0.5);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 280px;
+      }
+      .data-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">Back to Library</a>
+    </div>
+
+    <header class="hero">
+      <h1>Archimedes' Principle</h1>
+      <p>Buoyant force equals weight of displaced fluid</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="simCanvas" width="900" height="220"></canvas>
+        
+        <div class="btn-row">
+          <button id="playPause"><span>▶</span> Play</button>
+          <button id="reset"><span>↺</span> Reset</button>
+        </div>
+        
+        <div class="status-indicator" id="statusIndicator">
+          <span class="status-text" id="statusText">FLOAT</span>
+        </div>
+        
+        <div class="data-grid">
+          <div class="data-card">
+            <span class="data-label">Weight Force</span>
+            <span class="data-value red" id="weightVal">0 <small>N</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Buoyant Force</span>
+            <span class="data-value blue" id="buoyVal">0 <small>N</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Net Force</span>
+            <span class="data-value yellow" id="netVal">0 <small>N</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Object Mass</span>
+            <span class="data-value blue" id="massVal">0 <small>kg</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Fluid Density</span>
+            <span class="data-value green" id="fluidDensityVal">1000 <small>kg/m³</small></span>
+          </div>
+          <div class="data-card">
+            <span class="data-label">Submerged</span>
+            <span class="data-value yellow" id="submergedVal">0 <small>%</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls">
+        <div class="formula-box" onclick="copyFormula(this)">
+          <div class="formula-main">F<sub>b</sub> = ρ<sub>f</sub> × V<sub>disp</sub> × g</div>
+          <div class="formula-desc">Buoyancy = Fluid Density × Displaced Volume × Gravity</div>
+          <button class="copy-btn" title="Copy formula">📋</button>
+        </div>
+
+        <div class="info-box">
+          <div class="info-title">Physics Principle</div>
+          <div class="info-text" id="infoText">
+            Object density &lt; Fluid density → Floats<br>
+            Object density &gt; Fluid density → Sinks
+          </div>
+          <div class="info-values" id="infoValues">
+            <span id="infoRatio"></span>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Object Shape</label>
+          <select id="objectShape">
+            <option value="cube">Cube</option>
+            <option value="sphere">Sphere</option>
+            <option value="cylinder">Cylinder</option>
+            <option value="pyramid">Pyramid</option>
+            <option value="cone">Cone</option>
+            <option value="log">Log</option>
+            <option value="ship">Ship</option>
+            <option value="rock">Irregular Rock</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Object Density <strong id="densityLabel">500 kg/m³</strong></label>
+          <input type="range" id="densitySlider" min="200" max="15000" step="50" value="500">
+        </div>
+
+        <div class="control-group">
+          <label>Object Volume <strong id="volumeLabel">0.5 m³</strong></label>
+          <input type="range" id="volumeSlider" min="0.1" max="2" step="0.1" value="0.5">
+        </div>
+
+        <div class="control-group">
+          <label>Liquid Type</label>
+          <select id="liquidType">
+            <option value="water">Water (1000 kg/m³)</option>
+            <option value="oil">Oil (900 kg/m³)</option>
+            <option value="seawater">Seawater (1025 kg/m³)</option>
+            <option value="honey">Honey (1420 kg/m³)</option>
+            <option value="mercury">Mercury (13600 kg/m³)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Gravity <strong id="gravityLabel">9.81 m/s²</strong></label>
+          <input type="range" id="gravitySlider" min="1" max="20" step="0.1" value="9.81">
+        </div>
+
+        <div class="control-group">
+          <label>Background</label>
+          <select id="bgTheme">
+            <option value="underwater">Underwater Depths</option>
+            <option value="lab">Laboratory</option>
+            <option value="ocean">Ocean Scene</option>
+            <option value="tank">Tank Close-up</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="showForces" checked /> Show force vectors</label>
+            <label><input type="checkbox" id="showWater" checked /> Show water</label>
+            <label><input type="checkbox" id="showLabels" checked /> Show labels</label>
+            <label><input type="checkbox" id="showTrail" checked /> Show trail</label>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const densitySlider = document.getElementById('densitySlider');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const gravitySlider = document.getElementById('gravitySlider');
+    const objectShapeSelect = document.getElementById('objectShape');
+    const liquidTypeSelect = document.getElementById('liquidType');
+    const bgThemeSelect = document.getElementById('bgTheme');
+    const showForcesCheck = document.getElementById('showForces');
+    const showWaterCheck = document.getElementById('showWater');
+    const showLabelsCheck = document.getElementById('showLabels');
+    const showTrailCheck = document.getElementById('showTrail');
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const drownBtn = document.getElementById('drownBtn');
+
+    const liquidDensities = {
+      water: 1000,
+      oil: 900,
+      seawater: 1025,
+      honey: 1420,
+      mercury: 13600
+    };
+
+    const liquidViscosity = {
+      water: 1.0,
+      oil: 2.5,
+      seawater: 1.1,
+      honey: 15.0,
+      mercury: 1.5
+    };
+
+    const liquidColors = {
+      water: { base: '#1e6091', surface: '#38bdf8', alpha: 0.4 },
+      oil: { base: '#b45309', surface: '#fbbf24', alpha: 0.5 },
+      seawater: { base: '#0c4a6e', surface: '#22d3ee', alpha: 0.45 },
+      honey: { base: '#92400e', surface: '#f59e0b', alpha: 0.7 },
+      mercury: { base: '#6b7280', surface: '#d1d5db', alpha: 0.8 }
+    };
+
+    const state = {
+      density: 500,
+      volume: 0.5,
+      gravity: 9.81,
+      objectShape: 'cube',
+      liquid: 'water',
+      bgTheme: 'underwater',
+      objectY: 0,
+      velocity: 0,
+      playing: true,
+      settled: false,
+      dropping: false,
+      inWater: false,
+      splashAnim: 0,
+      status: 'floating',
+      trail: [],
+      bubbles: []
+    };
+
+    for (let i = 0; i < 15; i++) {
+      state.bubbles.push({
+        x: Math.random() * 900,
+        y: Math.random() * 400 + 150,
+        speed: 0.2 + Math.random() * 0.5,
+        size: 1 + Math.random() * 2
+      });
+    }
+
+    function updateLabels() {
+      document.getElementById('densityLabel').textContent = `${densitySlider.value} kg/m³`;
+      document.getElementById('volumeLabel').textContent = `${parseFloat(volumeSlider.value).toFixed(1)} m³`;
+      document.getElementById('gravityLabel').textContent = `${gravitySlider.value} m/s²`;
+    }
+
+    function getObjectSize() {
+      if (state.objectShape === 'sphere') {
+        return { radius: Math.cbrt(state.volume * 3 / (4 * Math.PI)) * 80 };
+      } else if (state.objectShape === 'cylinder') {
+        const h = Math.cbrt(state.volume) * 1.2;
+        const r = Math.sqrt(state.volume / (Math.PI * h)) * 80;
+        return { radius: r, height: h * 80 };
+      } else {
+        const side = Math.cbrt(state.volume) * 80;
+        return { side: side };
+      }
+    }
+
+    function getSubmergedFraction(waterLevel, objectTop, objectBottom) {
+      const submergedTop = Math.max(waterLevel, objectTop);
+      const submergedBottom = Math.min(waterLevel, objectBottom);
+      if (submergedBottom <= submergedTop) return 0;
+      return (submergedBottom - submergedTop) / (objectBottom - objectTop);
+    }
+
+    function getObjectColor() {
+      const rho = state.density;
+      if (rho < 500) return '#a16207';
+      if (rho < 1000) return '#854d0e';
+      if (rho < 2700) return '#71717a';
+      if (rho < 7850) return '#52525b';
+      if (rho < 12000) return '#f59e0b';
+      return '#fbbf24';
+    }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const time = Date.now() / 1000;
+
+      if (state.bgTheme === 'underwater') {
+        const grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#065f73');
+        grad.addColorStop(0.25, '#0c4a6e');
+        grad.addColorStop(0.6, '#0a1628');
+        grad.addColorStop(1, '#020c14');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+
+        for (let i = 0; i < 6; i++) {
+          const rayX = w * 0.15 + i * w * 0.14;
+          const rayWidth = 30 + i * 5;
+          const rayGrad = ctx.createLinearGradient(rayX, 0, rayX + rayWidth, h);
+          const alpha = 0.08 + 0.04 * Math.sin(time * 0.5 + i);
+          rayGrad.addColorStop(0, `rgba(200, 240, 255, ${alpha})`);
+          rayGrad.addColorStop(0.5, `rgba(200, 240, 255, ${alpha * 0.3})`);
+          rayGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = rayGrad;
+          ctx.beginPath();
+          ctx.moveTo(rayX, 0);
+          ctx.lineTo(rayX + rayWidth, 0);
+          ctx.lineTo(rayX + rayWidth * 2 + 40, h);
+          ctx.lineTo(rayX - 20, h);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        const drawSeaweed = (baseX, scale) => {
+          for (let j = 0; j < 3; j++) {
+            const sway = Math.sin(time * 0.8 + j * 2) * 8 * (j + 1);
+            const x = baseX + j * 12 * scale;
+            const height = (60 + j * 40) * scale;
+            ctx.strokeStyle = `rgba(20, 80, 50, ${0.6 - j * 0.15})`;
+            ctx.lineWidth = 3 * scale;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x, h);
+            ctx.quadraticCurveTo(x + sway * 0.5, h - height * 0.5, x + sway, h - height);
+            ctx.stroke();
+          }
+        };
+        drawSeaweed(20, 1);
+        drawSeaweed(w - 80, 0.9);
+
+        const fishTrail = (time * 15) % (w + 200);
+        const drawFish = (startX, startY, size, flip) => {
+          const x = (startX + fishTrail) % (w + 100) - 50;
+          const wobble = Math.sin(time * 3 + startX) * 3;
+          ctx.save();
+          ctx.translate(x, startY + wobble);
+          ctx.scale(flip ? -1 : 1, 1);
+          ctx.fillStyle = 'rgba(180, 140, 100, 0.25)';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, size, size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(-size * 0.8, 0);
+          ctx.lineTo(-size * 1.3, -size * 0.4);
+          ctx.lineTo(-size * 1.3, size * 0.4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        };
+        drawFish(0, h * 0.25, 12, false);
+        drawFish(w * 0.3, h * 0.4, 8, true);
+        drawFish(w * 0.6, h * 0.3, 10, false);
+
+        for (let i = 0; i < 40; i++) {
+          const x = (i * 73 + time * 1.5) % w;
+          const y = (i * 47 + time * 3) % h;
+          const size = 0.5 + (i % 3) * 0.5;
+          const alpha = 0.2 + 0.25 * Math.sin(time * 0.5 + i);
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          ctx.fill();
+        }
+
+      } else if (state.bgTheme === 'lab') {
+        const labGrad = ctx.createLinearGradient(0, 0, 0, h);
+        labGrad.addColorStop(0, '#0f172a');
+        labGrad.addColorStop(0.5, '#1e293b');
+        labGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = labGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+        ctx.lineWidth = 1;
+        const gridSize = 25;
+        for (let x = 0; x < w; x += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
+        }
+        for (let y = 0; y < h; y += gridSize) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
+
+        const flicker = 0.85 + 0.15 * Math.abs(Math.sin(time * 8));
+        ctx.fillStyle = `rgba(220, 240, 255, ${0.08 * flicker})`;
+        ctx.fillRect(0, 0, w, 60);
+        ctx.fillStyle = `rgba(200, 220, 240, ${0.12 * flicker})`;
+        ctx.fillRect(50, 8, w - 100, 4);
+        ctx.fillRect(50, 20, w - 100, 2);
+
+        const drawBeaker = (bx, by, bw, bh) => {
+          ctx.fillStyle = 'rgba(200, 220, 255, 0.1)';
+          ctx.fillRect(bx, by, bw, bh);
+          ctx.strokeStyle = 'rgba(200, 220, 255, 0.4)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(bx, by, bw, bh);
+          const liquidGrad = ctx.createLinearGradient(bx, by + bh * 0.3, bx, by + bh);
+          liquidGrad.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
+          liquidGrad.addColorStop(1, 'rgba(56, 189, 248, 0.4)');
+          ctx.fillStyle = liquidGrad;
+          ctx.fillRect(bx + 3, by + bh * 0.4, bw - 6, bh * 0.55);
+        };
+        drawBeaker(30, h - 120, 35, 80);
+        drawBeaker(75, h - 90, 25, 50);
+        drawBeaker(w - 60, h - 140, 40, 100);
+
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.03)';
+        ctx.beginPath();
+        ctx.ellipse(w * 0.7, h - 30, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        const flameGrad = ctx.createRadialGradient(w * 0.7, h - 35, 0, w * 0.7, h - 30, 10);
+        flameGrad.addColorStop(0, 'rgba(251, 191, 36, 0.8)');
+        flameGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.4)');
+        flameGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = flameGrad;
+        ctx.beginPath();
+        ctx.ellipse(w * 0.7, h - 32, 6 + Math.sin(time * 10) * 2, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.15)';
+        ctx.fillRect(50, 40, 100, 60);
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 40, 100, 60);
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.3)';
+        ctx.fillRect(55, 50, 20, 40);
+        const waveLine = [];
+        for (let x = 0; x < 60; x += 5) {
+          waveLine.push({ x: 80 + x, y: 70 + Math.sin(x * 0.2 + time * 3) * 8 });
+        }
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(waveLine[0].x, waveLine[0].y);
+        waveLine.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+
+      } else if (state.bgTheme === 'ocean') {
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.4);
+        skyGrad.addColorStop(0, '#0ea5e9');
+        skyGrad.addColorStop(0.5, '#38bdf8');
+        skyGrad.addColorStop(1, '#7dd3fc');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, w, h * 0.4);
+
+        const sunX = w - 100;
+        const sunY = 70;
+        const sunGrad = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, 80);
+        sunGrad.addColorStop(0, '#fef9c3');
+        sunGrad.addColorStop(0.3, '#fde047');
+        sunGrad.addColorStop(0.6, 'rgba(254, 240, 138, 0.3)');
+        sunGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, 80, 0, Math.PI * 2);
+        ctx.fill();
+
+        for (let i = 0; i < 6; i++) {
+          const flareAngle = (i / 6) * Math.PI * 2 + time * 0.1;
+          const flareGrad = ctx.createLinearGradient(sunX, sunY, sunX + Math.cos(flareAngle) * 120, sunY + Math.sin(flareAngle) * 120);
+          flareGrad.addColorStop(0, 'rgba(254, 240, 138, 0.15)');
+          flareGrad.addColorStop(1, 'transparent');
+          ctx.fillStyle = flareGrad;
+          ctx.beginPath();
+          ctx.moveTo(sunX, sunY);
+          ctx.lineTo(sunX + Math.cos(flareAngle - 0.1) * 150, sunY + Math.sin(flareAngle - 0.1) * 150);
+          ctx.lineTo(sunX + Math.cos(flareAngle + 0.1) * 150, sunY + Math.sin(flareAngle + 0.1) * 150);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        const drawBird = (bx, by, size) => {
+          const flap = Math.sin(time * 8 + bx) * 0.3;
+          ctx.strokeStyle = 'rgba(30, 30, 40, 0.6)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(bx - size, by);
+          ctx.quadraticCurveTo(bx, by - size * flap, bx + size, by);
+          ctx.quadraticCurveTo(bx, by + size * 0.3, bx - size, by);
+          ctx.stroke();
+        };
+        drawBird(120, 50, 8);
+        drawBird(150, 70, 6);
+        drawBird(200, 40, 7);
+
+        const boatX = w * 0.25;
+        const boatY = h * 0.28;
+        ctx.fillStyle = 'rgba(40, 50, 60, 0.5)';
+        ctx.beginPath();
+        ctx.moveTo(boatX - 40, boatY);
+        ctx.lineTo(boatX + 40, boatY);
+        ctx.lineTo(boatX + 30, boatY + 25);
+        ctx.lineTo(boatX - 30, boatY + 25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(60, 70, 80, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(boatX, boatY);
+        ctx.lineTo(boatX, boatY - 50);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(boatX, boatY - 45);
+        ctx.lineTo(boatX + 25, boatY - 30);
+        ctx.lineTo(boatX, boatY - 15);
+        ctx.stroke();
+
+        const waterGrad = ctx.createLinearGradient(0, h * 0.35, 0, h);
+        waterGrad.addColorStop(0, '#0284c7');
+        waterGrad.addColorStop(0.3, '#0369a1');
+        waterGrad.addColorStop(0.6, '#075985');
+        waterGrad.addColorStop(1, '#0c4a6e');
+        ctx.fillStyle = waterGrad;
+        ctx.fillRect(0, h * 0.35, w, h * 0.65);
+
+        const drawWave = (baseY, amplitude, freq, speed, alpha) => {
+          ctx.fillStyle = `rgba(125, 211, 252, ${alpha})`;
+          ctx.beginPath();
+          ctx.moveTo(0, baseY);
+          for (let x = 0; x <= w; x += 10) {
+            ctx.lineTo(x, baseY + Math.sin(x * freq + time * speed) * amplitude);
+          }
+          ctx.lineTo(w, h);
+          ctx.lineTo(0, h);
+          ctx.closePath();
+          ctx.fill();
+        };
+        drawWave(h * 0.38, 8, 0.015, 2, 0.25);
+        drawWave(h * 0.42, 12, 0.012, 1.5, 0.2);
+        drawWave(h * 0.48, 15, 0.01, 1, 0.15);
+
+      } else if (state.bgTheme === 'tank') {
+        const tankGrad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
+        tankGrad.addColorStop(0, '#334155');
+        tankGrad.addColorStop(0.5, '#1e293b');
+        tankGrad.addColorStop(1, '#0f172a');
+        ctx.fillStyle = tankGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        const tileW = 50;
+        const tileH = 40;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.08)';
+        for (let x = 0; x < w; x += tileW) {
+          for (let y = 0; y < h; y += tileH) {
+            ctx.fillRect(x, y, tileW - 2, tileH - 2);
+          }
+        }
+        ctx.fillStyle = 'rgba(71, 85, 105, 0.15)';
+        for (let x = 0; x < w; x += tileW) {
+          ctx.fillRect(x - 1, 0, 3, h);
+        }
+        for (let y = 0; y < h; y += tileH) {
+          ctx.fillRect(0, y - 1, w, 3);
+        }
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = '10px Space Grotesk';
+        for (let i = 0; i <= 8; i++) {
+          const markY = 30 + i * 30;
+          ctx.fillRect(25, markY, 8, 1);
+          if (i > 0) {
+            ctx.fillText((i * 10) + 'cm', 8, markY + 3);
+          }
+        }
+
+        const bubbleX = 50 + Math.sin(time) * 5;
+        for (let i = 0; i < 8; i++) {
+          const by = h - 30 - ((time * 30 + i * 40) % (h - 60));
+          const bx = bubbleX + Math.sin(time * 2 + i) * 8;
+          const bSize = 3 + (i % 3) * 1.5;
+          const bAlpha = 0.3 + (i / 8) * 0.3;
+          ctx.fillStyle = `rgba(255, 255, 255, ${bAlpha})`;
+          ctx.beginPath();
+          ctx.arc(bx, by, bSize, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = `rgba(255, 255, 255, ${bAlpha * 0.5})`;
+          ctx.beginPath();
+          ctx.arc(bx - bSize * 0.3, by - bSize * 0.3, bSize * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.4)';
+        ctx.beginPath();
+        ctx.arc(w - 60, h - 25, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(71, 85, 105, 0.6)';
+        ctx.beginPath();
+        ctx.arc(w - 60, h - 25, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(w - 60, h - 25, 20, 0, Math.PI * 2);
+        ctx.stroke();
+
+        const rimGrad = ctx.createLinearGradient(0, 80, 0, 100);
+        rimGrad.addColorStop(0, 'rgba(180, 200, 220, 0.3)');
+        rimGrad.addColorStop(1, 'rgba(180, 200, 220, 0.05)');
+        ctx.fillStyle = rimGrad;
+        ctx.fillRect(90, 80, w - 180, 20);
+      }
+    }
+
+    function drawTank() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const tankY = h * 0.35;
+      const tankHeight = h * 0.55;
+      const tankLeft = 100;
+      const tankRight = w - 100;
+      const time = Date.now() / 1000;
+
+      // Tank background (dark)
+      ctx.fillStyle = 'rgba(20, 30, 45, 0.3)';
+      ctx.fillRect(tankLeft, tankY, tankRight - tankLeft, tankHeight);
+
+      // Tank shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(tankLeft + 5, tankY + tankHeight - 5, tankRight - tankLeft - 10, 15);
+
+      if (showWaterCheck.checked) {
+        const liquid = liquidColors[state.liquid];
+        
+        // Calculate displaced volume effect - water level rises
+        const size = getObjectSize();
+        const objectBottom = state.objectY + (size.side || size.radius * 2);
+        const objectTop = state.objectY;
+        const waterLevel = tankY + 10;
+        const submergedHeight = Math.max(0, Math.min(objectBottom, waterLevel + tankHeight - 20) - waterLevel);
+        const displacementRise = submergedHeight * 0.15;
+        
+        const actualSurfaceY = waterLevel - displacementRise;
+        
+        // Liquid body with gradient
+        const liquidGrad = ctx.createLinearGradient(tankLeft, actualSurfaceY, tankLeft, tankY + tankHeight);
+        liquidGrad.addColorStop(0, liquid.base + Math.round(liquid.alpha * 255).toString(16).padStart(2, '0'));
+        liquidGrad.addColorStop(1, liquid.base + Math.round(liquid.alpha * 0.8 * 255).toString(16).padStart(2, '0'));
+        
+        ctx.fillStyle = liquidGrad;
+        ctx.fillRect(tankLeft + 5, actualSurfaceY, tankRight - tankLeft - 10, tankY + tankHeight - actualSurfaceY - 10);
+
+        // Surface waves
+        const surfaceY = actualSurfaceY;
+        ctx.beginPath();
+        ctx.moveTo(tankLeft + 5, surfaceY);
+        for (let x = tankLeft + 5; x < tankRight - 5; x += 5) {
+          const waveHeight = Math.sin((x + time * 50) * 0.05) * 2 + Math.sin((x + time * 30) * 0.03) * 1;
+          ctx.lineTo(x, surfaceY + waveHeight);
+        }
+        ctx.lineTo(tankRight - 5, surfaceY);
+        ctx.lineTo(tankRight - 5, tankY + tankHeight);
+        ctx.lineTo(tankLeft + 5, tankY + tankHeight);
+        ctx.closePath();
+        ctx.fillStyle = liquid.base + Math.round(liquid.alpha * 220).toString(16).padStart(2, '0');
+        ctx.fill();
+
+
+
+        // Surface effects based on liquid type
+        // Oil - iridescent shimmer
+        if (state.liquid === 'oil') {
+          for (let i = 0; i < 6; i++) {
+            const shimmerX = tankLeft + 30 + i * 60 + Math.sin(time * 2 + i) * 25;
+            const shimmerGrad = ctx.createLinearGradient(shimmerX - 40, surfaceY, shimmerX + 40, surfaceY);
+            shimmerGrad.addColorStop(0, 'transparent');
+            shimmerGrad.addColorStop(0.2, 'rgba(255, 180, 80, 0.25)');
+            shimmerGrad.addColorStop(0.4, 'rgba(255, 255, 180, 0.35)');
+            shimmerGrad.addColorStop(0.6, 'rgba(180, 255, 255, 0.25)');
+            shimmerGrad.addColorStop(0.8, 'rgba(255, 200, 150, 0.2)');
+            shimmerGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = shimmerGrad;
+            ctx.fillRect(shimmerX - 40, surfaceY - 3, 80, 7);
+          }
+        }
+        
+        // Mercury - metallic reflection
+        if (state.liquid === 'mercury') {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 2;
+          for (let i = 0; i < 3; i++) {
+            const yOff = 5 + i * 8;
+            ctx.beginPath();
+            ctx.moveTo(tankLeft + 30 + i * 10, surfaceY + yOff);
+            ctx.lineTo(tankLeft + 70 + i * 15, surfaceY + yOff);
+            ctx.stroke();
+          }
+          ctx.beginPath();
+          ctx.moveTo(tankRight - 90, surfaceY + 6);
+          ctx.lineTo(tankRight - 50, surfaceY + 6);
+          ctx.stroke();
+        }
+        
+        // Honey - slow bubbles
+        if (state.liquid === 'honey') {
+          for (let i = 0; i < 6; i++) {
+            const by = tankY + tankHeight - 20 - ((time * 3 + i * 30) % (tankHeight - 40));
+            const bx = tankLeft + 30 + i * 50 + Math.sin(time + i) * 10;
+            const bSize = 3 + (i % 3) * 1.5;
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.5)';
+            ctx.beginPath();
+            ctx.arc(bx, by, bSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        
+        // Water & Seawater - rising bubbles
+        if (state.liquid === 'water' || state.liquid === 'seawater') {
+          state.bubbles.forEach(bubble => {
+            bubble.y -= bubble.speed;
+            if (bubble.y < surfaceY + 5) {
+              bubble.y = tankY + tankHeight - 10;
+              bubble.x = tankLeft + 15 + Math.random() * (tankRight - tankLeft - 30);
+            }
+            // Bubble shine
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.beginPath();
+            ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.beginPath();
+            ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+        
+        // Surface shine - animated
+        const shineGrad = ctx.createLinearGradient(tankLeft, surfaceY - 5, tankLeft, surfaceY + 10);
+        shineGrad.addColorStop(0, 'transparent');
+        shineGrad.addColorStop(0.5, liquid.surface + '44');
+        shineGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = shineGrad;
+        ctx.fillRect(tankLeft + 10, surfaceY - 5, tankRight - tankLeft - 20, 15);
+
+        // Splash particles - more realistic
+        if (state.splashAnim > 0) {
+          for (let i = 0; i < 15; i++) {
+            const angle = (i / 15) * Math.PI;
+            const splashX = tankRight - 60 + Math.cos(angle) * 40 * state.splashAnim;
+            const splashY = surfaceY - Math.sin(angle) * 30 * state.splashAnim - 10;
+            const dropSize = 2 + Math.random() * 3 * state.splashAnim;
+            
+            ctx.fillStyle = liquid.base + Math.round(state.splashAnim * 200).toString(16).padStart(2, '0');
+            ctx.beginPath();
+            ctx.arc(splashX, splashY, dropSize, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          state.splashAnim -= 0.03;
+        }
+      }
+
+      // Glass tank edges - left side
+      const glassGradLeft = ctx.createLinearGradient(tankLeft, 0, tankLeft + 20, 0);
+      glassGradLeft.addColorStop(0, 'rgba(200, 220, 255, 0.15)');
+      glassGradLeft.addColorStop(0.5, 'rgba(200, 220, 255, 0.05)');
+      glassGradLeft.addColorStop(1, 'transparent');
+      ctx.fillStyle = glassGradLeft;
+      ctx.fillRect(tankLeft, tankY, 20, tankHeight);
+      
+      // Glass tank edges - right side
+      const glassGradRight = ctx.createLinearGradient(tankRight - 20, 0, tankRight, 0);
+      glassGradRight.addColorStop(0, 'transparent');
+      glassGradRight.addColorStop(0.5, 'rgba(200, 220, 255, 0.05)');
+      glassGradRight.addColorStop(1, 'rgba(200, 220, 255, 0.1)');
+      ctx.fillStyle = glassGradRight;
+      ctx.fillRect(tankRight - 20, tankY, 20, tankHeight);
+
+      // Tank border
+      ctx.strokeStyle = 'rgba(180, 200, 230, 0.5)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(tankLeft, tankY, tankRight - tankLeft, tankHeight);
+
+      // Ruler markings on the left
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '9px Space Grotesk';
+      for (let i = 0; i <= 5; i++) {
+        const markY = tankY + 15 + i * ((tankHeight - 20) / 5);
+        ctx.fillRect(tankLeft - 15, markY, 10, 1);
+        if (i > 0) {
+          const liters = Math.round(i * (tankHeight - 20) / 80 * 10) / 10;
+          ctx.fillText(liters + 'L', tankLeft - 35, markY + 3);
+        }
+      }
+    }
+
+    function drawObject() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const size = getObjectSize();
+      const waterLevel = canvas.height * 0.45 + 10;
+      const tankY = h * 0.45;
+      const tankHeight = h * 0.45;
+      const tankLeft = 100;
+      const tankRight = w - 100;
+      
+      // Account for displacement rise
+      const objectBottom = state.objectY + (size.side || size.radius * 2);
+      const objectTop = state.objectY;
+      const submergedHeight = Math.max(0, Math.min(objectBottom, waterLevel + 200) - waterLevel);
+      const displacementRise = submergedHeight * 0.15;
+      const actualWaterLevel = waterLevel - displacementRise;
+
+      const objColor = getObjectColor();
+      const objectBottomY = state.objectY + (size.side || size.radius * 2);
+      const objectTopY = state.objectY;
+      
+      const submerged = getSubmergedFraction(actualWaterLevel, objectTopY, objectBottomY);
+
+      // Object shadow on tank bottom
+      const tankBottom = canvas.height * 0.45 + canvas.height * 0.45 - 10;
+      const shadowY = tankBottom - 5;
+      const shadowSize = (size.side || size.radius * 2) * 0.8;
+      const shadowAlpha = Math.max(0.1, 0.3 - (shadowY - objectBottomY) / 300);
+      ctx.fillStyle = `rgba(0, 0, 0, ${shadowAlpha})`;
+      ctx.beginPath();
+      ctx.ellipse(cx, shadowY, shadowSize * 0.6, shadowSize * 0.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Draw movement trail
+      if (showTrailCheck && showTrailCheck.checked && state.trail.length > 1) {
+        for (let i = 1; i < state.trail.length; i++) {
+          const alpha = i / state.trail.length * 0.4;
+          const trailY = state.trail[i].y;
+          const prevY = state.trail[i-1].y;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${alpha})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, prevY);
+          ctx.lineTo(cx, trailY);
+          ctx.stroke();
+        }
+      }
+
+      if (state.objectShape === 'cube') {
+        const s = size.side;
+        
+        // Submerged part with wet effect
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.fillRect(cx - s/2, actualWaterLevel, s, objectBottomY - actualWaterLevel);
+        }
+        
+        // Main cube with 3D shading
+        const cubeGrad = ctx.createLinearGradient(cx - s/2, objectTopY, cx + s/2, objectBottomY);
+        cubeGrad.addColorStop(0, objColor);
+        cubeGrad.addColorStop(0.3, objColor);
+        cubeGrad.addColorStop(1, objColor + '88');
+        ctx.fillStyle = cubeGrad;
+        ctx.fillRect(cx - s/2, objectTopY, s, s);
+        
+        // Top face highlight
+        const topGrad = ctx.createLinearGradient(cx - s/2, objectTopY, cx - s/2, objectTopY + s * 0.3);
+        topGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+        topGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = topGrad;
+        ctx.fillRect(cx - s/2, objectTopY, s, s * 0.3);
+        
+        // Edge highlights
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx - s/2, objectTopY, s, s);
+        
+        // Wet effect - darken when submerged
+        if (submerged > 0) {
+          ctx.fillStyle = `rgba(0, 20, 40, ${submerged * 0.2})`;
+          ctx.fillRect(cx - s/2, objectTopY, s, s);
+        }
+      } else if (state.objectShape === 'sphere') {
+        const r = size.radius;
+        
+        // Submerged part
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.arc(cx, actualWaterLevel + (objectBottomY - actualWaterLevel) / 2, r * submerged, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Main sphere with 3D shading
+        const sphereGrad = ctx.createRadialGradient(cx - r*0.35, objectTopY + r*0.35, 0, cx, objectTopY + r, r);
+        sphereGrad.addColorStop(0, objColor);
+        sphereGrad.addColorStop(0.5, objColor);
+        sphereGrad.addColorStop(0.8, objColor + 'aa');
+        sphereGrad.addColorStop(1, objColor + '66');
+        ctx.fillStyle = sphereGrad;
+        ctx.beginPath();
+        ctx.arc(cx, objectTopY + r, r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.arc(cx - r*0.3, objectTopY + r - r*0.3, r*0.2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wet effect
+        if (submerged > 0) {
+          ctx.fillStyle = `rgba(0, 20, 40, ${submerged * 0.2})`;
+          ctx.beginPath();
+          ctx.arc(cx, objectTopY + r, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else if (state.objectShape === 'cylinder') {
+        const r = size.radius;
+        const h = size.height;
+        
+        // Submerged part
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.ellipse(cx, actualWaterLevel + (objectBottomY - actualWaterLevel) / 2, r, (objectBottomY - actualWaterLevel) / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(cx - r, actualWaterLevel, r * 2, objectBottomY - actualWaterLevel);
+        }
+        
+        // Main cylinder with 3D shading
+        const cylGrad = ctx.createLinearGradient(cx - r, objectTopY, cx + r, objectTopY);
+        cylGrad.addColorStop(0, objColor + 'aa');
+        cylGrad.addColorStop(0.3, objColor);
+        cylGrad.addColorStop(0.7, objColor);
+        cylGrad.addColorStop(1, objColor + '88');
+        ctx.fillStyle = cylGrad;
+        
+        // Top ellipse
+        ctx.beginPath();
+        ctx.ellipse(cx, objectTopY, r, r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Body
+        ctx.fillRect(cx - r, objectTopY, r * 2, h);
+        
+        // Bottom ellipse
+        ctx.beginPath();
+        ctx.ellipse(cx, objectTopY + h, r, r * 0.3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wet effect
+        if (submerged > 0) {
+          ctx.fillStyle = `rgba(0, 20, 40, ${submerged * 0.2})`;
+          ctx.beginPath();
+          ctx.ellipse(cx, objectTopY, r, r * 0.3, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(cx - r, objectTopY, r * 2, h);
+        }
+      } else if (state.objectShape === 'pyramid') {
+        const base = size.side;
+        const hgt = base * 1.2;
+        
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.moveTo(cx - base/2, actualWaterLevel);
+          ctx.lineTo(cx + base/2, actualWaterLevel);
+          ctx.lineTo(cx, actualWaterLevel + hgt * 0.6);
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        const pyrGrad = ctx.createLinearGradient(cx - base/2, objectTopY, cx + base/2, objectTopY + hgt);
+        pyrGrad.addColorStop(0, objColor);
+        pyrGrad.addColorStop(1, objColor + '88');
+        ctx.fillStyle = pyrGrad;
+        ctx.beginPath();
+        ctx.moveTo(cx - base/2, objectTopY);
+        ctx.lineTo(cx + base/2, objectTopY);
+        ctx.lineTo(cx, objectTopY + hgt);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.beginPath();
+        ctx.moveTo(cx - base/2, objectTopY);
+        ctx.lineTo(cx, objectTopY + hgt);
+        ctx.lineTo(cx - base/4, objectTopY + hgt * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        
+      } else if (state.objectShape === 'cone') {
+        const r = size.radius || 30;
+        const hgt = r * 2;
+        
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.moveTo(cx - r, actualWaterLevel);
+          ctx.lineTo(cx + r, actualWaterLevel);
+          ctx.lineTo(cx, actualWaterLevel + hgt * 0.7);
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        const coneGrad = ctx.createLinearGradient(cx - r, objectTopY, cx + r, objectTopY);
+        coneGrad.addColorStop(0, objColor + 'aa');
+        coneGrad.addColorStop(0.5, objColor);
+        coneGrad.addColorStop(1, objColor + '88');
+        ctx.fillStyle = coneGrad;
+        ctx.beginPath();
+        ctx.moveTo(cx - r, objectTopY);
+        ctx.lineTo(cx + r, objectTopY);
+        ctx.lineTo(cx, objectTopY + hgt);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(cx - r * 0.5, objectTopY + 5);
+        ctx.lineTo(cx, objectTopY + hgt * 0.3);
+        ctx.lineTo(cx + r * 0.3, objectTopY + 5);
+        ctx.closePath();
+        ctx.fill();
+        
+      } else if (state.objectShape === 'log') {
+        const r = 25;
+        const len = 70;
+        
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.ellipse(cx, actualWaterLevel, len/2, r * submerged, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(cx - len/2, actualWaterLevel, len, r * submerged);
+        }
+        
+        const logGrad = ctx.createLinearGradient(cx - len/2, objectTopY, cx - len/2, objectTopY + r * 2);
+        logGrad.addColorStop(0, '#8B4513');
+        logGrad.addColorStop(0.3, '#A0522D');
+        logGrad.addColorStop(1, '#654321');
+        ctx.fillStyle = logGrad;
+        
+        ctx.beginPath();
+        ctx.ellipse(cx, objectTopY, len/2, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(cx - len/2, objectTopY, len, r * 2);
+        ctx.beginPath();
+        ctx.ellipse(cx, objectTopY + r * 2, len/2, r, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Wood grain lines
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          ctx.beginPath();
+          ctx.moveTo(cx - len/2 + 10 + i * 20, objectTopY + 5);
+          ctx.lineTo(cx - len/2 + 15 + i * 20, objectTopY + r * 2 - 5);
+          ctx.stroke();
+        }
+        
+      } else if (state.objectShape === 'ship') {
+        const sw = 60;
+        const sh = 25;
+        const mastH = 50;
+        
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.fillRect(cx - sw/2, actualWaterLevel, sw, sh);
+        }
+        
+        // Hull
+        ctx.fillStyle = '#8B0000';
+        ctx.beginPath();
+        ctx.moveTo(cx - sw/2 - 5, objectTopY);
+        ctx.lineTo(cx + sw/2 + 5, objectTopY);
+        ctx.lineTo(cx + sw/2, objectTopY + sh);
+        ctx.lineTo(cx - sw/2, objectTopY + sh);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Deck
+        ctx.fillStyle = '#A0522D';
+        ctx.fillRect(cx - sw/2 + 3, objectTopY + 3, sw - 6, 5);
+        
+        // Mast
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, objectTopY + 3);
+        ctx.lineTo(cx, objectTopY - mastH);
+        ctx.stroke();
+        
+        // Sail
+        ctx.fillStyle = '#FFF8DC';
+        ctx.beginPath();
+        ctx.moveTo(cx, objectTopY - mastH + 5);
+        ctx.lineTo(cx + 25, objectTopY - mastH + 20);
+        ctx.lineTo(cx, objectTopY - mastH + 35);
+        ctx.closePath();
+        ctx.fill();
+        
+      } else if (state.objectShape === 'rock') {
+        if (submerged > 0) {
+          const subColor = liquidColors[state.liquid];
+          ctx.fillStyle = subColor.base + Math.round(subColor.alpha * 200).toString(16).padStart(2, '0');
+          ctx.beginPath();
+          ctx.moveTo(cx - 35, waterLevel);
+          ctx.lineTo(cx + 30, waterLevel + 20);
+          ctx.lineTo(cx + 20, objectBottom - 10);
+          ctx.lineTo(cx - 30, objectBottom - 5);
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        ctx.fillStyle = objColor;
+        ctx.beginPath();
+        ctx.moveTo(cx - 30, state.objectY);
+        ctx.lineTo(cx + 35, state.objectY + 10);
+        ctx.lineTo(cx + 30, state.objectY + 50);
+        ctx.lineTo(cx + 10, state.objectY + 70);
+        ctx.lineTo(cx - 25, state.objectY + 65);
+        ctx.lineTo(cx - 35, state.objectY + 30);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.arc(cx - 10, state.objectY + 35, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (showForcesCheck.checked) {
+        const rhoF = liquidDensities[state.liquid];
+        const dispVol = state.volume * submerged;
+        const Fb = rhoF * dispVol * state.gravity;
+        const W = state.density * state.volume * state.gravity;
+        
+        const arrowScale = 0.08;
+        
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, objectBottom + 10);
+        ctx.lineTo(cx, objectBottom + 10 + Fb * arrowScale);
+        ctx.stroke();
+        ctx.fillStyle = '#34d399';
+        ctx.beginPath();
+        ctx.moveTo(cx, objectBottom + 10 + Fb * arrowScale);
+        ctx.lineTo(cx - 6, objectBottom + 10 + Fb * arrowScale - 8);
+        ctx.lineTo(cx + 6, objectBottom + 10 + Fb * arrowScale - 8);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(cx, objectTop - 10);
+        ctx.lineTo(cx, objectTop - 10 - W * arrowScale);
+        ctx.stroke();
+        ctx.fillStyle = '#f87171';
+        ctx.beginPath();
+        ctx.moveTo(cx, objectTop - 10 - W * arrowScale);
+        ctx.lineTo(cx - 6, objectTop - 10 - W * arrowScale + 8);
+        ctx.lineTo(cx + 6, objectTop - 10 - W * arrowScale + 8);
+        ctx.closePath();
+        ctx.fill();
+
+        if (showLabelsCheck.checked) {
+          ctx.font = 'bold 10px Space Grotesk';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#34d399';
+          ctx.fillText(`Fb = ${Fb.toFixed(1)} N`, cx + 15, objectBottom + 10 + Fb * arrowScale / 2);
+          ctx.fillStyle = '#f87171';
+          ctx.fillText(`W = ${W.toFixed(1)} N`, cx + 15, objectTop - 10 - W * arrowScale / 2);
+          
+          const rhoF = liquidDensities[state.liquid];
+          const ratio = (state.density / rhoF).toFixed(2);
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillText(`ρobj/ρfluid = ${ratio}`, cx + 60, (objectTop + objectBottom) / 2);
+        }
+      }
+
+      if (showLabelsCheck.checked) {
+        const rhoF = liquidDensities[state.liquid];
+        const status = state.density < rhoF ? 'FLOAT' : 'SINK';
+        
+        ctx.font = 'bold 12px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = state.density < rhoF ? '#34d399' : '#f87171';
+        ctx.fillText(status, cx, state.objectY - 18);
+        
+        ctx.font = '10px Space Grotesk';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillText(`${state.density} kg/m³`, cx, state.objectY - 5);
+        
+        // Water level label
+        ctx.font = '9px Space Grotesk';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.8)';
+        ctx.fillText(`Water: ${rhoF} kg/m³`, tankLeft + 15, tankY + tankHeight - 15);
+        
+        // Displaced volume indicator
+        if (submerged > 0) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.fillText(`Vdisp: ${(displacedVol).toFixed(2)} m³`, cx + 60, actualWaterLevel + 20);
+        }
+      }
+    }
+
+    function updatePhysics() {
+      if (!state.playing) return;
+
+      const rhoF = liquidDensities[state.liquid];
+      const viscosity = liquidViscosity[state.liquid];
+      const tankWaterLevel = canvas.height * 0.45 + 10;
+      const cx = canvas.width / 2;
+      const size = getObjectSize();
+      const objHeight = size.side || size.radius * 2;
+      
+      // Calculate equilibrium position
+      // Float: object density < fluid density, sink: object density > fluid density
+      const willFloat = state.density < rhoF;
+      
+      // Initial position - start above water
+      if (!state.settled) {
+        state.objectY = tankWaterLevel - objHeight - 20;
+        state.velocity = 0;
+        state.dropping = true;
+        state.inWater = false;
+        state.settled = true;
+      }
+      
+      const waterLevel = tankWaterLevel;
+      
+      // Handle dropping phase (falling through air)
+      if (state.dropping) {
+        state.velocity += state.gravity * 0.5;
+        state.objectY += state.velocity;
+        
+        // Check if hit water surface
+        if (state.objectY + objHeight >= waterLevel) {
+          state.dropping = false;
+          state.inWater = true;
+          state.splashAnim = 1;
+          state.velocity = state.velocity * 0.3; // Slow down on impact
+        }
+      }
+      
+      const objectBottom = state.objectY + objHeight;
+      const objectTop = state.objectY;
+      
+      const submerged = getSubmergedFraction(waterLevel, objectTop, objectBottom);
+      const displacedVol = state.volume * submerged;
+      
+      const Fb = rhoF * displacedVol * state.gravity;
+      const W = state.density * state.volume * state.gravity;
+      const netForce = W - Fb;
+      
+      // Clamp position bounds
+      const maxY = canvas.height * 0.45 + canvas.height * 0.45 - objHeight - 20;
+      const minY = canvas.height * 0.45 - objHeight + 20;
+      
+      // Only apply float/sink physics when in water
+      if (state.inWater) {
+        // Calculate target position based on density ratio
+        const densityRatio = state.density / rhoF;
+        
+        // If density < fluid (floats): target is near surface (50% submerged)
+        // If density > fluid (sinks): target is at bottom
+        let targetY;
+        if (densityRatio < 1) {
+          // Floats - equilibrium at ~50% submerged
+          targetY = waterLevel - objHeight * 0.5;
+        } else {
+          // Sinks - equilibrium at bottom
+          targetY = maxY;
+        }
+        
+        // Smooth movement toward target
+        const diff = targetY - state.objectY;
+        const speed = 0.05 / Math.sqrt(viscosity);
+        
+        if (Math.abs(diff) > 0.5) {
+          state.objectY += diff * speed;
+        } else {
+          state.objectY = targetY;
+        }
+      }
+      
+      // Clamp position
+      state.objectY = Math.max(minY, Math.min(maxY, state.objectY));
+      
+      // Update trail
+      if (state.playing) {
+        state.trail.push({ x: cx, y: state.objectY + (size.side || size.radius * 2) / 2, time: Date.now() });
+        // Keep trail limited to last 60 frames
+        if (state.trail.length > 60) state.trail.shift();
+      }
+
+      document.getElementById('weightVal').innerHTML = `${W.toFixed(1)} <small>N</small>`;
+      document.getElementById('buoyVal').innerHTML = `${Fb.toFixed(1)} <small>N</small>`;
+      document.getElementById('netVal').innerHTML = `${netForce.toFixed(1)} <small>N</small>`;
+      document.getElementById('massVal').innerHTML = `${(state.density * state.volume).toFixed(1)} <small>kg</small>`;
+      document.getElementById('fluidDensityVal').innerHTML = `${rhoF} <small>kg/m³</small>`;
+      document.getElementById('submergedVal').innerHTML = `${(submerged * 100).toFixed(0)} <small>%</small>`;
+      
+      // Update status indicator
+      const statusIndicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      const infoText = document.getElementById('infoText');
+      const infoRatio = document.getElementById('infoRatio');
+      
+      const displacedLiters = (displacedVol * 1000).toFixed(1);
+      const newStatus = willFloat ? 'floating' : 'sinking';
+      
+      if (state.status !== newStatus) {
+        state.status = newStatus;
+        if (willFloat) {
+          statusIndicator.classList.remove('sinking');
+          statusText.textContent = 'FLOAT';
+          infoText.innerHTML = `Object density (${state.density} kg/m³) &lt; Fluid density (${rhoF} kg/m³)<br>Buoyant force &gt; Weight → Object rises`;
+          infoRatio.innerHTML = `<span class="float">Ratio: ${(state.density / rhoF).toFixed(2)} → Floats at ${(submerged * 100).toFixed(0)}% submerged</span>`;
+        } else {
+          statusIndicator.classList.add('sinking');
+          statusText.textContent = 'SINK';
+          infoText.innerHTML = `Object density (${state.density} kg/m³) &gt; Fluid density (${rhoF} kg/m³)<br>Weight &gt; Buoyant force → Object sinks`;
+          infoRatio.innerHTML = `<span class="sink">Ratio: ${(state.density / rhoF).toFixed(2)} → Sinks (displaces ${displacedLiters}L)</span>`;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      drawBackground();
+      drawTank();
+      updatePhysics();
+      drawObject();
+      
+      requestAnimationFrame(draw);
+    }
+
+    densitySlider.addEventListener('input', () => {
+      state.density = parseFloat(densitySlider.value);
+      state.velocity = 0;
+      updateLabels();
+    });
+
+    volumeSlider.addEventListener('input', () => {
+      state.volume = parseFloat(volumeSlider.value);
+      state.velocity = 0;
+      updateLabels();
+    });
+
+    gravitySlider.addEventListener('input', () => {
+      state.gravity = parseFloat(gravitySlider.value);
+      state.velocity = 0;
+      updateLabels();
+    });
+
+    objectShapeSelect.addEventListener('change', (e) => {
+      state.objectShape = e.target.value;
+    });
+
+    liquidTypeSelect.addEventListener('change', (e) => {
+      state.liquid = e.target.value;
+      state.velocity = 0;
+      // Reset bubbles for new liquid
+      state.bubbles.forEach(b => {
+        b.x = 100 + Math.random() * 700;
+        b.y = 150 + Math.random() * 250;
+      });
+    });
+
+    bgThemeSelect.addEventListener('change', (e) => {
+      state.bgTheme = e.target.value;
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.settled = false;
+      state.dropping = false;
+      state.inWater = false;
+      state.objectY = 0;
+      state.velocity = 0;
+      state.trail = [];
+      state.playing = true;
+      playPauseBtn.innerHTML = '<span>⏸</span> Pause';
+    });
+
+    updateLabels();
+    draw();
+
+    function copyFormula(el) {
+      const text = el.querySelector('.formula-main').textContent.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        el.classList.add('copied');
+        setTimeout(() => el.classList.remove('copied'), 1500);
+      });
+    }
+  </script>
+</body>
+</html>

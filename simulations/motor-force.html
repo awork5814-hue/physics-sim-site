@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Motor Effect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Motor Effect</h1>
+    <div class="subtitle">Force on a current-carrying wire: F = B I L (perpendicular)</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Simulation</label>
+          <div class="button-row">
+            <button class="btn" id="playPause">Pause</button>
+            <button class="btn" id="reset">Reset</button>
+          </div>
+        </div>
+        <div class="control">
+          <label>Current (A)</label>
+          <input type="range" id="current" min="0" max="20" step="0.1" value="10" />
+          <div class="row"><span>0</span><span id="currentValue" class="value">10.0 A</span><span>20</span></div>
+        </div>
+        <div class="control">
+          <label>Magnetic Field (T)</label>
+          <input type="range" id="field" min="0.1" max="1" step="0.01" value="0.5" />
+          <div class="row"><span>0.1</span><span id="fieldValue" class="value">0.50 T</span><span>1.0</span></div>
+        </div>
+        <div class="control">
+          <label>Wire Length (m)</label>
+          <input type="range" id="length" min="0.1" max="1" step="0.01" value="0.2" />
+          <div class="row"><span>0.1</span><span id="lengthValue" class="value">0.20 m</span><span>1.0</span></div>
+        </div>
+        <div class="control">
+          <label>Field Direction</label>
+          <div class="checks">
+            <label><input type="radio" name="fieldDir" value="into" checked /> Into page</label>
+            <label><input type="radio" name="fieldDir" value="out" /> Out of page</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Current Direction</label>
+          <div class="checks">
+            <label><input type="radio" name="currentDir" value="up" checked /> Up</label>
+            <label><input type="radio" name="currentDir" value="down" /> Down</label>
+          </div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showForce" type="checkbox" checked /> Force vector</label>
+            <label><input id="showField" type="checkbox" checked /> Field lines</label>
+            <label><input id="show3d" type="checkbox" /> 3D hint</label>
+            <label><input id="showLabels" type="checkbox" checked /> Labels</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Force:</strong> <span style="font-family: var(--mono);">F = B I L</span></div>
+            <div><strong>Torque:</strong> <span style="font-family: var(--mono);">τ = N I A B</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Force direction uses conventional current and the right‑hand rule.
+  </footer>
+
+  <script>
+    const state = {
+      current: 10,
+      magneticField: 0.5,
+      wireLength: 0.2,
+      fieldDirection: 'into',
+      currentDirection: 'up',
+      showForce: true,
+      showFieldLines: true,
+      show3D: false,
+      showLabels: true
+    };
+
+    const dom = {
+      current: document.getElementById('current'),
+      field: document.getElementById('field'),
+      length: document.getElementById('length'),
+      showForce: document.getElementById('showForce'),
+      showField: document.getElementById('showField'),
+      show3d: document.getElementById('show3d'),
+      showLabels: document.getElementById('showLabels'),
+      currentValue: document.getElementById('currentValue'),
+      fieldValue: document.getElementById('fieldValue'),
+      lengthValue: document.getElementById('lengthValue')
+    };
+
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function calculateForce() {
+      return state.magneticField * state.current * state.wireLength;
+    }
+
+    function getForceDirection() {
+      const isUp = state.currentDirection === 'up';
+      const isInto = state.fieldDirection === 'into';
+      if (isUp && isInto) return 'right';
+      if (isUp && !isInto) return 'left';
+      if (!isUp && isInto) return 'left';
+      return 'right';
+    }
+
+    function drawArrow(x, y, dx, dy, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+      ctx.stroke();
+
+      const angle = Math.atan2(dy, dx);
+      const headLen = 10;
+      ctx.beginPath();
+      ctx.moveTo(x + dx, y + dy);
+      ctx.lineTo(x + dx - headLen * Math.cos(angle - Math.PI / 6), y + dy - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x + dx - headLen * Math.cos(angle + Math.PI / 6), y + dy - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawScene() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0, '#051223');
+      grad.addColorStop(0.35, '#0a1a2f');
+      grad.addColorStop(0.7, '#071829');
+      grad.addColorStop(1, '#04101e');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // subtle tech grid
+      ctx.strokeStyle = 'rgba(106,215,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      // soft vignette + glow bands
+      const vignette = ctx.createRadialGradient(w * 0.6, h * 0.2, 60, w * 0.6, h * 0.2, w);
+      vignette.addColorStop(0, 'rgba(106,215,255,0.08)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.65)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+
+      const band = ctx.createLinearGradient(0, h * 0.2, w, h * 0.2);
+      band.addColorStop(0, 'rgba(34,197,94,0.06)');
+      band.addColorStop(0.5, 'rgba(106,215,255,0.1)');
+      band.addColorStop(1, 'rgba(34,197,94,0.04)');
+      ctx.fillStyle = band;
+      ctx.fillRect(0, h * 0.18, w, 40);
+
+      // magnet poles with bevels
+      const magnetY = 70;
+      const magnetH = 220;
+      const magnetW = 52;
+      const leftX = 36;
+      const rightX = w - magnetW - 36;
+      const leftGrad = ctx.createLinearGradient(leftX, magnetY, leftX + magnetW, magnetY);
+      leftGrad.addColorStop(0, '#8b1d24');
+      leftGrad.addColorStop(0.5, '#ff6b6b');
+      leftGrad.addColorStop(1, '#a41f2a');
+      ctx.fillStyle = leftGrad;
+      ctx.fillRect(leftX, magnetY, magnetW, magnetH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(leftX, magnetY, magnetW, magnetH);
+
+      const rightGrad = ctx.createLinearGradient(rightX, magnetY, rightX + magnetW, magnetY);
+      rightGrad.addColorStop(0, '#2a7db6');
+      rightGrad.addColorStop(0.5, '#6ad7ff');
+      rightGrad.addColorStop(1, '#1d5e93');
+      ctx.fillStyle = rightGrad;
+      ctx.fillRect(rightX, magnetY, magnetW, magnetH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(rightX, magnetY, magnetW, magnetH);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = '14px Inter, sans-serif';
+      ctx.fillText('N', leftX + 18, magnetY - 10);
+      ctx.fillText('S', rightX + 18, magnetY - 10);
+
+      // field lines (slight curvature + glow)
+      if (state.showFieldLines) {
+        for (let y = magnetY + 20; y <= magnetY + magnetH - 20; y += 26) {
+          const curve = 12 + 6 * Math.sin(y * 0.06);
+          const start = leftX + magnetW + 6;
+          const end = rightX - 6;
+          ctx.strokeStyle = 'rgba(106,215,255,0.45)';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(start, y);
+          ctx.bezierCurveTo(start + (end - start) * 0.35, y - curve, start + (end - start) * 0.65, y + curve, end, y);
+          ctx.stroke();
+
+          // arrow head
+          const ax = end - 10;
+          ctx.beginPath();
+          ctx.moveTo(ax, y);
+          ctx.lineTo(ax - 6, y - 3);
+          ctx.lineTo(ax - 6, y + 3);
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(106,215,255,0.6)';
+          ctx.fill();
+        }
+      }
+
+      const wireX = w / 2;
+      const lengthNorm = Math.max(0.2, Math.min(1, state.wireLength));
+      const wireSpan = (magnetH - 80) * lengthNorm;
+      const wireTop = magnetY + (magnetH - wireSpan) / 2;
+      const wireBot = wireTop + wireSpan;
+      const wireGrad = ctx.createLinearGradient(wireX - 4, wireTop, wireX + 4, wireTop);
+      wireGrad.addColorStop(0, '#7dd3fc');
+      wireGrad.addColorStop(0.5, '#e2e8f0');
+      wireGrad.addColorStop(1, '#38bdf8');
+      ctx.strokeStyle = wireGrad;
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(wireX, wireTop);
+      ctx.lineTo(wireX, wireBot);
+      ctx.stroke();
+
+      // wire glow
+      ctx.strokeStyle = 'rgba(106,215,255,0.35)';
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.moveTo(wireX, wireTop);
+      ctx.lineTo(wireX, wireBot);
+      ctx.stroke();
+
+      if (state.showLabels) {
+        ctx.fillStyle = '#6ad7ff';
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillText(state.currentDirection === 'up' ? 'I ↑' : 'I ↓', wireX + 12, wireTop + 16);
+      }
+
+      if (state.showForce) {
+        const dir = getForceDirection();
+        const dx = (dir === 'right' ? 1 : -1) * (60 + 60 * lengthNorm);
+        drawArrow(wireX, (wireTop + wireBot) / 2, dx, 0, '#f6c76b');
+        if (state.showLabels) {
+          ctx.fillStyle = '#f6c76b';
+          ctx.fillText('F', wireX + dx + (dx > 0 ? 10 : -20), (wireTop + wireBot) / 2 - 6);
+        }
+      }
+
+      const symbol = state.fieldDirection === 'into' ? '⊗' : '⊙';
+      ctx.fillStyle = '#8aa0b8';
+      ctx.font = '20px Inter, sans-serif';
+      ctx.fillText(symbol, wireX - 8, magnetY + magnetH + 20);
+
+      if (state.show3D) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(120, 320);
+        ctx.lineTo(220, 320);
+        ctx.lineTo(250, 290);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(106,215,255,0.8)';
+        ctx.fillText('3D', 120, 288);
+      }
+    }
+
+    function updateReadouts() {
+      const force = calculateForce();
+      const dir = getForceDirection();
+      const torque = force * 0.1;
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Force</span><span class="data-value orange">${force.toFixed(2)} N</span></div>
+          <div class="data-card"><span class="data-label">Direction</span><span class="data-value blue">${dir.charAt(0).toUpperCase() + dir.slice(1)}</span></div>
+          <div class="data-card"><span class="data-label">Current</span><span class="data-value green">${state.current.toFixed(1)} A</span></div>
+          <div class="data-card"><span class="data-label">Field</span><span class="data-value blue">${state.magneticField.toFixed(2)} T</span></div>
+          <div class="data-card"><span class="data-label">Torque</span><span class="data-value orange">${torque.toFixed(2)} N·m</span></div>
+        </div>
+      `;
+
+      dom.currentValue.textContent = `${state.current.toFixed(1)} A`;
+      dom.fieldValue.textContent = `${state.magneticField.toFixed(2)} T`;
+      dom.lengthValue.textContent = `${state.wireLength.toFixed(2)} m`;
+    }
+
+    function update() {
+      updateReadouts();
+      drawScene();
+    }
+
+    function bind() {
+      dom.current.addEventListener('input', () => {
+        state.current = Number(dom.current.value);
+        update();
+      });
+      dom.field.addEventListener('input', () => {
+        state.magneticField = Number(dom.field.value);
+        update();
+      });
+      dom.length.addEventListener('input', () => {
+        state.wireLength = Number(dom.length.value);
+        update();
+      });
+      document.querySelectorAll('input[name="fieldDir"]').forEach(r => {
+        r.addEventListener('change', (e) => {
+          state.fieldDirection = e.target.value;
+          update();
+        });
+      });
+      document.querySelectorAll('input[name="currentDir"]').forEach(r => {
+        r.addEventListener('change', (e) => {
+          state.currentDirection = e.target.value;
+          update();
+        });
+      });
+      dom.showForce.addEventListener('change', () => {
+        state.showForce = dom.showForce.checked;
+        update();
+      });
+      dom.showField.addEventListener('change', () => {
+        state.showFieldLines = dom.showField.checked;
+        update();
+      });
+      dom.show3d.addEventListener('change', () => {
+        state.show3D = dom.show3d.checked;
+        update();
+      });
+      dom.showLabels.addEventListener('change', () => {
+        state.showLabels = dom.showLabels.checked;
+        update();
+      });
+
+      document.getElementById('playPause').addEventListener('click', (e) => {
+        e.target.textContent = e.target.textContent === 'Pause' ? 'Play' : 'Pause';
+      });
+      document.getElementById('reset').addEventListener('click', () => {
+        state.current = 10;
+        state.magneticField = 0.5;
+        state.wireLength = 0.2;
+        state.fieldDirection = 'into';
+        state.currentDirection = 'up';
+        dom.current.value = 10;
+        dom.field.value = 0.5;
+        dom.length.value = 0.2;
+        document.querySelector('input[name="fieldDir"][value="into"]').checked = true;
+        document.querySelector('input[name="currentDir"][value="up"]').checked = true;
+        update();
+      });
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    bind();
+    update();
+  </script>
+</body>
+</html>

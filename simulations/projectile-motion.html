@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projectile Motion</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --projectile-color: #f6c76b;
+      --trajectory-color: rgba(106, 215, 255, 0.5);
+      --ground-color: #2d5a27;
+      --grid-color: rgba(255, 255, 255, 0.1);
+      --vector-vx: #6bff6b;
+      --vector-vy: #ff6b6b;
+      --vector-g: #f6c76b;
+      --graph-y: #6ad7ff;
+      --graph-x: #ff9a6c;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .graph-panel {
+      margin: 0 28px 18px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="projectile-motion">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Projectile Motion</h1>
+      <p>Parabolic trajectory under gravity</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="projCanvas" width="900" height="520" aria-label="Projectile motion"></canvas>
+        <div class="btn-row">
+          <button id="launch">Launch</button>
+          <button id="reset">Reset</button>
+          <div class="inline" style="max-width: 220px;">
+            <label for="speed">Speed</label>
+            <select id="speed">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="v0">Initial Speed <strong id="v0Label">20 m/s</strong></label>
+          <input type="range" id="v0" min="1" max="50" step="1" value="20" />
+        </div>
+
+        <div class="control-group">
+          <label for="angle">Launch Angle <strong id="angleLabel">45°</strong></label>
+          <input type="range" id="angle" min="0" max="90" step="1" value="45" />
+        </div>
+
+        <div class="control-group">
+          <label for="height">Launch Height <strong id="heightLabel">0 m</strong></label>
+          <input type="range" id="height" min="0" max="20" step="0.5" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="gravity">Gravity <strong id="gravityLabel">9.81 m/s²</strong></label>
+          <select id="gravity">
+            <option value="9.81" selected>Earth (9.81)</option>
+            <option value="1.62">Moon (1.62)</option>
+            <option value="3.71">Mars (3.71)</option>
+            <option value="24.79">Jupiter (24.79)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showVectors" checked /> Show vectors</label>
+          <label><input type="checkbox" id="showAccel" checked /> Show acceleration vector</label>
+          <label><input type="checkbox" id="showTrail" checked /> Show trajectory trail</label>
+          <label><input type="checkbox" id="showGraphs" checked /> Show motion graphs</label>
+          <label><input type="checkbox" id="showPrediction" checked /> Show prediction line</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="graph-header">
+        <h3 style="margin:0;">Motion Graphs</h3>
+        <div style="color: var(--sim-muted);">x(t), y(t), vx(t), vy(t)</div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Projectile graphs"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Projectile motion combines constant horizontal velocity with constant downward acceleration. The path is a parabola.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Try 30° and 60°. Which gives the same range?</li>
+          <li>What happens to vx at the top of the trajectory?</li>
+          <li>Is 45° always optimal for range?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Horizontal and vertical motion are independent.</li>
+          <li>vx is constant, vy changes linearly.</li>
+          <li>Range depends on sin(2θ) for level ground.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('projCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const v0Input = document.getElementById('v0');
+    const angleInput = document.getElementById('angle');
+    const heightInput = document.getElementById('height');
+    const gravitySelect = document.getElementById('gravity');
+
+    const v0Label = document.getElementById('v0Label');
+    const angleLabel = document.getElementById('angleLabel');
+    const heightLabel = document.getElementById('heightLabel');
+    const gravityLabel = document.getElementById('gravityLabel');
+
+    const showVectors = document.getElementById('showVectors');
+    const showAccel = document.getElementById('showAccel');
+    const showTrail = document.getElementById('showTrail');
+    const showGraphs = document.getElementById('showGraphs');
+    const showPrediction = document.getElementById('showPrediction');
+
+    const launchBtn = document.getElementById('launch');
+    const resetBtn = document.getElementById('reset');
+    const speedSelect = document.getElementById('speed');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const state = {
+      v0: 20,
+      angle: 45,
+      height: 0,
+      gravity: 9.81,
+      time: 0,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      launched: false,
+      landed: false,
+      trail: [],
+      graphData: [],
+      speed: 1
+    };
+
+    function updateLabels() {
+      v0Label.textContent = `${state.v0.toFixed(0)} m/s`;
+      angleLabel.textContent = `${state.angle.toFixed(0)}°`;
+      heightLabel.textContent = `${state.height.toFixed(1)} m`;
+      gravityLabel.textContent = `${state.gravity.toFixed(2)} m/s²`;
+    }
+
+    function reset() {
+      state.time = 0;
+      state.x = 0;
+      state.y = state.height;
+      state.trail = [];
+      state.graphData = [];
+      state.launched = false;
+      state.landed = false;
+    }
+
+    function launch() {
+      state.time = 0;
+      state.launched = true;
+      state.landed = false;
+      state.trail = [];
+      state.graphData = [];
+    }
+
+    function updatePhysics(dt) {
+      if (!state.launched || state.landed) return;
+      state.time += dt;
+      const theta = (state.angle * Math.PI) / 180;
+      state.vx = state.v0 * Math.cos(theta);
+      state.vy = state.v0 * Math.sin(theta) - state.gravity * state.time;
+      state.x = state.vx * state.time;
+      state.y = state.height + state.v0 * Math.sin(theta) * state.time - 0.5 * state.gravity * state.time * state.time;
+      if (state.y <= 0) {
+        state.y = 0;
+        state.landed = true;
+      }
+      if (showTrail.checked) {
+        state.trail.push({ x: state.x, y: state.y });
+        if (state.trail.length > 200) state.trail.shift();
+      }
+      state.graphData.push({
+        t: state.time,
+        x: state.x,
+        y: state.y,
+        vx: state.vx,
+        vy: state.vy
+      });
+      if (state.graphData.length > 200) state.graphData.shift();
+    }
+
+    function drawScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const groundY = canvas.height * 0.8;
+
+      ctx.fillStyle = '#2d5a27';
+      ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      for (let i = 0; i <= 10; i++) {
+        const x = (canvas.width / 10) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, groundY);
+        ctx.stroke();
+      }
+
+      if (showPrediction.checked) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.4)';
+        ctx.beginPath();
+        for (let t = 0; t <= 5; t += 0.1) {
+          const theta = (state.angle * Math.PI) / 180;
+          const px = state.v0 * Math.cos(theta) * t;
+          const py = state.height + state.v0 * Math.sin(theta) * t - 0.5 * state.gravity * t * t;
+          const x = px * 10;
+          const y = groundY - py * 10;
+          if (t === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      if (showTrail.checked) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.6)';
+        ctx.beginPath();
+        state.trail.forEach((p, i) => {
+          const x = p.x * 10;
+          const y = groundY - p.y * 10;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      const px = state.x * 10;
+      const py = groundY - state.y * 10;
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showVectors.checked) {
+        drawVector(px, py, state.vx * 2, 0, '#6bff6b');
+        drawVector(px, py, 0, -state.vy * 2, '#ff6b6b');
+      }
+
+      if (showAccel.checked) {
+        drawVector(px, py, 0, 40, '#f6c76b');
+      }
+    }
+
+    function drawVector(x, y, dx, dy, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+      ctx.stroke();
+    }
+
+    function updateDataPanel() {
+      const range = state.v0 * state.v0 * Math.sin(2 * (state.angle * Math.PI / 180)) / state.gravity;
+      const maxHeight = Math.pow(state.v0 * Math.sin((state.angle * Math.PI) / 180), 2) / (2 * state.gravity);
+      const timeOfFlight = 2 * state.v0 * Math.sin((state.angle * Math.PI) / 180) / state.gravity;
+      dataPanel.innerHTML = `
+        <div><strong>Initial Speed:</strong> ${state.v0.toFixed(1)} m/s</div>
+        <div><strong>Angle:</strong> ${state.angle.toFixed(1)}°</div>
+        <div><strong>Position:</strong> (${state.x.toFixed(1)}, ${state.y.toFixed(1)}) m</div>
+        <div><strong>Velocity:</strong> ${Math.hypot(state.vx, state.vy).toFixed(1)} m/s</div>
+        <div><strong>Range:</strong> ${range.toFixed(1)} m</div>
+        <div><strong>Max Height:</strong> ${maxHeight.toFixed(1)} m</div>
+        <div><strong>Time of Flight:</strong> ${timeOfFlight.toFixed(2)} s</div>
+      `;
+    }
+
+    function drawGraphs() {
+      if (!showGraphs.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 30;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      if (state.graphData.length < 2) return;
+      gctx.strokeStyle = '#6ad7ff';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      state.graphData.forEach((p, i) => {
+        const x = padding + (i / (state.graphData.length - 1)) * width;
+        const y = padding + height - (p.y / 30) * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+    }
+
+    function loop() {
+      updatePhysics((1 / 60) * state.speed);
+      drawScene();
+      updateDataPanel();
+      drawGraphs();
+      requestAnimationFrame(loop);
+    }
+
+    v0Input.addEventListener('input', (e) => {
+      state.v0 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    angleInput.addEventListener('input', (e) => {
+      state.angle = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    heightInput.addEventListener('input', (e) => {
+      state.height = parseFloat(e.target.value);
+      state.y = state.height;
+      updateLabels();
+    });
+
+    gravitySelect.addEventListener('change', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    launchBtn.addEventListener('click', () => {
+      launch();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      reset();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    reset();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

@@ -1,0 +1,1136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projectile Motion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --projectile: #f6c76b;
+      --trajectory: rgba(255, 220, 120, 0.95);
+      --grid: rgba(255, 255, 255, 0.08);
+      --vector-vx: #6bff6b;
+      --vector-vy: #ff6b6b;
+      --vector-g: #f6c76b;
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --panel: rgba(16, 24, 36, 0.86);
+      --panel-strong: rgba(12, 20, 32, 0.95);
+      --glass-border: rgba(106, 215, 255, 0.2);
+      --glass-glow: rgba(106, 215, 255, 0.16);
+      --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 700px at 12% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 88% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px clamp(16px, 4vw, 36px) 36px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0 18px;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 8px 0 18px;
+    }
+
+    .hero-title { max-width: 720px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .btn {
+      background: rgba(12, 18, 28, 0.85);
+      color: var(--sim-text);
+      border: 1px solid var(--glass-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.45); }
+    .btn.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+    .btn.ghost { background: rgba(106, 215, 255, 0.1); color: var(--accent); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.05rem;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr);
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, var(--glass-glow), transparent 45%);
+      pointer-events: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 520px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .presets .btn { font-size: 11px; padding: 8px 10px; }
+
+    .graph-panel { margin-top: 18px; }
+
+    .data-panel {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .data-card strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--sim-muted);
+      font-size: 12px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(106, 215, 255, 0.4);
+    }
+
+    @media (max-width: 980px) {
+      header.hero { flex-direction: column; align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      canvas { height: 380px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="projectile">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <div class="hero-title">
+        <div class="hero-badge">Precision Lab</div>
+        <h1>Projectile Motion</h1>
+        <p>Parabolic trajectory under gravity with live vectors and analytics.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary" id="launch">Launch</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><span>Range</span><strong id="rangeStat">0.0 m</strong></div>
+      <div class="stat"><span>Max Height</span><strong id="heightStat">0.0 m</strong></div>
+      <div class="stat"><span>Time of Flight</span><strong id="timeStat">0.00 s</strong></div>
+      <div class="stat"><span>Impact Speed</span><strong id="impactStat">0.0 m/s</strong></div>
+    </div>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="projCanvas" width="900" height="520" aria-label="Projectile motion"></canvas>
+        <div class="legend">
+          <span><i></i> Trajectory</span>
+          <span><i style="background: var(--projectile);"></i> Projectile</span>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="v0">Initial Speed <span class="value-chip" id="v0Label">20 m/s</span></label>
+          <input type="range" id="v0" min="1" max="50" step="1" value="20" />
+        </div>
+
+        <div class="control-group">
+          <label for="angle">Launch Angle <span class="value-chip" id="angleLabel">45°</span></label>
+          <input type="range" id="angle" min="0" max="90" step="1" value="45" />
+        </div>
+
+        <div class="control-group">
+          <label for="height">Launch Height <span class="value-chip" id="heightLabel">0 m</span></label>
+          <input type="range" id="height" min="0" max="20" step="0.5" value="0" />
+        </div>
+
+        <div class="control-group">
+          <label for="gravity">Gravity <span class="value-chip" id="gravityLabel">9.81 m/s²</span></label>
+          <select id="gravity">
+            <option value="9.81" selected>Earth (9.81)</option>
+            <option value="1.62">Moon (1.62)</option>
+            <option value="3.71">Mars (3.71)</option>
+            <option value="24.79">Jupiter (24.79)</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showVectors" checked /> Show vectors</label>
+          <label><input type="checkbox" id="showAccel" checked /> Show acceleration vector</label>
+          <label><input type="checkbox" id="showTrail" checked /> Show trajectory trail</label>
+          <label><input type="checkbox" id="showGraphs" checked /> Show motion graphs</label>
+          <label><input type="checkbox" id="showPrediction" checked /> Show prediction line</label>
+        </div>
+
+        <div class="control-group">
+          <label for="speed">Animation Speed <span class="value-chip" id="speedLabel">1x</span></label>
+          <select id="speed">
+            <option value="0.25">0.25x</option>
+            <option value="0.5">0.5x</option>
+            <option value="1" selected>1x</option>
+            <option value="2">2x</option>
+          </select>
+        </div>
+
+        <div class="presets">
+          <button class="btn" data-preset="high">High Arc</button>
+          <button class="btn" data-preset="range">Long Range</button>
+          <button class="btn" data-preset="noair">No Air</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top: 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="btn-row" style="margin-bottom: 12px;">
+        <div style="color: var(--sim-muted);">x(t), y(t), vx(t), vy(t)</div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Projectile graphs"></canvas>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('projCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const v0Input = document.getElementById('v0');
+    const angleInput = document.getElementById('angle');
+    const heightInput = document.getElementById('height');
+    const gravitySelect = document.getElementById('gravity');
+
+    const v0Label = document.getElementById('v0Label');
+    const angleLabel = document.getElementById('angleLabel');
+    const heightLabel = document.getElementById('heightLabel');
+    const gravityLabel = document.getElementById('gravityLabel');
+    const speedLabel = document.getElementById('speedLabel');
+
+    const showVectors = document.getElementById('showVectors');
+    const showAccel = document.getElementById('showAccel');
+    const showTrail = document.getElementById('showTrail');
+    const showGraphs = document.getElementById('showGraphs');
+    const showPrediction = document.getElementById('showPrediction');
+
+    const launchBtn = document.getElementById('launch');
+    const resetBtn = document.getElementById('reset');
+    const speedSelect = document.getElementById('speed');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const state = {
+      v0: 20,
+      angle: 45,
+      height: 0,
+      gravity: 9.81,
+      time: 0,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      launched: false,
+      landed: false,
+      trail: [],
+      graphData: [],
+      speed: 1,
+      swingActive: false,
+      swingT: 0,
+      moonStars: null,
+      moonCraters: null,
+      marsHills: null,
+      jupiterBands: null,
+      jupiterStorm: null
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const gw = graphCanvas.getBoundingClientRect();
+      graphCanvas.width = Math.round(gw.width * ratio);
+      graphCanvas.height = Math.round(gw.height * ratio);
+      gctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function updateLabels() {
+      v0Label.textContent = `${state.v0.toFixed(0)} m/s`;
+      angleLabel.textContent = `${state.angle.toFixed(0)}°`;
+      heightLabel.textContent = `${state.height.toFixed(1)} m`;
+      gravityLabel.textContent = `${state.gravity.toFixed(2)} m/s²`;
+      speedLabel.textContent = `${state.speed.toFixed(2)}x`;
+    }
+
+    function reset() {
+      state.time = 0;
+      state.x = 0;
+      state.y = state.height;
+      state.trail = [];
+      state.graphData = [];
+      state.launched = false;
+      state.landed = false;
+    }
+
+    function launch() {
+      state.time = 0;
+      state.launched = false;
+      state.landed = false;
+      state.trail = [];
+      state.graphData = [];
+      state.swingActive = true;
+      state.swingT = 0;
+    }
+
+    function updatePhysics(dt) {
+      if (state.swingActive) {
+        state.swingT += dt;
+        if (state.swingT >= 0.35) {
+          state.swingActive = false;
+          state.launched = true;
+          state.time = 0;
+        }
+        return;
+      }
+      if (!state.launched || state.landed) return;
+      state.time += dt;
+      const theta = (state.angle * Math.PI) / 180;
+      state.vx = state.v0 * Math.cos(theta);
+      state.vy = state.v0 * Math.sin(theta) - state.gravity * state.time;
+      state.x = state.vx * state.time;
+      state.y = state.height + state.v0 * Math.sin(theta) * state.time - 0.5 * state.gravity * state.time * state.time;
+      if (state.y <= 0) {
+        state.y = 0;
+        state.landed = true;
+      }
+      if (showTrail.checked) {
+        state.trail.push({ x: state.x, y: state.y });
+        if (state.trail.length > 200) state.trail.shift();
+      }
+      state.graphData.push({ t: state.time, x: state.x, y: state.y, vx: state.vx, vy: state.vy });
+      if (state.graphData.length > 200) state.graphData.shift();
+    }
+
+    function drawGrid(groundY, w, h) {
+      ctx.strokeStyle = varComputed('--grid');
+      for (let i = 0; i <= 10; i++) {
+        const x = (w / 10) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, groundY);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 6; i++) {
+        const y = (groundY / 6) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    function initMoonScene(w, groundY) {
+      if (!state.moonStars) {
+        state.moonStars = Array.from({ length: 140 }, () => ({
+          x: Math.random() * w,
+          y: Math.random() * groundY * 0.9,
+          r: Math.random() * 1.4 + 0.2,
+          a: 0.5 + Math.random() * 0.5
+        }));
+      }
+      if (!state.moonCraters) {
+        state.moonCraters = Array.from({ length: 6 }, () => ({
+          dx: (Math.random() - 0.5) * 40,
+          dy: (Math.random() - 0.5) * 40,
+          r: 6 + Math.random() * 10
+        }));
+      }
+    }
+
+    function drawMoonBackdrop(groundY, w, h) {
+      initMoonScene(w, groundY);
+      const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+      sky.addColorStop(0, '#040713');
+      sky.addColorStop(1, '#0b1b3f');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+      state.moonStars.forEach((s) => {
+        ctx.fillStyle = `rgba(255,255,255,${s.a})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      const moonX = w * 0.7;
+      const moonY = h * 0.18;
+      const moonR = 70;
+      const moonGrad = ctx.createRadialGradient(moonX - 22, moonY - 22, 10, moonX, moonY, moonR);
+      moonGrad.addColorStop(0, '#f7f7f7');
+      moonGrad.addColorStop(0.6, '#d7d7d7');
+      moonGrad.addColorStop(1, '#9d9d9d');
+      ctx.fillStyle = moonGrad;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+      // moon texture and craters
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.clip();
+
+      ctx.fillStyle = 'rgba(120,120,120,0.45)';
+      state.moonCraters.forEach((c) => {
+        ctx.beginPath();
+        ctx.arc(moonX + c.dx, moonY + c.dy, c.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+
+      // speckle texture
+      for (let i = 0; i < 140; i++) {
+        const rx = moonX + (Math.random() - 0.5) * moonR * 1.6;
+        const ry = moonY + (Math.random() - 0.5) * moonR * 1.6;
+        const rr = Math.random() * 1.2 + 0.3;
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(180,180,180,0.2)' : 'rgba(90,90,90,0.25)';
+        ctx.beginPath();
+        ctx.arc(rx, ry, rr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // fine grey texture lines
+      ctx.strokeStyle = 'rgba(120,120,120,0.35)';
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < 14; i++) {
+        const y = moonY - moonR + (i / 14) * (moonR * 2);
+        ctx.beginPath();
+        ctx.moveTo(moonX - moonR, y);
+        ctx.lineTo(moonX + moonR, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // rim light
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR - 1, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const sea = ctx.createLinearGradient(0, groundY, 0, h);
+      sea.addColorStop(0, '#0b1f45');
+      sea.addColorStop(1, '#050b1c');
+      ctx.fillStyle = sea;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      const ref = ctx.createLinearGradient(0, groundY, 0, h);
+      ref.addColorStop(0, 'rgba(255,255,255,0.5)');
+      ref.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = ref;
+      ctx.beginPath();
+      ctx.moveTo(moonX - 50, groundY);
+      ctx.lineTo(moonX + 50, groundY);
+      ctx.lineTo(moonX + 15, h);
+      ctx.lineTo(moonX - 15, h);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      for (let i = 0; i < 10; i++) {
+        const y = groundY + i * 18;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawParkBackdrop(groundY, w, h) {
+      const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+      sky.addColorStop(0, '#2f7ec9');
+      sky.addColorStop(0.4, '#6bb6f2');
+      sky.addColorStop(1, '#cfe9ff');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, groundY);
+
+      // sun glow
+      const sun = ctx.createRadialGradient(w * 0.8, h * 0.12, 10, w * 0.8, h * 0.12, 120);
+      sun.addColorStop(0, 'rgba(255,255,255,0.9)');
+      sun.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sun;
+      ctx.beginPath();
+      ctx.arc(w * 0.8, h * 0.12, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // distant trees band
+      ctx.fillStyle = '#2f6b3a';
+      ctx.fillRect(0, groundY - 40, w, 40);
+
+      // grass gradient
+      const grass = ctx.createLinearGradient(0, groundY, 0, h);
+      grass.addColorStop(0, '#3f8c3e');
+      grass.addColorStop(1, '#1f4d2c');
+      ctx.fillStyle = grass;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      // path
+      ctx.fillStyle = '#b7bfc9';
+      ctx.beginPath();
+      ctx.moveTo(w * 0.42, h);
+      ctx.lineTo(w * 0.58, h);
+      ctx.lineTo(w * 0.54, groundY - 20);
+      ctx.lineTo(w * 0.46, groundY - 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // path tiles
+      ctx.strokeStyle = 'rgba(90, 100, 110, 0.35)';
+      for (let i = 0; i < 8; i++) {
+        const y = groundY + (i / 8) * (h - groundY);
+        ctx.beginPath();
+        ctx.moveTo(w * 0.42 + (i * 2), y);
+        ctx.lineTo(w * 0.58 - (i * 2), y);
+        ctx.stroke();
+      }
+
+      // trees
+      ctx.lineWidth = 6;
+      for (let i = 0; i < 6; i++) {
+        const x = 40 + i * (w / 6);
+        const trunkY = groundY;
+        ctx.strokeStyle = '#5a3d2b';
+        ctx.beginPath();
+        ctx.moveTo(x, trunkY);
+        ctx.lineTo(x, trunkY - 80);
+        ctx.stroke();
+        ctx.fillStyle = '#3f7f3a';
+        ctx.beginPath();
+        ctx.arc(x - 10, trunkY - 100, 28, 0, Math.PI * 2);
+        ctx.arc(x + 12, trunkY - 110, 24, 0, Math.PI * 2);
+        ctx.arc(x + 2, trunkY - 80, 26, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // bench
+      ctx.fillStyle = '#8c5a2b';
+      ctx.fillRect(w * 0.7, groundY - 30, 90, 10);
+      ctx.fillRect(w * 0.7, groundY - 18, 90, 8);
+      ctx.fillStyle = '#4a3722';
+      ctx.fillRect(w * 0.71, groundY - 8, 6, 18);
+      ctx.fillRect(w * 0.76, groundY - 8, 6, 18);
+      ctx.fillRect(w * 0.83, groundY - 8, 6, 18);
+    }
+
+    function initMarsScene(w, groundY) {
+      if (!state.marsHills) {
+        state.marsHills = Array.from({ length: 6 }, () => ({
+          x: Math.random() * w,
+          y: groundY - 10 - Math.random() * 50,
+          r: 40 + Math.random() * 80
+        }));
+      }
+    }
+
+    function drawMarsBackdrop(groundY, w, h) {
+      initMarsScene(w, groundY);
+      const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+      sky.addColorStop(0, '#b3472c');
+      sky.addColorStop(1, '#f1b27a');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, groundY);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.arc(w * 0.8, h * 0.12, 35, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#7a3b2a';
+      state.marsHills.forEach((hill) => {
+        ctx.beginPath();
+        ctx.arc(hill.x, hill.y, hill.r, Math.PI, 0);
+        ctx.fill();
+      });
+
+      const ground = ctx.createLinearGradient(0, groundY, 0, h);
+      ground.addColorStop(0, '#a24a2a');
+      ground.addColorStop(1, '#5a2a1a');
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, groundY, w, h - groundY);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      for (let i = 0; i < 10; i++) {
+        const y = groundY + i * 18;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    function initJupiterScene() {
+      if (!state.jupiterBands) {
+        state.jupiterBands = [
+          '#caa27a', '#b67b56', '#d6b08a', '#9f6b4b', '#e0c2a0', '#b37a58'
+        ];
+      }
+      if (!state.jupiterStorm) {
+        state.jupiterStorm = { x: 0.68, y: 0.62, r: 22 };
+      }
+    }
+
+    function drawJupiterBackdrop(groundY, w, h) {
+      initJupiterScene();
+      const sky = ctx.createLinearGradient(0, 0, 0, groundY);
+      sky.addColorStop(0, '#0d1220');
+      sky.addColorStop(1, '#1b2334');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, groundY);
+
+      // Jupiter disk
+      const jx = w * 0.75;
+      const jy = h * 0.2;
+      const jr = 80;
+      ctx.fillStyle = '#d9c2a6';
+      ctx.beginPath();
+      ctx.arc(jx, jy, jr, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(jx, jy, jr, 0, Math.PI * 2);
+      ctx.clip();
+      state.jupiterBands.forEach((color, i) => {
+        ctx.fillStyle = color;
+        const y = jy - jr + (i / state.jupiterBands.length) * (jr * 2);
+        ctx.fillRect(jx - jr, y, jr * 2, jr * 0.22);
+      });
+      ctx.fillStyle = 'rgba(190,120,90,0.7)';
+      ctx.beginPath();
+      ctx.ellipse(jx + jr * 0.25, jy + jr * 0.25, 22, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      const ground = ctx.createLinearGradient(0, groundY, 0, h);
+      ground.addColorStop(0, '#1a2733');
+      ground.addColorStop(1, '#0a1218');
+      ctx.fillStyle = ground;
+      ctx.fillRect(0, groundY, w, h - groundY);
+    }
+
+    function drawAxes(groundY, w) {
+      ctx.strokeStyle = 'rgba(233, 242, 255, 0.25)';
+      ctx.beginPath();
+      ctx.moveTo(20, groundY);
+      ctx.lineTo(w - 20, groundY);
+      ctx.moveTo(20, groundY);
+      ctx.lineTo(20, 20);
+      ctx.stroke();
+    }
+
+    function drawScene() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.clearRect(0, 0, w, h);
+      const groundY = h * 0.82;
+
+      if (Math.abs(state.gravity - 1.62) < 0.05) {
+        drawMoonBackdrop(groundY, w, h);
+      } else if (Math.abs(state.gravity - 3.71) < 0.05) {
+        drawMarsBackdrop(groundY, w, h);
+      } else if (Math.abs(state.gravity - 24.79) < 0.05) {
+        drawJupiterBackdrop(groundY, w, h);
+      } else {
+        drawParkBackdrop(groundY, w, h);
+      }
+      drawGrid(groundY, w, h);
+      drawAxes(groundY, w);
+
+      const originX = 80;
+      const originY = groundY;
+      const theta = (state.angle * Math.PI) / 180;
+      const v0 = state.v0;
+      const g = state.gravity;
+      const flightTime = (v0 * Math.sin(theta) + Math.sqrt(Math.max(0, (v0 * Math.sin(theta)) ** 2 + 2 * g * state.height))) / g;
+      const range = v0 * Math.cos(theta) * flightTime;
+      const maxHeight = state.height + (v0 * Math.sin(theta)) ** 2 / (2 * g);
+      const xScale = (w - originX - 40) / Math.max(10, range);
+      const yScale = (groundY - 40) / Math.max(5, maxHeight);
+      const scale = Math.min(xScale, yScale);
+
+      // stick figure at launch point
+      const stickX = originX - 30;
+      const stickY = originY - 4;
+      ctx.strokeStyle = '#0e0e0e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(stickX, stickY - 28, 6, 0, Math.PI * 2);
+      ctx.moveTo(stickX, stickY - 22);
+      ctx.lineTo(stickX, stickY - 8);
+      // arm pointing toward launch angle
+      const armLen = 16;
+      const baseAngle = -(state.angle * Math.PI) / 180;
+      const swingPhase = state.swingActive ? Math.sin((state.swingT / 0.35) * Math.PI) : 0;
+      const armAngle = baseAngle - swingPhase * 0.6;
+      ctx.moveTo(stickX, stickY - 16);
+      ctx.lineTo(stickX + Math.cos(armAngle) * armLen, stickY - 16 + Math.sin(armAngle) * armLen);
+      ctx.moveTo(stickX, stickY - 8);
+      ctx.lineTo(stickX - 8, stickY + 6);
+      ctx.moveTo(stickX, stickY - 8);
+      ctx.lineTo(stickX + 8, stickY + 6);
+      ctx.stroke();
+
+      if (showPrediction.checked) {
+        ctx.strokeStyle = varComputed('--trajectory');
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        for (let t = 0; t <= 5; t += 0.1) {
+          const px = v0 * Math.cos(theta) * t;
+          const py = state.height + v0 * Math.sin(theta) * t - 0.5 * g * t * t;
+          const x = originX + px * scale;
+          const y = originY - py * scale;
+          if (t === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // label the predicted trajectory
+        ctx.save();
+        ctx.fillStyle = 'rgba(246,199,107,0.9)';
+        ctx.font = '16px \"Space Grotesk\", sans-serif';
+        ctx.translate(160, groundY - 140);
+        ctx.rotate(-0.5);
+        ctx.fillText('Trajectory', 0, 0);
+        ctx.restore();
+        ctx.lineWidth = 1;
+      }
+
+      if (showTrail.checked) {
+        ctx.strokeStyle = varComputed('--trajectory');
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        state.trail.forEach((p, i) => {
+          const x = originX + p.x * scale;
+          const y = originY - p.y * scale;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+
+      const px = originX + state.x * scale;
+      const py = originY - state.y * scale;
+      const ballR = 8;
+      const drawBall = (x, y, r, squash = 1) => {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(1, squash);
+        const grad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r * 1.1);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.6, '#f0f0f0');
+        grad.addColorStop(1, '#cfcfcf');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // central pentagon
+        ctx.fillStyle = '#1a1a1a';
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+          const px = Math.cos(ang) * r * 0.38;
+          const py = Math.sin(ang) * r * 0.38;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // surrounding hexagon-like panels
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = 0.8;
+        for (let i = 0; i < 5; i++) {
+          const ang = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+          const cx = Math.cos(ang) * r * 0.62;
+          const cy = Math.sin(ang) * r * 0.62;
+          ctx.beginPath();
+          for (let j = 0; j < 6; j++) {
+            const a2 = ang + Math.PI / 6 + (j * 2 * Math.PI) / 6;
+            const px = cx + Math.cos(a2) * r * 0.18;
+            const py = cy + Math.sin(a2) * r * 0.18;
+            if (j === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+        ctx.restore();
+      };
+
+      if (state.landed) {
+        drawBall(px, py + 3, ballR, 0.7);
+      } else {
+        drawBall(px, py, ballR, 1);
+      }
+
+      if (!state.launched) {
+        const handX = stickX + Math.cos(armAngle) * armLen;
+        const handY = stickY - 16 + Math.sin(armAngle) * armLen;
+        drawBall(handX, handY, ballR * 0.8, 1);
+      }
+
+      if (showVectors.checked) {
+        drawVector(px, py, state.vx * 2, 0, varComputed('--vector-vx'));
+        drawVector(px, py, 0, -state.vy * 2, varComputed('--vector-vy'));
+      }
+
+      if (showAccel.checked) {
+        drawVector(px, py, 0, 40, varComputed('--vector-g'));
+      }
+    }
+
+    function drawVector(x, y, dx, dy, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+      ctx.stroke();
+    }
+
+    function updateDataPanel() {
+      const range = state.v0 * state.v0 * Math.sin(2 * (state.angle * Math.PI / 180)) / state.gravity;
+      const maxHeight = Math.pow(state.v0 * Math.sin((state.angle * Math.PI) / 180), 2) / (2 * state.gravity);
+      const timeOfFlight = 2 * state.v0 * Math.sin((state.angle * Math.PI) / 180) / state.gravity;
+      const impactSpeed = Math.hypot(state.vx, state.vy);
+      document.getElementById('rangeStat').textContent = `${range.toFixed(1)} m`;
+      document.getElementById('heightStat').textContent = `${maxHeight.toFixed(1)} m`;
+      document.getElementById('timeStat').textContent = `${timeOfFlight.toFixed(2)} s`;
+      document.getElementById('impactStat').textContent = `${impactSpeed.toFixed(1)} m/s`;
+
+      dataPanel.innerHTML = `
+        <div class="data-card"><strong>Initial Speed:</strong> ${state.v0.toFixed(1)} m/s</div>
+        <div class="data-card"><strong>Angle:</strong> ${state.angle.toFixed(1)}°</div>
+        <div class="data-card"><strong>Position:</strong> (${state.x.toFixed(1)}, ${state.y.toFixed(1)}) m</div>
+        <div class="data-card"><strong>Velocity:</strong> ${impactSpeed.toFixed(1)} m/s</div>
+        <div class="data-card"><strong>Range:</strong> ${range.toFixed(1)} m</div>
+        <div class="data-card"><strong>Max Height:</strong> ${maxHeight.toFixed(1)} m</div>
+        <div class="data-card"><strong>Time of Flight:</strong> ${timeOfFlight.toFixed(2)} s</div>
+      `;
+    }
+
+    function drawGraphs() {
+      if (!showGraphs.checked) {
+        graphPanel.style.display = 'none';
+        return;
+      }
+      graphPanel.style.display = 'block';
+      const w = graphCanvas.width / (window.devicePixelRatio || 1);
+      const h = graphCanvas.height / (window.devicePixelRatio || 1);
+      gctx.clearRect(0, 0, w, h);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, w, h);
+
+      const padding = 30;
+      const width = w - padding * 2;
+      const height = h - padding * 2;
+
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      if (state.graphData.length < 2) return;
+      gctx.strokeStyle = '#6ad7ff';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      state.graphData.forEach((p, i) => {
+        const x = padding + (i / (state.graphData.length - 1)) * width;
+        const y = padding + height - (p.y / 30) * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      });
+      gctx.stroke();
+    }
+
+    function varComputed(name) {
+      return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    }
+
+    function loop() {
+      updatePhysics((1 / 60) * state.speed);
+      drawScene();
+      updateDataPanel();
+      drawGraphs();
+      requestAnimationFrame(loop);
+    }
+
+    v0Input.addEventListener('input', (e) => {
+      state.v0 = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    angleInput.addEventListener('input', (e) => {
+      state.angle = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    heightInput.addEventListener('input', (e) => {
+      state.height = parseFloat(e.target.value);
+      state.y = state.height;
+      updateLabels();
+    });
+
+    gravitySelect.addEventListener('change', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+      speedLabel.textContent = `${state.speed.toFixed(2)}x`;
+    });
+
+    launchBtn.addEventListener('click', () => {
+      launch();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      reset();
+    });
+
+    document.querySelectorAll('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const preset = btn.dataset.preset;
+        if (preset === 'high') { state.v0 = 18; state.angle = 70; }
+        if (preset === 'range') { state.v0 = 30; state.angle = 40; }
+        if (preset === 'noair') { state.v0 = 25; state.angle = 45; }
+        v0Input.value = state.v0;
+        angleInput.value = state.angle;
+        updateLabels();
+        reset();
+      });
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+    });
+
+    updateLabels();
+    reset();
+    resizeCanvas();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

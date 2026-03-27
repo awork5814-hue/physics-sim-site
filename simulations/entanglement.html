@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Entanglement</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    button { background: rgba(12, 18, 28, 0.8); color: var(--sim-text); border: 1px solid var(--sim-border); padding: 10px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; }
+    button:hover { border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Physics</span></div>
+    <header class="hero"><h1>Quantum Entanglement</h1><p>Instantaneous correlation between particles</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="control-group">
+          <label>Measurement Basis</label>
+          <select id="basis" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="spin">Spin (z)</option>
+            <option value="pol">Polarization</option>
+          </select>
+        </div>
+        <button id="entangleBtn">Create Entangled Pair</button>
+        <button id="measureBtn">Measure Alice</button>
+        <div class="data-panel">
+          <div>Alice: <strong id="aliceVal">?</strong></div>
+          <div>Bob: <strong id="bobVal">?</strong></div>
+          <div>Correlation: <strong id="corrVal">Perfect</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const basis = document.getElementById('basis');
+    const entangleBtn = document.getElementById('entangleBtn');
+    const measureBtn = document.getElementById('measureBtn');
+    let pairs = [];
+    let measured = false;
+    let aliceResult = null;
+    let bobResult = null;
+    function entangle() {
+      measured = false;
+      aliceResult = null;
+      bobResult = null;
+      pairs = [{ x: canvas.offsetWidth / 2, y: canvas.offsetHeight / 2, entangled: true }];
+      document.getElementById('aliceVal').textContent = '?';
+      document.getElementById('bobVal').textContent = '?';
+    }
+    function measure() {
+      if (pairs.length === 0) return;
+      measured = true;
+      aliceResult = Math.random() > 0.5 ? '↑' : '↓';
+      bobResult = basis.value === 'spin' ? (aliceResult === '↑' ? '↓' : '↑') : (aliceResult === '↑' ? '→' : '←');
+      document.getElementById('aliceVal').textContent = aliceResult;
+      document.getElementById('bobVal').textContent = bobResult;
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      ctx.fillStyle = '#666';
+      ctx.fillRect(30, cy - 40, 50, 80);
+      ctx.fillRect(w - 80, cy - 40, 50, 80);
+      ctx.fillStyle = '#fff';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Alice', 40, cy + 55);
+      ctx.fillText('Bob', w - 70, cy + 55);
+      pairs.forEach(p => {
+        if (!measured) {
+          ctx.fillStyle = '#6ad7ff';
+          ctx.beginPath(); ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#f6c76b';
+          ctx.beginPath(); ctx.arc(p.x + 5, p.y + 5, 8, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.fillText('Entangled!', p.x - 30, p.y - 20);
+        } else {
+          ctx.fillStyle = aliceResult === '↑' ? '#ff6b6b' : '#6ad7ff';
+          ctx.beginPath(); ctx.arc(80, cy, 15, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = bobResult === '↓' ? '#ff6b6b' : '#6ad7ff';
+          ctx.beginPath(); ctx.arc(w - 80, cy, 15, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.fillText(aliceResult, 75, cy + 4);
+          ctx.fillText(bobResult, w - 85, cy + 4);
+        }
+      });
+      requestAnimationFrame(draw);
+    }
+    entangleBtn.addEventListener('click', entangle);
+    measureBtn.addEventListener('click', measure);
+    draw();
+  </script>
+</body>
+</html>

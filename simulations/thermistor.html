@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thermistors</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --red: #ff6b6b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 15% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.5px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .card {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .thermistor-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .thermistor-visual {
+      background: linear-gradient(135deg, #101e2e, #0e1622);
+      border-radius: 10px;
+      border: 1px solid #243954;
+      padding: 14px;
+      min-height: 160px;
+      position: relative;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .heatbar {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #2a4a7a, #2d8dd6, #f6c76b, #ff6b6b);
+      opacity: 0.85;
+    }
+    .heat-indicator {
+      position: absolute;
+      bottom: 6px;
+      width: 12px;
+      height: 22px;
+      border-radius: 6px;
+      background: #fff;
+      box-shadow: 0 0 12px rgba(255,255,255,0.6);
+    }
+    .divider {
+      margin: 10px 0;
+      border-top: 1px dashed #2a3f59;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .value {
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] {
+      width: 100%;
+    }
+    .toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .readouts {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    canvas {
+      width: 100%;
+      height: 260px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+      .toggles { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Thermistors</h1>
+        <p>R(T) = R0 × exp(β(1/T - 1/T0)) · Temperature-sensitive resistors</p>
+      </div>
+      <div class="pill">NTC / PTC · R-T curve · Voltage divider</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Thermistor Model</h2>
+        <div class="hero">
+          <div class="card thermistor-visual" id="thermistorVisual">
+            <div class="row"><span class="pill">Thermistor</span><span class="pill" id="typePill">NTC</span></div>
+            <div class="divider"></div>
+            <div class="row"><span>Temperature</span><span class="value" id="tempLabel">25 °C</span></div>
+            <div class="row"><span>Resistance</span><span class="value" id="resLabel">10.0 kΩ</span></div>
+            <div class="row"><span>Coefficient</span><span class="value" id="coefLabel">-4.2 %/°C</span></div>
+            <div class="heatbar"></div>
+            <div class="heat-indicator" id="heatIndicator"></div>
+          </div>
+          <div class="card">
+            <canvas id="rtCanvas" width="520" height="260" aria-label="Resistance vs Temperature"></canvas>
+            <div class="row" style="margin-top:10px;">
+              <span class="pill">R-T Curve</span>
+              <span class="pill" id="curveInfo">Visible</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Thermistor Type</label>
+            <div class="toggles">
+              <label class="toggle"><input type="radio" name="type" value="ntc" checked> NTC</label>
+              <label class="toggle"><input type="radio" name="type" value="ptc"> PTC</label>
+            </div>
+          </div>
+          <div class="control">
+            <label>Temperature (°C)</label>
+            <input type="range" id="temp" min="-40" max="150" step="1" value="25" />
+            <div class="row"><span class="muted">T</span><span class="value" id="tempValue">25 °C</span></div>
+          </div>
+          <div class="control">
+            <label>Base Resistance R0 (Ω)</label>
+            <input type="range" id="r0" min="1000" max="100000" step="500" value="10000" />
+            <div class="row"><span class="muted">R0</span><span class="value" id="r0Value">10.0 kΩ</span></div>
+          </div>
+          <div class="control">
+            <label>Beta Constant β (K)</label>
+            <input type="range" id="beta" min="2000" max="5000" step="10" value="3950" />
+            <div class="row"><span class="muted">β</span><span class="value" id="betaValue">3950 K</span></div>
+          </div>
+          <div class="control">
+            <label>Reference Temp T0 (°C)</label>
+            <input type="range" id="t0" min="0" max="50" step="1" value="25" />
+            <div class="row"><span class="muted">T0</span><span class="value" id="t0Value">25 °C</span></div>
+          </div>
+          <div class="control">
+            <label>Input Voltage (V)</label>
+            <input type="range" id="vin" min="1" max="12" step="0.1" value="5" />
+            <div class="row"><span class="muted">Vin</span><span class="value" id="vinValue">5.0 V</span></div>
+          </div>
+          <div class="control">
+            <label>Show R-T Curve</label>
+            <label class="toggle"><input type="checkbox" id="showCurve" checked> Display curve</label>
+            <label class="toggle"><input type="checkbox" id="showDivider" checked> Show voltage divider</label>
+          </div>
+        </div>
+
+        <div class="readouts" style="margin-top:12px;">
+          <div class="readout">
+            <div class="title">Resistance & Sensitivity</div>
+            <div class="row"><span>R(T)</span><span class="value" id="rValue">10.0 kΩ</span></div>
+            <div class="row"><span>Alpha (approx)</span><span class="value" id="alphaValue">-4.2 %/°C</span></div>
+            <div class="row"><span>Model</span><span class="value" id="modelValue">Beta equation</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Voltage Divider</div>
+            <div class="row"><span>Fixed Resistor</span><span class="value" id="rFixed">10.0 kΩ</span></div>
+            <div class="row"><span>Vout</span><span class="value" id="voutValue">2.50 V</span></div>
+            <div class="row"><span>Current</span><span class="value" id="iValue">0.25 mA</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              R(T) = R0 × exp(β(1/T - 1/T0))
+              <br>Alpha ≈ -β/T² (NTC)
+              <br>Vout = Vin × Rth / (Rfixed + Rth)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">NTC curve uses the beta equation. PTC curve uses a simplified two-slope model around a Curie point for visualization.</div>
+  </div>
+
+  <script>
+    const state = {
+      thermistorType: 'ntc',
+      temperature: 25,
+      baseResistance: 10000,
+      betaConstant: 3950,
+      referenceTemp: 25,
+      showCurve: true,
+      showDivider: true,
+      inputVoltage: 5
+    };
+
+    const dom = {
+      temp: document.getElementById('temp'),
+      r0: document.getElementById('r0'),
+      beta: document.getElementById('beta'),
+      t0: document.getElementById('t0'),
+      vin: document.getElementById('vin'),
+      showCurve: document.getElementById('showCurve'),
+      showDivider: document.getElementById('showDivider'),
+      tempValue: document.getElementById('tempValue'),
+      r0Value: document.getElementById('r0Value'),
+      betaValue: document.getElementById('betaValue'),
+      t0Value: document.getElementById('t0Value'),
+      vinValue: document.getElementById('vinValue'),
+      rValue: document.getElementById('rValue'),
+      alphaValue: document.getElementById('alphaValue'),
+      voutValue: document.getElementById('voutValue'),
+      iValue: document.getElementById('iValue'),
+      rFixed: document.getElementById('rFixed'),
+      resLabel: document.getElementById('resLabel'),
+      tempLabel: document.getElementById('tempLabel'),
+      coefLabel: document.getElementById('coefLabel'),
+      typePill: document.getElementById('typePill'),
+      curveInfo: document.getElementById('curveInfo'),
+      heatIndicator: document.getElementById('heatIndicator'),
+      modelValue: document.getElementById('modelValue')
+    };
+
+    const canvas = document.getElementById('rtCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function celsiusToKelvin(c) { return c + 273.15; }
+    function formatOhms(value) {
+      if (value >= 1000000) return (value / 1e6).toFixed(2) + ' MΩ';
+      if (value >= 1000) return (value / 1e3).toFixed(2) + ' kΩ';
+      return value.toFixed(1) + ' Ω';
+    }
+
+    function calculateResistance(tempC) {
+      const T = celsiusToKelvin(tempC);
+      const T0 = celsiusToKelvin(state.referenceTemp);
+      if (state.thermistorType === 'ntc') {
+        return state.baseResistance * Math.exp(state.betaConstant * (1 / T - 1 / T0));
+      }
+      const curie = 100;
+      const lowSlope = -0.01;
+      const highSlope = 0.09;
+      const slope = tempC < curie ? lowSlope : highSlope;
+      return state.baseResistance * Math.exp(slope * (tempC - state.referenceTemp));
+    }
+
+    function calculateAlpha(tempC) {
+      const T = celsiusToKelvin(tempC);
+      if (state.thermistorType === 'ntc') {
+        return -(state.betaConstant / (T * T)) * 100;
+      }
+      return (tempC < 100 ? -0.5 : 2.5);
+    }
+
+    function calculateDivider(Rth) {
+      const Rfixed = state.baseResistance;
+      const Vout = state.inputVoltage * (Rth / (Rfixed + Rth));
+      const I = state.inputVoltage / (Rfixed + Rth);
+      return { Vout, I, Rfixed };
+    }
+
+    function drawCurve() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = '#21354f';
+      ctx.lineWidth = 1;
+      for (let i = 0; i <= 6; i++) {
+        const y = 20 + i * ((h - 40) / 6);
+        ctx.beginPath();
+        ctx.moveTo(40, y);
+        ctx.lineTo(w - 20, y);
+        ctx.stroke();
+      }
+      for (let i = 0; i <= 6; i++) {
+        const x = 40 + i * ((w - 60) / 6);
+        ctx.beginPath();
+        ctx.moveTo(x, 20);
+        ctx.lineTo(x, h - 20);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#8aa0b8';
+      ctx.font = '12px Trebuchet MS';
+      ctx.fillText('R (Ω)', 8, 16);
+      ctx.fillText('T (°C)', w - 50, h - 6);
+
+      if (!state.showCurve) {
+        ctx.fillStyle = '#7e91a8';
+        ctx.fillText('Curve hidden', 46, 36);
+        return;
+      }
+
+      const temps = [];
+      const res = [];
+      for (let t = -40; t <= 150; t += 1) {
+        temps.push(t);
+        res.push(calculateResistance(t));
+      }
+      const rMax = Math.max(...res);
+      const rMin = Math.min(...res);
+      const xMin = -40;
+      const xMax = 150;
+
+      ctx.strokeStyle = state.thermistorType === 'ntc' ? '#6ad7ff' : '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      res.forEach((r, i) => {
+        const t = temps[i];
+        const x = 40 + ((t - xMin) / (xMax - xMin)) * (w - 60);
+        const y = 20 + (1 - (r - rMin) / (rMax - rMin)) * (h - 40);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      const rNow = calculateResistance(state.temperature);
+      const x = 40 + ((state.temperature - xMin) / (xMax - xMin)) * (w - 60);
+      const y = 20 + (1 - (rNow - rMin) / (rMax - rMin)) * (h - 40);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function update() {
+      const Rth = calculateResistance(state.temperature);
+      const alpha = calculateAlpha(state.temperature);
+      const divider = calculateDivider(Rth);
+
+      dom.tempValue.textContent = `${state.temperature} °C`;
+      dom.r0Value.textContent = formatOhms(state.baseResistance);
+      dom.betaValue.textContent = `${state.betaConstant} K`;
+      dom.t0Value.textContent = `${state.referenceTemp} °C`;
+      dom.vinValue.textContent = `${state.inputVoltage.toFixed(1)} V`;
+      dom.rValue.textContent = formatOhms(Rth);
+      dom.alphaValue.textContent = `${alpha.toFixed(2)} %/°C`;
+      dom.voutValue.textContent = `${divider.Vout.toFixed(2)} V`;
+      dom.iValue.textContent = `${(divider.I * 1000).toFixed(2)} mA`;
+      dom.rFixed.textContent = formatOhms(divider.Rfixed);
+      dom.resLabel.textContent = formatOhms(Rth);
+      dom.tempLabel.textContent = `${state.temperature} °C`;
+      dom.coefLabel.textContent = `${alpha.toFixed(2)} %/°C`;
+      dom.typePill.textContent = state.thermistorType.toUpperCase();
+      dom.curveInfo.textContent = state.showCurve ? 'Visible' : 'Hidden';
+      dom.modelValue.textContent = state.thermistorType === 'ntc' ? 'Beta equation' : 'PTC curve';
+
+      const heatPercent = (state.temperature + 40) / 190;
+      dom.heatIndicator.style.left = `${12 + heatPercent * (dom.heatIndicator.parentElement.clientWidth - 36)}px`;
+      drawCurve();
+
+      document.getElementById('rtCanvas').style.opacity = state.showCurve ? '1' : '0.4';
+      document.querySelectorAll('.readout')[1].style.display = state.showDivider ? 'grid' : 'none';
+    }
+
+    function bind() {
+      document.querySelectorAll('input[name="type"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.thermistorType = e.target.value;
+          update();
+        });
+      });
+      dom.temp.addEventListener('input', () => {
+        state.temperature = Number(dom.temp.value);
+        update();
+      });
+      dom.r0.addEventListener('input', () => {
+        state.baseResistance = Number(dom.r0.value);
+        update();
+      });
+      dom.beta.addEventListener('input', () => {
+        state.betaConstant = Number(dom.beta.value);
+        update();
+      });
+      dom.t0.addEventListener('input', () => {
+        state.referenceTemp = Number(dom.t0.value);
+        update();
+      });
+      dom.vin.addEventListener('input', () => {
+        state.inputVoltage = Number(dom.vin.value);
+        update();
+      });
+      dom.showCurve.addEventListener('change', () => {
+        state.showCurve = dom.showCurve.checked;
+        update();
+      });
+      dom.showDivider.addEventListener('change', () => {
+        state.showDivider = dom.showDivider.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+  </script>
+</body>
+</html>

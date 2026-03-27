@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entropy</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+    .entropy-bar { height: 24px; background: linear-gradient(90deg, #6ad7ff, #f6c76b, #ff6b6b); border-radius: 6px; margin: 8px 0; position: relative; }
+    .entropy-marker { position: absolute; top: -3px; width: 4px; height: 30px; background: #fff; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Thermodynamics</span></div>
+    <header class="hero"><h1>Entropy</h1><p>ΔS = Q/T — Measure of disorder in a system</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">S = k<sub>B</sub> ln W</div>
+        <div class="control-group">
+          <label>Temperature (K)</label>
+          <input type="range" id="tempSlider" min="100" max="1000" value="300">
+        </div>
+        <div class="control-group">
+          <label>Heat Added (J)</label>
+          <input type="range" id="heatSlider" min="0" max="1000" value="100">
+        </div>
+        <div class="control-group">
+          <label>Number of Particles</label>
+          <input type="range" id="partSlider" min="10" max="500" value="100">
+        </div>
+        <div class="entropy-bar"><div class="entropy-marker" id="entropyMarker" style="left: 30%"></div></div>
+        <div class="data-panel">
+          <div>Entropy Change: <strong id="dsVal">0 J/K</strong></div>
+          <div>Microstates: <strong id="wVal">W = 1</strong></div>
+          <div>Order/Disorder: <strong id="orderVal">Ordered</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const tempSlider = document.getElementById('tempSlider');
+    const heatSlider = document.getElementById('heatSlider');
+    const partSlider = document.getElementById('partSlider');
+    let particles = [];
+    let time = 0;
+    function initParticles() {
+      particles = [];
+      const n = parseInt(partSlider.value);
+      for (let i = 0; i < n; i++) {
+        particles.push({ x: Math.random() * 200 + 50, y: Math.random() * 200 + 100, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2 });
+      }
+    }
+    function update() {
+      const T = parseFloat(tempSlider.value);
+      const Q = parseFloat(heatSlider.value);
+      const N = parseInt(partSlider.value);
+      const dS = Q / T;
+      const W = Math.pow(2, N * dS / 10);
+      document.getElementById('dsVal').textContent = dS.toFixed(3) + ' J/K';
+      document.getElementById('wVal').textContent = 'W = ' + W.toExponential(2);
+      const orderVal = dS < 0.1 ? 'Ordered' : dS < 0.5 ? 'Semi-ordered' : 'Disordered';
+      document.getElementById('orderVal').textContent = orderVal;
+      document.getElementById('entropyMarker').style.left = Math.min(90, dS * 30) + '%';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const T = parseFloat(tempSlider.value) / 100;
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const boxX = 40, boxY = 80, boxW = w - 80, boxH = h - 160;
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+      particles.forEach(p => {
+        p.x += p.vx * T;
+        p.y += p.vy * T;
+        if (p.x < boxX || p.x > boxX + boxW) p.vx *= -1;
+        if (p.y < boxY || p.y > boxY + boxH) p.vy *= -1;
+        p.x = Math.max(boxX, Math.min(boxX + boxW, p.x));
+        p.y = Math.max(boxY, Math.min(boxY + boxH, p.y));
+        ctx.fillStyle = '#6ad7ff';
+        ctx.globalAlpha = 0.8;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      const heatGrad = ctx.createLinearGradient(boxX, boxY + boxH + 20, boxX + boxW, boxY + boxH + 20);
+      heatGrad.addColorStop(0, '#3498db');
+      heatGrad.addColorStop(1, '#e74c3c');
+      ctx.fillStyle = heatGrad;
+      ctx.fillRect(boxX, boxY + boxH + 20, boxW, 15);
+      ctx.fillStyle = '#fff';
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('Cold', boxX, boxY + boxH + 50);
+      ctx.fillText('Hot', boxX + boxW - 30, boxY + boxH + 50);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('Particles: ' + particles.length, 50, 60);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    tempSlider.addEventListener('input', update);
+    heatSlider.addEventListener('input', update);
+    partSlider.addEventListener('input', () => { initParticles(); update(); });
+    initParticles(); update(); draw();
+  </script>
+</body>
+</html>

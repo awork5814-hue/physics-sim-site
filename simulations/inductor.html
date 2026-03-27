@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inductor</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Inductor</span></div>
+    <header class="hero"><h1>Inductor</h1><p>V = L(dI/dt) — Store energy in a magnetic field</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">V = L × di/dt</div>
+        <div class="control-group">
+          <label>Current (A)</label>
+          <input type="range" id="currentSlider" min="0" max="100" value="50">
+        </div>
+        <div class="control-group">
+          <label>Inductance (mH)</label>
+          <input type="range" id="indSlider" min="1" max="100" value="30">
+        </div>
+        <div class="control-group">
+          <label>Number of Turns</label>
+          <input type="range" id="turnsSlider" min="10" max="200" value="100">
+        </div>
+        <div class="control-group">
+          <label>Core Permeability</label>
+          <input type="range" id="permSlider" min="1" max="1000" value="100">
+        </div>
+        <div class="data-panel">
+          <div>Magnetic Energy: <strong id="energyVal">0.00 J</strong></div>
+          <div>Magnetic Field: <strong id="bField">0 T</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const currentSlider = document.getElementById('currentSlider');
+    const indSlider = document.getElementById('indSlider');
+    const turnsSlider = document.getElementById('turnsSlider');
+    const permSlider = document.getElementById('permSlider');
+    let time = 0;
+    function update() {
+      const I = parseFloat(currentSlider.value) / 10;
+      const L = parseFloat(indSlider.value) / 1000;
+      const N = parseInt(turnsSlider.value);
+      const mu = parseFloat(permSlider.value);
+      const E = 0.5 * L * I * I;
+      const mu0 = 4 * Math.PI * 1e-7;
+      const A = Math.PI * 0.02 * 0.02;
+      const B = mu0 * mu * N * I / 0.1;
+      document.getElementById('energyVal').textContent = E.toFixed(4) + ' J';
+      document.getElementById('bField').textContent = B.toFixed(3) + ' T';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const I = parseFloat(currentSlider.value) / 10;
+      const N = parseInt(turnsSlider.value);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const radius = 80;
+      const coilWidth = 120;
+      ctx.fillStyle = '#8b4513';
+      ctx.beginPath(); ctx.ellipse(cx, cy, radius, radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#a0522d';
+      ctx.beginPath(); ctx.ellipse(cx, cy - 15, radius - 5, (radius - 5) * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+      const turns = Math.floor(N / 10);
+      for (let i = 0; i < turns; i++) {
+        const y = cy - 60 + i * 15;
+        ctx.strokeStyle = '#cd853f';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(cx - coilWidth/2, y); ctx.bezierCurveTo(cx - coilWidth/2, y - 20, cx + coilWidth/2, y - 20, cx + coilWidth/2, y); ctx.stroke();
+      }
+      const fieldStrength = I / 10;
+      for (let i = 0; i < 6; i++) {
+        const angle = (time * 0.02 + i * Math.PI / 3) % (Math.PI * 2);
+        const r = 100 + Math.sin(time * 0.05 + i) * 10;
+        const x = cx + Math.cos(angle) * r * 0.5;
+        const y = cy + Math.sin(angle) * r * 0.2;
+        ctx.strokeStyle = `rgba(106, 215, 255, ${fieldStrength * 0.3})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, y, 20 + fieldStrength * 5, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(cx - 150, cy); ctx.lineTo(cx - coilWidth/2 - 10, cy); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(cx + coilWidth/2 + 10, cy); ctx.lineTo(cx + 150, cy); ctx.stroke();
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.fillText('I = ' + I.toFixed(1) + ' A', cx + coilWidth/2 + 15, cy + 5);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('B field circles', cx + 50, cy - 80);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    currentSlider.addEventListener('input', update);
+    indSlider.addEventListener('input', update);
+    turnsSlider.addEventListener('input', update);
+    permSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

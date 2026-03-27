@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AC Circuits</title>
+  <style>
+    :root {
+      --bg1: #0c131d;
+      --bg2: #142131;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --grid: #1c2c43;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 8px 4px 18px;
+      border-bottom: 1px solid #20324a;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: 0.4px;
+    }
+    header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #0b1420;
+      border: 1px solid #223753;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      color: var(--accent-2);
+    }
+    .canvas-wrap {
+      display: grid;
+      gap: 12px;
+    }
+    canvas {
+      width: 100%;
+      height: 220px;
+      background: #0b1420;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .value { color: var(--accent); font-weight: 600; }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+    }
+    .control {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px;
+    }
+    .control label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #2a3f59;
+      background: #0b1420;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .readouts {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .readout {
+      background: #0f1a27;
+      border: 1px solid #20324a;
+      border-radius: 10px;
+      padding: 10px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .readout .title {
+      color: var(--accent-2);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+    .formula {
+      font-family: "Consolas", "Courier New", monospace;
+      color: #c3d1e5;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>AC Circuits</h1>
+        <p>Waveforms, phasors, impedance, and power factor</p>
+      </div>
+      <div class="pill">RMS · Reactance · Resonance</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Oscilloscope & Phasors</h2>
+        <div class="canvas-wrap">
+          <canvas id="scopeCanvas" width="560" height="220"></canvas>
+          <canvas id="phasorCanvas" width="560" height="220"></canvas>
+          <canvas id="triangleCanvas" width="560" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Circuit Type</label>
+            <select id="circuitType">
+              <option value="R">R only</option>
+              <option value="RL">RL</option>
+              <option value="RC">RC</option>
+              <option value="RLC" selected>RLC</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Resistance (Ω)</label>
+            <input type="range" id="resistance" min="10" max="1000" step="1" value="100" />
+            <div class="row"><span class="muted">R</span><span class="value" id="rValue">100 Ω</span></div>
+          </div>
+          <div class="control">
+            <label>Inductance (H)</label>
+            <input type="range" id="inductance" min="0.01" max="1" step="0.01" value="0.1" />
+            <div class="row"><span class="muted">L</span><span class="value" id="lValue">0.10 H</span></div>
+          </div>
+          <div class="control">
+            <label>Capacitance (µF)</label>
+            <input type="range" id="capacitance" min="1" max="1000" step="1" value="100" />
+            <div class="row"><span class="muted">C</span><span class="value" id="cValue">100 µF</span></div>
+          </div>
+          <div class="control">
+            <label>Source Voltage (V peak)</label>
+            <input type="range" id="voltage" min="1" max="100" step="1" value="50" />
+            <div class="row"><span class="muted">V0</span><span class="value" id="vValue">50 V</span></div>
+          </div>
+          <div class="control">
+            <label>Frequency (Hz)</label>
+            <input type="range" id="frequency" min="10" max="1000" step="1" value="60" />
+            <div class="row"><span class="muted">f</span><span class="value" id="fValue">60 Hz</span></div>
+          </div>
+          <div class="control">
+            <label>Display Options</label>
+            <label class="toggle"><input type="checkbox" id="showPhasor" checked> Show phasor</label>
+            <label class="toggle"><input type="checkbox" id="showTriangle" checked> Show impedance triangle</label>
+            <label class="toggle"><input type="checkbox" id="showPower"> Show power</label>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">RMS Values</div>
+            <div class="row"><span>V_rms</span><span class="value" id="vrmsValue">0 V</span></div>
+            <div class="row"><span>I_rms</span><span class="value" id="irmsValue">0 A</span></div>
+            <div class="row"><span>Phase φ</span><span class="value" id="phiValue">0°</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Reactance & Impedance</div>
+            <div class="row"><span>X_L</span><span class="value" id="xlValue">0 Ω</span></div>
+            <div class="row"><span>X_C</span><span class="value" id="xcValue">0 Ω</span></div>
+            <div class="row"><span>Z</span><span class="value" id="zValue">0 Ω</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Power</div>
+            <div class="row"><span>Real P</span><span class="value" id="pValue">0 W</span></div>
+            <div class="row"><span>Reactive Q</span><span class="value" id="qValue">0 VAR</span></div>
+            <div class="row"><span>Apparent S</span><span class="value" id="sValue">0 VA</span></div>
+            <div class="row"><span>Power Factor</span><span class="value" id="pfValue">1.00</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Formulas</div>
+            <div class="formula">
+              Z = √(R² + (XL - XC)²)
+              <br>XL = 2πfL, XC = 1/(2πfC)
+              <br>P = V I cos(φ)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Resonance occurs when XL = XC, giving Z = R and φ = 0.</div>
+  </div>
+
+  <script>
+    const state = {
+      circuitType: 'RLC',
+      resistance: 100,
+      inductance: 0.1,
+      capacitance: 100e-6,
+      sourceVoltage: 50,
+      frequency: 60,
+      showPhasor: true,
+      showTriangle: true,
+      showPower: false,
+      time: 0
+    };
+
+    const dom = {
+      circuitType: document.getElementById('circuitType'),
+      resistance: document.getElementById('resistance'),
+      inductance: document.getElementById('inductance'),
+      capacitance: document.getElementById('capacitance'),
+      voltage: document.getElementById('voltage'),
+      frequency: document.getElementById('frequency'),
+      showPhasor: document.getElementById('showPhasor'),
+      showTriangle: document.getElementById('showTriangle'),
+      showPower: document.getElementById('showPower'),
+      rValue: document.getElementById('rValue'),
+      lValue: document.getElementById('lValue'),
+      cValue: document.getElementById('cValue'),
+      vValue: document.getElementById('vValue'),
+      fValue: document.getElementById('fValue'),
+      vrmsValue: document.getElementById('vrmsValue'),
+      irmsValue: document.getElementById('irmsValue'),
+      phiValue: document.getElementById('phiValue'),
+      xlValue: document.getElementById('xlValue'),
+      xcValue: document.getElementById('xcValue'),
+      zValue: document.getElementById('zValue'),
+      pValue: document.getElementById('pValue'),
+      qValue: document.getElementById('qValue'),
+      sValue: document.getElementById('sValue'),
+      pfValue: document.getElementById('pfValue')
+    };
+
+    const scopeCanvas = document.getElementById('scopeCanvas');
+    const scopeCtx = scopeCanvas.getContext('2d');
+    const phasorCanvas = document.getElementById('phasorCanvas');
+    const phasorCtx = phasorCanvas.getContext('2d');
+    const triangleCanvas = document.getElementById('triangleCanvas');
+    const triangleCtx = triangleCanvas.getContext('2d');
+
+    function calculateReactances() {
+      const omega = 2 * Math.PI * state.frequency;
+      const XL = state.circuitType.includes('L') ? omega * state.inductance : 0;
+      const XC = state.circuitType.includes('C') ? 1 / (omega * state.capacitance) : 0;
+      return { XL, XC, X: XL - XC };
+    }
+
+    function calculateImpedance() {
+      const { X } = calculateReactances();
+      const Z = Math.sqrt(state.resistance * state.resistance + X * X);
+      const phi = Math.atan2(X, state.resistance);
+      return { Z, phi };
+    }
+
+    function calculatePower(Irms) {
+      const { phi } = calculateImpedance();
+      const P = Irms * Irms * state.resistance;
+      const S = Irms * Irms * calculateImpedance().Z;
+      const Q = Math.sqrt(Math.max(0, S * S - P * P));
+      return { P, Q, S, PF: Math.cos(phi) };
+    }
+
+    function drawGrid(ctx, w, h) {
+      ctx.strokeStyle = '#1c2c43';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawScope() {
+      const w = scopeCanvas.width;
+      const h = scopeCanvas.height;
+      scopeCtx.clearRect(0, 0, w, h);
+      scopeCtx.fillStyle = '#0b1420';
+      scopeCtx.fillRect(0, 0, w, h);
+      drawGrid(scopeCtx, w, h);
+
+      const { Z, phi } = calculateImpedance();
+      const Vp = state.sourceVoltage;
+      const Ip = Z === 0 ? 0 : Vp / Z;
+
+      const mid = h / 2;
+      const scale = 0.35 * h / Math.max(1, Vp);
+      const scaleI = 0.35 * h / Math.max(1, Ip * Vp);
+
+      scopeCtx.strokeStyle = '#6ad7ff';
+      scopeCtx.lineWidth = 2;
+      scopeCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = (x / w) * 2 * Math.PI;
+        const y = mid - Math.sin(t + state.time) * Vp * scale;
+        if (x === 0) scopeCtx.moveTo(x, y); else scopeCtx.lineTo(x, y);
+      }
+      scopeCtx.stroke();
+
+      scopeCtx.strokeStyle = '#f6c76b';
+      scopeCtx.beginPath();
+      for (let x = 0; x <= w; x++) {
+        const t = (x / w) * 2 * Math.PI;
+        const y = mid - Math.sin(t + state.time - phi) * Ip * Vp * scaleI;
+        if (x === 0) scopeCtx.moveTo(x, y); else scopeCtx.lineTo(x, y);
+      }
+      scopeCtx.stroke();
+
+      scopeCtx.fillStyle = '#8aa0b8';
+      scopeCtx.font = '12px Trebuchet MS';
+      scopeCtx.fillText('Voltage', 10, 18);
+      scopeCtx.fillStyle = '#f6c76b';
+      scopeCtx.fillText('Current', 80, 18);
+    }
+
+    function drawPhasor() {
+      const w = phasorCanvas.width;
+      const h = phasorCanvas.height;
+      phasorCtx.clearRect(0, 0, w, h);
+      phasorCtx.fillStyle = '#0b1420';
+      phasorCtx.fillRect(0, 0, w, h);
+      drawGrid(phasorCtx, w, h);
+
+      if (!state.showPhasor) {
+        phasorCtx.fillStyle = '#7e91a8';
+        phasorCtx.fillText('Phasor hidden', 20, 20);
+        return;
+      }
+
+      const { phi } = calculateImpedance();
+      const centerX = w / 2;
+      const centerY = h / 2;
+      const len = 70;
+      const angle = state.time;
+
+      phasorCtx.strokeStyle = '#6ad7ff';
+      phasorCtx.lineWidth = 3;
+      phasorCtx.beginPath();
+      phasorCtx.moveTo(centerX, centerY);
+      phasorCtx.lineTo(centerX + len * Math.cos(angle), centerY + len * Math.sin(angle));
+      phasorCtx.stroke();
+
+      phasorCtx.strokeStyle = '#f6c76b';
+      phasorCtx.beginPath();
+      phasorCtx.moveTo(centerX, centerY);
+      phasorCtx.lineTo(centerX + len * Math.cos(angle - phi), centerY + len * Math.sin(angle - phi));
+      phasorCtx.stroke();
+
+      phasorCtx.fillStyle = '#8aa0b8';
+      phasorCtx.font = '12px Trebuchet MS';
+      phasorCtx.fillText('V', centerX + len + 6, centerY + 4);
+      phasorCtx.fillText('I', centerX + len * Math.cos(angle - phi) + 6, centerY + len * Math.sin(angle - phi) + 4);
+    }
+
+    function drawTriangle() {
+      const w = triangleCanvas.width;
+      const h = triangleCanvas.height;
+      triangleCtx.clearRect(0, 0, w, h);
+      triangleCtx.fillStyle = '#0b1420';
+      triangleCtx.fillRect(0, 0, w, h);
+      drawGrid(triangleCtx, w, h);
+
+      if (!state.showTriangle) {
+        triangleCtx.fillStyle = '#7e91a8';
+        triangleCtx.fillText('Impedance triangle hidden', 20, 20);
+        return;
+      }
+
+      const { X } = calculateReactances();
+      const { Z } = calculateImpedance();
+      const centerX = 140;
+      const centerY = h - 40;
+      const scale = 1 / Math.max(1, Math.abs(Z)) * 120;
+
+      triangleCtx.strokeStyle = '#6ad7ff';
+      triangleCtx.lineWidth = 2;
+      triangleCtx.beginPath();
+      triangleCtx.moveTo(centerX, centerY);
+      triangleCtx.lineTo(centerX + state.resistance * scale, centerY);
+      triangleCtx.lineTo(centerX + state.resistance * scale, centerY - X * scale);
+      triangleCtx.closePath();
+      triangleCtx.stroke();
+
+      triangleCtx.fillStyle = '#f6c76b';
+      triangleCtx.fillText('R', centerX + state.resistance * scale / 2, centerY + 16);
+      triangleCtx.fillStyle = '#6ad7ff';
+      triangleCtx.fillText('X', centerX + state.resistance * scale + 8, centerY - X * scale / 2);
+      triangleCtx.fillStyle = '#f5f8fd';
+      triangleCtx.fillText('Z', centerX + state.resistance * scale / 2, centerY - X * scale / 2 - 8);
+    }
+
+    function updateReadouts() {
+      const { XL, XC, X } = calculateReactances();
+      const { Z, phi } = calculateImpedance();
+      const Vrms = state.sourceVoltage / Math.sqrt(2);
+      const Irms = Z === 0 ? 0 : Vrms / Z;
+      const power = calculatePower(Irms);
+
+      dom.rValue.textContent = `${state.resistance.toFixed(0)} Ω`;
+      dom.lValue.textContent = `${state.inductance.toFixed(2)} H`;
+      dom.cValue.textContent = `${(state.capacitance * 1e6).toFixed(0)} µF`;
+      dom.vValue.textContent = `${state.sourceVoltage.toFixed(0)} V`;
+      dom.fValue.textContent = `${state.frequency} Hz`;
+
+      dom.vrmsValue.textContent = `${Vrms.toFixed(2)} V`;
+      dom.irmsValue.textContent = `${Irms.toFixed(3)} A`;
+      dom.phiValue.textContent = `${(phi * 180 / Math.PI).toFixed(1)}°`;
+
+      dom.xlValue.textContent = `${XL.toFixed(2)} Ω`;
+      dom.xcValue.textContent = `${XC.toFixed(2)} Ω`;
+      dom.zValue.textContent = `${Z.toFixed(2)} Ω`;
+
+      dom.pValue.textContent = `${power.P.toFixed(2)} W`;
+      dom.qValue.textContent = `${power.Q.toFixed(2)} VAR`;
+      dom.sValue.textContent = `${power.S.toFixed(2)} VA`;
+      dom.pfValue.textContent = `${power.PF.toFixed(3)}`;
+    }
+
+    function update() {
+      updateReadouts();
+      drawScope();
+      drawPhasor();
+      drawTriangle();
+    }
+
+    function tick() {
+      state.time += 0.03;
+      drawScope();
+      drawPhasor();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.circuitType.addEventListener('change', () => {
+        state.circuitType = dom.circuitType.value;
+        update();
+      });
+      dom.resistance.addEventListener('input', () => {
+        state.resistance = Number(dom.resistance.value);
+        update();
+      });
+      dom.inductance.addEventListener('input', () => {
+        state.inductance = Number(dom.inductance.value);
+        update();
+      });
+      dom.capacitance.addEventListener('input', () => {
+        state.capacitance = Number(dom.capacitance.value) * 1e-6;
+        update();
+      });
+      dom.voltage.addEventListener('input', () => {
+        state.sourceVoltage = Number(dom.voltage.value);
+        update();
+      });
+      dom.frequency.addEventListener('input', () => {
+        state.frequency = Number(dom.frequency.value);
+        update();
+      });
+      dom.showPhasor.addEventListener('change', () => {
+        state.showPhasor = dom.showPhasor.checked;
+        update();
+      });
+      dom.showTriangle.addEventListener('change', () => {
+        state.showTriangle = dom.showTriangle.checked;
+        update();
+      });
+      dom.showPower.addEventListener('change', () => {
+        state.showPower = dom.showPower.checked;
+        update();
+      });
+    }
+
+    bind();
+    update();
+    tick();
+  </script>
+</body>
+</html>

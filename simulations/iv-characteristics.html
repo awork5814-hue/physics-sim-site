@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>I-V Characteristics</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --resistor-color: #8b7355;
+      --diode-color: #ff6b6b;
+      --led-glow: #6bff6b;
+      --graph-axis: rgba(255, 255, 255, 0.5);
+      --graph-line: #6ad7ff;
+      --operating-point: #f6c76b;
+      --tangent-line: #ff9a6c;
+      --grid-line: rgba(255, 255, 255, 0.1);
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="iv-characteristics">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>I-V Characteristics</h1>
+      <p>Current–Voltage relationships for circuit components</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="resistor">Resistor</button>
+      <button class="tab" data-mode="lamp">Filament Lamp</button>
+      <button class="tab" data-mode="diode">Diode</button>
+      <button class="tab" data-mode="led">LED</button>
+      <button class="tab" data-mode="compare">Compare All</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="ivCanvas" width="900" height="520" aria-label="I-V simulation"></canvas>
+        <div class="btn-row">
+          <button id="sweep">Auto Sweep</button>
+          <button id="polarity">Forward</button>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="voltage">Voltage <strong id="voltageLabel">0.0 V</strong></label>
+          <input type="range" id="voltage" min="-5" max="5" step="0.1" value="0" />
+        </div>
+
+        <div id="resistorControls">
+          <div class="control-group">
+            <label for="resistance">Resistance <strong id="resistanceLabel">100 Ω</strong></label>
+            <input type="range" id="resistance" min="10" max="1000" step="10" value="100" />
+          </div>
+        </div>
+
+        <div id="lampControls" class="hidden">
+          <div class="control-group">
+            <label for="lampPower">Lamp Rating <strong id="lampLabel">5</strong></label>
+            <input type="range" id="lampPower" min="1" max="10" step="1" value="5" />
+          </div>
+        </div>
+
+        <div id="diodeControls" class="hidden">
+          <div class="control-group">
+            <label for="diodeMaterial">Material</label>
+            <select id="diodeMaterial">
+              <option value="silicon" selected>Silicon</option>
+              <option value="germanium">Germanium</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="knee">Knee Voltage <strong id="kneeLabel">0.7 V</strong></label>
+            <input type="range" id="knee" min="0.3" max="0.7" step="0.05" value="0.7" />
+          </div>
+        </div>
+
+        <div id="ledControls" class="hidden">
+          <div class="control-group">
+            <label for="ledColor">LED Color</label>
+            <select id="ledColor">
+              <option value="red" selected>Red</option>
+              <option value="green">Green</option>
+              <option value="blue">Blue</option>
+              <option value="white">White</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="ledV">Forward Voltage <strong id="ledLabel">2.0 V</strong></label>
+            <input type="range" id="ledV" min="1.8" max="3.5" step="0.1" value="2.0" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showCircuit" checked /> Show circuit diagram</label>
+          <label><input type="checkbox" id="showGraph" checked /> Show I-V graph</label>
+          <label><input type="checkbox" id="showTangent" /> Show tangent line</label>
+          <label><input type="checkbox" id="showResistance" /> Show resistance at point</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>I–V characteristics show how current responds to applied voltage. Ohmic conductors are linear, non-ohmic components are curved.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Is the resistor graph a straight line?</li>
+          <li>At V = 0.5 V, does a diode conduct?</li>
+          <li>Why does a filament lamp curve upward?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Resistor: linear I-V.</li>
+          <li>Diode: exponential, one-way.</li>
+          <li>LED: diode with color-dependent forward voltage.</li>
+          <li>Slope gives conductance.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('ivCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const tabs = document.querySelectorAll('.tab');
+    const voltageInput = document.getElementById('voltage');
+    const resistanceInput = document.getElementById('resistance');
+    const lampPowerInput = document.getElementById('lampPower');
+    const diodeMaterial = document.getElementById('diodeMaterial');
+    const kneeInput = document.getElementById('knee');
+    const ledColor = document.getElementById('ledColor');
+    const ledVInput = document.getElementById('ledV');
+
+    const voltageLabel = document.getElementById('voltageLabel');
+    const resistanceLabel = document.getElementById('resistanceLabel');
+    const lampLabel = document.getElementById('lampLabel');
+    const kneeLabel = document.getElementById('kneeLabel');
+    const ledLabel = document.getElementById('ledLabel');
+
+    const showCircuit = document.getElementById('showCircuit');
+    const showGraph = document.getElementById('showGraph');
+    const showTangent = document.getElementById('showTangent');
+    const showResistance = document.getElementById('showResistance');
+
+    const dataPanel = document.getElementById('dataPanel');
+
+    const resistorControls = document.getElementById('resistorControls');
+    const lampControls = document.getElementById('lampControls');
+    const diodeControls = document.getElementById('diodeControls');
+    const ledControls = document.getElementById('ledControls');
+
+    const state = {
+      mode: 'resistor',
+      voltage: 0,
+      resistance: 100,
+      lampPower: 5,
+      diodeMaterial: 'silicon',
+      knee: 0.7,
+      ledColor: 'red',
+      ledV: 2.0,
+      sweep: false,
+      polarity: 1
+    };
+
+    function updateLabels() {
+      voltageLabel.textContent = `${state.voltage.toFixed(1)} V`;
+      resistanceLabel.textContent = `${state.resistance.toFixed(0)} Ω`;
+      lampLabel.textContent = state.lampPower.toFixed(0);
+      kneeLabel.textContent = `${state.knee.toFixed(2)} V`;
+      ledLabel.textContent = `${state.ledV.toFixed(1)} V`;
+    }
+
+    function calculateCurrent(voltage) {
+      if (state.mode === 'resistor') {
+        return voltage / state.resistance;
+      }
+      if (state.mode === 'lamp') {
+        const k = 0.25 + state.lampPower * 0.05;
+        return Math.sign(voltage) * k * Math.sqrt(Math.abs(voltage));
+      }
+      if (state.mode === 'diode') {
+        const Is = state.diodeMaterial === 'germanium' ? 1e-9 : 1e-12;
+        const Vt = 0.026;
+        if (voltage > 0) {
+          return Is * (Math.exp((voltage - state.knee) / Vt) - 1);
+        }
+        return -Is;
+      }
+      if (state.mode === 'led') {
+        const Is = 1e-12;
+        const Vt = 0.026;
+        if (voltage > state.ledV) {
+          return Is * (Math.exp((voltage - state.ledV) / Vt) - 1);
+        }
+        return 0;
+      }
+      return 0;
+    }
+
+    function drawCircuit() {
+      ctx.strokeStyle = 'rgba(233,242,255,0.4)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(60, 80, 280, 200);
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText('V', 120, 140);
+      ctx.fillText('A', 260, 140);
+      ctx.fillText(state.mode.toUpperCase(), 160, 210);
+    }
+
+    function drawGraph() {
+      const gx = 380;
+      const gy = 80;
+      const gw = 480;
+      const gh = 360;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(gx, gy, gw, gh);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath();
+      ctx.moveTo(gx + gw / 2, gy);
+      ctx.lineTo(gx + gw / 2, gy + gh);
+      ctx.moveTo(gx, gy + gh / 2);
+      ctx.lineTo(gx + gw, gy + gh / 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const v = -5 + (i / 100) * 10;
+        const iVal = calculateCurrent(v);
+        const x = gx + ((v + 5) / 10) * gw;
+        const y = gy + gh / 2 - clamp(iVal * 1000, -100, 100) * (gh / 200);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      const current = calculateCurrent(state.voltage);
+      const cx = gx + ((state.voltage + 5) / 10) * gw;
+      const cy = gy + gh / 2 - clamp(current * 1000, -100, 100) * (gh / 200);
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function updateDataPanel() {
+      const current = calculateCurrent(state.voltage);
+      const power = state.voltage * current;
+      dataPanel.innerHTML = `
+        <div><strong>Component:</strong> ${state.mode}</div>
+        <div><strong>Voltage:</strong> ${state.voltage.toFixed(2)} V</div>
+        <div><strong>Current:</strong> ${(current * 1000).toFixed(2)} mA</div>
+        <div><strong>Power:</strong> ${(power * 1000).toFixed(2)} mW</div>
+      `;
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (showCircuit.checked) drawCircuit();
+      if (showGraph.checked) drawGraph();
+      updateDataPanel();
+      requestAnimationFrame(render);
+    }
+
+    function clamp(val, min, max) {
+      return Math.min(Math.max(val, min), max);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+        resistorControls.classList.toggle('hidden', state.mode !== 'resistor');
+        lampControls.classList.toggle('hidden', state.mode !== 'lamp');
+        diodeControls.classList.toggle('hidden', state.mode !== 'diode');
+        ledControls.classList.toggle('hidden', state.mode !== 'led');
+      });
+    });
+
+    voltageInput.addEventListener('input', (e) => {
+      state.voltage = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    resistanceInput.addEventListener('input', (e) => {
+      state.resistance = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    lampPowerInput.addEventListener('input', (e) => {
+      state.lampPower = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    diodeMaterial.addEventListener('change', (e) => {
+      state.diodeMaterial = e.target.value;
+    });
+
+    kneeInput.addEventListener('input', (e) => {
+      state.knee = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    ledColor.addEventListener('change', (e) => {
+      state.ledColor = e.target.value;
+    });
+
+    ledVInput.addEventListener('input', (e) => {
+      state.ledV = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('sweep').addEventListener('click', () => {
+      state.sweep = !state.sweep;
+    });
+
+    document.getElementById('polarity').addEventListener('click', () => {
+      state.polarity *= -1;
+      state.voltage *= -1;
+      voltageInput.value = state.voltage;
+      document.getElementById('polarity').textContent = state.polarity === 1 ? 'Forward' : 'Reverse';
+      updateLabels();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

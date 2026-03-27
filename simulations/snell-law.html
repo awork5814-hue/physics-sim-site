@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snell's Law</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Snell's Law</h1>
+    <div class="subtitle">Refraction at a boundary between two media</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Incident Angle θ₁ (°)</label>
+          <input id="theta" type="range" min="0" max="89" step="1" value="45" />
+          <div class="row"><span>0</span><span id="thetaVal">45°</span><span>89</span></div>
+        </div>
+        <div class="control">
+          <label>Medium 1 (n₁)</label>
+          <select id="n1">
+            <option value="air">Air (1.00)</option>
+            <option value="water">Water (1.33)</option>
+            <option value="glass" selected>Glass (1.52)</option>
+            <option value="diamond">Diamond (2.42)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Medium 2 (n₂)</label>
+          <select id="n2">
+            <option value="air">Air (1.00)</option>
+            <option value="water">Water (1.33)</option>
+            <option value="glass" selected>Glass (1.52)</option>
+            <option value="diamond">Diamond (2.42)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Wavelength Color</label>
+          <input id="waveColor" type="range" min="0" max="100" step="1" value="50" />
+          <div class="row"><span>Red</span><span id="waveColorVal">Neutral</span><span>Violet</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showNormal" type="checkbox" checked /> Normal line</label>
+            <label><input id="showRefl" type="checkbox" checked /> Reflection</label>
+            <label><input id="showRefr" type="checkbox" checked /> Refraction</label>
+            <label><input id="showAngles" type="checkbox" checked /> Angles</label>
+            <label><input id="showWaves" type="checkbox" checked /> Wavefronts</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Snell's law: n₁ sin θ₁ = n₂ sin θ₂. Total internal reflection when θ₁ &gt; θc.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const media = {
+      air: 1.00,
+      water: 1.33,
+      glass: 1.52,
+      diamond: 2.42
+    };
+
+    const state = {
+      theta1: 45,
+      n1: 'air',
+      n2: 'glass',
+      showNormal: true,
+      showRefl: true,
+      showRefr: true,
+      showAngles: true,
+      showWaves: true,
+      color: 50,
+      t: 0
+    };
+
+    function calcRefraction() {
+      const n1 = media[state.n1];
+      const n2 = media[state.n2];
+      const theta1Rad = state.theta1 * Math.PI / 180;
+      const sin2 = (n1 / n2) * Math.sin(theta1Rad);
+      if (sin2 > 1) return { tir: true, theta2: null };
+      const theta2 = Math.asin(sin2) * 180 / Math.PI;
+      return { tir: false, theta2 };
+    }
+
+    function criticalAngle() {
+      const n1 = media[state.n1];
+      const n2 = media[state.n2];
+      if (n1 <= n2) return null;
+      return Math.asin(n2 / n1) * 180 / Math.PI;
+    }
+
+    function waveColor() {
+      const t = state.color / 100;
+      const r = Math.round(255 * (1 - t));
+      const b = Math.round(255 * t);
+      return `rgb(${r},120,${b})`;
+    }
+
+    function draw() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const mid = canvas.height / 2;
+      ctx.strokeStyle = '#fff';
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(0, mid); ctx.lineTo(canvas.width, mid); ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (state.showNormal) {
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, 40);
+        ctx.lineTo(canvas.width/2, canvas.height-40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      const n1 = media[state.n1];
+      const n2 = media[state.n2];
+      const { tir, theta2 } = calcRefraction();
+      const theta1 = state.theta1 * Math.PI / 180;
+
+      // incident ray
+      const startX = canvas.width/2 - 200 * Math.sin(theta1);
+      const startY = mid - 200 * Math.cos(theta1);
+      ctx.strokeStyle = waveColor();
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(canvas.width/2, mid);
+      ctx.stroke();
+
+      // reflected ray
+      if (state.showRefl) {
+        ctx.strokeStyle = '#fff';
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, mid);
+        ctx.lineTo(canvas.width/2 + 200 * Math.sin(theta1), mid - 200 * Math.cos(theta1));
+        ctx.stroke();
+      }
+
+      // refracted ray
+      if (state.showRefr && !tir) {
+        const theta2Rad = theta2 * Math.PI / 180;
+        ctx.strokeStyle = waveColor();
+        ctx.beginPath();
+        ctx.moveTo(canvas.width/2, mid);
+        ctx.lineTo(canvas.width/2 + 200 * Math.sin(theta2Rad), mid + 200 * Math.cos(theta2Rad));
+        ctx.stroke();
+      }
+
+      // wavefronts
+      if (state.showWaves) {
+        ctx.strokeStyle = 'rgba(106,215,255,0.25)';
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.arc(canvas.width/2, mid, 20 + i * 20 + (state.t % 20), -Math.PI/2 - theta1, -Math.PI/2 + theta1);
+          ctx.stroke();
+        }
+      }
+
+      // angle arcs
+      if (state.showAngles) {
+        ctx.strokeStyle = '#f6c76b';
+        ctx.beginPath();
+        ctx.arc(canvas.width/2, mid, 40, -Math.PI/2, -Math.PI/2 + theta1);
+        ctx.stroke();
+        if (!tir) {
+          ctx.beginPath();
+          ctx.arc(canvas.width/2, mid, 40, Math.PI/2 - (theta2 * Math.PI/180), Math.PI/2);
+          ctx.stroke();
+        }
+      }
+
+      // labels
+      ctx.fillStyle = '#a9b6c6';
+      ctx.fillText(`n1 = ${n1.toFixed(2)}`, 20, 30);
+      ctx.fillText(`n2 = ${n2.toFixed(2)}`, 20, canvas.height - 20);
+    }
+
+    function updateReadout() {
+      const n1 = media[state.n1];
+      const n2 = media[state.n2];
+      const { tir, theta2 } = calcRefraction();
+      const tc = criticalAngle();
+      const v1 = 3e8 / n1;
+      const v2 = 3e8 / n2;
+      const text = `SNELL'S LAW\n` +
+        `---------\n` +
+        `n1 = ${n1.toFixed(2)}\n` +
+        `n2 = ${n2.toFixed(2)}\n` +
+        `θ1 = ${state.theta1.toFixed(1)}°\n` +
+        `θ2 = ${tir ? 'TIR' : theta2.toFixed(1) + '°'}\n` +
+        `Critical Angle: ${tc ? tc.toFixed(1) + '°' : 'N/A'}\n` +
+        `v1 = ${v1.toExponential(2)} m/s\n` +
+        `v2 = ${v2.toExponential(2)} m/s\n`;
+      document.getElementById('readout').textContent = text;
+    }
+
+    function tick() {
+      state.t += 0.3;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    // UI
+    document.getElementById('theta').addEventListener('input', e => {
+      state.theta1 = parseFloat(e.target.value);
+      document.getElementById('thetaVal').textContent = `${state.theta1.toFixed(0)}°`;
+    });
+    document.getElementById('n1').addEventListener('change', e => state.n1 = e.target.value);
+    document.getElementById('n2').addEventListener('change', e => state.n2 = e.target.value);
+    document.getElementById('waveColor').addEventListener('input', e => {
+      state.color = parseFloat(e.target.value);
+      const label = state.color < 33 ? 'Red' : (state.color > 66 ? 'Violet' : 'Neutral');
+      document.getElementById('waveColorVal').textContent = label;
+    });
+
+    document.getElementById('showNormal').addEventListener('change', e => state.showNormal = e.target.checked);
+    document.getElementById('showRefl').addEventListener('change', e => state.showRefl = e.target.checked);
+    document.getElementById('showRefr').addEventListener('change', e => state.showRefr = e.target.checked);
+    document.getElementById('showAngles').addEventListener('change', e => state.showAngles = e.target.checked);
+    document.getElementById('showWaves').addEventListener('change', e => state.showWaves = e.target.checked);
+
+    tick();
+  </script>
+</body>
+</html>

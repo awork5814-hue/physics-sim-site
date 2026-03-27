@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stefan-Boltzmann Law</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Radiation</span></div>
+    <header class="hero"><h1>Stefan-Boltzmann Law</h1><p>P = σAT⁴ — Blackbody radiation power</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">P = σAT⁴</div>
+        <div class="control-group">
+          <label>Temperature (K)</label>
+          <input type="range" id="tempSlider" min="100" max="10000" value="3000">
+        </div>
+        <div class="control-group">
+          <label>Surface Area (cm²)</label>
+          <input type="range" id="areaSlider" min="1" max="100" value="10">
+        </div>
+        <div class="control-group">
+          <label>Emissivity</label>
+          <input type="range" id="emisSlider" min="0" max="100" value="100">
+        </div>
+        <div class="data-panel">
+          <div>Power Output: <strong id="powerVal">0 W</strong></div>
+          <div>Peak Wavelength: <strong id="peakVal">0 nm</strong></div>
+          <div>Photon Emission: <strong id="photonVal">0 /s</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const tempSlider = document.getElementById('tempSlider');
+    const areaSlider = document.getElementById('areaSlider');
+    const emisSlider = document.getElementById('emisSlider');
+    const sigma = 5.67e-8;
+    const h = 6.626e-34, c = 3e8, k = 1.38e-23;
+    let time = 0;
+    function update() {
+      const T = parseFloat(tempSlider.value);
+      const A = parseFloat(areaSlider.value) * 1e-4;
+      const e = parseFloat(emisSlider.value) / 100;
+      const P = sigma * A * e * Math.pow(T, 4);
+      const peak = 2.898e-3 / T * 1e9;
+      const avgEnergy = 2.7 * k * T;
+      const photons = P / avgEnergy;
+      document.getElementById('powerVal').textContent = P.toFixed(2) + ' W';
+      document.getElementById('peakVal').textContent = peak.toFixed(0) + ' nm';
+      document.getElementById('photonVal').textContent = photons.toExponential(2) + ' /s';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const T = parseFloat(tempSlider.value);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const radius = 60 + T / 100;
+      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 3);
+      const tempRatio = T / 10000;
+      const r = Math.floor(255 * Math.min(1, tempRatio * 2));
+      const g = Math.floor(200 * Math.max(0, 1 - Math.abs(tempRatio - 0.5) * 2));
+      const b = Math.floor(100 * Math.max(0, 1 - tempRatio * 2));
+      glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.8)`);
+      glow.addColorStop(0.3, `rgba(${r}, ${g}, ${b}, 0.4)`);
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(cx, cy, radius * 3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+      ctx.beginPath(); ctx.arc(cx, cy, radius * 0.9, 0, Math.PI * 2); ctx.fill();
+      for (let i = 0; i < 20; i++) {
+        const angle = time * 0.05 + i * 0.3;
+        const dist = radius * 1.5 + Math.sin(time * 0.1 + i) * 20;
+        const px = cx + Math.cos(angle) * dist;
+        const py = cy + Math.sin(angle) * dist;
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+        ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 16px Space Grotesk';
+      ctx.fillText('T = ' + T + ' K', cx - 30, cy + radius + 40);
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText('Blackbody radiator', cx - 50, cy - radius - 20);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    tempSlider.addEventListener('input', update);
+    areaSlider.addEventListener('input', update);
+    emisSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Uniform Circular Motion</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --path-color: rgba(255, 255, 255, 0.3);
+      --center-color: #f6c76b;
+      --radius-color: rgba(255, 255, 255, 0.5);
+      --velocity-color: #6bff6b;
+      --acceleration-color: #ff6b6b;
+      --force-color: #f6c76b;
+      --object-color: #6ad7ff;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="uniform-circular-motion">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Uniform Circular Motion</h1>
+      <p>Constant speed • Centripetal acceleration</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="basic">Basic UCM</button>
+      <button class="tab" data-mode="vertical">Vertical Circle</button>
+      <button class="tab" data-mode="horizontal">Horizontal Circle</button>
+      <button class="tab" data-mode="compare">Compare</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="ucmCanvas" width="900" height="520" aria-label="Uniform circular motion"></canvas>
+        <div class="btn-row">
+          <button id="playPause">Play</button>
+          <button id="reset">Reset</button>
+          <div class="inline" style="max-width: 220px;">
+            <label for="speed">Speed</label>
+            <select id="speed">
+              <option value="0.25">0.25x</option>
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+              <option value="4">4x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="radius">Radius <strong id="radiusLabel">2.0 m</strong></label>
+          <input type="range" id="radius" min="0.5" max="5" step="0.1" value="2" />
+        </div>
+
+        <div class="control-group">
+          <label for="period">Period <strong id="periodLabel">2.0 s</strong></label>
+          <input type="range" id="period" min="0.5" max="10" step="0.1" value="2" />
+        </div>
+
+        <div class="control-group">
+          <label for="mass">Mass <strong id="massLabel">1.0 kg</strong></label>
+          <input type="range" id="mass" min="0.5" max="10" step="0.1" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showVelocity" checked /> Show velocity vector</label>
+          <label><input type="checkbox" id="showAcceleration" checked /> Show acceleration vector</label>
+          <label><input type="checkbox" id="showForce" checked /> Show force vector</label>
+          <label><input type="checkbox" id="showRadius" checked /> Show radius line</label>
+          <label><input type="checkbox" id="showAngle" checked /> Show angular position</label>
+          <label><input type="checkbox" id="showRevs" checked /> Show revolutions</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Uniform circular motion has constant speed but continuously changing velocity direction. The acceleration always points toward the center.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Is speed constant? Is velocity constant?</li>
+          <li>What happens to a when radius doubles?</li>
+          <li>What happens to a when speed doubles?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>v = 2πr / T.</li>
+          <li>a = v² / r = ω²r.</li>
+          <li>Force is always toward the center.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('ucmCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const radiusInput = document.getElementById('radius');
+    const periodInput = document.getElementById('period');
+    const massInput = document.getElementById('mass');
+
+    const radiusLabel = document.getElementById('radiusLabel');
+    const periodLabel = document.getElementById('periodLabel');
+    const massLabel = document.getElementById('massLabel');
+
+    const showVelocity = document.getElementById('showVelocity');
+    const showAcceleration = document.getElementById('showAcceleration');
+    const showForce = document.getElementById('showForce');
+    const showRadius = document.getElementById('showRadius');
+    const showAngle = document.getElementById('showAngle');
+    const showRevs = document.getElementById('showRevs');
+
+    const playPauseBtn = document.getElementById('playPause');
+    const resetBtn = document.getElementById('reset');
+    const speedSelect = document.getElementById('speed');
+
+    const dataPanel = document.getElementById('dataPanel');
+
+    const state = {
+      radius: 2,
+      period: 2,
+      mass: 1,
+      time: 0,
+      angle: 0,
+      playing: false,
+      speed: 1
+    };
+
+    function updateLabels() {
+      radiusLabel.textContent = `${state.radius.toFixed(1)} m`;
+      periodLabel.textContent = `${state.period.toFixed(1)} s`;
+      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
+    }
+
+    function updatePhysics(dt) {
+      const omega = (2 * Math.PI) / state.period;
+      state.angle += omega * dt;
+      state.time += dt;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const center = { x: canvas.width / 2, y: canvas.height / 2 };
+      const scale = 60;
+      const r = state.radius * scale;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+
+      const x = center.x + r * Math.cos(state.angle);
+      const y = center.y + r * Math.sin(state.angle);
+
+      if (showRadius.checked) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.moveTo(center.x, center.y);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(x, y, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (showVelocity.checked) {
+        drawVector(x, y, -Math.sin(state.angle) * 40, Math.cos(state.angle) * 40, '#6bff6b');
+      }
+
+      if (showAcceleration.checked) {
+        drawVector(x, y, (center.x - x) * 0.2, (center.y - y) * 0.2, '#ff6b6b');
+      }
+
+      if (showForce.checked) {
+        drawVector(x, y, (center.x - x) * 0.15, (center.y - y) * 0.15, '#f6c76b');
+      }
+
+      if (showAngle.checked) {
+        ctx.fillStyle = '#f6c76b';
+        ctx.fillText(`θ = ${(state.angle * 180 / Math.PI).toFixed(0)}°`, center.x + 20, center.y - 20);
+      }
+
+      if (showRevs.checked) {
+        const revs = state.angle / (2 * Math.PI);
+        ctx.fillStyle = 'rgba(233,242,255,0.8)';
+        ctx.fillText(`Revs: ${revs.toFixed(2)}`, 30, 40);
+        ctx.fillText(`Time: ${state.time.toFixed(2)} s`, 30, 60);
+      }
+    }
+
+    function drawVector(x, y, dx, dy, color) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + dx, y + dy);
+      ctx.stroke();
+    }
+
+    function updateDataPanel() {
+      const omega = (2 * Math.PI) / state.period;
+      const v = omega * state.radius;
+      const a = v * v / state.radius;
+      const F = state.mass * a;
+      const x = state.radius * Math.cos(state.angle);
+      const y = state.radius * Math.sin(state.angle);
+      dataPanel.innerHTML = `
+        <div><strong>Radius:</strong> ${state.radius.toFixed(2)} m</div>
+        <div><strong>Period:</strong> ${state.period.toFixed(2)} s</div>
+        <div><strong>Speed:</strong> ${v.toFixed(2)} m/s</div>
+        <div><strong>Angular ω:</strong> ${omega.toFixed(2)} rad/s</div>
+        <div><strong>Acceleration:</strong> ${a.toFixed(2)} m/s²</div>
+        <div><strong>Force:</strong> ${F.toFixed(2)} N</div>
+        <div><strong>Position:</strong> (${x.toFixed(2)}, ${y.toFixed(2)}) m</div>
+      `;
+    }
+
+    function loop() {
+      if (state.playing) {
+        updatePhysics((1 / 60) * state.speed);
+      }
+      draw();
+      updateDataPanel();
+      requestAnimationFrame(loop);
+    }
+
+    radiusInput.addEventListener('input', (e) => {
+      state.radius = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    periodInput.addEventListener('input', (e) => {
+      state.period = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      state.playing = !state.playing;
+      playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      state.time = 0;
+      state.angle = 0;
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

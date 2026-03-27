@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Signal Propagation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --panel: rgba(16, 24, 36, 0.86);
+      --panel-strong: rgba(12, 20, 32, 0.95);
+      --glass-border: rgba(106, 215, 255, 0.2);
+      --glass-glow: rgba(106, 215, 255, 0.16);
+      --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
+      --good: #6bff6b;
+      --warn: #ff9a6c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1200px 700px at 12% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 88% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px clamp(16px, 4vw, 36px) 36px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0 18px;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 8px 0 18px;
+    }
+
+    .hero-title { max-width: 720px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
+      margin: 0 0 10px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .btn {
+      background: rgba(12, 18, 28, 0.85);
+      color: var(--sim-text);
+      border: 1px solid var(--glass-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.45); }
+    .btn.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.05rem;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr); gap: 20px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, var(--glass-glow), transparent 45%);
+      pointer-events: none;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .controls { display: grid; gap: 16px; }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    input[type="range"], select { width: 100%; }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .read-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+
+    .read-card span {
+      display: block;
+      color: var(--sim-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .read-card strong {
+      font-size: 16px;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+    }
+
+    @media (max-width: 980px) {
+      header.hero { flex-direction: column; align-items: flex-start; }
+      .layout { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      canvas { height: 320px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="signal-propagation">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <div class="hero-title">
+        <div class="hero-badge">Precision Lab</div>
+        <h1>Signal Propagation</h1>
+        <p>Direct and reflected space waves over Earth curvature.</p>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary" id="run">Run</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><span>Direct Path</span><strong id="directStat">0 km</strong></div>
+      <div class="stat"><span>Reflected Path</span><strong id="reflectStat">0 km</strong></div>
+      <div class="stat"><span>Δd</span><strong id="deltaStat">0 m</strong></div>
+      <div class="stat"><span>Phase Δφ</span><strong id="phaseStat">0°</strong></div>
+    </div>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="scene" width="900" height="520" aria-label="Signal propagation"></canvas>
+      </div>
+
+      <div class="panel controls">
+        <div class="control-group">
+          <label>Frequency (MHz) <span class="value-chip" id="freqLabel">900</span></label>
+          <input id="freq" type="range" min="100" max="6000" step="50" value="900" />
+        </div>
+        <div class="control-group">
+          <label>Distance (km) <span class="value-chip" id="distLabel">10.0</span></label>
+          <input id="dist" type="range" min="1" max="100" step="1" value="10" />
+        </div>
+        <div class="control-group">
+          <label>Tx Height (m) <span class="value-chip" id="txLabel">50</span></label>
+          <input id="txh" type="range" min="10" max="300" step="10" value="50" />
+        </div>
+        <div class="control-group">
+          <label>Rx Height (m) <span class="value-chip" id="rxLabel">50</span></label>
+          <input id="rxh" type="range" min="10" max="300" step="10" value="50" />
+        </div>
+        <div class="control-group">
+          <label>Tx Power (dBm) <span class="value-chip" id="pwrLabel">30</span></label>
+          <input id="pwr" type="range" min="0" max="60" step="1" value="30" />
+        </div>
+        <div class="control-group">
+          <label>Surface Reflectivity <span class="value-chip" id="reflLabel">0.6</span></label>
+          <input id="refl" type="range" min="0" max="1" step="0.05" value="0.6" />
+        </div>
+
+        <div class="readout">
+          <div class="read-card"><span>FSPL</span><strong id="fsplRead">0 dB</strong></div>
+          <div class="read-card"><span>Rx Power</span><strong id="rxpRead">0 dBm</strong></div>
+          <div class="read-card"><span>Status</span><strong id="linkRead">OK</strong></div>
+          <div class="read-card"><span>Δφ (rad)</span><strong id="phiRead">0.00</strong></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const freq = document.getElementById('freq');
+    const dist = document.getElementById('dist');
+    const txh = document.getElementById('txh');
+    const rxh = document.getElementById('rxh');
+    const pwr = document.getElementById('pwr');
+    const refl = document.getElementById('refl');
+
+    const freqLabel = document.getElementById('freqLabel');
+    const distLabel = document.getElementById('distLabel');
+    const txLabel = document.getElementById('txLabel');
+    const rxLabel = document.getElementById('rxLabel');
+    const pwrLabel = document.getElementById('pwrLabel');
+    const reflLabel = document.getElementById('reflLabel');
+
+    const directStat = document.getElementById('directStat');
+    const reflectStat = document.getElementById('reflectStat');
+    const deltaStat = document.getElementById('deltaStat');
+    const phaseStat = document.getElementById('phaseStat');
+
+    const fsplRead = document.getElementById('fsplRead');
+    const rxpRead = document.getElementById('rxpRead');
+    const linkRead = document.getElementById('linkRead');
+    const phiRead = document.getElementById('phiRead');
+
+    const state = {
+      freq: 900,
+      dist: 10,
+      txh: 50,
+      rxh: 50,
+      pwr: 30,
+      refl: 0.6,
+      running: true,
+      t: 0
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function calcPaths() {
+      const d = state.dist * 1000;
+      const direct = Math.sqrt(d * d + (state.txh - state.rxh) ** 2);
+      const reflected = Math.sqrt(d * d + (state.txh + state.rxh) ** 2);
+      const delta = reflected - direct;
+      const lambda = 3e8 / (state.freq * 1e6);
+      const phase = (2 * Math.PI * delta) / lambda;
+      return { direct, reflected, delta, phase };
+    }
+
+    function fspl() {
+      const d = state.dist;
+      const f = state.freq;
+      return 32.44 + 20 * Math.log10(d) + 20 * Math.log10(f);
+    }
+
+    function updateUI() {
+      freqLabel.textContent = state.freq.toFixed(0);
+      distLabel.textContent = state.dist.toFixed(1);
+      txLabel.textContent = state.txh.toFixed(0);
+      rxLabel.textContent = state.rxh.toFixed(0);
+      pwrLabel.textContent = state.pwr.toFixed(0);
+      reflLabel.textContent = state.refl.toFixed(2);
+
+      const { direct, reflected, delta, phase } = calcPaths();
+      directStat.textContent = `${(direct / 1000).toFixed(2)} km`;
+      reflectStat.textContent = `${(reflected / 1000).toFixed(2)} km`;
+      deltaStat.textContent = `${delta.toFixed(1)} m`;
+      phaseStat.textContent = `${(phase * 180 / Math.PI).toFixed(1)}°`;
+
+      const loss = fspl();
+      const rxp = state.pwr - loss + 10 * Math.log10(1 + state.refl);
+      fsplRead.textContent = `${loss.toFixed(1)} dB`;
+      rxpRead.textContent = `${rxp.toFixed(1)} dBm`;
+      linkRead.textContent = rxp > -90 ? 'OK' : 'LOW';
+      linkRead.style.color = rxp > -90 ? 'var(--good)' : 'var(--warn)';
+      phiRead.textContent = phase.toFixed(2);
+    }
+
+    function drawScene() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.clearRect(0, 0, w, h);
+
+      // sky
+      const sky = ctx.createLinearGradient(0, 0, 0, h);
+      sky.addColorStop(0, '#0b1d3a');
+      sky.addColorStop(1, '#07101f');
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, w, h);
+
+      const earthY = h * 0.75;
+      const R = w * 1.2;
+      const cx = w / 2;
+      const cy = earthY + R;
+
+      // earth arc
+      ctx.strokeStyle = 'rgba(106,215,255,0.2)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.stroke();
+
+      // ground
+      ctx.fillStyle = '#0c2a2a';
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, Math.PI * 1.08, Math.PI * 1.92);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+
+      // positions
+      const distPx = Math.min(w * 0.7, Math.max(160, state.dist * 8));
+      const txX = cx - distPx / 2;
+      const rxX = cx + distPx / 2;
+      const txY = earthY - (state.txh / 300) * 80;
+      const rxY = earthY - (state.rxh / 300) * 80;
+
+      // antenna towers
+      ctx.strokeStyle = '#9fb0c5';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(txX, earthY);
+      ctx.lineTo(txX, txY);
+      ctx.moveTo(rxX, earthY);
+      ctx.lineTo(rxX, rxY);
+      ctx.stroke();
+
+      // antenna heads
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(txX, txY - 8, 10, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.arc(rxX, rxY - 8, 10, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.stroke();
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(txX, txY, 3, 0, Math.PI * 2);
+      ctx.arc(rxX, rxY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // direct ray
+      ctx.strokeStyle = 'rgba(106,215,255,0.7)';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(txX, txY);
+      ctx.lineTo(rxX, rxY);
+      ctx.stroke();
+
+      // reflected ray (bounce at midpoint)
+      const midX = (txX + rxX) / 2;
+      const midY = earthY - 6;
+      ctx.strokeStyle = `rgba(246,199,107,${0.4 + state.refl * 0.6})`;
+      ctx.beginPath();
+      ctx.moveTo(txX, txY);
+      ctx.lineTo(midX, midY);
+      ctx.lineTo(rxX, rxY);
+      ctx.stroke();
+
+      // wave packet animation
+      if (state.running) {
+        const t = (state.t % 1);
+        const dx = rxX - txX;
+        const dy = rxY - txY;
+        ctx.fillStyle = '#6ad7ff';
+        ctx.beginPath();
+        ctx.arc(txX + dx * t, txY + dy * t, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // labels
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.fillText('Transmitting Antenna', txX - 50, txY - 10);
+      ctx.fillText('Receiving Antenna', rxX - 40, rxY - 10);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillText('Direct wave', (txX + rxX) / 2 - 30, (txY + rxY) / 2 - 12);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('Reflected wave', midX - 40, midY - 10);
+    }
+
+    function loop() {
+      if (state.running) {
+        state.t += 0.01;
+      }
+      drawScene();
+      updateUI();
+      requestAnimationFrame(loop);
+    }
+
+    freq.addEventListener('input', e => { state.freq = parseFloat(e.target.value); });
+    dist.addEventListener('input', e => { state.dist = parseFloat(e.target.value); });
+    txh.addEventListener('input', e => { state.txh = parseFloat(e.target.value); });
+    rxh.addEventListener('input', e => { state.rxh = parseFloat(e.target.value); });
+    pwr.addEventListener('input', e => { state.pwr = parseFloat(e.target.value); });
+    refl.addEventListener('input', e => { state.refl = parseFloat(e.target.value); });
+
+    document.getElementById('run').addEventListener('click', (e) => {
+      state.running = !state.running;
+      e.currentTarget.textContent = state.running ? 'Pause' : 'Run';
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.freq = 900; state.dist = 10; state.txh = 50; state.rxh = 50; state.pwr = 30; state.refl = 0.6; state.t = 0;
+      freq.value = state.freq; dist.value = state.dist; txh.value = state.txh; rxh.value = state.rxh; pwr.value = state.pwr; refl.value = state.refl;
+      updateUI();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    updateUI();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

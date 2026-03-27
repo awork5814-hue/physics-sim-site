@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Antennas</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --green: #6bff6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .row-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select, button {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } .row-panels { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Antennas</h1>
+        <p>Radiation patterns, directivity, and arrays</p>
+      </div>
+      <div class="pill">λ = c / f · D & Gain · Beam steering</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Antenna & Radiation Pattern</h2>
+        <canvas id="patternCanvas" width="640" height="260"></canvas>
+        <div class="row-panels">
+          <div>
+            <h2 style="margin-top:12px;">Polar Pattern</h2>
+            <canvas id="polarCanvas" width="320" height="220"></canvas>
+          </div>
+          <div>
+            <h2 style="margin-top:12px;">Array Pattern</h2>
+            <canvas id="arrayCanvas" width="320" height="220"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Antenna Type</label>
+            <select id="type">
+              <option value="dipole" selected>Dipole</option>
+              <option value="monopole">Monopole</option>
+              <option value="yagi">Yagi</option>
+              <option value="array">Array</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Length (λ)</label>
+            <input type="range" id="length" min="0.25" max="1.5" step="0.05" value="0.5" />
+            <div class="row"><span class="muted">L/λ</span><span class="value" id="lengthValue">0.50</span></div>
+          </div>
+          <div class="control">
+            <label>Frequency (MHz)</label>
+            <input type="range" id="freq" min="30" max="3000" step="10" value="100" />
+            <div class="row"><span class="muted">f</span><span class="value" id="freqValue">100 MHz</span></div>
+          </div>
+          <div class="control">
+            <label>Number of Elements</label>
+            <input type="range" id="elements" min="1" max="10" step="1" value="4" />
+            <div class="row"><span class="muted">N</span><span class="value" id="elementsValue">4</span></div>
+          </div>
+          <div class="control">
+            <label>Element Spacing (λ)</label>
+            <input type="range" id="spacing" min="0.2" max="1.0" step="0.05" value="0.5" />
+            <div class="row"><span class="muted">d/λ</span><span class="value" id="spacingValue">0.50</span></div>
+          </div>
+          <div class="control">
+            <label>Phase Shift (°)</label>
+            <input type="range" id="phase" min="-180" max="180" step="5" value="0" />
+            <div class="row"><span class="muted">φ</span><span class="value" id="phaseValue">0°</span></div>
+          </div>
+          <div class="control">
+            <label>Show E-field</label>
+            <div class="toggle">
+              <input type="checkbox" id="showField" checked />
+              <span>Animate field lines</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Parameters</div>
+            <div class="row"><span>Wavelength</span><span class="value" id="lambdaValue">3.0 m</span></div>
+            <div class="row"><span>Gain</span><span class="value" id="gainValue">2.15 dBi</span></div>
+            <div class="row"><span>HPBW</span><span class="value" id="hpbwValue">78°</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Array</div>
+            <div class="row"><span>Directivity</span><span class="value" id="directivityValue">2.0 dBi</span></div>
+            <div class="row"><span>Steering</span><span class="value" id="steerValue">0°</span></div>
+            <div class="row"><span>R_rad</span><span class="value" id="radValue">73 Ω</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Arrays steer beams using phase shifts. Half-wave dipoles are omnidirectional in azimuth.</div>
+  </div>
+
+  <script>
+    const C = 3e8;
+    const state = {
+      type: 'dipole',
+      length: 0.5,
+      freq: 100,
+      elements: 4,
+      spacing: 0.5,
+      phase: 0,
+      showField: true,
+      time: 0
+    };
+
+    const dom = {
+      type: document.getElementById('type'),
+      length: document.getElementById('length'),
+      freq: document.getElementById('freq'),
+      elements: document.getElementById('elements'),
+      spacing: document.getElementById('spacing'),
+      phase: document.getElementById('phase'),
+      showField: document.getElementById('showField'),
+      lengthValue: document.getElementById('lengthValue'),
+      freqValue: document.getElementById('freqValue'),
+      elementsValue: document.getElementById('elementsValue'),
+      spacingValue: document.getElementById('spacingValue'),
+      phaseValue: document.getElementById('phaseValue'),
+      lambdaValue: document.getElementById('lambdaValue'),
+      gainValue: document.getElementById('gainValue'),
+      hpbwValue: document.getElementById('hpbwValue'),
+      directivityValue: document.getElementById('directivityValue'),
+      steerValue: document.getElementById('steerValue'),
+      radValue: document.getElementById('radValue'),
+      patternCanvas: document.getElementById('patternCanvas'),
+      polarCanvas: document.getElementById('polarCanvas'),
+      arrayCanvas: document.getElementById('arrayCanvas')
+    };
+
+    const patternCtx = dom.patternCanvas.getContext('2d');
+    const polarCtx = dom.polarCanvas.getContext('2d');
+    const arrayCtx = dom.arrayCanvas.getContext('2d');
+
+    function calcLambda() {
+      return C / (state.freq * 1e6);
+    }
+
+    function calcGain() {
+      if (state.type === 'dipole') return 2.15;
+      if (state.type === 'monopole') return 5.15;
+      if (state.type === 'yagi') return 7 + state.elements;
+      return 2 + 10 * Math.log10(state.elements);
+    }
+
+    function calcHPBW() {
+      if (state.type === 'dipole') return 78;
+      if (state.type === 'monopole') return 62;
+      return Math.max(10, 52 / Math.sqrt(state.elements));
+    }
+
+    function calcRadiationResistance() {
+      const l = state.length;
+      return 80 * Math.PI * Math.PI * (l ** 2);
+    }
+
+    function updateReadouts() {
+      dom.lengthValue.textContent = state.length.toFixed(2);
+      dom.freqValue.textContent = `${state.freq} MHz`;
+      dom.elementsValue.textContent = state.elements;
+      dom.spacingValue.textContent = state.spacing.toFixed(2);
+      dom.phaseValue.textContent = `${state.phase}°`;
+      dom.lambdaValue.textContent = `${calcLambda().toFixed(2)} m`;
+      dom.gainValue.textContent = `${calcGain().toFixed(2)} dBi`;
+      dom.hpbwValue.textContent = `${calcHPBW().toFixed(0)}°`;
+      dom.directivityValue.textContent = `${(10 * Math.log10(state.elements)).toFixed(1)} dBi`;
+      dom.steerValue.textContent = `${state.phase}°`;
+      dom.radValue.textContent = `${calcRadiationResistance().toFixed(0)} Ω`;
+    }
+
+    function drawPattern() {
+      const w = dom.patternCanvas.width;
+      const h = dom.patternCanvas.height;
+      patternCtx.clearRect(0, 0, w, h);
+      patternCtx.fillStyle = '#0b1420';
+      patternCtx.fillRect(0, 0, w, h);
+      const midX = w / 2;
+      const midY = h / 2;
+      patternCtx.strokeStyle = '#f6c76b';
+      patternCtx.lineWidth = 3;
+      patternCtx.beginPath();
+      patternCtx.moveTo(midX, midY - 60);
+      patternCtx.lineTo(midX, midY + 60);
+      patternCtx.stroke();
+      if (state.showField) {
+        patternCtx.strokeStyle = '#6ad7ff';
+        for (let i = 0; i < 6; i++) {
+          patternCtx.beginPath();
+          patternCtx.arc(midX, midY, 40 + i * 12 + 8 * Math.sin(state.time + i), Math.PI * 0.2, Math.PI * 1.8);
+          patternCtx.stroke();
+        }
+      }
+    }
+
+    function drawPolar() {
+      const w = dom.polarCanvas.width;
+      const h = dom.polarCanvas.height;
+      polarCtx.clearRect(0, 0, w, h);
+      polarCtx.fillStyle = '#0b1420';
+      polarCtx.fillRect(0, 0, w, h);
+      const center = { x: w / 2, y: h / 2 };
+      polarCtx.strokeStyle = '#1c2c43';
+      for (let r = 30; r <= 90; r += 30) {
+        polarCtx.beginPath();
+        polarCtx.arc(center.x, center.y, r, 0, Math.PI * 2);
+        polarCtx.stroke();
+      }
+      polarCtx.strokeStyle = '#6ad7ff';
+      polarCtx.beginPath();
+      for (let t = 0; t <= Math.PI * 2; t += 0.02) {
+        const gain = Math.abs(Math.sin(t));
+        const r = 80 * Math.pow(gain, 0.6);
+        const x = center.x + r * Math.cos(t);
+        const y = center.y + r * Math.sin(t);
+        if (t === 0) polarCtx.moveTo(x, y); else polarCtx.lineTo(x, y);
+      }
+      polarCtx.stroke();
+    }
+
+    function drawArray() {
+      const w = dom.arrayCanvas.width;
+      const h = dom.arrayCanvas.height;
+      arrayCtx.clearRect(0, 0, w, h);
+      arrayCtx.fillStyle = '#0b1420';
+      arrayCtx.fillRect(0, 0, w, h);
+      const center = { x: w / 2, y: h / 2 };
+      arrayCtx.strokeStyle = '#1c2c43';
+      arrayCtx.beginPath();
+      arrayCtx.arc(center.x, center.y, 70, 0, Math.PI * 2);
+      arrayCtx.stroke();
+      arrayCtx.strokeStyle = '#6ad7ff';
+      arrayCtx.beginPath();
+      for (let t = 0; t <= Math.PI * 2; t += 0.02) {
+        const arrayFactor = Math.abs(Math.cos(state.elements * t / 2 + state.phase * Math.PI / 180));
+        const r = 60 * Math.pow(arrayFactor, 0.5);
+        const x = center.x + r * Math.cos(t);
+        const y = center.y + r * Math.sin(t);
+        if (t === 0) arrayCtx.moveTo(x, y); else arrayCtx.lineTo(x, y);
+      }
+      arrayCtx.stroke();
+    }
+
+    function render() {
+      updateReadouts();
+      drawPattern();
+      drawPolar();
+      drawArray();
+    }
+
+    function tick() {
+      state.time += 0.02;
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.type.addEventListener('change', () => { state.type = dom.type.value; render(); });
+      dom.length.addEventListener('input', () => { state.length = Number(dom.length.value); render(); });
+      dom.freq.addEventListener('input', () => { state.freq = Number(dom.freq.value); render(); });
+      dom.elements.addEventListener('input', () => { state.elements = Number(dom.elements.value); render(); });
+      dom.spacing.addEventListener('input', () => { state.spacing = Number(dom.spacing.value); render(); });
+      dom.phase.addEventListener('input', () => { state.phase = Number(dom.phase.value); render(); });
+      dom.showField.addEventListener('change', () => { state.showField = dom.showField.checked; render(); });
+    }
+
+    bind();
+    render();
+    tick();
+  </script>
+</body>
+</html>

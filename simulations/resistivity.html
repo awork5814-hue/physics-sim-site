@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Resistivity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(320px, 48vh, 480px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Resistivity</h1>
+    <div class="subtitle">R = ρL/A and temperature dependence</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="400"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Wire Length (m)</label>
+          <input type="range" id="length" min="0.1" max="10" step="0.1" value="1" />
+          <div class="row"><span>0.1</span><span id="lengthValue" class="value">1.0 m</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Wire Area (mm²)</label>
+          <input type="range" id="area" min="0.1" max="10" step="0.1" value="1" />
+          <div class="row"><span>0.1</span><span id="areaValue" class="value">1.0 mm²</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Material</label>
+          <select id="material">
+            <option value="copper">Copper</option>
+            <option value="aluminum">Aluminum</option>
+            <option value="iron">Iron</option>
+            <option value="silver">Silver</option>
+            <option value="gold">Gold</option>
+            <option value="constantan">Constantan</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Temperature (°C)</label>
+          <input type="range" id="temp" min="-50" max="200" step="1" value="20" />
+          <div class="row"><span>-50</span><span id="tempValue" class="value">20 °C</span><span>200</span></div>
+        </div>
+        <div class="control">
+          <label>Applied Voltage (V)</label>
+          <input type="range" id="voltage" min="0" max="20" step="0.5" value="5" />
+          <div class="row"><span>0</span><span id="voltageValue" class="value">5.0 V</span><span>20</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input type="checkbox" id="showElectrons" checked /> Electron flow</label>
+            <label><input type="checkbox" id="showHeat" checked /> Heat tint</label>
+            <label><input type="checkbox" id="showGraph" checked /> ρ(T) graph</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Resistance:</strong> <span style="font-family: var(--mono);">R = ρL/A</span></div>
+            <div><strong>Temp:</strong> <span style="font-family: var(--mono);">ρ(T) = ρ₀[1+α(T−T₀)]</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Constantan has a very small temperature coefficient, so R stays nearly constant.
+  </footer>
+
+  <script>
+    const materials = {
+      copper: { rho: 1.68e-8, alpha: 0.00393, label: 'Copper', color: '#f6c76b' },
+      aluminum: { rho: 2.82e-8, alpha: 0.00403, label: 'Aluminum', color: '#a3b8c9' },
+      iron: { rho: 9.71e-8, alpha: 0.00651, label: 'Iron', color: '#8b9bab' },
+      silver: { rho: 1.59e-8, alpha: 0.0038, label: 'Silver', color: '#d1d5db' },
+      gold: { rho: 2.44e-8, alpha: 0.0034, label: 'Gold', color: '#f59e0b' },
+      constantan: { rho: 4.9e-7, alpha: 0.00002, label: 'Constantan', color: '#c084fc' }
+    };
+
+    const state = {
+      length: 1,
+      area: 1,
+      material: 'copper',
+      temperature: 20,
+      voltage: 5,
+      showElectrons: true,
+      showHeat: true,
+      showGraph: true,
+      time: 0
+    };
+
+    const dom = {
+      length: document.getElementById('length'),
+      area: document.getElementById('area'),
+      material: document.getElementById('material'),
+      temp: document.getElementById('temp'),
+      voltage: document.getElementById('voltage'),
+      showElectrons: document.getElementById('showElectrons'),
+      showHeat: document.getElementById('showHeat'),
+      showGraph: document.getElementById('showGraph'),
+      lengthValue: document.getElementById('lengthValue'),
+      areaValue: document.getElementById('areaValue'),
+      tempValue: document.getElementById('tempValue'),
+      voltageValue: document.getElementById('voltageValue')
+    };
+
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function calculateResistance() {
+      const mat = materials[state.material];
+      const rho = mat.rho * (1 + mat.alpha * (state.temperature - 20));
+      const areaM2 = state.area * 1e-6;
+      const R = rho * state.length / areaM2;
+      return { R, rho, alpha: mat.alpha };
+    }
+
+    function drawWire() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, '#08121f');
+      bg.addColorStop(1, '#0a1525');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+
+      const wireY = h / 2;
+      const wireLengthPx = 360 + (state.length - 1) * 20;
+      const wireThickness = 18 + (state.area / 10) * 40;
+      const wireX = (w - wireLengthPx) / 2;
+
+      const mat = materials[state.material];
+      const base = mat.color;
+      const tempGlow = state.showHeat ? Math.min(1, (state.temperature + 50) / 250) : 0;
+      const grad = ctx.createLinearGradient(wireX, 0, wireX + wireLengthPx, 0);
+      if (state.material === 'copper') {
+        grad.addColorStop(0, '#3b1f16');
+        grad.addColorStop(0.45, '#b87333');
+        grad.addColorStop(1, '#5b2b18');
+      } else if (state.material === 'aluminum') {
+        grad.addColorStop(0, '#5b6470');
+        grad.addColorStop(0.5, '#cbd5e1');
+        grad.addColorStop(1, '#4b5563');
+      } else if (state.material === 'iron') {
+        grad.addColorStop(0, '#2b313a');
+        grad.addColorStop(0.5, '#8b98a7');
+        grad.addColorStop(1, '#3b424c');
+      } else if (state.material === 'silver') {
+        grad.addColorStop(0, '#7b8794');
+        grad.addColorStop(0.5, '#e5e7eb');
+        grad.addColorStop(1, '#6b7280');
+      } else if (state.material === 'gold') {
+        grad.addColorStop(0, '#6b4e10');
+        grad.addColorStop(0.5, '#f6c76b');
+        grad.addColorStop(1, '#7a5a12');
+      } else {
+        grad.addColorStop(0, '#3b3b54');
+        grad.addColorStop(0.5, '#c084fc');
+        grad.addColorStop(1, '#2b2b3f');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(wireX, wireY - wireThickness / 2, wireLengthPx, wireThickness);
+
+      // subtle brushed texture
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 18; i++) {
+        const y = wireY - wireThickness / 2 + (i / 18) * wireThickness;
+        ctx.beginPath();
+        ctx.moveTo(wireX + 6, y);
+        ctx.lineTo(wireX + wireLengthPx - 6, y);
+        ctx.stroke();
+      }
+
+      if (tempGlow > 0) {
+        ctx.fillStyle = `rgba(248,113,113,${0.2 + 0.4 * tempGlow})`;
+        ctx.fillRect(wireX, wireY - wireThickness / 2, wireLengthPx, wireThickness);
+      }
+
+      if (state.showElectrons) {
+        ctx.fillStyle = '#6ad7ff';
+        for (let i = 0; i < 16; i++) {
+          const x = wireX + (i * 28 + state.time * 60) % wireLengthPx;
+          ctx.beginPath();
+          ctx.arc(x, wireY, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(`L = ${state.length.toFixed(1)} m`, 24, 30);
+      ctx.fillText(`A = ${state.area.toFixed(1)} mm²`, 24, 50);
+
+      if (state.showGraph) drawRhoGraph(w - 270, 24, 240, 120);
+    }
+
+    function drawRhoGraph(x, y, w, h) {
+      const mat = materials[state.material];
+      ctx.fillStyle = 'rgba(8,12,20,0.7)';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+      ctx.strokeRect(x, y, w, h);
+      ctx.fillStyle = 'rgba(248,250,252,0.8)';
+      ctx.font = '11px Inter, sans-serif';
+      ctx.fillText('ρ(T)', x + 8, y + 14);
+
+      const tMin = -50;
+      const tMax = 200;
+      const rhoAt = (T) => mat.rho * (1 + mat.alpha * (T - 20));
+      const rhoMin = rhoAt(tMin);
+      const rhoMax = rhoAt(tMax);
+
+      ctx.strokeStyle = 'rgba(106,215,255,0.8)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 50; i++) {
+        const T = tMin + (tMax - tMin) * (i / 50);
+        const rho = rhoAt(T);
+        const px = x + 10 + (i / 50) * (w - 20);
+        const py = y + h - 10 - ((rho - rhoMin) / (rhoMax - rhoMin || 1)) * (h - 20);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+
+      const markerX = x + 10 + ((state.temperature - tMin) / (tMax - tMin)) * (w - 20);
+      const markerY = y + h - 10 - ((rhoAt(state.temperature) - rhoMin) / (rhoMax - rhoMin || 1)) * (h - 20);
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath(); ctx.arc(markerX, markerY, 3.5, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function updateReadout() {
+      const { R, rho, alpha } = calculateResistance();
+      const current = R > 0 ? state.voltage / R : 0;
+      const power = state.voltage * current;
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Resistance</span><span class="data-value orange">${R.toFixed(3)} Ω</span></div>
+          <div class="data-card"><span class="data-label">Resistivity</span><span class="data-value blue">${(rho * 1e8).toFixed(2)} ×10⁻⁸ Ω·m</span></div>
+          <div class="data-card"><span class="data-label">α</span><span class="data-value green">${alpha.toFixed(5)} /°C</span></div>
+          <div class="data-card"><span class="data-label">Material</span><span class="data-value blue">${materials[state.material].label}</span></div>
+          <div class="data-card"><span class="data-label">Current</span><span class="data-value green">${current.toFixed(3)} A</span></div>
+          <div class="data-card"><span class="data-label">Power</span><span class="data-value orange">${power.toFixed(2)} W</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      state.time += 0.03;
+      drawWire();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    function bind() {
+      dom.length.addEventListener('input', () => {
+        state.length = Number(dom.length.value);
+        dom.lengthValue.textContent = `${state.length.toFixed(1)} m`;
+      });
+      dom.area.addEventListener('input', () => {
+        state.area = Number(dom.area.value);
+        dom.areaValue.textContent = `${state.area.toFixed(1)} mm²`;
+      });
+      dom.material.addEventListener('change', () => {
+        state.material = dom.material.value;
+      });
+      dom.temp.addEventListener('input', () => {
+        state.temperature = Number(dom.temp.value);
+        dom.tempValue.textContent = `${state.temperature} °C`;
+      });
+      dom.voltage.addEventListener('input', () => {
+        state.voltage = Number(dom.voltage.value);
+        dom.voltageValue.textContent = `${state.voltage.toFixed(1)} V`;
+      });
+      dom.showElectrons.addEventListener('change', () => {
+        state.showElectrons = dom.showElectrons.checked;
+      });
+      dom.showHeat.addEventListener('change', () => {
+        state.showHeat = dom.showHeat.checked;
+      });
+      dom.showGraph.addEventListener('change', () => {
+        state.showGraph = dom.showGraph.checked;
+      });
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    bind();
+    tick();
+  </script>
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Boyle's Law</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --cylinder-glass: rgba(200, 220, 255, 0.2);
+      --piston-color: #4a5568;
+      --weight-color: #718096;
+      --molecule-color: #6ad7ff;
+      --gauge-needle: #f6c76b;
+      --graph-line: #6ad7ff;
+      --graph-point: #f6c76b;
+      --graph-hyperbola: rgba(106, 215, 255, 0.5);
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select, input[type="number"] {
+      width: 100%;
+    }
+
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .inline > * {
+      flex: 1;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .graph-panel {
+      margin: 0 28px 18px;
+    }
+
+    .graph-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="boyle-law">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Boyle's Law</h1>
+      <p>Pressure × Volume = Constant (isothermal)</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="cylinderCanvas" width="900" height="520" aria-label="Boyle's law cylinder"></canvas>
+        <div class="btn-row">
+          <button id="reset">Reset</button>
+          <button id="toggleMolecules">Hide Molecules</button>
+          <button id="toggleGraph">Hide Graph</button>
+          <div class="inline" style="max-width: 220px;">
+            <label for="speed">Speed</label>
+            <select id="speed">
+              <option value="0.5">0.5x</option>
+              <option value="1" selected>1x</option>
+              <option value="2">2x</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div class="control-group">
+          <label for="volume">Volume <strong id="volumeLabel">4.0 L</strong></label>
+          <input type="range" id="volume" min="1" max="10" step="0.1" value="4" />
+          <div class="inline">
+            <button id="volDown">-</button>
+            <button id="volUp">+</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="mass">Mass on Piston <strong id="massLabel">15 kg</strong></label>
+          <input type="range" id="mass" min="0" max="50" step="1" value="15" />
+        </div>
+
+        <div class="control-group">
+          <label for="moles">Moles of Gas <strong id="molesLabel">1.0 mol</strong></label>
+          <input type="range" id="moles" min="0.5" max="5" step="0.1" value="1" />
+        </div>
+
+        <div class="control-group">
+          <label for="temp">Temperature <strong id="tempLabel">300 K (locked)</strong></label>
+          <input type="range" id="temp" min="250" max="400" step="1" value="300" disabled />
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showMolecules" checked /> Show molecules</label>
+          <label><input type="checkbox" id="showCollisions" /> Show collisions</label>
+          <label><input type="checkbox" id="showGraph" checked /> Show P-V graph</label>
+          <label><input type="checkbox" id="showForces" /> Show force vectors</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="panel graph-panel" id="graphPanel">
+      <div class="graph-header">
+        <h3 style="margin:0;">P–V Diagram</h3>
+        <div style="color: var(--sim-muted);">P ∝ 1/V</div>
+      </div>
+      <canvas id="graphCanvas" width="900" height="240" aria-label="Pressure volume graph"></canvas>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>Boyle's Law states that for a fixed amount of gas at constant temperature, pressure is inversely proportional to volume: P × V = constant.</p>
+        <p>When volume decreases, molecules collide more frequently with the walls, raising pressure.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Double the pressure. What happens to volume?</li>
+          <li>Why does a syringe get harder to push as you compress it?</li>
+          <li>Calculate P₁ × V₁ and P₂ × V₂. Are they equal?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Inverse relationship: P ∝ 1/V.</li>
+          <li>P–V graph is a hyperbola.</li>
+          <li>Temperature must be constant for Boyle's Law.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('cylinderCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('graphCanvas');
+    const gctx = graphCanvas.getContext('2d');
+
+    const volumeInput = document.getElementById('volume');
+    const massInput = document.getElementById('mass');
+    const molesInput = document.getElementById('moles');
+    const tempInput = document.getElementById('temp');
+    const speedSelect = document.getElementById('speed');
+
+    const volumeLabel = document.getElementById('volumeLabel');
+    const massLabel = document.getElementById('massLabel');
+    const molesLabel = document.getElementById('molesLabel');
+    const tempLabel = document.getElementById('tempLabel');
+
+    const showMolecules = document.getElementById('showMolecules');
+    const showCollisions = document.getElementById('showCollisions');
+    const showGraph = document.getElementById('showGraph');
+    const showForces = document.getElementById('showForces');
+
+    const dataPanel = document.getElementById('dataPanel');
+    const graphPanel = document.getElementById('graphPanel');
+
+    const state = {
+      volume: 4,
+      mass: 15,
+      moles: 1,
+      temperature: 300,
+      speed: 1,
+      initial: { P: 1, V: 4 },
+      molecules: [],
+      showMolecules: true,
+      showGraph: true
+    };
+
+    const cylinder = {
+      x: 140,
+      y: 80,
+      w: 280,
+      h: 360,
+      area: 0.01
+    };
+
+    function atmFromMass(massKg) {
+      const g = 9.81;
+      const added = (massKg * g) / cylinder.area;
+      return 101325 + added;
+    }
+
+    function toAtm(pa) {
+      return pa / 101325;
+    }
+
+    function updateLabels() {
+      volumeLabel.textContent = `${state.volume.toFixed(1)} L`;
+      massLabel.textContent = `${state.mass.toFixed(0)} kg`;
+      molesLabel.textContent = `${state.moles.toFixed(1)} mol`;
+      tempLabel.textContent = `${state.temperature.toFixed(0)} K (locked)`;
+    }
+
+    function calculateState() {
+      const pressurePa = atmFromMass(state.mass);
+      const pressureAtm = toAtm(pressurePa);
+      const constant = state.initial.P * state.initial.V;
+      const verification = pressureAtm * state.volume;
+      return { pressurePa, pressureAtm, constant, verification };
+    }
+
+    function initMolecules() {
+      const count = Math.round(state.moles * 40);
+      state.molecules = Array.from({ length: count }, () => ({
+        x: cylinder.x + 20 + Math.random() * (cylinder.w - 40),
+        y: cylinder.y + 40 + Math.random() * (cylinder.h - 80),
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: (Math.random() - 0.5) * 1.2
+      }));
+    }
+
+    function updateMolecules() {
+      const pistonY = getPistonY();
+      const speedScale = 0.6 + (4 / state.volume) * 0.4;
+      state.molecules.forEach((m) => {
+        m.x += m.vx * state.speed * speedScale;
+        m.y += m.vy * state.speed * speedScale;
+
+        if (m.x < cylinder.x + 10 || m.x > cylinder.x + cylinder.w - 10) m.vx *= -1;
+        if (m.y < pistonY + 8 || m.y > cylinder.y + cylinder.h - 10) m.vy *= -1;
+      });
+    }
+
+    function drawCylinder() {
+      ctx.strokeStyle = 'rgba(233, 242, 255, 0.35)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cylinder.x, cylinder.y, cylinder.w, cylinder.h);
+
+      ctx.fillStyle = 'rgba(233, 242, 255, 0.08)';
+      ctx.fillRect(cylinder.x + cylinder.w + 20, cylinder.y, 12, cylinder.h);
+    }
+
+    function getPistonY() {
+      const minV = 1;
+      const maxV = 10;
+      const t = (state.volume - minV) / (maxV - minV);
+      return cylinder.y + 40 + (1 - t) * (cylinder.h - 80);
+    }
+
+    function drawPiston() {
+      const y = getPistonY();
+      ctx.fillStyle = '#4a5568';
+      ctx.fillRect(cylinder.x - 6, y - 8, cylinder.w + 12, 16);
+
+      ctx.fillStyle = '#718096';
+      ctx.fillRect(cylinder.x + 70, y - 44, 140, 30);
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '14px Space Grotesk, sans-serif';
+      ctx.fillText(`${state.mass.toFixed(0)} kg`, cylinder.x + 110, y - 24);
+    }
+
+    function drawGauge(pressureAtm) {
+      const cx = cylinder.x + cylinder.w + 140;
+      const cy = cylinder.y + 90;
+      const r = 40;
+      ctx.strokeStyle = 'rgba(233, 242, 255, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, Math.PI, 0);
+      ctx.stroke();
+
+      const angle = Math.PI - Math.min(pressureAtm, 5) / 5 * Math.PI;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * (r - 6), cy - Math.sin(angle) * (r - 6));
+      ctx.stroke();
+
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '14px Space Grotesk, sans-serif';
+      ctx.fillText(`${pressureAtm.toFixed(2)} atm`, cx - 30, cy + 18);
+    }
+
+    function drawMolecules() {
+      ctx.fillStyle = '#6ad7ff';
+      state.molecules.forEach((m) => {
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        if (showCollisions.checked) {
+          ctx.strokeStyle = 'rgba(246, 199, 107, 0.4)';
+          ctx.beginPath();
+          ctx.arc(m.x, m.y, 7, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      });
+    }
+
+    function drawForces(pressurePa) {
+      const force = pressurePa * cylinder.area;
+      const len = Math.min(80, force / 1500);
+      const x = cylinder.x + cylinder.w + 60;
+      const y = getPistonY();
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + len);
+      ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(x, y + len);
+      ctx.lineTo(x - 6, y + len - 10);
+      ctx.lineTo(x + 6, y + len - 10);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function updateDataPanel() {
+      const { pressureAtm, constant, verification } = calculateState();
+      dataPanel.innerHTML = `
+        <div><strong>State 1 (Initial):</strong> P₁ = ${state.initial.P.toFixed(1)} atm, V₁ = ${state.initial.V.toFixed(1)} L</div>
+        <div><strong>State 2 (Current):</strong> P₂ = ${pressureAtm.toFixed(2)} atm, V₂ = ${state.volume.toFixed(1)} L</div>
+        <div><strong>Verification:</strong> P₁×V₁ = ${constant.toFixed(2)} atm·L</div>
+        <div><strong>Current:</strong> P₂×V₂ = ${verification.toFixed(2)} atm·L</div>
+      `;
+    }
+
+    function drawGraph() {
+      gctx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      gctx.fillStyle = 'rgba(8, 13, 22, 0.8)';
+      gctx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
+
+      const padding = 30;
+      const width = graphCanvas.width - padding * 2;
+      const height = graphCanvas.height - padding * 2;
+
+      gctx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
+      gctx.beginPath();
+      gctx.moveTo(padding, padding);
+      gctx.lineTo(padding, padding + height);
+      gctx.lineTo(padding + width, padding + height);
+      gctx.stroke();
+
+      const constant = state.initial.P * state.initial.V;
+      gctx.strokeStyle = 'rgba(106, 215, 255, 0.6)';
+      gctx.lineWidth = 2;
+      gctx.beginPath();
+      for (let i = 0; i <= 80; i++) {
+        const v = 1 + (i / 80) * 9;
+        const p = constant / v;
+        const x = padding + ((v - 1) / 9) * width;
+        const y = padding + height - Math.min(p, 5) / 5 * height;
+        if (i === 0) gctx.moveTo(x, y);
+        else gctx.lineTo(x, y);
+      }
+      gctx.stroke();
+
+      const { pressureAtm } = calculateState();
+      const cx = padding + ((state.volume - 1) / 9) * width;
+      const cy = padding + height - Math.min(pressureAtm, 5) / 5 * height;
+      gctx.fillStyle = '#f6c76b';
+      gctx.beginPath();
+      gctx.arc(cx, cy, 6, 0, Math.PI * 2);
+      gctx.fill();
+    }
+
+    function loop() {
+      const { pressureAtm, pressurePa } = calculateState();
+      if (showMolecules.checked) {
+        updateMolecules();
+      }
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCylinder();
+      if (showMolecules.checked) drawMolecules();
+      drawPiston();
+      drawGauge(pressureAtm);
+      if (showForces.checked) drawForces(pressurePa);
+      updateDataPanel();
+      graphPanel.style.display = showGraph.checked ? 'block' : 'none';
+      if (showGraph.checked) drawGraph();
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('mousedown', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+      const pistonY = getPistonY();
+      if (Math.abs(y - pistonY) < 20) {
+        const onMove = (e) => {
+          const ny = (e.clientY - rect.top) * (canvas.height / rect.height);
+          const minY = cylinder.y + 40;
+          const maxY = cylinder.y + cylinder.h - 40;
+          const clamped = Math.min(maxY, Math.max(minY, ny));
+          const t = 1 - (clamped - minY) / (maxY - minY);
+          state.volume = 1 + t * 9;
+          volumeInput.value = state.volume;
+          updateLabels();
+        };
+        const onUp = () => {
+          window.removeEventListener('mousemove', onMove);
+          window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+      }
+    });
+
+    volumeInput.addEventListener('input', (e) => {
+      state.volume = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('volUp').addEventListener('click', () => {
+      state.volume = Math.min(10, state.volume + 0.1);
+      volumeInput.value = state.volume;
+      updateLabels();
+    });
+
+    document.getElementById('volDown').addEventListener('click', () => {
+      state.volume = Math.max(1, state.volume - 0.1);
+      volumeInput.value = state.volume;
+      updateLabels();
+    });
+
+    massInput.addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    molesInput.addEventListener('input', (e) => {
+      state.moles = parseFloat(e.target.value);
+      initMolecules();
+      updateLabels();
+    });
+
+    speedSelect.addEventListener('change', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.volume = 4;
+      state.mass = 15;
+      state.moles = 1;
+      volumeInput.value = state.volume;
+      massInput.value = state.mass;
+      molesInput.value = state.moles;
+      initMolecules();
+      updateLabels();
+    });
+
+    document.getElementById('toggleMolecules').addEventListener('click', () => {
+      showMolecules.checked = !showMolecules.checked;
+      document.getElementById('toggleMolecules').textContent = showMolecules.checked ? 'Hide Molecules' : 'Show Molecules';
+    });
+
+    document.getElementById('toggleGraph').addEventListener('click', () => {
+      showGraph.checked = !showGraph.checked;
+      document.getElementById('toggleGraph').textContent = showGraph.checked ? 'Hide Graph' : 'Show Graph';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    initMolecules();
+    updateLabels();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

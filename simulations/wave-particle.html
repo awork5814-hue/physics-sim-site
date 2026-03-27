@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wave-Particle Duality</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #0f151c;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+    .tab.active { color: var(--ink); border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(106,215,255,0.3); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Wave-Particle Duality</h1>
+    <div class="subtitle">Single-particle double‑slit build‑up with de Broglie wavelength</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" data-mode="photons">Photons</button>
+        <button class="tab" data-mode="electrons">Electrons</button>
+        <button class="tab" data-mode="single-double">Single vs Double</button>
+      </div>
+      <div class="canvas-wrap" style="margin-top: 10px;">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="button-row" style="margin-top: 10px;">
+        <button class="btn" id="fireSingle">Fire Single</button>
+        <button class="btn" id="autoFire">Auto-Fire</button>
+        <button class="btn" id="clear">Clear</button>
+        <button class="btn" id="toggleSlits">Toggle Slits</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Particle Type</label>
+          <select id="particleType">
+            <option value="electron">Electron</option>
+            <option value="photon">Photon</option>
+            <option value="atom">Atom</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Energy / Speed</label>
+          <input id="energy" type="range" min="5" max="100" step="1" value="50" />
+          <div class="row"><span>Low</span><span id="energyVal" class="value">50</span><span>High</span></div>
+        </div>
+        <div class="control">
+          <label>Slits</label>
+          <select id="slitCount">
+            <option value="1">1 slit</option>
+            <option value="2" selected>2 slits</option>
+            <option value="3">3 slits</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Slit Width</label>
+          <input id="slitWidth" type="range" min="10" max="200" step="5" value="50" />
+          <div class="row"><span>10</span><span id="slitWidthVal" class="value">50</span><span>200</span></div>
+        </div>
+        <div class="control">
+          <label>Slit Separation</label>
+          <input id="slitSep" type="range" min="50" max="500" step="10" value="140" />
+          <div class="row"><span>50</span><span id="slitSepVal" class="value">140</span><span>500</span></div>
+        </div>
+        <div class="control">
+          <label>Speed</label>
+          <select id="speed">
+            <option value="1">1x</option>
+            <option value="10">10x</option>
+            <option value="100" selected>100x</option>
+            <option value="1000">1000x</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="data-panel" id="readout" style="margin-top: 12px;"></div>
+    </div>
+  </div>
+
+  <footer>
+    Interference pattern builds from probability: intensity ~ cos²(πd sinθ/λ) × sinc²(πa sinθ/λ).
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      mode: 'photons',
+      particle: 'electron',
+      energy: 50,
+      slitCount: 2,
+      slitWidth: 50,
+      slitSep: 140,
+      speed: 100,
+      auto: false,
+      hits: [],
+      particlesFired: 0,
+      showTwoSlits: true
+    };
+
+    const h = 6.626e-34;
+    const c = 3e8;
+    const me = 9.11e-31;
+    const mAtom = 6.6e-26;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function layout() {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const emitterX = Math.max(26, w * 0.06);
+      const emitterW = Math.max(14, w * 0.02);
+      const plateX = w * 0.32;
+      const plateW = Math.max(18, w * 0.025);
+      const screenX = w * 0.86;
+      const screenW = Math.max(20, w * 0.03);
+      return { w, h, emitterX, emitterW, plateX, plateW, screenX, screenW };
+    }
+
+    function drawBackground() {
+      const { w, h: ch } = layout();
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, w, ch);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.55, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.45, '#0a1426');
+        grad.addColorStop(1, '#07101f');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, ch);
+
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(106,215,255,0.06)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, ch); ctx.stroke();
+      }
+      for (let y = 0; y < ch; y += 80) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      const vignette = ctx.createRadialGradient(w * 0.6, ch * 0.2, 60, w * 0.6, ch * 0.2, w);
+      vignette.addColorStop(0, 'rgba(255,255,255,0.04)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.65)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, ch);
+    }
+
+    function drawSetup() {
+      const { h: ch, emitterX, emitterW, plateX, plateW, screenX, screenW } = layout();
+      const midY = ch / 2;
+      const emitterGrad = ctx.createLinearGradient(emitterX - 10, midY - 30, emitterX + emitterW + 10, midY + 30);
+      emitterGrad.addColorStop(0, '#f59e0b');
+      emitterGrad.addColorStop(1, '#7c3aed');
+      ctx.fillStyle = emitterGrad;
+      ctx.fillRect(emitterX, midY - 28, emitterW, 56);
+      ctx.fillStyle = 'rgba(248,250,252,0.9)';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText('Emitter', Math.max(10, emitterX - 26), midY - 38);
+
+      const plateGrad = ctx.createLinearGradient(plateX, 40, plateX + plateW, 40);
+      plateGrad.addColorStop(0, '#1f2937');
+      plateGrad.addColorStop(0.5, '#4b5563');
+      plateGrad.addColorStop(1, '#111827');
+      ctx.fillStyle = plateGrad;
+      ctx.fillRect(plateX, 40, plateW, ch - 80);
+
+      const slitCount = state.showTwoSlits ? state.slitCount : 1;
+      const sep = state.slitSep;
+      const width = state.slitWidth;
+      for (let i = 0; i < slitCount; i++) {
+        const offset = (i - (slitCount - 1) / 2) * sep;
+        ctx.clearRect(plateX, midY + offset - width / 2, plateW, width);
+      }
+
+      const screenGrad = ctx.createLinearGradient(screenX, 40, screenX + screenW, 40);
+      screenGrad.addColorStop(0, '#0f172a');
+      screenGrad.addColorStop(0.5, '#334155');
+      screenGrad.addColorStop(1, '#0b1020');
+      ctx.fillStyle = screenGrad;
+      ctx.fillRect(screenX, 40, screenW, ch - 80);
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillText('Screen', Math.max(10, screenX - 24), 30);
+    }
+
+    function particleMass() {
+      if (state.particle === 'electron') return me;
+      if (state.particle === 'atom') return mAtom;
+      return 0;
+    }
+
+    function particleSpeed() {
+      if (state.particle === 'electron') return 1e6 + state.energy * 4e4;
+      if (state.particle === 'atom') return 300 + state.energy * 5;
+      return c;
+    }
+
+    function wavelengthForParticle() {
+      if (state.particle === 'photon') {
+        const nm = 400 + (100 - state.energy) * 4;
+        return nm * 1e-9;
+      }
+      if (state.particle === 'electron') {
+        const v = particleSpeed();
+        return h / (me * v);
+      }
+      const v = particleSpeed();
+      return h / (mAtom * v);
+    }
+
+    function intensityAt(y) {
+      const d = state.slitSep * 1e-9 * 2;
+      const a = state.slitWidth * 1e-9 * 2;
+      const lambda = wavelengthForParticle();
+      const theta = Math.atan2(y, 0.5);
+      const beta = Math.PI * a * Math.sin(theta) / lambda;
+      const alpha = Math.PI * d * Math.sin(theta) / lambda;
+      const sinc = beta === 0 ? 1 : Math.sin(beta) / beta;
+      let I = Math.cos(alpha) ** 2;
+      I *= (sinc ** 2);
+      if (state.slitCount === 1 || !state.showTwoSlits) I = sinc ** 2;
+      if (state.slitCount === 3) I *= (Math.cos(2*alpha) ** 2 + 0.2);
+      return Math.max(0, I);
+    }
+
+    function fireParticle() {
+      const { h: ch, emitterX, emitterW, plateX, screenX, screenW } = layout();
+      const slitCount = state.showTwoSlits ? state.slitCount : 1;
+      const sep = state.slitSep;
+      const slitIndex = Math.floor(Math.random() * slitCount);
+      const base = (slitIndex - (slitCount - 1) / 2) * sep;
+      const startY = ch / 2 + base + (Math.random() - 0.5) * state.slitWidth * 0.6;
+
+      let y;
+      for (let i = 0; i < 50; i++) {
+        const candidate = (Math.random() - 0.5) * ch;
+        const I = intensityAt(candidate / 1000);
+        if (Math.random() < I) { y = ch / 2 + candidate; break; }
+      }
+      if (y === undefined) y = ch / 2 + (Math.random() - 0.5) * 200;
+
+      state.hits.push({ x: screenX + screenW * 0.4 + Math.random() * 6, y, alpha: 1 });
+      state.particlesFired++;
+
+      ctx.strokeStyle = 'rgba(246,199,107,0.4)';
+      ctx.beginPath();
+      ctx.moveTo(emitterX + emitterW, startY);
+      ctx.lineTo(plateX, startY);
+      ctx.lineTo(screenX, y);
+      ctx.stroke();
+    }
+
+    function drawHits() {
+      const { screenX, screenW } = layout();
+      for (const hit of state.hits) {
+        ctx.fillStyle = `rgba(106,215,255,${hit.alpha})`;
+        ctx.fillRect(Math.min(hit.x, screenX + screenW - 4), hit.y, 2, 2);
+        hit.alpha = Math.max(0.2, hit.alpha - 0.002);
+      }
+    }
+
+    function drawWavefronts() {
+      const { h: ch, plateX } = layout();
+      const midY = ch / 2;
+      const slitCount = state.showTwoSlits ? state.slitCount : 1;
+      const sep = state.slitSep;
+      const t = Date.now() * 0.002;
+      ctx.strokeStyle = 'rgba(106,215,255,0.25)';
+      for (let i = 0; i < slitCount; i++) {
+        const y0 = midY + (i - (slitCount - 1) / 2) * sep;
+        for (let r = 20; r < 380; r += 40) {
+          ctx.beginPath();
+          ctx.arc(plateX, y0, r + (t % 40), -0.5, 0.5);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function draw() {
+      drawBackground();
+      drawSetup();
+      drawWavefronts();
+      drawHits();
+    }
+
+    function updateReadout() {
+      const lambda = wavelengthForParticle();
+      const v = particleSpeed();
+      const f = state.particle === 'photon' ? c / lambda : v / (lambda || 1);
+      const p = state.particle === 'photon' ? h / lambda : particleMass() * v;
+      const energyJ = state.particle === 'photon' ? h * f : 0.5 * particleMass() * v ** 2;
+
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">Type</span><span class="data-value blue">${state.particle}</span></div>
+          <div class="data-card"><span class="data-label">Energy/Speed</span><span class="data-value orange">${state.energy.toFixed(0)}</span></div>
+          <div class="data-card"><span class="data-label">de Broglie λ</span><span class="data-value green">${(lambda * 1e9).toFixed(3)} nm</span></div>
+          <div class="data-card"><span class="data-label">Frequency</span><span class="data-value blue">${f.toExponential(2)} Hz</span></div>
+          <div class="data-card"><span class="data-label">Momentum</span><span class="data-value orange">${p.toExponential(2)} kg·m/s</span></div>
+          <div class="data-card"><span class="data-label">Shots</span><span class="data-value blue">${state.particlesFired}</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      if (state.auto) {
+        const count = Math.max(1, Math.floor(state.speed / 20));
+        for (let i = 0; i < count; i++) fireParticle();
+      }
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        state.mode = btn.dataset.mode;
+        if (state.mode === 'photons') state.particle = 'photon';
+        if (state.mode === 'electrons') state.particle = 'electron';
+        const select = document.getElementById('particleType');
+        if (select) select.value = state.particle;
+      });
+    });
+
+    document.getElementById('particleType').addEventListener('change', e => state.particle = e.target.value);
+    document.getElementById('energy').addEventListener('input', e => {
+      state.energy = parseFloat(e.target.value);
+      document.getElementById('energyVal').textContent = state.energy.toFixed(0);
+    });
+    document.getElementById('slitCount').addEventListener('change', e => state.slitCount = parseInt(e.target.value, 10));
+    document.getElementById('slitWidth').addEventListener('input', e => {
+      state.slitWidth = parseFloat(e.target.value);
+      document.getElementById('slitWidthVal').textContent = state.slitWidth.toFixed(0);
+    });
+    document.getElementById('slitSep').addEventListener('input', e => {
+      state.slitSep = parseFloat(e.target.value);
+      document.getElementById('slitSepVal').textContent = state.slitSep.toFixed(0);
+    });
+    document.getElementById('speed').addEventListener('change', e => state.speed = parseFloat(e.target.value));
+
+    document.getElementById('fireSingle').addEventListener('click', fireParticle);
+    document.getElementById('autoFire').addEventListener('click', () => state.auto = !state.auto);
+    document.getElementById('clear').addEventListener('click', () => { state.hits = []; state.particlesFired = 0; });
+    document.getElementById('toggleSlits').addEventListener('click', () => state.showTwoSlits = !state.showTwoSlits);
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    tick();
+  </script>
+</body>
+</html>

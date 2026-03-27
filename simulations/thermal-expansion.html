@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thermal Expansion</title>
+  <style>
+    :root {
+      --bg1: #0a0e17;
+      --bg2: #131c2b;
+      --panel: #111c2b;
+      --panel-2: #0f1a27;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --cold: #6ad7ff;
+      --hot: #ff6b6b;
+      --accent-2: #f6c76b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% 10%, #1b2c42 0%, var(--bg1) 45%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
+    .app { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 8px 4px 18px; border-bottom: 1px solid #20324a;
+    }
+    header h1 { margin: 0; font-size: 28px; letter-spacing: 0.4px; }
+    header p { margin: 4px 0 0; color: var(--muted); }
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px;
+      border-radius: 999px; background: #0b1420; border: 1px solid #223753;
+      color: var(--muted); font-size: 12px;
+    }
+    .grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 18px; margin-top: 18px; }
+    .panel {
+      background: linear-gradient(160deg, var(--panel), var(--panel-2));
+      border: 1px solid #20324a; border-radius: 14px; padding: 16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; color: var(--accent-2); }
+    canvas { width: 100%; height: 260px; background: #0b1420; border: 1px solid #20324a; border-radius: 10px; }
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+    .control { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px; }
+    .control label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+    input[type="range"] { width: 100%; }
+    select {
+      width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #2a3f59;
+      background: #0b1420; color: var(--text); font-family: inherit; cursor: pointer;
+    }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0; }
+    .value { color: var(--accent-2); font-weight: 600; }
+    .readouts { display: grid; gap: 10px; margin-top: 12px; }
+    .readout { background: #0f1a27; border: 1px solid #20324a; border-radius: 10px; padding: 10px 12px; display: grid; gap: 6px; font-size: 13px; }
+    .readout .title { color: var(--accent-2); font-weight: 700; font-size: 12px; letter-spacing: 0.4px; }
+    .footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Thermal Expansion</h1>
+        <p>Linear, area, and volume expansion</p>
+      </div>
+      <div class="pill">ΔL = αL₀ΔT · ΔA ≈ 2αA₀ΔT · ΔV ≈ 3αV₀ΔT</div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Material View</h2>
+        <canvas id="expCanvas" width="640" height="260"></canvas>
+      </div>
+
+      <div class="panel">
+        <h2>Controls & Readouts</h2>
+        <div class="controls">
+          <div class="control">
+            <label>Material</label>
+            <select id="material">
+              <option value="steel" selected>Steel</option>
+              <option value="aluminum">Aluminum</option>
+              <option value="copper">Copper</option>
+              <option value="glass">Glass</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Initial Length (mm)</label>
+            <input type="range" id="length" min="50" max="1000" step="10" value="100" />
+            <div class="row"><span class="muted">L₀</span><span class="value" id="lengthValue">100 mm</span></div>
+          </div>
+          <div class="control">
+            <label>Temperature Change (°C)</label>
+            <input type="range" id="deltaT" min="-100" max="500" step="5" value="200" />
+            <div class="row"><span class="muted">ΔT</span><span class="value" id="deltaTValue">200°C</span></div>
+          </div>
+          <div class="control">
+            <label>Expansion Type</label>
+            <select id="expType">
+              <option value="linear" selected>Linear</option>
+              <option value="area">Area</option>
+              <option value="volume">Volume</option>
+            </select>
+          </div>
+          <div class="control">
+            <label>Show Particles</label>
+            <div class="toggle">
+              <input type="checkbox" id="showParticles" checked />
+              <span>Molecular view</span>
+            </div>
+          </div>
+          <div class="control">
+            <label>Real-time Scale</label>
+            <div class="toggle">
+              <input type="checkbox" id="showScale" checked />
+              <span>Actual vs exaggerated</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="readouts">
+          <div class="readout">
+            <div class="title">Results</div>
+            <div class="row"><span>α</span><span class="value" id="alphaValue">12×10⁻⁶/°C</span></div>
+            <div class="row"><span>ΔL</span><span class="value" id="deltaLValue">0.24 mm</span></div>
+            <div class="row"><span>L_final</span><span class="value" id="finalValue">100.24 mm</span></div>
+          </div>
+          <div class="readout">
+            <div class="title">Notes</div>
+            <div class="row"><span id="noteValue">Bridge joints allow expansion.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Area expansion is ~2α, volume expansion is ~3α for isotropic materials.</div>
+  </div>
+
+  <script>
+    const materials = {
+      steel: { alpha: 12e-6, note: 'Steel expands modestly; bridges need joints.' },
+      aluminum: { alpha: 23e-6, note: 'Aluminum expands strongly; watch fit tolerance.' },
+      copper: { alpha: 17e-6, note: 'Copper has moderate expansion.' },
+      glass: { alpha: 9e-6, note: 'Glass expands less than metals.' }
+    };
+
+    const state = {
+      material: 'steel',
+      length: 100,
+      deltaT: 200,
+      expType: 'linear',
+      showParticles: true,
+      showScale: true
+    };
+
+    const dom = {
+      material: document.getElementById('material'),
+      length: document.getElementById('length'),
+      deltaT: document.getElementById('deltaT'),
+      expType: document.getElementById('expType'),
+      showParticles: document.getElementById('showParticles'),
+      showScale: document.getElementById('showScale'),
+      lengthValue: document.getElementById('lengthValue'),
+      deltaTValue: document.getElementById('deltaTValue'),
+      alphaValue: document.getElementById('alphaValue'),
+      deltaLValue: document.getElementById('deltaLValue'),
+      finalValue: document.getElementById('finalValue'),
+      noteValue: document.getElementById('noteValue'),
+      expCanvas: document.getElementById('expCanvas')
+    };
+
+    const ctx = dom.expCanvas.getContext('2d');
+
+    function calcDelta() {
+      const alpha = materials[state.material].alpha;
+      const L0 = state.length / 1000;
+      const dT = state.deltaT;
+      if (state.expType === 'linear') return alpha * L0 * dT;
+      if (state.expType === 'area') return 2 * alpha * L0 * dT;
+      return 3 * alpha * L0 * dT;
+    }
+
+    function updateReadouts() {
+      dom.lengthValue.textContent = `${state.length.toFixed(0)} mm`;
+      dom.deltaTValue.textContent = `${state.deltaT}°C`;
+      const alpha = materials[state.material].alpha * 1e6;
+      dom.alphaValue.textContent = `${alpha.toFixed(0)}×10⁻⁶/°C`;
+      const deltaL = calcDelta() * 1000;
+      dom.deltaLValue.textContent = `${deltaL.toFixed(3)} mm`;
+      dom.finalValue.textContent = `${(state.length + deltaL).toFixed(3)} mm`;
+      dom.noteValue.textContent = materials[state.material].note;
+    }
+
+    function drawExpansion() {
+      const w = dom.expCanvas.width;
+      const h = dom.expCanvas.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#0b1420';
+      ctx.fillRect(0, 0, w, h);
+      const base = 120;
+      const delta = calcDelta() * 1000 * (state.showScale ? 30 : 3);
+      const coldLen = base;
+      const hotLen = base + delta;
+      ctx.fillStyle = '#6ad7ff';
+      ctx.fillRect(80, h / 2 - 40, coldLen, 20);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(80, h / 2 + 10, hotLen, 20);
+      ctx.fillStyle = '#8aa0b8';
+      ctx.fillText(`Cold: ${state.length.toFixed(2)} mm`, 80, h / 2 - 50);
+      ctx.fillText(`Hot: ${(state.length + delta).toFixed(2)} mm`, 80, h / 2 + 50);
+      ctx.fillStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(80 + coldLen, h / 2 - 30);
+      ctx.lineTo(80 + hotLen, h / 2 - 30);
+      ctx.stroke();
+
+      if (state.showParticles) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        for (let i = 0; i < 16; i++) {
+          ctx.beginPath();
+          ctx.arc(100 + i * 12, h / 2 + 40, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function render() {
+      updateReadouts();
+      drawExpansion();
+    }
+
+    function bind() {
+      dom.material.addEventListener('change', () => { state.material = dom.material.value; render(); });
+      dom.length.addEventListener('input', () => { state.length = Number(dom.length.value); render(); });
+      dom.deltaT.addEventListener('input', () => { state.deltaT = Number(dom.deltaT.value); render(); });
+      dom.expType.addEventListener('change', () => { state.expType = dom.expType.value; render(); });
+      dom.showParticles.addEventListener('change', () => { state.showParticles = dom.showParticles.checked; render(); });
+      dom.showScale.addEventListener('change', () => { state.showScale = dom.showScale.checked; render(); });
+    }
+
+    bind();
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quantum Hamiltonian</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); --shadow: 0 24px 45px rgba(5, 10, 18, 0.35); }
+    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--sim-border); backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7); position: sticky; top: 0; z-index: 10; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    header.hero { text-align: center; padding: 34px 20px 18px; }
+    header.hero h1 { letter-spacing: 0.08em; text-transform: uppercase; font-size: clamp(1.6rem, 2.4vw, 2.5rem); margin: 0 0 10px; }
+    header.hero p { color: var(--sim-muted); margin: 0; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr); gap: 24px; padding: 12px 28px 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--sim-border); border-radius: 18px; box-shadow: var(--shadow); padding: 18px; }
+    canvas { width: 100%; height: 420px; background: rgba(6, 10, 18, 0.7); border-radius: 16px; border: 1px solid var(--sim-border); }
+    .controls { display: grid; gap: 16px; }
+    .control-group { display: grid; gap: 8px; }
+    label { font-size: 0.9rem; color: var(--sim-muted); display: flex; justify-content: space-between; gap: 10px; }
+    input[type="range"] { width: 100%; }
+    .formula { background: rgba(106, 215, 255, 0.1); border: 1px solid var(--accent); border-radius: 12px; padding: 14px; text-align: center; margin: 10px 0; font-size: 1.2rem; }
+    .data-panel { display: grid; gap: 6px; font-size: 0.9rem; color: var(--sim-muted); }
+    .data-panel strong { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar"><a href="/">← Physics Simulations</a><span class="toggle">Quantum Physics</span></div>
+    <header class="hero"><h1>Quantum Hamiltonian</h1><p>Ĥ = T + V — Energy operator</p></header>
+    <div class="layout">
+      <div class="panel canvas-wrap"><canvas id="simCanvas"></canvas></div>
+      <div class="panel controls">
+        <div class="formula">Ĥ = -ℏ²/2m ∇² + V(x)</div>
+        <div class="control-group">
+          <label>Potential Type</label>
+          <select id="potType" style="width:100%;padding:8px;background:rgba(12,18,28,0.8);color:#e9f2ff;border:1px solid var(--sim-border);border-radius:8px;">
+            <option value="free">Free Particle</option>
+            <option value="well">Infinite Well</option>
+            <option value="oscillator">Harmonic Oscillator</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Quantum State (n)</label>
+          <input type="range" id="nSlider" min="1" max="5" value="1">
+        </div>
+        <div class="data-panel">
+          <div>Energy: <strong id="eVal">E₁</strong></div>
+          <div>Eigenstate: <strong id="stateVal">|n=1⟩</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * 2;
+    canvas.height = canvas.offsetHeight * 2;
+    ctx.scale(2, 2);
+    const potType = document.getElementById('potType');
+    const nSlider = document.getElementById('nSlider');
+    let time = 0;
+    function update() {
+      const n = parseInt(nSlider.value);
+      document.getElementById('eVal').textContent = 'E' + n;
+      document.getElementById('stateVal').textContent = '|n=' + n + '⟩';
+    }
+    function draw() {
+      const w = canvas.offsetWidth, h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
+      for (let i = 0; i < w; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, h); ctx.stroke(); }
+      for (let i = 0; i < h; i += 40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke(); }
+      const type = potType.value;
+      const n = parseInt(nSlider.value);
+      const baseline = h * 0.7;
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      if (type === 'well') {
+        ctx.beginPath(); ctx.moveTo(50, 50); ctx.lineTo(50, baseline); ctx.lineTo(w - 50, baseline); ctx.lineTo(w - 50, 50); ctx.stroke();
+        ctx.beginPath();
+        for (let x = 50; x <= w - 50; x++) {
+          const psi = Math.sin(n * Math.PI * (x - 50) / (w - 100));
+          const y = baseline - psi * 80 * Math.cos(time * 0.05);
+          if (x === 50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(106, 215, 255, 0.2)';
+        ctx.beginPath();
+        for (let x = 50; x <= w - 50; x++) {
+          const psi = Math.sin(n * Math.PI * (x - 50) / (w - 100));
+          const prob = psi * psi;
+          ctx.lineTo(x, baseline - prob * 80);
+        }
+        ctx.lineTo(w - 50, baseline); ctx.lineTo(50, baseline); ctx.fill();
+      } else if (type === 'oscillator') {
+        ctx.beginPath(); ctx.moveTo(50, baseline); ctx.quadraticCurveTo(w/2, 50, w - 50, baseline); ctx.stroke();
+        ctx.beginPath();
+        for (let x = 50; x <= w - 50; x++) {
+          const xn = (x - 50) / (w - 100) - 0.5;
+          const psi = Math.exp(-xn * xn * n * 2) * Math.cos(n * 5 * xn + time * 0.05);
+          const y = baseline - psi * 60;
+          if (x === 50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        for (let x = 50; x <= w - 50; x++) {
+          const k = n * 0.1;
+          const psi = Math.cos(k * (x - 50) + time * 0.05);
+          const y = cy - psi * 60;
+          if (x === 50) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#fff';
+      ctx.font = '14px Space Grotesk';
+      ctx.fillText('Wavefunction ψ(x)', 50, 30);
+      ctx.fillText('Probability |ψ|²', 50, h - 20);
+      time++;
+      requestAnimationFrame(draw);
+    }
+    potType.addEventListener('change', update);
+    nSlider.addEventListener('input', update);
+    update(); draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Moments & Equilibrium</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --clockwise-color: #ff6b6b;
+      --anticlockwise-color: #6bff6b;
+      --mass-color: #4a6fa5;
+      --beam-color: #8b7355;
+      --fulcrum-color: #5a5a5a;
+      --arrow-weight: #f6c76b;
+      --arrow-support: #6bff6b;
+      --balanced-color: #6bff6b;
+      --unbalanced-color: #ff6b6b;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 34px 20px 18px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
+      margin: 0 0 10px;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: 24px;
+      padding: 12px 28px 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .canvas-wrap {
+      display: grid;
+      gap: 16px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: rgba(6, 10, 18, 0.7);
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+    }
+
+    .inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      border: 1px solid var(--sim-border);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .data-panel {
+      display: grid;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: var(--sim-muted);
+    }
+
+    .data-panel strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 12px;
+      margin: 0 28px 40px;
+    }
+
+    details {
+      border: 1px solid var(--sim-border);
+      border-radius: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      padding: 12px 16px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--accent);
+      list-style: none;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details p, details li {
+      color: var(--sim-muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page" id="moments">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Moments & Equilibrium</h1>
+      <p>The turning effect of forces</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-mode="beam">Beam</button>
+      <button class="tab" data-mode="multi">Multiple Weights</button>
+      <button class="tab" data-mode="fulcrum">Adjustable Fulcrum</button>
+      <button class="tab" data-mode="angle">Angle</button>
+    </div>
+
+    <section class="layout">
+      <div class="panel canvas-wrap">
+        <canvas id="beamCanvas" width="900" height="520" aria-label="Moments simulation"></canvas>
+        <div class="btn-row">
+          <button id="reset">Reset</button>
+        </div>
+      </div>
+
+      <div class="panel controls" aria-label="Controls">
+        <div id="beamControls">
+          <div class="control-group">
+            <label for="massL">Mass Left <strong id="massLLabel">20 kg</strong></label>
+            <input type="range" id="massL" min="1" max="100" step="1" value="20" />
+          </div>
+          <div class="control-group">
+            <label for="distL">Distance Left <strong id="distLLabel">2.0 m</strong></label>
+            <input type="range" id="distL" min="0.5" max="5" step="0.1" value="2" />
+          </div>
+          <div class="control-group">
+            <label for="massR">Mass Right <strong id="massRLabel">10 kg</strong></label>
+            <input type="range" id="massR" min="1" max="100" step="1" value="10" />
+          </div>
+          <div class="control-group">
+            <label for="distR">Distance Right <strong id="distRLabel">4.0 m</strong></label>
+            <input type="range" id="distR" min="0.5" max="5" step="0.1" value="4" />
+          </div>
+        </div>
+
+        <div id="fulcrumControls" class="hidden">
+          <div class="control-group">
+            <label for="fulcrum">Fulcrum Position <strong id="fulcrumLabel">0.0 m</strong></label>
+            <input type="range" id="fulcrum" min="-2" max="2" step="0.1" value="0" />
+          </div>
+        </div>
+
+        <div id="angleControls" class="hidden">
+          <div class="control-group">
+            <label for="force">Applied Force <strong id="forceLabel">100 N</strong></label>
+            <input type="range" id="force" min="10" max="200" step="1" value="100" />
+          </div>
+          <div class="control-group">
+            <label for="angle">Force Angle <strong id="angleLabel">90°</strong></label>
+            <input type="range" id="angle" min="0" max="90" step="1" value="90" />
+          </div>
+          <div class="control-group">
+            <label for="arm">Lever Arm <strong id="armLabel">2.0 m</strong></label>
+            <input type="range" id="arm" min="0.5" max="5" step="0.1" value="2" />
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Display Options</label>
+          <label><input type="checkbox" id="showArrows" checked /> Show force arrows</label>
+          <label><input type="checkbox" id="showMoments" checked /> Show moment arms</label>
+          <label><input type="checkbox" id="showLabels" checked /> Show calculations</label>
+          <label><input type="checkbox" id="animateTilt" checked /> Animate tilt</label>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin: 0 28px 18px;">
+      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
+    </section>
+
+    <section class="accordion">
+      <details open>
+        <summary>📚 Theory</summary>
+        <p>A moment (torque) is the turning effect of a force: M = F × d, where d is the perpendicular distance from the pivot.</p>
+        <p>For equilibrium: ΣF = 0 and ΣM = 0.</p>
+      </details>
+
+      <details>
+        <summary>🔬 Investigation Questions</summary>
+        <ol>
+          <li>Place equal masses at equal distances. Is it balanced?</li>
+          <li>Double the distance, halve the mass. Is it still balanced?</li>
+          <li>Move the fulcrum closer to the heavier mass. What happens?</li>
+        </ol>
+      </details>
+
+      <details>
+        <summary>💡 Key Takeaways</summary>
+        <ul>
+          <li>Moment = Force × Distance.</li>
+          <li>Equilibrium requires clockwise moments = anticlockwise moments.</li>
+          <li>Longer distance increases turning effect.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('beamCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const tabs = document.querySelectorAll('.tab');
+    const dataPanel = document.getElementById('dataPanel');
+
+    const massL = document.getElementById('massL');
+    const distL = document.getElementById('distL');
+    const massR = document.getElementById('massR');
+    const distR = document.getElementById('distR');
+    const fulcrumInput = document.getElementById('fulcrum');
+
+    const massLLabel = document.getElementById('massLLabel');
+    const distLLabel = document.getElementById('distLLabel');
+    const massRLabel = document.getElementById('massRLabel');
+    const distRLabel = document.getElementById('distRLabel');
+    const fulcrumLabel = document.getElementById('fulcrumLabel');
+
+    const forceInput = document.getElementById('force');
+    const angleInput = document.getElementById('angle');
+    const armInput = document.getElementById('arm');
+    const forceLabel = document.getElementById('forceLabel');
+    const angleLabel = document.getElementById('angleLabel');
+    const armLabel = document.getElementById('armLabel');
+
+    const showArrows = document.getElementById('showArrows');
+    const showMoments = document.getElementById('showMoments');
+    const showLabels = document.getElementById('showLabels');
+    const animateTilt = document.getElementById('animateTilt');
+
+    const beamControls = document.getElementById('beamControls');
+    const fulcrumControls = document.getElementById('fulcrumControls');
+    const angleControls = document.getElementById('angleControls');
+
+    const state = {
+      mode: 'beam',
+      massL: 20,
+      massR: 10,
+      distL: 2,
+      distR: 4,
+      fulcrum: 0,
+      force: 100,
+      angle: 90,
+      arm: 2
+    };
+
+    const g = 9.81;
+
+    function updateLabels() {
+      massLLabel.textContent = `${state.massL.toFixed(0)} kg`;
+      distLLabel.textContent = `${state.distL.toFixed(1)} m`;
+      massRLabel.textContent = `${state.massR.toFixed(0)} kg`;
+      distRLabel.textContent = `${state.distR.toFixed(1)} m`;
+      fulcrumLabel.textContent = `${state.fulcrum.toFixed(1)} m`;
+      forceLabel.textContent = `${state.force.toFixed(0)} N`;
+      angleLabel.textContent = `${state.angle.toFixed(0)}°`;
+      armLabel.textContent = `${state.arm.toFixed(1)} m`;
+    }
+
+    function calculateMoments() {
+      const leftMoment = state.massL * g * state.distL;
+      const rightMoment = state.massR * g * state.distR;
+      const net = rightMoment - leftMoment;
+      return { leftMoment, rightMoment, net, balanced: Math.abs(net) < 1 };
+    }
+
+    function drawBeam() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const midX = canvas.width / 2 + state.fulcrum * 60;
+      const midY = canvas.height / 2;
+      const beamLength = canvas.width * 0.7;
+      const { net } = calculateMoments();
+      const maxTilt = Math.PI / 12;
+      const tilt = animateTilt.checked ? Math.max(-maxTilt, Math.min(maxTilt, net / 2000)) : 0;
+
+      ctx.save();
+      ctx.translate(midX, midY);
+      ctx.rotate(tilt);
+      ctx.fillStyle = '#8b7355';
+      ctx.fillRect(-beamLength / 2, -10, beamLength, 20);
+
+      drawMass(-state.distL * 60, -30, state.massL, true);
+      drawMass(state.distR * 60, -30, state.massR, false);
+
+      if (showArrows.checked) {
+        drawArrow(-state.distL * 60, -30, state.massL * g, '#f6c76b');
+        drawArrow(state.distR * 60, -30, state.massR * g, '#f6c76b');
+      }
+
+      ctx.restore();
+
+      ctx.fillStyle = '#5a5a5a';
+      ctx.beginPath();
+      ctx.moveTo(midX - 30, midY + 30);
+      ctx.lineTo(midX + 30, midY + 30);
+      ctx.lineTo(midX, midY - 10);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawMass(x, y, mass, left) {
+      ctx.fillStyle = '#4a6fa5';
+      ctx.beginPath();
+      ctx.roundRect(x - 20, y - 20, 40, 40, 6);
+      ctx.fill();
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '12px Space Grotesk, sans-serif';
+      ctx.fillText(`${mass.toFixed(0)}kg`, x - 16, y + 5);
+    }
+
+    function drawArrow(x, y, force, color) {
+      const len = Math.min(80, force / 5);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, y + len);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + len);
+      ctx.lineTo(x - 6, y + len - 10);
+      ctx.lineTo(x + 6, y + len - 10);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    function drawAngleMode() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const midX = canvas.width / 2;
+      const midY = canvas.height / 2;
+      const arm = state.arm * 80;
+      ctx.strokeStyle = '#8b7355';
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      ctx.lineTo(midX + arm, midY);
+      ctx.stroke();
+
+      const angleRad = (state.angle * Math.PI) / 180;
+      const fx = midX + arm * Math.cos(angleRad);
+      const fy = midY - arm * Math.sin(angleRad);
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(midX + arm, midY);
+      ctx.lineTo(fx, fy);
+      ctx.stroke();
+
+      if (showMoments.checked) {
+        ctx.strokeStyle = 'rgba(233,242,255,0.4)';
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(midX + arm, midY);
+        ctx.lineTo(midX + arm, fy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText('Fulcrum', midX - 30, midY + 20);
+    }
+
+    function updateDataPanel() {
+      if (state.mode === 'angle') {
+        const moment = state.force * state.arm * Math.sin((state.angle * Math.PI) / 180);
+        dataPanel.innerHTML = `
+          <div><strong>Angle Mode:</strong> M = F × d × sin(θ)</div>
+          <div><strong>Force:</strong> ${state.force.toFixed(1)} N</div>
+          <div><strong>Arm:</strong> ${state.arm.toFixed(1)} m</div>
+          <div><strong>Angle:</strong> ${state.angle.toFixed(0)}°</div>
+          <div><strong>Moment:</strong> ${moment.toFixed(1)} N·m</div>
+        `;
+        return;
+      }
+      const { leftMoment, rightMoment, net, balanced } = calculateMoments();
+      dataPanel.innerHTML = `
+        <div><strong>Equilibrium:</strong> ΣF = 0, ΣM = 0</div>
+        <div><strong>Left:</strong> ${state.massL.toFixed(0)} kg at ${state.distL.toFixed(1)} m → ${leftMoment.toFixed(1)} N·m</div>
+        <div><strong>Right:</strong> ${state.massR.toFixed(0)} kg at ${state.distR.toFixed(1)} m → ${rightMoment.toFixed(1)} N·m</div>
+        <div><strong>Status:</strong> ${balanced ? '✓ BALANCED' : 'UNBALANCED'}</div>
+        <div><strong>Net Moment:</strong> ${net.toFixed(1)} N·m</div>
+      `;
+    }
+
+    function render() {
+      if (state.mode === 'angle') {
+        drawAngleMode();
+      } else {
+        drawBeam();
+      }
+      updateDataPanel();
+      requestAnimationFrame(render);
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.mode = tab.dataset.mode;
+        beamControls.classList.toggle('hidden', state.mode === 'angle');
+        fulcrumControls.classList.toggle('hidden', state.mode !== 'fulcrum');
+        angleControls.classList.toggle('hidden', state.mode !== 'angle');
+      });
+    });
+
+    massL.addEventListener('input', (e) => {
+      state.massL = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    distL.addEventListener('input', (e) => {
+      state.distL = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    massR.addEventListener('input', (e) => {
+      state.massR = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    distR.addEventListener('input', (e) => {
+      state.distR = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    fulcrumInput.addEventListener('input', (e) => {
+      state.fulcrum = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    forceInput.addEventListener('input', (e) => {
+      state.force = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    angleInput.addEventListener('input', (e) => {
+      state.angle = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    armInput.addEventListener('input', (e) => {
+      state.arm = parseFloat(e.target.value);
+      updateLabels();
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.massL = 20;
+      state.massR = 10;
+      state.distL = 2;
+      state.distR = 4;
+      state.fulcrum = 0;
+      updateLabels();
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    updateLabels();
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

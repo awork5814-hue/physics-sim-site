@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wheatstone Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0f16;
+      --panel: rgba(16, 24, 36, 0.86);
+      --panel-strong: rgba(12, 20, 32, 0.95);
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --good: #6bff6b;
+      --warn: #ff9a6c;
+      --line: rgba(255,255,255,0.08);
+      --glow: rgba(106, 215, 255, 0.22);
+      --shadow: rgba(3, 6, 10, 0.6);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% -10%, #1f3146 0%, #0f1622 40%, #0a0f16 100%),
+        linear-gradient(180deg, #0a0f16 0%, #0d1520 60%, #0a0f16 100%);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", sans-serif;
+      min-height: 100vh;
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px clamp(16px, 4vw, 36px) 36px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .title-block h1 {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: clamp(26px, 3vw, 34px);
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      background: rgba(106, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: 0 20px 50px var(--shadow);
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+    }
+
+    .wrap { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 24px 60px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 10% 10%, rgba(106, 215, 255, 0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    canvas { width: 100%; height: 460px; background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); font-weight: 600; }
+    .control input[type="range"] { width: 100%; }
+    .control .row { display: flex; justify-content: space-between; }
+    .value-chip {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      padding: 9px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(12, 20, 32, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.35); }
+    .btn.primary {
+      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      color: #0a0f16;
+      border: none;
+      font-weight: 700;
+      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
+    }
+    .btn.ghost {
+      background: rgba(106, 215, 255, 0.1);
+      color: var(--accent);
+      border-color: rgba(106, 215, 255, 0.25);
+    }
+
+    .readout {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .read-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .read-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+    .read-card strong {
+      font-size: 16px;
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+    }
+
+    footer { margin-top: 18px; color: var(--muted); font-size: 12px; }
+
+    @media (max-width: 980px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .wrap { grid-template-columns: 1fr; }
+      canvas { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title-block">
+        <div class="badge">Precision Lab</div>
+        <h1>Wheatstone Bridge</h1>
+        <div class="subtitle">Balance a bridge to measure an unknown resistance</div>
+      </div>
+      <div class="buttons">
+        <button class="btn primary" id="balance">Balance</button>
+        <button class="btn" id="reset">Reset</button>
+      </div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">R1/R2</div><div class="stat-value" id="ratio12">1.00</div></div>
+      <div class="stat"><div class="stat-label">R3/Rx</div><div class="stat-value" id="ratio3x">1.00</div></div>
+      <div class="stat"><div class="stat-label">Balance</div><div class="stat-value" id="balanceStat">NO</div></div>
+      <div class="stat"><div class="stat-label">Galvanometer</div><div class="stat-value" id="igStat">0 μA</div></div>
+    </div>
+
+    <div class="wrap">
+      <div class="card">
+        <canvas id="scene" width="960" height="520"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="controls">
+          <div class="control">
+            <label>R₁ (Ω) <span class="value-chip" id="r1Val">100</span></label>
+            <input id="r1" type="range" min="10" max="1000" step="5" value="100" />
+            <div class="row"><span>10</span><span>1000</span></div>
+          </div>
+          <div class="control">
+            <label>R₂ (Ω) <span class="value-chip" id="r2Val">100</span></label>
+            <input id="r2" type="range" min="10" max="1000" step="5" value="100" />
+            <div class="row"><span>10</span><span>1000</span></div>
+          </div>
+          <div class="control">
+            <label>R₃ (Ω) <span class="value-chip" id="r3Val">100</span></label>
+            <input id="r3" type="range" min="10" max="1000" step="5" value="100" />
+            <div class="row"><span>10</span><span>1000</span></div>
+          </div>
+          <div class="control">
+            <label>Rₓ (Ω) <span class="value-chip" id="rxVal">150</span></label>
+            <input id="rx" type="range" min="10" max="1000" step="5" value="150" />
+            <div class="row"><span>10</span><span>1000</span></div>
+          </div>
+          <div class="control">
+            <label>Source Voltage (V) <span class="value-chip" id="voltVal">5.0</span></label>
+            <input id="volt" type="range" min="1" max="12" step="0.5" value="5" />
+            <div class="row"><span>1</span><span>12</span></div>
+          </div>
+        </div>
+
+        <div class="readout">
+          <div class="read-card"><span>V at D</span><strong id="vdRead">0.00 V</strong></div>
+          <div class="read-card"><span>V at B</span><strong id="vbRead">0.00 V</strong></div>
+          <div class="read-card"><span>I top</span><strong id="itRead">0.00 mA</strong></div>
+          <div class="read-card"><span>I bottom</span><strong id="ibRead">0.00 mA</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Balanced bridge: R₁/R₂ = R₃/Rₓ. Galvanometer current is zero.
+    </footer>
+    <section class="panel" style="margin-top: 18px;">
+      <details open>
+        <summary style="cursor:pointer; font-weight:600; color: var(--accent);">📚 Experiment Explanation</summary>
+        <p style="color: var(--sim-muted); margin-top: 8px;">
+          A Wheatstone bridge compares two voltage dividers. When the ratios match, the midpoint potentials are equal,
+          the galvanometer reads zero, and the bridge is <strong>balanced</strong>.
+        </p>
+        <p style="color: var(--sim-muted);">
+          Balance condition: <strong>R₁/R₂ = R₃/Rₓ</strong>. Use the sliders to change the resistors and watch the
+          galvanometer needle. Press <strong>Balance</strong> to auto‑adjust R₃ until the needle centers.
+        </p>
+        <p style="color: var(--sim-muted);">
+          This method is used to measure an unknown resistance Rₓ with high precision by balancing the bridge.
+        </p>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      R1: 100,
+      R2: 100,
+      R3: 100,
+      Rx: 150,
+      V: 5,
+      ig: 0
+    };
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const { width, height } = canvas.getBoundingClientRect();
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function currents() {
+      const I1 = state.V / (state.R1 + state.R2);
+      const I2 = state.V / (state.R3 + state.Rx);
+      const Vd = I1 * state.R1;
+      const Vb = I2 * state.R3;
+      const Ig = (Vd - Vb) / 1000;
+      return { I1, I2, Vd, Vb, Ig };
+    }
+
+    function balanced() {
+      return Math.abs((state.R1 / state.R2) - (state.R3 / state.Rx)) < 0.001;
+    }
+
+    function drawResistor(x1, y1, x2, y2) {
+      ctx.strokeStyle = '#e9f2ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      const steps = 6;
+      for (let i = 1; i <= steps; i++) {
+        const t = i / (steps + 1);
+        const x = x1 + (x2 - x1) * t;
+        const y = y1 + (y2 - y1) * t + (i % 2 === 0 ? -10 : 10);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+
+    function drawCircuit() {
+      const w = canvas.width / (window.devicePixelRatio || 1);
+      const h = canvas.height / (window.devicePixelRatio || 1);
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w * 0.5;
+      const cy = h * 0.5;
+      const dx = 180;
+      const dy = 120;
+
+      // diamond points
+      const A = { x: cx, y: cy - dy };
+      const B = { x: cx + dx, y: cy };
+      const C = { x: cx, y: cy + dy };
+      const D = { x: cx - dx, y: cy };
+
+      // wire lines
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y);
+      ctx.moveTo(B.x, B.y); ctx.lineTo(C.x, C.y);
+      ctx.moveTo(C.x, C.y); ctx.lineTo(D.x, D.y);
+      ctx.moveTo(D.x, D.y); ctx.lineTo(A.x, A.y);
+      ctx.stroke();
+
+      // resistors on each branch
+      drawResistor(A.x, A.y, D.x, D.y); // R1
+      drawResistor(A.x, A.y, B.x, B.y); // R3
+      drawResistor(D.x, D.y, C.x, C.y); // R2
+      drawResistor(B.x, B.y, C.x, C.y); // Rx
+
+      // galvanometer in center
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = '14px "Space Grotesk", sans-serif';
+      ctx.fillText('G', cx - 5, cy + 5);
+
+      // needle
+      const { Ig } = currents();
+      const angle = Math.max(-0.7, Math.min(0.7, Ig * 3000));
+      ctx.strokeStyle = balanced() ? '#6bff6b' : '#ff9a6c';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18);
+      ctx.stroke();
+
+      // battery on left
+      ctx.strokeStyle = '#f6c76b';
+      ctx.beginPath();
+      ctx.moveTo(D.x - 60, D.y - 40); ctx.lineTo(D.x - 60, D.y + 40);
+      ctx.moveTo(D.x - 40, D.y - 25); ctx.lineTo(D.x - 40, D.y + 25);
+      ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('+', D.x - 30, D.y - 10);
+      ctx.fillText('-', D.x - 75, D.y + 20);
+
+      // labels
+      ctx.fillStyle = '#9fb0c5';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.fillText(`R1 ${state.R1}Ω`, (A.x + D.x) / 2 - 35, (A.y + D.y) / 2 - 10);
+      ctx.fillText(`R2 ${state.R2}Ω`, (D.x + C.x) / 2 - 35, (D.y + C.y) / 2 + 20);
+      ctx.fillText(`R3 ${state.R3}Ω`, (A.x + B.x) / 2 - 35, (A.y + B.y) / 2 - 10);
+      ctx.fillText(`Rx ${state.Rx}Ω`, (B.x + C.x) / 2 - 35, (B.y + C.y) / 2 + 20);
+      ctx.fillText(`V=${state.V.toFixed(1)}V`, D.x - 85, D.y + 70);
+
+      // node labels
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText('A', A.x - 8, A.y - 10);
+      ctx.fillText('B', B.x + 6, B.y + 6);
+      ctx.fillText('C', C.x - 6, C.y + 18);
+      ctx.fillText('D', D.x - 16, D.y + 6);
+    }
+
+    function updateUI() {
+      const { I1, I2, Vd, Vb, Ig } = currents();
+      document.getElementById('r1Val').textContent = state.R1.toFixed(0);
+      document.getElementById('r2Val').textContent = state.R2.toFixed(0);
+      document.getElementById('r3Val').textContent = state.R3.toFixed(0);
+      document.getElementById('rxVal').textContent = state.Rx.toFixed(0);
+      document.getElementById('voltVal').textContent = state.V.toFixed(1);
+
+      document.getElementById('ratio12').textContent = (state.R1 / state.R2).toFixed(2);
+      document.getElementById('ratio3x').textContent = (state.R3 / state.Rx).toFixed(2);
+      document.getElementById('balanceStat').textContent = balanced() ? 'YES' : 'NO';
+      document.getElementById('balanceStat').style.color = balanced() ? '#6bff6b' : '#ff9a6c';
+      document.getElementById('igStat').textContent = `${(Ig * 1e6).toFixed(1)} μA`;
+
+      document.getElementById('vdRead').textContent = `${Vd.toFixed(2)} V`;
+      document.getElementById('vbRead').textContent = `${Vb.toFixed(2)} V`;
+      document.getElementById('itRead').textContent = `${(I1 * 1000).toFixed(2)} mA`;
+      document.getElementById('ibRead').textContent = `${(I2 * 1000).toFixed(2)} mA`;
+    }
+
+    function tick() {
+      drawCircuit();
+      updateUI();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('r1').addEventListener('input', e => { state.R1 = parseFloat(e.target.value); });
+    document.getElementById('r2').addEventListener('input', e => { state.R2 = parseFloat(e.target.value); });
+    document.getElementById('r3').addEventListener('input', e => { state.R3 = parseFloat(e.target.value); });
+    document.getElementById('rx').addEventListener('input', e => { state.Rx = parseFloat(e.target.value); });
+    document.getElementById('volt').addEventListener('input', e => { state.V = parseFloat(e.target.value); });
+
+    document.getElementById('balance').addEventListener('click', () => {
+      state.R3 = (state.R1 * state.Rx) / state.R2;
+      document.getElementById('r3').value = state.R3;
+      updateUI();
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      state.R1 = 100; state.R2 = 100; state.R3 = 100; state.Rx = 150; state.V = 5;
+      document.getElementById('r1').value = 100;
+      document.getElementById('r2').value = 100;
+      document.getElementById('r3').value = 100;
+      document.getElementById('rx').value = 150;
+      document.getElementById('volt').value = 5;
+      updateUI();
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    updateUI();
+    tick();
+  </script>
+</body>
+</html>

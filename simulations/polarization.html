@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Polarization of Light</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(12, 18, 30, 0.82);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #22c55e;
+      --line: rgba(255,255,255,0.08);
+      --mono: "JetBrains Mono", monospace;
+    }
+    body.light {
+      --bg: #f5f7fa;
+      --ink: #0f172a;
+      --muted: #475569;
+      --line: rgba(15, 23, 42, 0.12);
+      --panel: rgba(255,255,255,0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", sans-serif;
+    }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--ink);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
+
+    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+    }
+    .canvas-wrap { position: relative; }
+    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+    .control .value { font-weight: 600; color: var(--ink); }
+
+    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
+      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .data-panel { padding: 0; background: transparent; border: none; }
+    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
+    .data-value.blue { color: var(--accent); }
+    .data-value.orange { color: var(--accent-2); }
+    .data-value.green { color: var(--accent-3); }
+
+    .formula {
+      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
+      border: 1px solid rgba(106,215,255,0.5);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/index.html">← Back to Library</a>
+    <button class="toggle" id="themeToggle">Light/Dark</button>
+  </div>
+  <header>
+    <h1>Polarization of Light</h1>
+    <div class="subtitle">Malus's Law and the three‑polarizer paradox</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="canvas-wrap">
+        <canvas id="scene" width="960" height="460"></canvas>
+      </div>
+      <div class="data-panel" id="readout"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Preset Scenarios</label>
+          <select id="preset">
+            <option value="malus">Malus Law (0°, 60°)</option>
+            <option value="crossed">Crossed (0°, 90°)</option>
+            <option value="three">Three Polarizers (0°, 45°, 90°)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Polarizer Count</label>
+          <select id="count">
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Polarizer 1 Angle (°)</label>
+          <input id="a1" type="range" min="0" max="180" step="1" value="0" />
+          <div class="row"><span>0</span><span id="a1Val" class="value">0°</span><span>180</span></div>
+        </div>
+        <div class="control">
+          <label>Polarizer 2 Angle (°)</label>
+          <input id="a2" type="range" min="0" max="180" step="1" value="45" />
+          <div class="row"><span>0</span><span id="a2Val" class="value">45°</span><span>180</span></div>
+        </div>
+        <div class="control">
+          <label>Polarizer 3 Angle (°)</label>
+          <input id="a3" type="range" min="0" max="180" step="1" value="90" />
+          <div class="row"><span>0</span><span id="a3Val" class="value">90°</span><span>180</span></div>
+        </div>
+        <div class="control">
+          <label>Source Intensity I₀</label>
+          <input id="i0" type="range" min="10" max="200" step="5" value="100" />
+          <div class="row"><span>10</span><span id="i0Val" class="value">100</span><span>200</span></div>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showWave" type="checkbox" checked /> Wave diagram</label>
+            <label><input id="showE" type="checkbox" checked /> E‑field</label>
+          </div>
+        </div>
+        <div class="control">
+          <div class="formula">
+            <div><strong>Malus:</strong> <span style="font-family: var(--mono);">I = I₀ cos²θ</span></div>
+            <div><strong>Unpolarized:</strong> <span style="font-family: var(--mono);">I = I₀/2</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Malus’s Law: <span style="font-family: var(--mono);">I = I₀ cos²θ</span>. Unpolarized light becomes polarized by the first filter, transmitting <span style="font-family: var(--mono);">I₀/2</span>.
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      count: 2,
+      a1: 0,
+      a2: 45,
+      a3: 90,
+      i0: 100,
+      showWave: true,
+      showE: true,
+      t: 0
+    };
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function intensities() {
+      const I0 = state.i0;
+      let I1 = I0 / 2;
+      let I2 = I1;
+      let I3 = I2;
+      if (state.count >= 2) {
+        const d1 = (state.a2 - state.a1) * Math.PI / 180;
+        I2 = I1 * Math.cos(d1) ** 2;
+      }
+      if (state.count >= 3) {
+        const d2 = (state.a3 - state.a2) * Math.PI / 180;
+        I3 = I2 * Math.cos(d2) ** 2;
+      }
+      return { I0, I1, I2, I3 };
+    }
+
+    function drawBackground() {
+      const isLight = document.body.classList.contains('light');
+      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (isLight) {
+        grad.addColorStop(0, '#f8fafc');
+        grad.addColorStop(0.55, '#e2e8f0');
+        grad.addColorStop(1, '#f1f5f9');
+      } else {
+        grad.addColorStop(0, '#05070e');
+        grad.addColorStop(0.6, '#0a0f1f');
+        grad.addColorStop(1, '#0b1224');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.clientWidth; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.clientHeight; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+      }
+    }
+
+    function drawPolarizer(x, y, angle, label) {
+      const frame = ctx.createRadialGradient(x, y, 2, x, y, 34);
+      frame.addColorStop(0, 'rgba(248,250,252,0.15)');
+      frame.addColorStop(1, 'rgba(248,250,252,0.02)');
+      ctx.fillStyle = frame;
+      ctx.beginPath(); ctx.arc(x, y, 30, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 26, 0, Math.PI * 2); ctx.stroke();
+
+      const rad = angle * Math.PI / 180;
+      ctx.beginPath();
+      ctx.moveTo(x - 20 * Math.cos(rad), y - 20 * Math.sin(rad));
+      ctx.lineTo(x + 20 * Math.cos(rad), y + 20 * Math.sin(rad));
+      ctx.stroke();
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillText(label, x - 10, y + 40);
+    }
+
+    function drawWave(x, y, width, intensity, angle) {
+      if (!state.showWave) return;
+      const amp = 18 * (intensity / state.i0);
+      const waveLen = 40;
+      ctx.strokeStyle = `rgba(106,215,255,${Math.max(0.2, intensity / 150)})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= width; i++) {
+        const yy = y + Math.sin((i / waveLen) * Math.PI * 2 + state.t) * amp;
+        if (i === 0) ctx.moveTo(x + i, yy);
+        else ctx.lineTo(x + i, yy);
+      }
+      ctx.stroke();
+
+      if (state.showE) {
+        const rad = angle * Math.PI / 180;
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.moveTo(x + width/2, y);
+        ctx.lineTo(x + width/2 + 30 * Math.cos(rad), y + 30 * Math.sin(rad));
+        ctx.stroke();
+      }
+    }
+
+    function draw() {
+      drawBackground();
+      const mid = canvas.clientHeight / 2;
+      const { I0, I1, I2, I3 } = intensities();
+
+      drawWave(60, mid, 180, I0, state.a1);
+      drawWave(260, mid, 160, I1, state.a1);
+      if (state.count >= 2) drawWave(420, mid, 160, I2, state.a2);
+      if (state.count >= 3) drawWave(580, mid, 160, I3, state.a3);
+
+      drawPolarizer(240, mid, state.a1, 'P1');
+      if (state.count >= 2) drawPolarizer(400, mid, state.a2, 'P2');
+      if (state.count >= 3) drawPolarizer(560, mid, state.a3, 'P3');
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(760, mid - 40, 8, 80);
+      const brightness = Math.min(1, (state.count >= 3 ? I3 : (state.count === 2 ? I2 : I1)) / state.i0);
+      ctx.fillStyle = `rgba(106,215,255,${brightness})`;
+      ctx.fillRect(770, mid - 40, 40, 80);
+
+      const bars = [I0, I1, I2, I3];
+      for (let i = 0; i < state.count + 1; i++) {
+        const bx = 80 + i * 140;
+        const h = (bars[i] / state.i0) * 60;
+        ctx.fillStyle = 'rgba(106,215,255,0.5)';
+        ctx.fillRect(bx, mid + 90 - h, 40, h);
+        ctx.fillStyle = '#a9b6c6';
+        ctx.fillText(`${Math.round(bars[i])}%`, bx - 4, mid + 110);
+      }
+    }
+
+    function updateReadout() {
+      const { I0, I1, I2, I3 } = intensities();
+      const d1 = Math.abs(state.a2 - state.a1);
+      const d2 = Math.abs(state.a3 - state.a2);
+      document.getElementById('readout').innerHTML = `
+        <div class="data-grid">
+          <div class="data-card"><span class="data-label">I₀</span><span class="data-value blue">${I0.toFixed(1)}</span></div>
+          <div class="data-card"><span class="data-label">I₁</span><span class="data-value green">${I1.toFixed(1)}</span></div>
+          <div class="data-card"><span class="data-label">I₂</span><span class="data-value orange">${I2.toFixed(1)}</span></div>
+          <div class="data-card"><span class="data-label">I₃</span><span class="data-value orange">${I3.toFixed(1)}</span></div>
+          <div class="data-card"><span class="data-label">θ₂-θ₁</span><span class="data-value blue">${d1.toFixed(1)}°</span></div>
+          <div class="data-card"><span class="data-label">θ₃-θ₂</span><span class="data-value blue">${d2.toFixed(1)}°</span></div>
+        </div>
+      `;
+    }
+
+    function tick() {
+      state.t += 0.05;
+      draw();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('preset').addEventListener('change', e => {
+      const val = e.target.value;
+      if (val === 'malus') { state.a1 = 0; state.a2 = 60; state.a3 = 90; state.count = 2; }
+      if (val === 'crossed') { state.a1 = 0; state.a2 = 90; state.a3 = 90; state.count = 2; }
+      if (val === 'three') { state.a1 = 0; state.a2 = 45; state.a3 = 90; state.count = 3; }
+      syncUI();
+    });
+    document.getElementById('count').addEventListener('change', e => { state.count = parseInt(e.target.value, 10); });
+    document.getElementById('a1').addEventListener('input', e => { state.a1 = parseFloat(e.target.value); document.getElementById('a1Val').textContent = `${state.a1.toFixed(0)}°`; });
+    document.getElementById('a2').addEventListener('input', e => { state.a2 = parseFloat(e.target.value); document.getElementById('a2Val').textContent = `${state.a2.toFixed(0)}°`; });
+    document.getElementById('a3').addEventListener('input', e => { state.a3 = parseFloat(e.target.value); document.getElementById('a3Val').textContent = `${state.a3.toFixed(0)}°`; });
+    document.getElementById('i0').addEventListener('input', e => { state.i0 = parseFloat(e.target.value); document.getElementById('i0Val').textContent = state.i0.toFixed(0); });
+    document.getElementById('showWave').addEventListener('change', e => state.showWave = e.target.checked);
+    document.getElementById('showE').addEventListener('change', e => state.showE = e.target.checked);
+
+    function syncUI() {
+      document.getElementById('count').value = state.count;
+      document.getElementById('a1').value = state.a1;
+      document.getElementById('a2').value = state.a2;
+      document.getElementById('a3').value = state.a3;
+      document.getElementById('a1Val').textContent = `${state.a1.toFixed(0)}°`;
+      document.getElementById('a2Val').textContent = `${state.a2.toFixed(0)}°`;
+      document.getElementById('a3Val').textContent = `${state.a3.toFixed(0)}°`;
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    window.addEventListener('resize', resize);
+    resize();
+    syncUI();
+    tick();
+  </script>
+</body>
+</html>

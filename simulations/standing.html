@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standing Waves</title>
+  <style>
+    :root {
+      --bg: #0c131d;
+      --panel: #142131;
+      --ink: #f5f8fd;
+      --muted: #a9b6c6;
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --line: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
+      color: var(--ink);
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
+    header .subtitle { color: var(--muted); font-size: 13px; }
+
+    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+
+    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+
+    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .control {
+      background: #0f151c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
+    .control input[type="range"] { width: 100%; }
+    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
+    .control .row { display: flex; justify-content: space-between; }
+
+    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+
+    .readout {
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+    }
+
+    .formula {
+      margin-top: 10px;
+      font-family: "Consolas", "SFMono-Regular", monospace;
+      background: #0c1116;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Standing Waves</h1>
+    <div class="subtitle">Nodes, antinodes, and harmonic modes on a string or pipe</div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <canvas id="scene" width="960" height="420"></canvas>
+      <div class="formula" id="formulaBox"></div>
+    </div>
+
+    <div class="card">
+      <div class="controls">
+        <div class="control">
+          <label>Harmonic Mode (n)</label>
+          <input id="harmonic" type="range" min="1" max="8" step="1" value="1" />
+          <div class="row"><span>1</span><span id="harmonicVal">1</span><span>8</span></div>
+        </div>
+        <div class="control">
+          <label>Amplitude</label>
+          <input id="amplitude" type="range" min="10" max="80" step="1" value="50" />
+          <div class="row"><span>10</span><span id="amplitudeVal">50</span><span>80</span></div>
+        </div>
+        <div class="control">
+          <label>Wave Speed v (m/s)</label>
+          <input id="speed" type="range" min="0.5" max="5" step="0.1" value="2" />
+          <div class="row"><span>0.5</span><span id="speedVal">2.0</span><span>5.0</span></div>
+        </div>
+        <div class="control">
+          <label>Medium Length L (m)</label>
+          <input id="length" type="range" min="1" max="10" step="0.5" value="5" />
+          <div class="row"><span>1</span><span id="lengthVal">5.0</span><span>10</span></div>
+        </div>
+        <div class="control">
+          <label>Tension T (N)</label>
+          <input id="tension" type="range" min="1" max="50" step="1" value="10" />
+          <div class="row"><span>1</span><span id="tensionVal">10</span><span>50</span></div>
+        </div>
+        <div class="control">
+          <label>Linear Density μ (kg/m)</label>
+          <input id="mu" type="range" min="0.01" max="0.2" step="0.01" value="0.05" />
+          <div class="row"><span>0.01</span><span id="muVal">0.05</span><span>0.20</span></div>
+        </div>
+        <div class="control">
+          <label>Wave Type</label>
+          <select id="waveType">
+            <option value="string">Fixed Ends (String)</option>
+            <option value="open">Open Pipe</option>
+            <option value="closed">Closed Pipe</option>
+          </select>
+        </div>
+        <div class="control">
+          <label>Display Options</label>
+          <div class="checks">
+            <label><input id="showTravel" type="checkbox" /> Traveling waves</label>
+            <label><input id="showNodes" type="checkbox" checked /> Nodes/Antinodes</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;" class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <footer>
+    Standing wave: y(x,t) = A sin(kx) cos(ωt). For fixed ends, λ = 2L/n and f = nv/(2L).
+  </footer>
+
+  <script>
+    const canvas = document.getElementById('scene');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      n: 1,
+      amplitude: 50,
+      v: 2,
+      L: 5,
+      T: 10,
+      mu: 0.05,
+      showTraveling: false,
+      showNodes: true,
+      waveType: 'string',
+      time: 0
+    };
+
+    function getWaveSpeed() {
+      return Math.sqrt(state.T / state.mu);
+    }
+
+    function getWavelength() {
+      if (state.waveType === 'open') return 2 * state.L / state.n;
+      if (state.waveType === 'closed') return 4 * state.L / (2 * state.n - 1);
+      return 2 * state.L / state.n;
+    }
+
+    function getFrequency() {
+      return state.n * getWaveSpeed() / (2 * state.L);
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#0b0f14';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      for (let x = 0; x < canvas.width; x += 80) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+    }
+
+    function drawWave() {
+      const mid = canvas.height / 2;
+      const left = 80;
+      const right = canvas.width - 80;
+      const lengthPx = right - left;
+      const k = 2 * Math.PI / getWavelength();
+      const w = 2 * Math.PI * getFrequency();
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let i = 0; i <= 300; i++) {
+        const x = left + (i / 300) * lengthPx;
+        const xPhys = (i / 300) * state.L;
+        let y = state.amplitude * Math.sin(k * xPhys) * Math.cos(w * state.time);
+
+        // boundary conditions
+        if (state.waveType === 'closed') {
+          y = state.amplitude * Math.sin(k * xPhys) * Math.cos(w * state.time);
+        }
+
+        if (i === 0) ctx.moveTo(x, mid + y);
+        else ctx.lineTo(x, mid + y);
+      }
+      ctx.stroke();
+      ctx.lineWidth = 1;
+
+      if (state.showTraveling) {
+        ctx.strokeStyle = 'rgba(246,199,107,0.6)';
+        ctx.beginPath();
+        for (let i = 0; i <= 300; i++) {
+          const x = left + (i / 300) * lengthPx;
+          const xPhys = (i / 300) * state.L;
+          const y = state.amplitude * Math.sin(k * xPhys - w * state.time);
+          if (i === 0) ctx.moveTo(x, mid + y);
+          else ctx.lineTo(x, mid + y);
+        }
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(106,215,255,0.4)';
+        ctx.beginPath();
+        for (let i = 0; i <= 300; i++) {
+          const x = left + (i / 300) * lengthPx;
+          const xPhys = (i / 300) * state.L;
+          const y = state.amplitude * Math.sin(k * xPhys + w * state.time);
+          if (i === 0) ctx.moveTo(x, mid + y);
+          else ctx.lineTo(x, mid + y);
+        }
+        ctx.stroke();
+      }
+
+      if (state.showNodes) {
+        const nodes = state.waveType === 'closed' ? (2 * state.n) : (state.n + 1);
+        for (let i = 0; i < nodes; i++) {
+          const x = left + (i / (nodes - 1)) * lengthPx;
+          ctx.fillStyle = '#f6c76b';
+          ctx.beginPath();
+          ctx.arc(x, mid, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        const antinodes = state.waveType === 'closed' ? (2 * state.n - 1) : state.n;
+        for (let i = 0; i < antinodes; i++) {
+          const x = left + ((i + 0.5) / antinodes) * lengthPx;
+          ctx.fillStyle = 'rgba(106,215,255,0.6)';
+          ctx.beginPath();
+          ctx.arc(x, mid, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.beginPath(); ctx.moveTo(left, mid); ctx.lineTo(right, mid); ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(`L = ${state.L.toFixed(1)} m`, right - 80, mid - 10);
+    }
+
+    function updateReadout() {
+      const lambda = getWavelength();
+      const v = getWaveSpeed();
+      const f = getFrequency();
+      const nodes = state.waveType === 'closed' ? (2 * state.n) : (state.n + 1);
+      const antinodes = state.waveType === 'closed' ? (2 * state.n - 1) : state.n;
+      const text = `STANDING WAVES\n` +
+        `----------------\n` +
+        `n = ${state.n}\n` +
+        `L = ${state.L.toFixed(2)} m\n` +
+        `v = ${v.toFixed(2)} m/s\n` +
+        `λ = ${lambda.toFixed(2)} m\n` +
+        `f = ${f.toFixed(2)} Hz\n` +
+        `Nodes: ${nodes}\n` +
+        `Antinodes: ${antinodes}\n`;
+      document.getElementById('readout').textContent = text;
+
+      document.getElementById('formulaBox').textContent = `λₙ = 2L/n   fₙ = nv/2L   v = √(T/μ)`;
+    }
+
+    function tick() {
+      state.time += 0.016;
+      drawBackground();
+      drawWave();
+      updateReadout();
+      requestAnimationFrame(tick);
+    }
+
+    document.getElementById('harmonic').addEventListener('input', e => {
+      state.n = parseInt(e.target.value, 10);
+      document.getElementById('harmonicVal').textContent = state.n;
+    });
+    document.getElementById('amplitude').addEventListener('input', e => {
+      state.amplitude = parseFloat(e.target.value);
+      document.getElementById('amplitudeVal').textContent = state.amplitude.toFixed(0);
+    });
+    document.getElementById('speed').addEventListener('input', e => {
+      state.v = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = state.v.toFixed(1);
+    });
+    document.getElementById('length').addEventListener('input', e => {
+      state.L = parseFloat(e.target.value);
+      document.getElementById('lengthVal').textContent = state.L.toFixed(1);
+    });
+    document.getElementById('tension').addEventListener('input', e => {
+      state.T = parseFloat(e.target.value);
+      document.getElementById('tensionVal').textContent = state.T.toFixed(0);
+    });
+    document.getElementById('mu').addEventListener('input', e => {
+      state.mu = parseFloat(e.target.value);
+      document.getElementById('muVal').textContent = state.mu.toFixed(2);
+    });
+    document.getElementById('waveType').addEventListener('change', e => {
+      state.waveType = e.target.value;
+    });
+    document.getElementById('showTravel').addEventListener('change', e => state.showTraveling = e.target.checked);
+    document.getElementById('showNodes').addEventListener('change', e => state.showNodes = e.target.checked);
+
+    tick();
+  </script>
+</body>
+</html>
