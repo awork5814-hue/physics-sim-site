@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Doppler Broadening - Physics Experiments Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.min.css" />
+  <link rel="stylesheet" href="simulation-theme.css" />
+  <script>!function(){var t=localStorage.getItem('physicsSimTheme')||'dark';document.documentElement.setAttribute('data-theme',t)}();
+  </script>
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --text: #f5f8fd;
+      --muted: #a9b6c6;
+      --bg-1: #0c131d;
+      --bg-2: #142131;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: radial-gradient(ellipse at 20% -10%, #1a2a3d 0%, #0a0f16 50%, #050810 100%);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .background {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+    }
+    
+    .orb {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+    }
+    
+    .orb-a {
+      background: radial-gradient(circle, rgba(106, 215, 255, 0.3) 0%, transparent 70%);
+      top: -20%;
+      right: -10%;
+      animation: floatOrb 20s ease-in-out infinite;
+    }
+    
+    .orb-b {
+      background: radial-gradient(circle, rgba(246, 199, 107, 0.2) 0%, transparent 70%);
+      bottom: -30%;
+      left: -20%;
+      animation: floatOrb 25s ease-in-out infinite reverse;
+    }
+    
+    @keyframes floatOrb {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(30px, -20px) scale(1.1); }
+    }
+    
+    .site-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px clamp(16px, 4vw, 48px) 12px;
+    }
+    
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    
+    .brand-mark {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(106, 215, 255, 0.5);
+    }
+    
+    .brand-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      background: rgba(106, 215, 255, 0.1);
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      transition: all 0.2s ease;
+      margin: 16px clamp(16px, 4vw, 48px);
+    }
+    
+    .back-link:hover {
+      background: rgba(106, 215, 255, 0.2);
+      transform: translateX(-4px);
+    }
+    
+    .main-container {
+      padding: 0 clamp(16px, 4vw, 48px) 48px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+    
+    .title-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    
+    .title-section h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent) 50%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .title-section .subtitle {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    
+    .visualization-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+    
+    .controls-panel {
+      background: rgba(20, 33, 49, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      height: fit-content;
+    }
+    
+    .controls-panel h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    
+    .control-group {
+      margin-bottom: 24px;
+    }
+    
+    .control-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    
+    .control-group input[type="range"] {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      background: linear-gradient(90deg, rgba(106, 215, 255, 0.3), rgba(106, 215, 255, 0.1));
+      border-radius: 999px;
+      outline: none;
+    }
+    
+    .control-group input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 3px solid #0a1118;
+      box-shadow: 0 0 0 4px rgba(106, 215, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.4);
+      cursor: grab;
+      transition: transform 0.2s ease;
+    }
+    
+    .control-group input[type="range"]::-webkit-slider-thumb:active {
+      cursor: grabbing;
+      transform: scale(1.15);
+    }
+    
+    .control-value {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text);
+      margin-top: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+    }
+    
+    .select-wrapper {
+      position: relative;
+    }
+    
+    .select-wrapper select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(9, 14, 21, 0.7);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      appearance: none;
+    }
+    
+    .select-wrapper::after {
+      content: '▼';
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+    }
+    
+    .toggle-group input[type="checkbox"] {
+      width: 44px;
+      height: 24px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    
+    .toggle-group input[type="checkbox"]::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text);
+      top: 3px;
+      left: 3px;
+      transition: transform 0.3s ease;
+    }
+    
+    .toggle-group input[type="checkbox"]:checked {
+      background: rgba(106, 215, 255, 0.4);
+    }
+    
+    .toggle-group input[type="checkbox"]:checked::before {
+      transform: translateX(20px);
+      background: var(--accent);
+    }
+    
+    .toggle-group span {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    
+    .canvas-panel {
+      background: rgba(20, 33, 49, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+    }
+    
+    #simCanvas {
+      width: 100%;
+      height: 450px;
+      border-radius: 12px;
+      background: radial-gradient(ellipse at 50% 80%, rgba(106, 215, 255, 0.08) 0%, rgba(10, 17, 27, 0.95) 70%);
+    }
+    
+    .readouts-panel {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+    
+    .readout-card {
+      background: rgba(12, 19, 29, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .readout-card .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+    
+    .readout-card .value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    
+    .readout-card .unit {
+      font-size: 12px;
+      color: var(--text);
+      opacity: 0.7;
+    }
+    
+    .particles-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background: rgba(12, 19, 29, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      margin-top: 16px;
+    }
+    
+    .particle-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .legend-dot.fast { background: #ff6b4a; box-shadow: 0 0 8px #ff6b4a; }
+    .legend-dot.medium { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+    .legend-dot.slow { background: #4a9eff; box-shadow: 0 0 8px #4a9eff; }
+    
+    .info-panel {
+      background: rgba(20, 33, 49, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      backdrop-filter: blur(20px);
+      margin-top: 24px;
+    }
+    
+    .info-panel h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      margin-bottom: 16px;
+      color: var(--accent-2);
+    }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    
+    .info-card {
+      background: rgba(12, 19, 29, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    
+    .info-card h4 {
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    
+    .info-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    
+    .formula-box {
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 15px;
+      color: var(--text);
+      margin-top: 12px;
+    }
+    
+    @media (max-width: 900px) {
+      .visualization-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .readouts-panel {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">λ</span>
+      <div>
+        <div class="brand-title">Physics Experiments Lab</div>
+        <div class="brand-subtitle">Doppler Broadening Simulation</div>
+      </div>
+    </div>
+    <a href="index.html" class="btn ghost" style="font-size: 13px; padding: 8px 16px;">← Back</a>
+  </header>
+
+  <main class="main-container">
+    <div class="title-section">
+      <h1>Doppler Broadening</h1>
+      <p class="subtitle">
+        Explore how thermal motion of gas atoms causes spectral lines to broaden into a Gaussian profile. 
+        Temperature, atomic mass, and wavelength all affect the line width.
+      </p>
+    </div>
+
+    <div class="visualization-container">
+      <div class="controls-panel">
+        <h3>Parameters</h3>
+        
+        <div class="control-group">
+          <label>Temperature (T)</label>
+          <input type="range" id="temperature" min="500" max="10000" value="6000" step="100" />
+          <div class="control-value">
+            <span id="tempValue">6000</span>
+            <span class="unit">K</span>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>Gas Species</label>
+          <div class="select-wrapper">
+            <select id="gasSpecies">
+              <option value="1.008">Hydrogen (H) - m = 1.008 u</option>
+              <option value="4.003">Helium (He) - m = 4.003 u</option>
+              <option value="12.011">Carbon (C) - m = 12.011 u</option>
+              <option value="55.845" selected>Iron (Fe) - m = 55.845 u</option>
+              <option value="32.065">Sulfur (S) - m = 32.065 u</option>
+              <option value="28.086">Silicon (Si) - m = 28.086 u</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>Central Wavelength (λ₀)</label>
+          <input type="range" id="wavelength" min="400" max="700" value="656.28" step="0.1" />
+          <div class="control-value">
+            <span id="wavelengthValue">656.28</span>
+            <span class="unit">nm</span>
+          </div>
+        </div>
+        
+        <div class="control-group">
+          <label>Intensity</label>
+          <input type="range" id="intensity" min="20" max="100" value="80" step="1" />
+          <div class="control-value">
+            <span id="intensityValue">80</span>
+            <span class="unit">%</span>
+          </div>
+        </div>
+        
+        <h3 style="margin-top: 24px;">Options</h3>
+        
+        <div class="toggle-group">
+          <input type="checkbox" id="showParticles" checked />
+          <span>Show particles</span>
+        </div>
+        
+        <div class="toggle-group">
+          <input type="checkbox" id="showGrid" checked />
+          <span>Show grid</span>
+        </div>
+        
+        <div class="toggle-group">
+          <input type="checkbox" id="comparisonMode" />
+          <span>Comparison mode</span>
+        </div>
+      </div>
+
+      <div class="canvas-panel">
+        <canvas id="simCanvas"></canvas>
+        
+        <div class="readouts-panel">
+          <div class="readout-card">
+            <div class="label">FWHM</div>
+            <div class="value" id="fwhmValue">0.000</div>
+            <div class="unit">nm</div>
+          </div>
+          <div class="readout-card">
+            <div class="label">Doppler Width (σ)</div>
+            <div class="value" id="sigmaValue">0.000</div>
+            <div class="unit">nm</div>
+          </div>
+          <div class="readout-card">
+            <div class="label">Most Probable Speed</div>
+            <div class="value" id="speedValue">0.00</div>
+            <div class="unit">km/s</div>
+          </div>
+        </div>
+        
+        <div class="particles-container">
+          <span style="font-size: 12px; color: var(--muted);">Particle legend:</span>
+          <div class="particle-legend">
+            <div class="legend-item"><div class="legend-dot fast"></div> Fast (hot)</div>
+            <div class="legend-item"><div class="legend-dot medium"></div> Medium</div>
+            <div class="legend-item"><div class="legend-dot slow"></div> Slow (cold)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>Physics Explained</h3>
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>The Doppler Effect</h4>
+          <p>
+            Atoms moving toward the observer appear to emit at higher frequencies (blue shift), 
+            while receding atoms emit at lower frequencies (red shift). This creates a range of 
+            observed wavelengths.
+          </p>
+        </div>
+        
+        <div class="info-card">
+          <h4>Gaussian Profile</h4>
+          <p>
+            The thermal velocity distribution follows Maxwell-Boltzmann statistics, resulting 
+            in a Gaussian spectral line shape: <strong>I(ν) = I₀ · exp(-(ν-ν₀)²/2σ²)</strong>
+          </p>
+          <div class="formula-box">σ = (ν₀/c) · √(2kT/m)</div>
+        </div>
+        
+        <div class="info-card">
+          <h4>Temperature Dependence</h4>
+          <p>
+            Higher temperatures → faster atoms → broader spectral lines. The FWHM scales 
+            with the square root of temperature: <strong>FWHM ∝ √T</strong>
+          </p>
+        </div>
+        
+        <div class="info-card">
+          <h4>Mass Dependence</h4>
+          <p>
+            Heavier atoms move slower at the same temperature, producing narrower lines. 
+            This is why hydrogen lines are broader than iron lines at the same temperature.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+  (function() {
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // High DPI support
+    const dpr = window.devicePixelRatio || 1;
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Physics constants
+    const k_B = 1.380649e-23; // Boltzmann constant
+    const c = 2.99792458e8;   // Speed of light
+    const u = 1.660539e-27;   // Atomic mass unit
+
+    // State
+    let state = {
+      temperature: 6000,
+      mass: 55.845,       // Iron in atomic mass units
+      wavelength: 656.28, // H-alpha line
+      intensity: 80,
+      showParticles: true,
+      showGrid: true,
+      comparisonMode: false,
+      comparisonTemp: 3000,
+      particles: [],
+      time: 0
+    };
+
+    // Initialize particles
+    const numParticles = 120;
+    for (let i = 0; i < numParticles; i++) {
+      state.particles.push({
+        x: Math.random(),
+        y: Math.random(),
+        vx: (Math.random() - 0.5) * 2,
+        vy: (Math.random() - 0.5) * 2,
+        speed: Math.random()
+      });
+    }
+
+    // Calculate physics
+    function calculatePhysics() {
+      const T = state.temperature;
+      const m = state.mass * u;
+      const lambda0 = state.wavelength * 1e-9;
+      const nu0 = c / lambda0;
+      
+      // Doppler width (sigma in frequency)
+      const sigma_nu = (nu0 / c) * Math.sqrt(2 * k_B * T / m);
+      
+      // Convert to wavelength
+      const sigma_lambda = sigma_nu * (lambda0 * lambda0 / c);
+      
+      // FWHM = 2 * sqrt(2 * ln(2)) * sigma ≈ 2.355 * sigma
+      const fwhm_lambda = 2.355 * sigma_lambda * 1e9; // Convert to nm
+      
+      // Most probable speed: v_mp = sqrt(2kT/m)
+      const v_mp = Math.sqrt(2 * k_B * T / m) / 1000; // Convert to km/s
+      
+      return {
+        sigma: sigma_lambda * 1e9,
+        fwhm: fwhm_lambda,
+        vmp: v_mp
+      };
+    }
+
+    // Gaussian function
+    function gaussian(x, center, sigma, amplitude) {
+      return amplitude * Math.exp(-Math.pow(x - center, 2) / (2 * Math.pow(sigma, 2)));
+    }
+
+    // Draw the visualization
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      
+      ctx.clearRect(0, 0, width, height);
+      
+      // Physics calculations
+      const phys = calculatePhysics();
+      
+      // Update display values
+      document.getElementById('fwhmValue').textContent = phys.fwhm.toFixed(3);
+      document.getElementById('sigmaValue').textContent = phys.sigma.toFixed(3);
+      document.getElementById('speedValue').textContent = phys.vmp.toFixed(2);
+      
+      // Drawing parameters
+      const padding = { top: 40, bottom: 50, left: 60, right: 30 };
+      const plotWidth = width - padding.left - padding.right;
+      const plotHeight = height - padding.top - padding.bottom;
+      
+      // Wavelength range
+      const lambdaMin = state.wavelength - state.wavelength * 0.15;
+      const lambdaMax = state.wavelength + state.wavelength * 0.15;
+      
+      // Draw grid
+      if (state.showGrid) {
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = 1;
+        
+        // Vertical grid lines
+        for (let i = 0; i <= 10; i++) {
+          const x = padding.left + (i / 10) * plotWidth;
+          ctx.beginPath();
+          ctx.moveTo(x, padding.top);
+          ctx.lineTo(x, height - padding.bottom);
+          ctx.stroke();
+        }
+        
+        // Horizontal grid lines
+        for (let i = 0; i <= 5; i++) {
+          const y = padding.top + (i / 5) * plotHeight;
+          ctx.beginPath();
+          ctx.moveTo(padding.left, y);
+          ctx.lineTo(width - padding.right, y);
+          ctx.stroke();
+        }
+      }
+      
+      // Draw axes
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, height - padding.bottom);
+      ctx.lineTo(width - padding.right, height - padding.bottom);
+      ctx.stroke();
+      
+      // X-axis labels
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.textAlign = 'center';
+      for (let i = 0; i <= 5; i++) {
+        const lambda = lambdaMin + (i / 5) * (lambdaMax - lambdaMin);
+        const x = padding.left + (i / 5) * plotWidth;
+        ctx.fillText(lambda.toFixed(1) + ' nm', x, height - padding.bottom + 20);
+      }
+      
+      // Y-axis labels
+      ctx.textAlign = 'right';
+      for (let i = 0; i <= 5; i++) {
+        const intensity = (i / 5) * state.intensity;
+        const y = height - padding.bottom - (i / 5) * plotHeight;
+        ctx.fillText(intensity.toFixed(0) + '%', padding.left - 10, y + 4);
+      }
+      
+      // Draw Gaussian curve
+      const points = [];
+      const numPoints = 200;
+      for (let i = 0; i <= numPoints; i++) {
+        const lambda = lambdaMin + (i / numPoints) * (lambdaMax - lambdaMin);
+        const intensity = gaussian(lambda, state.wavelength, phys.sigma, state.intensity);
+        points.push({ x: lambda, y: intensity });
+      }
+      
+      // Create gradient fill
+      const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+      gradient.addColorStop(0, 'rgba(106, 215, 255, 0.3)');
+      gradient.addColorStop(1, 'rgba(106, 215, 255, 0)');
+      
+      // Draw filled area
+      ctx.beginPath();
+      ctx.moveTo(padding.left, height - padding.bottom);
+      points.forEach((p) => {
+        const x = padding.left + ((p.x - lambdaMin) / (lambdaMax - lambdaMin)) * plotWidth;
+        const y = height - padding.bottom - (p.y / state.intensity) * plotHeight;
+        ctx.lineTo(x, y);
+      });
+      ctx.lineTo(width - padding.right, height - padding.bottom);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      // Draw curve outline with glow
+      ctx.shadowColor = 'rgba(106, 215, 255, 0.8)';
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const x = padding.left + ((p.x - lambdaMin) / (lambdaMax - lambdaMin)) * plotWidth;
+        const y = height - padding.bottom - (p.y / state.intensity) * plotHeight;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Draw FWHM markers
+      const halfMax = state.intensity / 2;
+      const fwhmLeft = state.wavelength - phys.fwhm / 2;
+      const fwhmRight = state.wavelength + phys.fwhm / 2;
+      
+      // FWHM line
+      const fwhmY = height - padding.bottom - (halfMax / state.intensity) * plotHeight;
+      ctx.strokeStyle = 'rgba(246, 199, 107, 0.6)';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      
+      // Left marker
+      const leftX = padding.left + ((fwhmLeft - lambdaMin) / (lambdaMax - lambdaMin)) * plotWidth;
+      ctx.beginPath();
+      ctx.moveTo(leftX, fwhmY);
+      ctx.lineTo(leftX, height - padding.bottom);
+      ctx.stroke();
+      
+      // Right marker
+      const rightX = padding.left + ((fwhmRight - lambdaMin) / (lambdaMax - lambdaMin)) * plotWidth;
+      ctx.beginPath();
+      ctx.moveTo(rightX, fwhmY);
+      ctx.lineTo(rightX, height - padding.bottom);
+      ctx.stroke();
+      
+      ctx.setLineDash([]);
+      
+      // FWHM label
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.9)';
+      ctx.font = '12px IBM Plex Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText('FWHM', padding.left + plotWidth / 2, fwhmY - 15);
+      
+      // Center line
+      const centerX = padding.left + (0.5 * plotWidth);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(centerX, padding.top);
+      ctx.lineTo(centerX, height - padding.bottom);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw particles
+      if (state.showParticles) {
+        const particleScale = Math.sqrt(state.temperature / 6000);
+        
+        state.particles.forEach((p, i) => {
+          // Update position with temperature-dependent speed
+          p.x += p.vx * particleScale * 0.003;
+          p.y += p.vy * particleScale * 0.003;
+          
+          // Wrap around
+          if (p.x > 1) p.x = 0;
+          if (p.x < 0) p.x = 1;
+          if (p.y > 1) p.y = 0;
+          if (p.y < 0) p.y = 1;
+          
+          // Color based on speed
+          const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy) * particleScale;
+          let color;
+          if (speed > 1.2) color = '#ff6b4a';
+          else if (speed > 0.6) color = '#ffd700';
+          else color = '#4a9eff';
+          
+          // Draw particle (under the curve area only)
+          const lambda = lambdaMin + p.x * (lambdaMax - lambdaMin);
+          const intensity = gaussian(lambda, state.wavelength, phys.sigma, state.intensity);
+          if (intensity > state.intensity * 0.1) {
+            const px = padding.left + p.x * plotWidth;
+            const py = padding.top + p.y * plotHeight * 0.6;
+            
+            ctx.beginPath();
+            ctx.arc(px, py, 3, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        });
+      }
+      
+      // Draw comparison curve if enabled
+      if (state.comparisonMode) {
+        const comparePhys = calculateComparison();
+        
+        ctx.strokeStyle = 'rgba(167, 139, 250, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        
+        ctx.beginPath();
+        for (let i = 0; i <= numPoints; i++) {
+          const lambda = lambdaMin + (i / numPoints) * (lambdaMax - lambdaMin);
+          const intensity = gaussian(lambda, state.wavelength, comparePhys.sigma, state.intensity * 0.8);
+          const x = padding.left + ((lambda - lambdaMin) / (lambdaMax - lambdaMin)) * plotWidth;
+          const y = height - padding.bottom - (intensity / state.intensity) * plotHeight;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      
+      state.time += 16;
+      requestAnimationFrame(draw);
+    }
+
+    function calculateComparison() {
+      const T = state.comparisonTemp;
+      const m = state.mass * u;
+      const lambda0 = state.wavelength * 1e-9;
+      const nu0 = c / lambda0;
+      const sigma_nu = (nu0 / c) * Math.sqrt(2 * k_B * T / m);
+      const sigma_lambda = sigma_nu * (lambda0 * lambda0 / c);
+      return { sigma: sigma_lambda * 1e9 };
+    }
+
+    // Event listeners
+    document.getElementById('temperature').addEventListener('input', (e) => {
+      state.temperature = parseFloat(e.target.value);
+      document.getElementById('tempValue').textContent = state.temperature;
+    });
+
+    document.getElementById('gasSpecies').addEventListener('change', (e) => {
+      state.mass = parseFloat(e.target.value);
+    });
+
+    document.getElementById('wavelength').addEventListener('input', (e) => {
+      state.wavelength = parseFloat(e.target.value);
+      document.getElementById('wavelengthValue').textContent = state.wavelength.toFixed(2);
+    });
+
+    document.getElementById('intensity').addEventListener('input', (e) => {
+      state.intensity = parseFloat(e.target.value);
+      document.getElementById('intensityValue').textContent = state.intensity;
+    });
+
+    document.getElementById('showParticles').addEventListener('change', (e) => {
+      state.showParticles = e.target.checked;
+    });
+
+    document.getElementById('showGrid').addEventListener('change', (e) => {
+      state.showGrid = e.target.checked;
+    });
+
+    document.getElementById('comparisonMode').addEventListener('change', (e) => {
+      state.comparisonMode = e.target.checked;
+    });
+
+    // Start animation
+    requestAnimationFrame(draw);
+  })();
+  </script>
+</body>
+</html>

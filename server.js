@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
@@ -32,7 +31,51 @@ const PLANS = {
   monthly: { amountEGP: 50, amountUSD: 1, name: 'Monthly Subscription', months: 1 }
 };
 
-const db = new Database('physics_sim.db');
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+
+let db;
+let isTurso = false;
+
+if (TURSO_URL && TURSO_TOKEN) {
+  const { createClient } = require('@libsql/client');
+  const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+  isTurso = true;
+  console.log('Using Turso database');
+  
+  db = {
+    prepare: (sql) => ({
+      run: async (...params) => {
+        await client.execute({ sql, args: params });
+        return { changes: 1 };
+      },
+      get: async (...params) => {
+        const result = await client.execute({ sql, args: params });
+        return result.rows[0] || null;
+      },
+      all: async (...params) => {
+        const result = await client.execute({ sql, args: params });
+        return result.rows;
+      }
+    }),
+    exec: async (sql) => {
+      const statements = sql.split(';').filter(s => s.trim());
+      for (const stmt of statements) {
+        if (stmt.trim()) await client.execute({ sql: stmt });
+      }
+    }
+  };
+} else {
+  const Database = require('better-sqlite3');
+  db = new Database('physics_sim.db');
+  console.log('Using local SQLite database');
+  
+  db.prepare = (sql) => ({
+    run: (...params) => db.prepare(sql).run(...params),
+    get: (...params) => db.prepare(sql).get(...params),
+    all: (...params) => db.prepare(sql).all(...params)
+  });
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
