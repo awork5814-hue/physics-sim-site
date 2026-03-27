@@ -1460,6 +1460,10 @@ const startServer = async () => {
   });
 };
 
+app.get('/api/test', (req, res) => {
+  res.json({ test: 'ok', turso: isTurso });
+});
+
 startServer().catch(err => {
   console.error('Server failed to start:', err);
 });
