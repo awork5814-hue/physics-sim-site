@@ -36,41 +36,50 @@ const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
 let db;
 let isTurso = false;
+let SQL;
 
 console.log('TURSO_URL:', TURSO_URL ? 'set' : 'not set');
 console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
 
-if (TURSO_URL && TURSO_TOKEN) {
-  try {
-    const { createClient } = require('@libsql/client');
-    const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
-    isTurso = true;
-    console.log('Using Turso database');
-    
-    db = {
-      prepare: (sql) => ({
-        run: (...params) => client.execute({ sql, args: params }),
-        get: (...params) => client.execute({ sql, args: params }).then(r => r.rows[0] || null),
-        all: (...params) => client.execute({ sql, args: params }).then(r => r.rows)
-      }),
-      exec: (sql) => {
-        const statements = sql.split(';').filter(s => s.trim());
-        return Promise.all(statements.map(stmt => stmt.trim() ? client.execute({ sql: stmt }) : Promise.resolve()));
-      }
-    };
-  } catch (e) {
-    console.error('Failed to create Turso client:', e);
+async function initDatabase() {
+  if (TURSO_URL && TURSO_TOKEN) {
+    try {
+      const { createClient } = require('@libsql/client');
+      const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+      isTurso = true;
+      console.log('Using Turso database');
+      
+      db = {
+        prepare: (sql) => ({
+          run: async (...params) => { await client.execute({ sql, args: params }); return { changes: 1 }; },
+          get: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows[0] || null; },
+          all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
+        }),
+        exec: async (sql) => {
+          const statements = sql.split(';').filter(s => s.trim());
+          for (const stmt of statements) {
+            if (stmt.trim()) await client.execute({ sql: stmt });
+          }
+        }
+      };
+      return;
+    } catch (e) {
+      console.error('Failed to create Turso client:', e.message);
+    }
   }
-} else {
-  const Database = require('better-sqlite3');
-  db = new Database('physics_sim.db');
-  console.log('Using local SQLite database');
+  
+  console.log('Using in-memory SQLite (sql.js)');
+  const initSqlJs = require('sql.js');
+  SQL = await initSqlJs();
+  db = new SQL.Database();
   
   db.prepare = (sql) => ({
-    run: (...params) => db.prepare(sql).run(...params),
-    get: (...params) => db.prepare(sql).get(...params),
-    all: (...params) => db.prepare(sql).all(...params)
+    run: (...params) => { db.run(sql, params); return { changes: db.getRowsModified() }; },
+    get: (...params) => { const stmt = db.prepare(sql); stmt.bind(params); if (stmt.step()) { const row = stmt.getAsObject(); stmt.free(); return row; } stmt.free(); return null; },
+    all: (...params) => { const results = []; const stmt = db.prepare(sql); stmt.bind(params); while (stmt.step()) results.push(stmt.getAsObject()); stmt.free(); return results; }
   });
+  
+  db.exec = (sql) => { db.run(sql); };
 }
 
 const initDb = async () => {
@@ -1443,7 +1452,7 @@ app.get('/', (req, res) => {
 
 const startServer = async () => {
   try {
-    await initDb();
+    await initDatabase();
   } catch (error) {
     console.error('Failed to initialize database:', error);
   }
@@ -1461,19 +1470,7 @@ const startServer = async () => {
     console.log(`Physics Experiments Lab server running on port ${PORT}`);
     console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
     console.log(`Integration ID: ${PAYMOB_INTEGRATION_ID}`);
-    console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'physics_sim.db'}`);
-  });
-};
-
-  app.get('/api/test', (req, res) => {
-    res.json({ test: 'ok', turso: isTurso });
-  });
-  
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Physics Experiments Lab server running on port ${PORT}`);
-    console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
-    console.log(`Integration ID: ${PAYMOB_INTEGRATION_ID}`);
-    console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'physics_sim.db'}`);
+    console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'sql.js (in-memory)'}`);
   });
 };
 

@@ -9,6 +9,7 @@
     "jsonwebtoken": "^9.0.3",
     "node-fetch": "^2.7.0",
     "nodemailer": "^8.0.3",
+    "sql.js": "^1.14.1",
     "uuid": "^13.0.0"
   },
   "name": "physics-sim-site",
