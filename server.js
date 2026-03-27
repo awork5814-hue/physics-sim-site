@@ -112,35 +112,36 @@ const initDb = async () => {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS paytabs_orders (
+      cart_id TEXT PRIMARY KEY,
+      user_id TEXT,
+      plan TEXT NOT NULL,
+      amount REAL NOT NULL,
+      currency TEXT DEFAULT 'USD',
+      status TEXT DEFAULT 'pending',
+      tran_ref TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS payment_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      status TEXT DEFAULT 'info',
+      order_id TEXT,
+      amount REAL,
+      currency TEXT,
+      user_id TEXT,
+      txn_id TEXT,
+      payload TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
   console.log('Database tables initialized');
 };
 
 initDb();
-
-  CREATE TABLE IF NOT EXISTS paytabs_orders (
-    cart_id TEXT PRIMARY KEY,
-    user_id TEXT,
-    plan TEXT NOT NULL,
-    amount REAL NOT NULL,
-    currency TEXT DEFAULT 'USD',
-    status TEXT DEFAULT 'pending',
-    tran_ref TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS payment_events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    provider TEXT NOT NULL,
-    event_type TEXT NOT NULL,
-    status TEXT DEFAULT 'info',
-    order_id TEXT,
-    amount REAL,
-    currency TEXT,
-    user_id TEXT,
-    txn_id TEXT,
-    payload TEXT,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
 
   CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
   CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
