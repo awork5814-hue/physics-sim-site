@@ -45,24 +45,13 @@ if (TURSO_URL && TURSO_TOKEN) {
   
   db = {
     prepare: (sql) => ({
-      run: async (...params) => {
-        await client.execute({ sql, args: params });
-        return { changes: 1 };
-      },
-      get: async (...params) => {
-        const result = await client.execute({ sql, args: params });
-        return result.rows[0] || null;
-      },
-      all: async (...params) => {
-        const result = await client.execute({ sql, args: params });
-        return result.rows;
-      }
+      run: (...params) => client.execute({ sql, args: params }),
+      get: (...params) => client.execute({ sql, args: params }).then(r => r.rows[0] || null),
+      all: (...params) => client.execute({ sql, args: params }).then(r => r.rows)
     }),
-    exec: async (sql) => {
+    exec: (sql) => {
       const statements = sql.split(';').filter(s => s.trim());
-      for (const stmt of statements) {
-        if (stmt.trim()) await client.execute({ sql: stmt });
-      }
+      return Promise.all(statements.map(stmt => stmt.trim() ? client.execute({ sql: stmt }) : Promise.resolve()));
     }
   };
 } else {
@@ -217,7 +206,7 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
-    const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+    const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -227,7 +216,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const verifyToken = uuidv4();
     const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    db.prepare('INSERT INTO users (id, email, password_hash, name, verify_token, verify_token_expiry) VALUES (?, ?, ?, ?, ?, ?)').run(
+    await db.prepare('INSERT INTO users (id, email, password_hash, name, verify_token, verify_token_expiry) VALUES (?, ?, ?, ?, ?, ?)').run(
       userId,
       email.toLowerCase(),
       passwordHash,
@@ -236,7 +225,7 @@ app.post('/api/auth/signup', async (req, res) => {
       verifyExpiry
     );
 
-    db.prepare('INSERT INTO user_data (user_id) VALUES (?)').run(userId);
+    await db.prepare('INSERT INTO user_data (user_id) VALUES (?)').run(userId);
 
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const verifyUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
