@@ -193,6 +193,7 @@ const emailTransporter = nodemailer.createTransport(emailConfig);
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
+    console.log('Signup attempt:', email);
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -207,7 +208,9 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email format' });
     }
 
+    console.log('Checking existing user...');
     const existing = await db.prepare('SELECT id FROM users WHERE email = ?').get(email.toLowerCase());
+    console.log('Existing user:', existing);
     if (existing) {
       return res.status(400).json({ error: 'Email already registered' });
     }
@@ -217,6 +220,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const verifyToken = uuidv4();
     const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
+    console.log('Inserting user...');
     await db.prepare('INSERT INTO users (id, email, password_hash, name, verify_token, verify_token_expiry) VALUES (?, ?, ?, ?, ?, ?)').run(
       userId,
       email.toLowerCase(),
@@ -225,8 +229,10 @@ app.post('/api/auth/signup', async (req, res) => {
       verifyToken,
       verifyExpiry
     );
+    console.log('User inserted');
 
     await db.prepare('INSERT INTO user_data (user_id) VALUES (?)').run(userId);
+    console.log('User data inserted');
 
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
       const verifyUrl = `${process.env.BASE_URL || 'http://localhost:3000'}/verify-email?token=${verifyToken}`;
@@ -266,7 +272,8 @@ app.post('/api/auth/signup', async (req, res) => {
     });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Signup failed' });
+    console.error('Signup error stack:', error.stack);
+    res.status(500).json({ error: 'Signup failed: ' + error.message });
   }
 });
 
