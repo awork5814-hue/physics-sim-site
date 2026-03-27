@@ -1439,6 +1439,15 @@ app.get('/', (req, res) => {
 const startServer = async () => {
   await initDb();
   
+  app.get('/api/db-test', async (req, res) => {
+    try {
+      const result = await db.prepare('SELECT 1 as test').get();
+      res.json({ success: true, result });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  });
+  
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Physics Experiments Lab server running on port ${PORT}`);
     console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
