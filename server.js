@@ -83,8 +83,14 @@ async function initDatabase() {
 }
 
 async function initDb() {
+  console.log('initDb called, creating tables...');
+  console.log('db object:', typeof db);
+  console.log('db.prepare:', typeof db.prepare);
   console.log('Creating database tables...');
-  await db.exec(`
+  
+  try {
+    await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
@@ -244,7 +250,10 @@ const oldInitDb = async () => {
     CREATE INDEX IF NOT EXISTS idx_payment_events_provider ON payment_events(provider);
     CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
   `);
-  console.log('Database tables initialized');
+    console.log('Database tables initialized');
+  } catch (e) {
+    console.error('Error creating tables:', e);
+  }
 };
 
 const hashPassword = (password) => bcrypt.hashSync(password, 10);
