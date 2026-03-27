@@ -1437,7 +1437,11 @@ app.get('/', (req, res) => {
 });
 
 const startServer = async () => {
-  await initDb();
+  try {
+    await initDb();
+  } catch (error) {
+    console.error('Failed to initialize database:', error);
+  }
   
   app.get('/api/db-test', async (req, res) => {
     try {
@@ -1456,4 +1460,6 @@ const startServer = async () => {
   });
 };
 
-startServer();
+startServer().catch(err => {
+  console.error('Server failed to start:', err);
+});
