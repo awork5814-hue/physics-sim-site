@@ -1458,8 +1458,20 @@ const startServer = async () => {
   });
 };
 
-app.get('/api/test', (req, res) => {
-  res.json({ test: 'ok', turso: isTurso });
+  app.get('/api/test', (req, res) => {
+    res.json({ test: 'ok', turso: isTurso });
+  });
+  
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Physics Experiments Lab server running on port ${PORT}`);
+    console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
+    console.log(`Integration ID: ${PAYMOB_INTEGRATION_ID}`);
+    console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'physics_sim.db'}`);
+  });
+};
+
+startServer().catch(err => {
+  console.error('Server failed to start:', err);
 });
 
 startServer().catch(err => {
