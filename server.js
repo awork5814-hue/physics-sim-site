@@ -1444,13 +1444,13 @@ app.get('/api/user/subscription', authMiddleware, (req, res) => {
   });
 });
 
-app.use(express.static(path.join(__dirname)));
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
 const startServer = async () => {
+  app.use(express.static(path.join(__dirname)));
+  
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+  });
+  
   try {
     await initDatabase();
   } catch (error) {
@@ -1477,10 +1477,6 @@ const startServer = async () => {
     console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'sql.js (in-memory)'}`);
   });
 };
-
-startServer().catch(err => {
-  console.error('Server failed to start:', err);
-});
 
 startServer().catch(err => {
   console.error('Server failed to start:', err);
