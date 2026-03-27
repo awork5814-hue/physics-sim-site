@@ -37,23 +37,30 @@ const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
 let db;
 let isTurso = false;
 
+console.log('TURSO_URL:', TURSO_URL ? 'set' : 'not set');
+console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
+
 if (TURSO_URL && TURSO_TOKEN) {
-  const { createClient } = require('@libsql/client');
-  const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
-  isTurso = true;
-  console.log('Using Turso database');
-  
-  db = {
-    prepare: (sql) => ({
-      run: (...params) => client.execute({ sql, args: params }),
-      get: (...params) => client.execute({ sql, args: params }).then(r => r.rows[0] || null),
-      all: (...params) => client.execute({ sql, args: params }).then(r => r.rows)
-    }),
-    exec: (sql) => {
-      const statements = sql.split(';').filter(s => s.trim());
-      return Promise.all(statements.map(stmt => stmt.trim() ? client.execute({ sql: stmt }) : Promise.resolve()));
-    }
-  };
+  try {
+    const { createClient } = require('@libsql/client');
+    const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+    isTurso = true;
+    console.log('Using Turso database');
+    
+    db = {
+      prepare: (sql) => ({
+        run: (...params) => client.execute({ sql, args: params }),
+        get: (...params) => client.execute({ sql, args: params }).then(r => r.rows[0] || null),
+        all: (...params) => client.execute({ sql, args: params }).then(r => r.rows)
+      }),
+      exec: (sql) => {
+        const statements = sql.split(';').filter(s => s.trim());
+        return Promise.all(statements.map(stmt => stmt.trim() ? client.execute({ sql: stmt }) : Promise.resolve()));
+      }
+    };
+  } catch (e) {
+    console.error('Failed to create Turso client:', e);
+  }
 } else {
   const Database = require('better-sqlite3');
   db = new Database('physics_sim.db');
