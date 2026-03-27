@@ -77,47 +77,56 @@ if (TURSO_URL && TURSO_TOKEN) {
   });
 }
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT DEFAULT '',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    last_login TEXT,
-    plan TEXT DEFAULT 'free',
-    plan_expiry TEXT,
-    subscription_txn_id TEXT,
-    reset_token TEXT,
-    reset_token_expiry TEXT,
-    avatar TEXT
-  );
+const initDb = async () => {
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name TEXT DEFAULT '',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      last_login TEXT,
+      plan TEXT DEFAULT 'free',
+      plan_expiry TEXT,
+      subscription_txn_id TEXT,
+      reset_token TEXT,
+      reset_token_expiry TEXT,
+      avatar TEXT,
+      email_verified INTEGER DEFAULT 0,
+      verify_token TEXT,
+      verify_token_expiry TEXT
+    );
 
-  CREATE TABLE IF NOT EXISTS user_data (
-    user_id TEXT PRIMARY KEY,
-    favorites TEXT DEFAULT '[]',
-    achievements TEXT DEFAULT '[]',
-    quiz_progress TEXT DEFAULT '{}',
-    streak_count INTEGER DEFAULT 0,
-    streak_last_date TEXT,
-    settings TEXT DEFAULT '{}',
-    local_storage_data TEXT DEFAULT '{}',
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
+    CREATE TABLE IF NOT EXISTS user_data (
+      user_id TEXT PRIMARY KEY,
+      favorites TEXT DEFAULT '[]',
+      achievements TEXT DEFAULT '[]',
+      quiz_progress TEXT DEFAULT '{}',
+      streak_count INTEGER DEFAULT 0,
+      streak_last_date TEXT,
+      settings TEXT DEFAULT '{}',
+      local_storage_data TEXT DEFAULT '{}',
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
 
-  CREATE TABLE IF NOT EXISTS subscriptions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
-    plan TEXT NOT NULL,
-    amount INTEGER NOT NULL,
-    currency TEXT DEFAULT 'EGP',
-    txn_id TEXT,
-    paymob_order_id TEXT,
-    status TEXT DEFAULT 'active',
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    expires_at TEXT,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      currency TEXT DEFAULT 'EGP',
+      txn_id TEXT,
+      paymob_order_id TEXT,
+      status TEXT DEFAULT 'active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      expires_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+  console.log('Database tables initialized');
+};
+
+initDb();
 
   CREATE TABLE IF NOT EXISTS paytabs_orders (
     cart_id TEXT PRIMARY KEY,
@@ -1430,9 +1439,15 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Physics Experiments Lab server running on port ${PORT}`);
-  console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
-  console.log(`Integration ID: ${PAYMOB_INTEGRATION_ID}`);
-  console.log(`Database: physics_sim.db`);
-});
+const startServer = async () => {
+  await initDb();
+  
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Physics Experiments Lab server running on port ${PORT}`);
+    console.log(`Paymob mode: ${PAYMOB_API_KEY?.includes('test') ? 'TEST' : 'LIVE'}`);
+    console.log(`Integration ID: ${PAYMOB_INTEGRATION_ID}`);
+    console.log(`Database: ${isTurso ? 'Turso (cloud)' : 'physics_sim.db'}`);
+  });
+};
+
+startServer();
