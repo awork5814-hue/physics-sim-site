@@ -138,17 +138,15 @@ const initDb = async () => {
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  await db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_paytabs_orders_user ON paytabs_orders(user_id);
+    CREATE INDEX IF NOT EXISTS idx_payment_events_provider ON payment_events(provider);
+    CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
+  `);
   console.log('Database tables initialized');
 };
-
-initDb();
-
-  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-  CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
-  CREATE INDEX IF NOT EXISTS idx_paytabs_orders_user ON paytabs_orders(user_id);
-  CREATE INDEX IF NOT EXISTS idx_payment_events_provider ON payment_events(provider);
-  CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
-`);
 
 const hashPassword = (password) => bcrypt.hashSync(password, 10);
 const verifyPassword = (password, hash) => bcrypt.compareSync(password, hash);
