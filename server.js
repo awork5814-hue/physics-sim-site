@@ -1462,8 +1462,12 @@ const startServer = async () => {
       const result = await db.prepare('SELECT 1 as test').get();
       res.json({ success: true, result });
     } catch (error) {
-      res.json({ success: false, error: error.message });
+      res.json({ success: false, error: error.message, stack: error.stack });
     }
+  });
+  
+  app.get('/api/debug', (req, res) => {
+    res.json({ turso: isTurso, dbType: isTurso ? 'Turso' : 'sql.js' });
   });
   
   app.listen(PORT, '0.0.0.0', () => {
