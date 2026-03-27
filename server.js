@@ -42,42 +42,7 @@ console.log('TURSO_URL:', TURSO_URL ? 'set' : 'not set');
 console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
 
 async function initDatabase() {
-  if (TURSO_URL && TURSO_TOKEN) {
-    try {
-      const { createClient } = require('@libsql/client');
-      const client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
-      isTurso = true;
-      console.log('Using Turso database');
-      
-      db = {
-        prepare: (sql) => ({
-          run: async (...params) => { await client.execute({ sql, args: params }); return { changes: 1 }; },
-          get: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows[0] || null; },
-          all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
-        }),
-        exec: async (sql) => {
-          console.log('Turso exec called with SQL length:', sql.length);
-          const statements = sql.split(';').filter(s => s.trim());
-          console.log('Number of statements:', statements.length);
-          for (const stmt of statements) {
-            if (stmt.trim()) {
-              console.log('Executing:', stmt.substring(0, 50) + '...');
-              try {
-                await client.execute({ sql: stmt });
-              } catch (e) {
-                console.error('Error executing statement:', e.message);
-              }
-            }
-          }
-        }
-      };
-      return;
-    } catch (e) {
-      console.error('Failed to create Turso client:', e.message);
-    }
-  }
-  
-  console.log('Using in-memory SQLite (sql.js)');
+  console.log('Initializing sql.js...');
   const initSqlJs = require('sql.js');
   SQL = await initSqlJs();
   db = new SQL.Database();
@@ -89,6 +54,8 @@ async function initDatabase() {
   });
   
   db.exec = (sql) => { db.run(sql); };
+  
+  console.log('Using in-memory SQLite (sql.js)');
 }
 
 async function initDb() {
