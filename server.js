@@ -65,9 +65,9 @@ async function initDatabase() {
       
       db = {
         prepare: (sql) => ({
-          run: async (...params) => { await libsqlClient.execute({ sql, args: params }); return { changes: 1 }; },
-          get: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r.rows[0] || null; },
-          all: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r.rows; }
+          run: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return { changes: r?.changes || 0 }; },
+          get: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows?.[0] || null; },
+          all: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows || []; }
         }),
         exec: async (sql) => { 
           if (!sql || !sql.trim()) return;
@@ -75,7 +75,7 @@ async function initDatabase() {
           for (const stmt of statements) {
             if (stmt.trim()) {
               try {
-                await libsqlClient.execute({ sql: stmt.trim() });
+                await libsqlClient.execute(stmt.trim());
               } catch(e) {
                 console.log('exec stmt error:', e.message);
               }
@@ -107,16 +107,17 @@ async function initDatabase() {
 }
 
 async function initTables() {
+  if (!libsqlClient) return;
   console.log('Creating tables with libsqlClient...');
   try {
-    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)' });
-    console.log('Users table created');
-    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')' });
-    console.log('User_data table created');
-    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)' });
-    console.log('Subscriptions table created');
+    const r1 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
+    console.log('Users table created:', r1);
+    const r2 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')');
+    console.log('User_data table created:', r2);
+    const r3 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)');
+    console.log('Subscriptions table created:', r3);
   } catch (e) {
-    console.log('Table error:', e.message);
+    console.log('Table error:', e.message, e.stack);
   }
 }
 
