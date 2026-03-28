@@ -1,3 +1,7 @@
+// Store Turso vars BEFORE dotenv loads
+const RENDER_TURSO_URL = process.env.TURSO_DATABASE_URL;
+const RENDER_TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -49,15 +53,14 @@ let db;
 let isTurso = false;
 
 async function initDatabase() {
-  // Try direct access
-  const urlValue = process.env.TURSO_DATABASE_URL;
-  const tokenValue = process.env.TURSO_AUTH_TOKEN;
+  // Use pre-stored Render env vars
+  const urlValue = RENDER_TURSO_URL;
+  const tokenValue = RENDER_TURSO_TOKEN;
   
   console.log('==========================================');
-  console.log('INIT DATABASE - DIRECT ACCESS');
-  console.log('TURSO_DATABASE_URL value:', urlValue);
-  console.log('TURSO_AUTH_TOKEN value:', tokenValue ? 'exists' : 'undefined');
-  console.log('JSON stringified:', JSON.stringify(process.env).slice(0, 500));
+  console.log('INIT DATABASE - RENDER VARS');
+  console.log('TURSO_DATABASE_URL:', urlValue);
+  console.log('TURSO_AUTH_TOKEN:', tokenValue ? 'exists' : 'undefined');
   console.log('==========================================');
   
   if (urlValue && tokenValue) {
