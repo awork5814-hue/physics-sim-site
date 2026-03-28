@@ -595,7 +595,7 @@
     <div class="level-tabs">
       <button class="level-tab active" data-level="1">⚡ Level 1: Basics</button>
       <button class="level-tab active" data-level="2">🔧 Level 2: Build</button>
-      <button class="level-tab" data-level="3">🏠 Level 3: Real World</button>
+      <button class="level-tab active" data-level="3">🏠 Level 3: Real World</button>
     </div>
   </header>
 
@@ -751,6 +751,141 @@
         <button class="component-btn" id="toggleSwitch" style="width:100%;margin-top:8px;">
           🔀 Switch: <span id="switchStatus">CLOSED</span>
         </button>
+      </div>
+
+      <div class="panel" id="level3Controls" style="display:none;">
+        <div class="panel-title">🏠 Real World Applications</div>
+        
+        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
+          <button class="component-btn active" id="appLedCalc" data-app="ledcalc">💡 LED Calculator</button>
+          <button class="component-btn" id="appPowerCalc" data-app="powercalc">⚡ Power Calculator</button>
+          <button class="component-btn" id="appFaultFind" data-app="faultfind">🔍 Fault Finder</button>
+        </div>
+
+        <!-- LED Calculator Panel -->
+        <div id="ledCalculatorPanel">
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">🔋 Source Voltage</span>
+              <span class="slider-value" id="ledSourceVoltage">9 V</span>
+            </div>
+            <input type="range" id="ledSourceSlider" min="3" max="24" step="0.5" value="9">
+          </div>
+          
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">LED Color (Forward Voltage)</span>
+            </div>
+            <select id="ledType" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;">
+              <option value="1.8">Red/Orange/Yellow (1.8-2V)</option>
+              <option value="2.2">Green (2.2V)</option>
+              <option value="2.8">Blue/White (2.8-3.6V)</option>
+              <option value="3.2">UV (3.2-3.6V)</option>
+            </select>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">💡 LED Current</span>
+              <span class="slider-value" id="ledCurrent">20 mA</span>
+            </div>
+            <input type="range" id="ledCurrentSlider" min="5" max="50" step="5" value="20">
+          </div>
+
+          <div style="background:rgba(0,168,255,0.1);border:1px solid rgba(0,168,255,0.3);border-radius:10px;padding:16px;margin-top:12px;text-align:center;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Required Resistor</div>
+            <div style="font-size:28px;font-weight:700;color:var(--accent);" id="ledResistorResult">360 Ω</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:8px;">Standard: <span id="ledStandardResistor">330 Ω</span> or <span id="ledStandardResistor2">390 Ω</span></div>
+          </div>
+
+          <div style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;">
+            <div style="font-size:11px;color:var(--text-muted);">Calculation:</div>
+            <div style="font-size:12px;font-family:monospace;margin-top:4px;" id="ledCalcFormula">R = (9V - 1.8V) / 0.02A = 360Ω</div>
+          </div>
+        </div>
+
+        <!-- Power Calculator Panel -->
+        <div id="powerCalculatorPanel" style="display:none;">
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">🔌 Device Voltage</span>
+              <span class="slider-value" id="deviceVoltage">220 V</span>
+            </div>
+            <select id="deviceVoltageSelect" style="width:100%;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;">
+              <option value="1.5">1.5V (Batteries)</option>
+              <option value="5">5V (USB)</option>
+              <option value="12">12V (Car)</option>
+              <option value="220">220V (Mains)</option>
+            </select>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">⚡ Device Power</span>
+              <span class="slider-value" id="devicePower">60 W</span>
+            </div>
+            <input type="range" id="devicePowerSlider" min="1" max="2000" step="1" value="60">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">⏱️ Usage Hours/Day</span>
+              <span class="slider-value" id="usageHours">4 hrs</span>
+            </div>
+            <input type="range" id="usageHoursSlider" min="0.5" max="24" step="0.5" value="4">
+          </div>
+
+          <div style="background:rgba(46,213,115,0.1);border:1px solid rgba(46,213,115,0.3);border-radius:10px;padding:16px;margin-top:12px;text-align:center;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Daily Consumption</div>
+            <div style="font-size:24px;font-weight:700;color:#2ed573;" id="dailyConsumption">240 Wh</div>
+          </div>
+
+          <div style="background:rgba(255,165,2,0.1);border:1px solid rgba(255,165,2,0.3);border-radius:10px;padding:16px;margin-top:12px;text-align:center;">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Monthly Cost (approx. 1 EGP/kWh)</div>
+            <div style="font-size:28px;font-weight:700;color:#ffa502;" id="monthlyCost">7.2 EGP</div>
+          </div>
+
+          <div style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;">
+            <div style="font-size:11px;color:var(--text-muted);">Appliance Examples:</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">
+              <button class="preset-btn" data-power="10">💡 10W</button>
+              <button class="preset-btn" data-power="40">💡 40W</button>
+              <button class="preset-btn" data-power="100">📺 100W</button>
+              <button class="preset-btn" data-power="1500">🔥 1500W</button>
+              <button class="preset-btn" data-power="2000">❄️ 2000W</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fault Finder Panel -->
+        <div id="faultFinderPanel" style="display:none;">
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Identify what's wrong with the circuit:</p>
+          
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="component-btn" id="faultOpen" style="width:100%;text-align:left;">
+              🔌 Open Circuit - No current flows
+            </button>
+            <button class="component-btn" id="faultShort" style="width:100%;text-align:left;">
+              ⚡ Short Circuit - Too much current!
+            </button>
+            <button class="component-btn" id="faultHighR" style="width:100%;text-align:left;">
+              📈 High Resistance - Dim light
+            </button>
+            <button class="component-btn" id="faultLowV" style="width:100%;text-align:left;">
+              🔋 Low Voltage - Not enough power
+            </button>
+          </div>
+
+          <div id="faultExplanation" style="margin-top:16px;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;display:none;">
+            <div style="font-weight:600;margin-bottom:8px;" id="faultTitle"></div>
+            <div style="font-size:13px;color:var(--text-muted);" id="faultDesc"></div>
+          </div>
+
+          <div style="margin-top:16px;padding:12px;background:rgba(0,168,255,0.1);border-radius:8px;">
+            <div style="font-size:12px;color:var(--accent);margin-bottom:8px;">💡 How to Fix:</div>
+            <div style="font-size:13px;color:var(--text-muted);" id="faultFix"></div>
+          </div>
+        </div>
       </div>
 
       <div class="panel" id="infoPanel">
@@ -1403,6 +1538,7 @@
       const toolbar = document.getElementById('toolbar');
       const controlPanel = document.querySelector('.control-panel');
       const builderControls = document.getElementById('builderControls');
+      const level3Controls = document.getElementById('level3Controls');
       
       // Hide Level 1 controls in builder mode
       const level1Controls = controlPanel.querySelectorAll('.panel');
@@ -1411,7 +1547,8 @@
         breadcrumb.textContent = "Ohm's Law Lab / Introduction";
         title.textContent = '🔌 Simple Circuit';
         toolbar.style.display = 'flex';
-        builderControls.style.display = 'none';
+        if (builderControls) builderControls.style.display = 'none';
+        if (level3Controls) level3Controls.style.display = 'none';
         level1Controls.forEach(p => p.style.display = '');
         state.mode = 'simple';
         resetToSimple();
@@ -1419,7 +1556,8 @@
         breadcrumb.textContent = "Ohm's Law Lab / Circuit Builder";
         title.textContent = '🔧 Build Your Circuit';
         toolbar.style.display = 'flex';
-        builderControls.style.display = '';
+        if (builderControls) builderControls.style.display = '';
+        if (level3Controls) level3Controls.style.display = 'none';
         level1Controls.forEach(p => p.style.display = 'none');
         state.mode = 'builder';
         initBuilder();
@@ -1427,9 +1565,109 @@
         breadcrumb.textContent = "Ohm's Law Lab / Real World";
         title.textContent = '🏠 Real World Applications';
         toolbar.style.display = 'flex';
-        builderControls.style.display = 'none';
-        level1Controls.forEach(p => p.style.display = '');
+        if (builderControls) builderControls.style.display = 'none';
+        if (level3Controls) level3Controls.style.display = '';
+        level1Controls.forEach(p => p.style.display = 'none');
+        state.mode = 'realworld';
+        initLevel3();
       }
+    }
+
+    function initLevel3() {
+      // Initialize Level 3 app
+      calculateLEDResistor();
+      calculatePower();
+    }
+
+    function calculateLEDResistor() {
+      const sourceV = parseFloat(document.getElementById('ledSourceSlider')?.value || 9);
+      const forwardV = parseFloat(document.getElementById('ledType')?.value || 1.8);
+      const currentMA = parseInt(document.getElementById('ledCurrentSlider')?.value || 20);
+      const currentA = currentMA / 1000;
+      
+      const resistor = (sourceV - forwardV) / currentA;
+      const resultEl = document.getElementById('ledResistorResult');
+      const formulaEl = document.getElementById('ledCalcFormula');
+      
+      if (resultEl) resultEl.textContent = Math.round(resistor) + ' Ω';
+      
+      if (formulaEl) {
+        formulaEl.textContent = `R = (${sourceV}V - ${forwardV}V) / ${currentA}A = ${Math.round(resistor)}Ω`;
+      }
+      
+      // Standard resistor values
+      const standard1 = [100, 150, 220, 330, 390, 470, 560, 680, 820, 1000];
+      const std1 = standard1.find(s => s >= resistor) || standard1[standard1.length-1];
+      const std2 = standard1[standard1.indexOf(std1) + 1] || std1;
+      
+      if (document.getElementById('ledStandardResistor')) {
+        document.getElementById('ledStandardResistor').textContent = std1 + ' Ω';
+        document.getElementById('ledStandardResistor2').textContent = std2 + ' Ω';
+      }
+    }
+
+    function calculatePower() {
+      const voltage = parseFloat(document.getElementById('deviceVoltageSelect')?.value || 220);
+      const power = parseInt(document.getElementById('devicePowerSlider')?.value || 60);
+      const hours = parseFloat(document.getElementById('usageHoursSlider')?.value || 4);
+      
+      const dailyWh = power * hours;
+      const monthlyKWh = (dailyWh * 30) / 1000;
+      const cost = monthlyKWh * 1; // 1 EGP per kWh approximate
+      
+      if (document.getElementById('dailyConsumption')) {
+        document.getElementById('dailyConsumption').textContent = dailyWh + ' Wh';
+      }
+      if (document.getElementById('monthlyCost')) {
+        document.getElementById('monthlyCost').textContent = cost.toFixed(1) + ' EGP';
+      }
+    }
+
+    function showLevel3App(appName) {
+      document.getElementById('ledCalculatorPanel').style.display = appName === 'ledcalc' ? '' : 'none';
+      document.getElementById('powerCalculatorPanel').style.display = appName === 'powercalc' ? '' : 'none';
+      document.getElementById('faultFinderPanel').style.display = appName === 'faultfind' ? '' : 'none';
+      
+      document.querySelectorAll('#level3Controls .component-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.app === appName);
+      });
+    }
+
+    function showFault(type) {
+      const explanation = document.getElementById('faultExplanation');
+      const title = document.getElementById('faultTitle');
+      const desc = document.getElementById('faultDesc');
+      const fix = document.getElementById('faultFix');
+      
+      explanation.style.display = '';
+      
+      const faults = {
+        open: {
+          title: '🔌 Open Circuit',
+          desc: 'The circuit is broken - current cannot flow. This could be a disconnected wire, a blown fuse, or a switch that is open.',
+          fix: 'Check all wire connections, ensure switches are closed, replace any blown fuses.'
+        },
+        short: {
+          title: '⚡ Short Circuit',
+          desc: 'Current is taking a shortcut with very low resistance. This causes excessive current and can be dangerous!',
+          fix: 'Turn off power immediately. Check for damaged insulation, loose connections, or wires touching.'
+        },
+        highR: {
+          title: '📈 High Resistance',
+          desc: 'Too much resistance in the circuit. Lights are dim because not enough current can flow.',
+          fix: 'Check for corroded connections, loose terminals, or use wires with lower gauge (thicker).'
+        },
+        lowV: {
+          title: '🔋 Low Voltage',
+          desc: 'Not enough voltage to power the device properly. Devices may not work or work poorly.',
+          fix: 'Check battery charge, ensure proper power supply rating, check for voltage drop in wiring.'
+        }
+      };
+      
+      const f = faults[type];
+      title.textContent = f.title;
+      desc.textContent = f.desc;
+      fix.textContent = f.fix;
     }
 
     function resetToSimple() {
@@ -1732,6 +1970,48 @@
 
     // Initialize help
     renderHelp();
+
+    // ============ LEVEL 3 CONTROLS ============
+    // LED Calculator
+    document.getElementById('ledSourceSlider')?.addEventListener('input', (e) => {
+      document.getElementById('ledSourceVoltage').textContent = e.target.value + ' V';
+      calculateLEDResistor();
+    });
+    document.getElementById('ledType')?.addEventListener('change', calculateLEDResistor);
+    document.getElementById('ledCurrentSlider')?.addEventListener('input', (e) => {
+      document.getElementById('ledCurrent').textContent = e.target.value + ' mA';
+      calculateLEDResistor();
+    });
+
+    // Power Calculator
+    document.getElementById('deviceVoltageSelect')?.addEventListener('change', calculatePower);
+    document.getElementById('devicePowerSlider')?.addEventListener('input', (e) => {
+      document.getElementById('devicePower').textContent = e.target.value + ' W';
+      calculatePower();
+    });
+    document.getElementById('usageHoursSlider')?.addEventListener('input', (e) => {
+      document.getElementById('usageHours').textContent = e.target.value + ' hrs';
+      calculatePower();
+    });
+    document.querySelectorAll('#powerCalculatorPanel .preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const power = parseInt(btn.dataset.power);
+        document.getElementById('devicePowerSlider').value = power;
+        document.getElementById('devicePower').textContent = power + ' W';
+        calculatePower();
+      });
+    });
+
+    // App buttons
+    document.getElementById('appLedCalc')?.addEventListener('click', () => showLevel3App('ledcalc'));
+    document.getElementById('appPowerCalc')?.addEventListener('click', () => showLevel3App('powercalc'));
+    document.getElementById('appFaultFind')?.addEventListener('click', () => showLevel3App('faultfind'));
+
+    // Fault finder buttons
+    document.getElementById('faultOpen')?.addEventListener('click', () => showFault('open'));
+    document.getElementById('faultShort')?.addEventListener('click', () => showFault('short'));
+    document.getElementById('faultHighR')?.addEventListener('click', () => showFault('highR'));
+    document.getElementById('faultLowV')?.addEventListener('click', () => showFault('lowV'));
 
     // ============ BUILDER CONTROLS ============
     state.switchOpen = false;
