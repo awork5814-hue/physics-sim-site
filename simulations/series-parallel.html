@@ -551,7 +551,7 @@
       <div class="panel" id="panelResistors">
         <div class="panel-title" id="resistorsTitle">⚡ Resistors (Series)</div>
         <div id="resistorsList"></div>
-        <button class="component-btn" id="addResistorBtn" style="width:100%;margin-top:8px;">+ Add Resistor</button>
+        <button class="component-btn" id="addResistorBtn" style="width:100%;margin-top:8px;display:none;">+ Add Resistor</button>
       </div>
 
       <div class="panel">
@@ -1038,30 +1038,35 @@
 
     function drawElectronsSeries(startX, topY, spacing, count, batteryX) {
       const speed = state.current * 0.5;
+      const bottomY = topY + 200;
+      const leftX = batteryX + 30;
+      const rightX = startX + spacing * (count - 1);
       
       state.electrons.forEach(e => {
         e.t = (e.t + speed * 0.03) % 1;
         
-        const pathLen = (spacing * count) + 200;
+        // Path: top wire (left to right) -> right side (top to bottom) -> bottom wire (right to left) -> left side (bottom to top)
+        const pathLen = (rightX - leftX) * 2 + (bottomY - topY) * 2;
         const dist = e.t * pathLen;
         
         let x, y;
-        if (dist < spacing * count) {
-          x = startX + dist;
-          y = topY;
-        } else if (dist < spacing * count + 100) {
-          x = startX + spacing * (count - 1);
-          y = topY + (dist - spacing * count);
-        } else if (dist < spacing * count + 100 + spacing * count) {
-          x = startX + spacing * (count - 1) - (dist - spacing * count - 100);
-          y = topY + 200;
-        } else {
-          x = startX;
-          y = topY + 200 - (dist - (spacing * count * 2 + 100));
-        }
         
-        if (x < batteryX + 20 && y > topY + 50 && y < topY + 150) {
-          y = y < topY + 100 ? topY : topY + 200;
+        if (dist < rightX - leftX) {
+          // Top wire - left to right
+          x = leftX + dist;
+          y = topY;
+        } else if (dist < rightX - leftX + bottomY - topY) {
+          // Right side - top to bottom
+          x = rightX;
+          y = topY + (dist - (rightX - leftX));
+        } else if (dist < (rightX - leftX) * 2 + bottomY - topY) {
+          // Bottom wire - right to left
+          x = rightX - (dist - (rightX - leftX + bottomY - topY));
+          y = bottomY;
+        } else {
+          // Left side - bottom to top (through battery area)
+          x = leftX;
+          y = bottomY - (dist - ((rightX - leftX) * 2 + bottomY - topY));
         }
         
         ctx.shadowColor = '#00ffff';
@@ -1226,18 +1231,22 @@
       const panelControls = document.getElementById('panelCircuitControls');
       const panelExperiments = document.getElementById('panelExperiments');
       const panelComparison = document.getElementById('panelComparison');
+      const addResistorBtn = document.getElementById('addResistorBtn');
       
       if (level === 1) {
         breadcrumb.textContent = 'Series & Parallel / Series Circuit';
         title.textContent = '🔌 Series Circuit';
+        addResistorBtn.style.display = '';
         renderResistors();
       } else if (level === 2) {
         breadcrumb.textContent = 'Series & Parallel / Parallel Circuit';
         title.textContent = '🔀 Parallel Circuit';
+        addResistorBtn.style.display = '';
         renderResistors();
       } else {
         breadcrumb.textContent = 'Series & Parallel / Combined Circuit';
         title.textContent = '🎯 Combined Circuit';
+        addResistorBtn.style.display = 'none';
         renderResistors();
         updateComparison();
       }
