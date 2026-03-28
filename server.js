@@ -58,12 +58,34 @@ async function initDatabase() {
   db = new SQL.Database();
   
   db.prepare = (sql) => ({
-    run: (...params) => { db.run(sql, params); return { changes: db.getRowsModified() }; },
-    get: (...params) => { const stmt = db.prepare(sql); stmt.bind(params); if (stmt.step()) { const row = stmt.getAsObject(); stmt.free(); return row; } stmt.free(); return null; },
-    all: (...params) => { const results = []; const stmt = db.prepare(sql); stmt.bind(params); while (stmt.step()) results.push(stmt.getAsObject()); stmt.free(); return results; }
+    run: (...params) => { 
+      db.run(sql, params); 
+      return { changes: db.getRowsModified() }; 
+    },
+    get: (...params) => { 
+      const stmt = db.prepare(sql); 
+      if (params.length > 0) stmt.bind(params);
+      if (stmt.step()) { 
+        const row = stmt.getAsObject(); 
+        stmt.free(); 
+        return row; 
+      } 
+      stmt.free(); 
+      return null; 
+    },
+    all: (...params) => { 
+      const results = []; 
+      const stmt = db.prepare(sql); 
+      if (params.length > 0) stmt.bind(params);
+      while (stmt.step()) results.push(stmt.getAsObject()); 
+      stmt.free(); 
+      return results; 
+    }
   });
   
-  db.exec = (sql) => { db.run(sql); };
+  db.exec = (sql) => { 
+    db.run(sql); 
+  };
   
   console.log('Using in-memory SQLite (sql.js)');
 }
