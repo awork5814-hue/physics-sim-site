@@ -1,6 +1,6 @@
 // Store Turso vars BEFORE dotenv loads
-const RENDER_TURSO_URL = process.env.TURSO_DATABASE_URL;
-const RENDER_TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+const RENDER_TURSO_URL = process.env.TURSO_DATABASE_URL || 'https://physics-sim-awork5814-hue.aws-ap-northeast-1.turso.io';
+const RENDER_TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJleHAiOjE3ODIzOTc5MzQsImdpZCI6ImU2OTE4ODBhLTEyMzYtNGY2OS04MjUxLTgxM2Q5NzU3MDI5MSIsImlhdCI6MTc3NDYyMTkzNCwicmlkIjoiYjJmYTkzYmItMGMxZS00MDQ4LTkyMzAtMjAxYzEwMWQ1M2UxIn0.-VOeN6MSg4qEtk24NFntF6T2FB3ah85QUNAnrST_0XtTPocv55-OdVoI5xoEnBIcJtm02IA0tCAVFQBz1ChBDQ';
 
 require('dotenv').config();
 const express = require('express');
