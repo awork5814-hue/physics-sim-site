@@ -304,7 +304,7 @@ app.post('/api/auth/signin', async (req, res) => {
 });
 
 app.post('/api/auth/verify', authMiddleware, async (req, res) => {
-  const user = getUserPublicData(req.userId);
+  const user = await getUserPublicData(req.userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
   }
