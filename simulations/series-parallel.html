@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Series & Parallel Circuits - Interactive Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/simulation-theme.css">
+  <style>
+    :root {
+      --accent: #00a8ff;
+      --accent-glow: #00d4ff;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --success: #2ed573;
+      --series-color: #ff6b6b;
+      --parallel-color: #4ecdc4;
+      --bg-dark: #0a0f16;
+      --bg-panel: rgba(15, 23, 35, 0.95);
+      --border: rgba(100, 150, 200, 0.15);
+      --text: #e8f4fc;
+      --text-muted: #8ba3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 400px at 80% 80%, rgba(78, 205, 196, 0.06) 0%, transparent 50%),
+        var(--bg-dark);
+      z-index: -1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 15, 22, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--series-color), var(--parallel-color));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: #000;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .level-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .level-tab {
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .level-tab:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .level-tab.active {
+      background: linear-gradient(135deg, var(--series-color), var(--parallel-color));
+      color: #000;
+      border-color: transparent;
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .circuit-area {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      min-height: 500px;
+    }
+
+    .circuit-canvas {
+      width: 100%;
+      height: 420px;
+      border-radius: 12px;
+      background: 
+        radial-gradient(circle at 50% 50%, rgba(0, 168, 255, 0.03) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(0, 20, 40, 0.5) 0%, rgba(0, 10, 20, 0.8) 100%);
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .slider-name {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .slider-value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-glow);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .preset-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .meter-display {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .meter {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .meter-value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-glow);
+    }
+
+    .meter-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .formula-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', monospace;
+      text-align: center;
+      margin: 8px 0;
+    }
+
+    .formula-box.series {
+      border-left: 3px solid var(--series-color);
+    }
+
+    .formula-box.parallel {
+      border-left: 3px solid var(--parallel-color);
+    }
+
+    .component-btn {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+
+    .component-btn:hover {
+      background: rgba(0, 168, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .component-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .resistor-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .resistor-row input {
+      width: 70px;
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .resistor-row label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .resistor-row .remove-btn {
+      margin-left: auto;
+      background: rgba(255, 71, 87, 0.2);
+      border: none;
+      color: var(--danger);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    .experiment-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .experiment-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .experiment-card.active {
+      border-color: var(--success);
+      background: rgba(46, 213, 115, 0.1);
+    }
+
+    .experiment-title {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .experiment-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .comparison-box {
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .comparison-box.series {
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid var(--series-color);
+    }
+
+    .comparison-box.parallel {
+      background: rgba(78, 205, 196, 0.15);
+      border: 1px solid var(--parallel-color);
+    }
+
+    .comparison-box h4 {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .comparison-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-glow);
+    }
+
+    .breadcrumb {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .lang-toggle {
+      position: fixed;
+      top: 80px;
+      right: 32px;
+      z-index: 50;
+      padding: 8px 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .lang-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    .help-panel {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .help-panel.open {
+      display: block;
+    }
+
+    .help-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .help-tab {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .help-tab.active {
+      background: rgba(0, 168, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .help-content {
+      padding: 16px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .help-section {
+      margin-bottom: 14px;
+    }
+
+    .help-section h4 {
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .help-section p, .help-section li {
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-muted);
+    }
+
+    .help-section ul {
+      padding-left: 18px;
+    }
+
+    .info-box {
+      background: rgba(0, 168, 255, 0.1);
+      border: 1px solid rgba(0, 168, 255, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .info-box.warning {
+      background: rgba(255, 165, 2, 0.1);
+      border-color: rgba(255, 165, 2, 0.3);
+    }
+
+    @media (max-width: 900px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  
+  <header class="header">
+    <a href="/index.html" class="logo">
+      <div class="logo-icon">⚡</div>
+      <span class="logo-text">Physics Lab</span>
+    </a>
+    <div class="level-tabs">
+      <button class="level-tab active" data-level="1">🔌 Series</button>
+      <button class="level-tab" data-level="2">🔀 Parallel</button>
+      <button class="level-tab" data-level="3">🎯 Combined</button>
+    </div>
+  </header>
+
+  <button class="lang-toggle" id="langToggle">English</button>
+
+  <main class="main-container">
+    <div class="circuit-area">
+      <div class="breadcrumb" id="breadcrumb">Series & Parallel / Series Circuit</div>
+      <h2 class="section-title" id="sectionTitle">🔌 Series Circuit</h2>
+      <canvas class="circuit-canvas" id="circuitCanvas"></canvas>
+      <button class="component-btn" id="helpToggle" style="margin-top:12px;">📖 Help / Guide</button>
+      
+      <div class="help-panel" id="helpPanel">
+        <div class="help-tabs">
+          <button class="help-tab active" data-lang="en">🇬🇧 English</button>
+          <button class="help-tab" data-lang="ar">🇸🇦 العربية</button>
+        </div>
+        <div class="help-content" id="helpContent"></div>
+      </div>
+    </div>
+
+    <div class="control-panel" id="panelCircuitControls">
+      <div class="panel">
+        <div class="panel-title">🔋 Power Source</div>
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Voltage</span>
+            <span class="slider-value" id="voltageValue">12 V</span>
+          </div>
+          <input type="range" id="voltageSlider" min="1.5" max="24" step="0.5" value="12">
+          <div class="preset-btns">
+            <button class="preset-btn" data-v="1.5">1.5V</button>
+            <button class="preset-btn" data-v="3">3V</button>
+            <button class="preset-btn" data-v="6">6V</button>
+            <button class="preset-btn" data-v="9">9V</button>
+            <button class="preset-btn" data-v="12">12V</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="panelResistors">
+        <div class="panel-title" id="resistorsTitle">⚡ Resistors (Series)</div>
+        <div id="resistorsList"></div>
+        <button class="component-btn" id="addResistorBtn" style="width:100%;margin-top:8px;">+ Add Resistor</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">📊 Measurements</div>
+        <div class="meter-display">
+          <div class="meter">
+            <div class="meter-value" id="totalCurrent">0.00 A</div>
+            <div class="meter-label">Total Current</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="totalResistance">0 Ω</div>
+            <div class="meter-label">Total Resistance</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="totalPower">0 W</div>
+            <div class="meter-label">Total Power</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="voltageDrop">0 V</div>
+            <div class="meter-label">Voltage Drop</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="panelFormula">
+        <div class="panel-title">📐 Formulas</div>
+        <div class="formula-box series" id="formulaSeries">
+          <strong>Series:</strong> R<sub>total</sub> = R1 + R2 + R3...
+        </div>
+        <div class="formula-box parallel" id="formulaParallel" style="display:none;">
+          <strong>Parallel:</strong> 1/R<sub>total</sub> = 1/R1 + 1/R2 + 1/R3...
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panelExperiments" style="display:none;">
+      <div class="panel-title">🔬 Guided Experiments</div>
+      <div id="experimentsList"></div>
+    </div>
+
+    <div class="panel" id="panelComparison" style="display:none;">
+      <div class="panel-title">⚖️ Series vs Parallel</div>
+      <div class="comparison-grid">
+        <div class="comparison-box series">
+          <h4>Series</h4>
+          <div class="comparison-value" id="seriesR">0 Ω</div>
+          <div class="meter-label">Total R</div>
+        </div>
+        <div class="comparison-box parallel">
+          <h4>Parallel</h4>
+          <div class="comparison-value" id="parallelR">0 Ω</div>
+          <div class="meter-label">Total R</div>
+        </div>
+      </div>
+      <div class="info-box" id="comparisonInfo">
+        Same resistors in parallel have LOWER total resistance than series!
+      </div>
+    </div>
+
+    <div class="panel" id="panelInfo">
+      <div class="panel-title">💡 What's Happening</div>
+      <div class="info-box" id="infoBox">
+        Add resistors to see how total resistance changes in series circuits.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ============ STATE ============
+    const state = {
+      level: 1, // 1=series, 2=parallel, 3=combined
+      voltage: 12,
+      resistors: [
+        { id: 1, value: 100 },
+        { id: 2, value: 200 }
+      ],
+      current: 0,
+      totalResistance: 0,
+      power: 0,
+      electrons: [],
+      animating: true
+    };
+
+    // Generate electrons
+    for (let i = 0; i < 30; i++) {
+      state.electrons.push({ t: i / 30 });
+    }
+
+    // ============ DOM ELEMENTS ============
+    const canvas = document.getElementById('circuitCanvas');
+    const ctx = canvas.getContext('2d');
+    const voltageSlider = document.getElementById('voltageSlider');
+    const voltageValue = document.getElementById('voltageValue');
+    const resistorsList = document.getElementById('resistorsList');
+    const totalCurrent = document.getElementById('totalCurrent');
+    const totalResistance = document.getElementById('totalResistance');
+    const totalPower = document.getElementById('totalPower');
+    const infoBox = document.getElementById('infoBox');
+
+    // ============ RESIZE CANVAS ============
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width - 40;
+      canvas.height = 420;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // ============ CALCULATIONS ============
+    function calculate() {
+      const r = state.resistors.map(res => res.value);
+      
+      if (state.level === 1 || state.level === 3) {
+        // Series
+        state.totalResistance = r.reduce((a, b) => a + b, 0);
+      } else {
+        // Parallel
+        state.totalResistance = r.reduce((acc, val) => acc + 1/val, 0);
+        state.totalResistance = 1 / state.totalResistance;
+      }
+      
+      state.current = state.totalResistance > 0 ? state.voltage / state.totalResistance : 0;
+      state.power = state.voltage * state.current;
+      
+      // Update displays
+      voltageValue.textContent = state.voltage.toFixed(1) + ' V';
+      totalCurrent.textContent = state.current.toFixed(3) + ' A';
+      totalResistance.textContent = formatResistance(state.totalResistance);
+      totalPower.textContent = state.power.toFixed(2) + ' W';
+      
+      updateInfo();
+    }
+
+    function formatResistance(r) {
+      if (r >= 1000) return (r / 1000).toFixed(2) + ' kΩ';
+      return r.toFixed(1) + ' Ω';
+    }
+
+    function updateInfo() {
+      const count = state.resistors.length;
+      const r = state.resistors.map(res => res.value);
+      
+      if (state.level === 1) {
+        const sum = r.reduce((a, b) => a + b, 0);
+        infoBox.innerHTML = `<strong>Series Circuit:</strong><br>
+          Adding ${count} resistors: ${r.join(' + ')} = ${formatResistance(sum)}<br>
+          Current flows through ALL components (same everywhere)<br>
+          Voltage divides across each resistor`;
+      } else if (state.level === 2) {
+        const sum = r.reduce((acc, val) => acc + 1/val, 0);
+        const total = 1 / sum;
+        infoBox.innerHTML = `<strong>Parallel Circuit:</strong><br>
+          Total R = 1/(1/${r.join(' + 1/')}) = ${formatResistance(total)}<br>
+          Voltage is SAME across all branches<br>
+          Current divides through each branch`;
+      }
+    }
+
+    // ============ DRAWING ============
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      
+      // Circuit parameters
+      const resistorCount = state.resistors.length;
+      const spacing = Math.min(120, (w - 160) / Math.max(resistorCount, 2));
+      const startX = cx - (spacing * (resistorCount - 1)) / 2;
+      
+      // Draw based on level
+      if (state.level === 1) {
+        drawSeriesCircuit(w, h, cx, cy, startX, spacing, resistorCount);
+      } else if (state.level === 2) {
+        drawParallelCircuit(w, h, cx, cy, spacing);
+      } else {
+        drawCombinedCircuit(w, h, cx, cy, spacing);
+      }
+    }
+
+    function drawSeriesCircuit(w, h, cx, cy, startX, spacing, count) {
+      const topY = 80;
+      const bottomY = h - 80;
+      const batteryX = 60;
+      
+      // Wire glow based on current
+      const intensity = Math.min(state.current / 0.1, 1);
+      const wireColor = `rgba(0, 168, 255, ${0.3 + intensity * 0.6})`;
+      
+      ctx.strokeStyle = wireColor;
+      ctx.lineWidth = 4 + intensity * 3;
+      ctx.shadowColor = '#00a8ff';
+      ctx.shadowBlur = intensity * 15;
+      
+      // Main wire loop
+      ctx.beginPath();
+      ctx.moveTo(batteryX + 30, topY);
+      for (let i = 0; i < count; i++) {
+        ctx.lineTo(startX + i * spacing, topY);
+      }
+      ctx.lineTo(startX + (count - 1) * spacing, bottomY);
+      ctx.lineTo(batteryX + 30, bottomY);
+      ctx.stroke();
+      
+      // Close at battery
+      ctx.beginPath();
+      ctx.moveTo(batteryX + 30, bottomY);
+      ctx.lineTo(batteryX + 30, cy + 40);
+      ctx.moveTo(batteryX + 30, cy - 40);
+      ctx.lineTo(batteryX + 30, topY);
+      ctx.stroke();
+      
+      ctx.shadowBlur = 0;
+      
+      // Draw battery
+      drawBattery(batteryX, cy);
+      
+      // Draw resistors
+      for (let i = 0; i < count; i++) {
+        drawResistor(startX + i * spacing, topY, state.resistors[i].value);
+      }
+      
+      // Draw ammeter
+      drawMeter(batteryX + 30, cy, 'A', state.current.toFixed(2) + 'A', '#2ed573');
+      
+      // Draw electrons
+      if (state.current > 0.001) {
+        drawElectronsSeries(startX, topY, spacing, count, batteryX + 30);
+      }
+    }
+
+    function drawParallelCircuit(w, h, cx, cy, spacing) {
+      const topY = 60;
+      const bottomY = h - 60;
+      const leftX = 80;
+      const rightX = w - 80;
+      const branchCount = state.resistors.length;
+      const branchSpacing = (rightX - leftX - 60) / Math.max(branchCount, 1);
+      
+      const intensity = Math.min(state.current / 0.2, 1);
+      const wireColor = `rgba(78, 205, 196, ${0.3 + intensity * 0.6})`;
+      
+      ctx.strokeStyle = wireColor;
+      ctx.lineWidth = 4 + intensity * 3;
+      ctx.shadowColor = '#4ecdc4';
+      ctx.shadowBlur = intensity * 15;
+      
+      // Top rail
+      ctx.beginPath();
+      ctx.moveTo(leftX, topY);
+      ctx.lineTo(rightX, topY);
+      ctx.stroke();
+      
+      // Bottom rail
+      ctx.beginPath();
+      ctx.moveTo(leftX, bottomY);
+      ctx.lineTo(rightX, bottomY);
+      ctx.stroke();
+      
+      // Vertical branches
+      for (let i = 0; i < branchCount; i++) {
+        const branchX = leftX + 30 + i * branchSpacing;
+        ctx.beginPath();
+        ctx.moveTo(branchX, topY);
+        ctx.lineTo(branchX, bottomY);
+        ctx.stroke();
+        
+        // Resistor in each branch
+        drawResistor(branchX, (topY + bottomY) / 2, state.resistors[i].value, '#4ecdc4');
+      }
+      
+      // Main wires to battery
+      ctx.beginPath();
+      ctx.moveTo(leftX, cy);
+      ctx.lineTo(leftX, bottomY);
+      ctx.moveTo(rightX, cy);
+      ctx.lineTo(rightX, bottomY);
+      ctx.stroke();
+      
+      ctx.shadowBlur = 0;
+      
+      // Draw battery
+      drawBattery(leftX - 40, cy);
+      
+      // Draw ammeter
+      drawMeter(leftX - 40, cy, 'A', state.current.toFixed(2) + 'A', '#2ed573');
+      
+      // Draw electrons (simplified - showing parallel flow)
+      if (state.current > 0.001) {
+        drawElectronsParallel(leftX, rightX, topY, bottomY, branchSpacing, branchCount);
+      }
+    }
+
+    function drawCombinedCircuit(w, h, cx, cy, spacing) {
+      // Draw series portion then parallel branches
+      const topY = 80;
+      const bottomY = h - 80;
+      const leftX = 60;
+      const rightX = w - 60;
+      
+      const intensity = Math.min(state.current / 0.1, 1);
+      const wireColor = `rgba(255, 107, 107, ${0.3 + intensity * 0.5})`;
+      
+      ctx.strokeStyle = wireColor;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#ff6b6b';
+      ctx.shadowBlur = 10;
+      
+      // Series resistor before parallel group
+      const seriesR = state.resistors[0]?.value || 100;
+      const seriesX = leftX + 80;
+      
+      ctx.beginPath();
+      ctx.moveTo(leftX + 30, topY);
+      ctx.lineTo(seriesX, topY);
+      ctx.lineTo(seriesX, bottomY);
+      ctx.lineTo(rightX - 30, bottomY);
+      ctx.stroke();
+      
+      drawResistor(seriesX, topY, seriesR, '#ff6b6b');
+      
+      // Parallel section
+      if (state.resistors.length > 1) {
+        const parallelCount = state.resistors.length - 1;
+        const pSpacing = (rightX - seriesX - 60) / parallelCount;
+        
+        ctx.strokeStyle = `rgba(78, 205, 196, ${0.3 + intensity * 0.5})`;
+        ctx.shadowColor = '#4ecdc4';
+        
+        // Parallel rails
+        ctx.beginPath();
+        ctx.moveTo(seriesX + 30, topY);
+        ctx.lineTo(rightX - 30, topY);
+        ctx.moveTo(seriesX + 30, bottomY);
+        ctx.lineTo(rightX - 30, bottomY);
+        ctx.stroke();
+        
+        // Parallel branches
+        for (let i = 0; i < parallelCount; i++) {
+          const branchX = seriesX + 30 + i * pSpacing + pSpacing/2;
+          ctx.beginPath();
+          ctx.moveTo(branchX, topY);
+          ctx.lineTo(branchX, bottomY);
+          ctx.stroke();
+          drawResistor(branchX, (topY + bottomY)/2, state.resistors[i+1].value, '#4ecdc4');
+        }
+      }
+      
+      // Close circuit
+      ctx.beginPath();
+      ctx.moveTo(rightX - 30, bottomY);
+      ctx.lineTo(rightX - 30, cy + 40);
+      ctx.moveTo(rightX - 30, cy - 40);
+      ctx.lineTo(rightX - 30, topY);
+      ctx.stroke();
+      
+      ctx.shadowBlur = 0;
+      
+      drawBattery(leftX, cy);
+      drawMeter(leftX + 30, cy, 'A', state.current.toFixed(2) + 'A', '#2ed573');
+    }
+
+    function drawBattery(x, y) {
+      ctx.fillStyle = 'rgba(30, 40, 50, 0.9)';
+      ctx.strokeStyle = '#444';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x - 20, y - 35, 40, 70, 4);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = '#ffa502';
+      ctx.fillRect(x - 6, y - 45, 12, 12);
+      ctx.fillStyle = '#666';
+      ctx.fillRect(x - 4, y + 30, 8, 8);
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(state.voltage.toFixed(0) + 'V', x, y + 2);
+    }
+
+    function drawResistor(x, y, value, color = '#6ad7ff') {
+      const width = 50;
+      const height = 20;
+      
+      ctx.fillStyle = 'rgba(40, 50, 60, 0.9)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x - width/2, y - height/2, width, height, 3);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Color bands
+      const bands = ['#8b4513', '#c0392b', '#f1c40f'];
+      bands.forEach((c, i) => {
+        ctx.fillStyle = c;
+        ctx.fillRect(x - width/2 + 8 + i * 14, y - height/2, 6, height);
+      });
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(formatResistance(value), x, y + 4);
+    }
+
+    function drawMeter(x, y, type, value, color) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(value, x, y);
+      ctx.textBaseline = 'alphabetic';
+    }
+
+    function drawElectronsSeries(startX, topY, spacing, count, batteryX) {
+      const speed = state.current * 0.5;
+      
+      state.electrons.forEach(e => {
+        e.t = (e.t + speed * 0.03) % 1;
+        
+        const pathLen = (spacing * count) + 200;
+        const dist = e.t * pathLen;
+        
+        let x, y;
+        if (dist < spacing * count) {
+          x = startX + dist;
+          y = topY;
+        } else if (dist < spacing * count + 100) {
+          x = startX + spacing * (count - 1);
+          y = topY + (dist - spacing * count);
+        } else if (dist < spacing * count + 100 + spacing * count) {
+          x = startX + spacing * (count - 1) - (dist - spacing * count - 100);
+          y = topY + 200;
+        } else {
+          x = startX;
+          y = topY + 200 - (dist - (spacing * count * 2 + 100));
+        }
+        
+        if (x < batteryX + 20 && y > topY + 50 && y < topY + 150) {
+          y = y < topY + 100 ? topY : topY + 200;
+        }
+        
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 8;
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    function drawElectronsParallel(leftX, rightX, topY, bottomY, spacing, count) {
+      const speed = state.current * 0.3;
+      
+      state.electrons.forEach(e => {
+        e.t = (e.t + speed * 0.03) % 1;
+        
+        // Simplified parallel flow visualization
+        const y = topY + 30 + e.t * (bottomY - topY - 60);
+        
+        // Draw in each branch
+        for (let i = 0; i < count; i++) {
+          const branchX = leftX + 30 + i * spacing + spacing/2;
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 6;
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+          ctx.beginPath();
+          ctx.arc(branchX, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    // ============ RENDER RESISTORS ============
+    function renderResistors() {
+      const list = document.getElementById('resistorsList');
+      const isSeries = state.level === 1;
+      
+      document.getElementById('resistorsTitle').textContent = 
+        `⚡ Resistors (${isSeries ? 'Series' : 'Parallel'})`;
+      
+      document.getElementById('formulaSeries').style.display = isSeries ? '' : 'none';
+      document.getElementById('formulaParallel').style.display = !isSeries ? '' : 'none';
+      
+      list.innerHTML = state.resistors.map((res, i) => `
+        <div class="resistor-row">
+          <label>R${i + 1}:</label>
+          <input type="number" value="${res.value}" min="1" max="10000" 
+            onchange="updateResistor(${i}, this.value)">
+          <span>Ω</span>
+          ${state.resistors.length > 2 ? `<button class="remove-btn" onclick="removeResistor(${i})">✕</button>` : ''}
+        </div>
+      `).join('');
+      
+      calculate();
+    }
+
+    function updateResistor(index, value) {
+      state.resistors[index].value = parseInt(value) || 100;
+      calculate();
+    }
+
+    function addResistor() {
+      const newId = state.resistors.length + 1;
+      state.resistors.push({ id: newId, value: 100 });
+      renderResistors();
+    }
+
+    function removeResistor(index) {
+      if (state.resistors.length > 2) {
+        state.resistors.splice(index, 1);
+        renderResistors();
+      }
+    }
+
+    // ============ LEVEL SWITCHING ============
+    function updateLevel() {
+      const level = state.level;
+      const breadcrumb = document.getElementById('breadcrumb');
+      const title = document.getElementById('sectionTitle');
+      const panelControls = document.getElementById('panelCircuitControls');
+      const panelExperiments = document.getElementById('panelExperiments');
+      const panelComparison = document.getElementById('panelComparison');
+      
+      if (level === 1) {
+        breadcrumb.textContent = 'Series & Parallel / Series Circuit';
+        title.textContent = '🔌 Series Circuit';
+        renderResistors();
+      } else if (level === 2) {
+        breadcrumb.textContent = 'Series & Parallel / Parallel Circuit';
+        title.textContent = '🔀 Parallel Circuit';
+        renderResistors();
+      } else {
+        breadcrumb.textContent = 'Series & Parallel / Combined Circuit';
+        title.textContent = '🎯 Combined Circuit';
+        renderResistors();
+        updateComparison();
+      }
+      
+      calculate();
+    }
+
+    function updateComparison() {
+      const r = state.resistors.map(res => res.value);
+      const seriesTotal = r.reduce((a, b) => a + b, 0);
+      const parallelTotal = 1 / r.reduce((acc, val) => acc + 1/val, 0);
+      
+      document.getElementById('seriesR').textContent = formatResistance(seriesTotal);
+      document.getElementById('parallelR').textContent = formatResistance(parallelTotal);
+    }
+
+    // ============ EVENT LISTENERS ============
+    voltageSlider.addEventListener('input', (e) => {
+      state.voltage = parseFloat(e.target.value);
+      calculate();
+    });
+
+    document.querySelectorAll('.preset-btn[data-v]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.voltage = parseFloat(btn.dataset.v);
+        voltageSlider.value = state.voltage;
+        calculate();
+      });
+    });
+
+    document.getElementById('addResistorBtn').addEventListener('click', addResistor);
+
+    document.querySelectorAll('.level-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.level = parseInt(tab.dataset.level);
+        updateLevel();
+      });
+    });
+
+    // ============ HELP / LANGUAGE ============
+    let currentLang = 'en';
+    
+    const helpContent = {
+      en: {
+        title: '📖 How to Use',
+        sections: [
+          {
+            title: '🔌 Series Circuit',
+            content: `<p><strong>Current</strong> is the same through all components.</p>
+            <p><strong>Voltage</strong> divides across each resistor.</p>
+            <p><strong>Resistance</strong> adds up: R<sub>total</sub> = R1 + R2 + R3</p>`
+          },
+          {
+            title: '🔀 Parallel Circuit',
+            content: `<p><strong>Voltage</strong> is the same across all branches.</p>
+            <p><strong>Current</strong> divides through each branch.</p>
+            <p><strong>Resistance</strong> decreases: 1/R<sub>total</sub> = 1/R1 + 1/R2</p>`
+          },
+          {
+            title: '🎯 Combined Circuits',
+            content: `<p>Real circuits often have both series and parallel parts.</p>
+            <p>Use the comparison view to see how the same resistors behave differently!</p>`
+          },
+          {
+            title: '🎚️ Controls',
+            content: `<ul>
+              <li>Adjust voltage with slider or preset buttons</li>
+              <li>Add/remove resistors</li>
+              <li>Change resistor values</li>
+              <li>Switch between levels to explore</li>
+            </ul>`
+          }
+        ]
+      },
+      ar: {
+        title: '📖 كيفية الاستخدام',
+        sections: [
+          {
+            title: '🔌 دائرة التوصيل على التوازي',
+            content: `<p><strong>التيار</strong> نفسه يمر عبر جميع المكونات.</p>
+            <p><strong>الجهد</strong> يتقاسم عبر كل مقاومة.</p>
+            <p><strong>المقاومة</strong> تضاف: R = R1 + R2 + R3</p>`
+          },
+          {
+            title: '🔀 دائرة التوازي',
+            content: `<p><strong>الجهد</strong> نفسه عبر جميع الفروع.</p>
+            <p><strong>التيار</strong> يتقاسم عبر كل فرع.</p>
+            <p><strong>المقاومة</strong> تنخفض: 1/R = 1/R1 + 1/R2</p>`
+          },
+          {
+            title: '🎯 الدوائر المركبة',
+            content: `<p>الدوائر الحقيقية غالباً ما تحتوي على أجزاء متسلسلة ومتوازية.</p>`
+          },
+          {
+            title: '🎚️ عناصر التحكم',
+            content: `<ul>
+              <li>اضبط الجهد المنزلق أو الأزرار المحددة</li>
+              <li>أضف/أزل المقاومات</li>
+              <li>غير قيم المقاومات</li>
+            </ul>`
+          }
+        ]
+      }
+    };
+
+    function renderHelp() {
+      const content = helpContent[currentLang];
+      const html = content.sections.map(s => `
+        <div class="help-section">
+          <h4>${s.title}</h4>
+          ${s.content}
+        </div>
+      `).join('');
+      document.getElementById('helpContent').innerHTML = html;
+    }
+
+    document.getElementById('helpToggle').addEventListener('click', () => {
+      document.getElementById('helpPanel').classList.toggle('open');
+    });
+
+    document.querySelectorAll('.help-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentLang = tab.dataset.lang;
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+        renderHelp();
+      });
+    });
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+      document.querySelectorAll('.help-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === currentLang);
+      });
+      renderHelp();
+    });
+
+    // ============ ANIMATION LOOP ============
+    function loop() {
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    // ============ INITIALIZE ============
+    renderHelp();
+    renderResistors();
+    calculate();
+    loop();
+  </script>
+</body>
+</html>
