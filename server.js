@@ -45,64 +45,153 @@ const PLANS = {
   monthly: { amountEGP: 50, amountUSD: 1, name: 'Monthly Subscription', months: 1 }
 };
 
-// Turso disabled - using sql.js only
-const TURSO_URL = undefined;
-const TURSO_TOKEN = undefined;
+let db;
+let isTurso = false;
+let libsqlClient;
 
-let users = [];
-let userDataStore = [];
-const isTurso = false;
-
-function createDb() {
-  return {
-    prepare: (sql) => ({
-      run: (...params) => { 
-        console.log('RUN:', sql.substring(0, 60), params.slice(0,4));
-        if (sql.includes('INSERT INTO users')) {
-          const user = { 
-            id: params[0], 
-            email: params[1], 
-            password_hash: params[2], 
-            name: params[3],
-            verify_token: params[4],
-            verify_token_expiry: params[5],
-            created_at: new Date().toISOString(),
-            plan: 'free',
-            email_verified: 0,
-            last_login: null
-          };
-          console.log('Pushing user:', user.id, user.email);
-          users.push(user);
+async function initDatabase() {
+  const TURSO_URL = process.env.TURSO_DATABASE_URL;
+  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+  
+  console.log('Checking Turso config:', TURSO_URL ? 'URL set' : 'no URL');
+  
+  if (TURSO_URL && TURSO_TOKEN) {
+    console.log('Initializing Turso database...');
+    const { createClient } = require('@libsql/client');
+    libsqlClient = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+    isTurso = true;
+    
+    db = {
+      prepare: (sql) => ({
+        run: async (...params) => {
+          try {
+            await libsqlClient.execute({ sql, args: params });
+            return { changes: 1 };
+          } catch(e) {
+            console.error('DB run error:', e.message);
+            throw e;
+          }
+        },
+        get: async (...params) => {
+          try {
+            const result = await libsqlClient.execute({ sql, args: params });
+            return result.rows[0] || null;
+          } catch(e) {
+            console.error('DB get error:', e.message);
+            throw e;
+          }
+        },
+        all: async (...params) => {
+          try {
+            const result = await libsqlClient.execute({ sql, args: params });
+            return result.rows;
+          } catch(e) {
+            console.error('DB all error:', e.message);
+            throw e;
+          }
         }
-        console.log('Users now:', users.length);
-        return { changes: 1 }; 
-      },
-      get: (...params) => { 
-        console.log('GET:', sql.substring(0, 60), params);
-        if (sql.includes('FROM users WHERE email')) {
-          const u = users.find(u => u.email === params[0]);
-          console.log('Found by email:', u ? u.id : 'null');
-          return u || null;
+      }),
+      exec: async (sql) => {
+        const statements = sql.split(';').filter(s => s.trim());
+        for (const stmt of statements) {
+          if (stmt.trim()) {
+            try {
+              await libsqlClient.execute({ sql: stmt });
+            } catch(e) {
+              console.error('DB exec error:', e.message);
+            }
+          }
         }
-        if (sql.includes('FROM users WHERE id')) {
-          const u = users.find(u => u.id === params[0]);
-          console.log('Found by id:', u ? u.email : 'null');
-          return u || null;
-        }
-        return null;
-      },
-      all: (...params) => { 
-        return []; 
       }
-    }),
-    exec: (sql) => { 
-      console.log('EXEC:', sql.substring(0, 100));
+    };
+    
+    console.log('Testing Turso connection...');
+    try {
+      const test = await db.prepare('SELECT 1 as test').get();
+      console.log('Turso connection OK:', test);
+    } catch(e) {
+      console.error('Turso test failed:', e.message);
     }
-  };
+    
+    console.log('Using Turso database (persistent)');
+  } else {
+    console.log('No Turso config - using in-memory (data will be lost)');
+    let users = [];
+    let userDataStore = [];
+    
+    db = {
+      prepare: (sql) => ({
+        run: (...params) => { 
+          if (sql.includes('INSERT INTO users')) {
+            users.push({ 
+              id: params[0], email: params[1], password_hash: params[2], name: params[3],
+              verify_token: params[4], verify_token_expiry: params[5],
+              created_at: new Date().toISOString(), plan: 'free', email_verified: 0, last_login: null
+            });
+          }
+          return { changes: 1 }; 
+        },
+        get: (...params) => { 
+          if (sql.includes('FROM users WHERE email')) return users.find(u => u.email === params[0]) || null;
+          if (sql.includes('FROM users WHERE id')) return users.find(u => u.id === params[0]) || null;
+          return null;
+        },
+        all: () => []
+      }),
+      exec: () => {}
+    };
+  }
 }
 
-let db = createDb();
-console.log('Using in-memory database');
+async function initTables() {
+  console.log('Creating tables...');
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      name TEXT DEFAULT '',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      last_login TEXT,
+      plan TEXT DEFAULT 'free',
+      plan_expiry TEXT,
+      subscription_txn_id TEXT,
+      reset_token TEXT,
+      reset_token_expiry TEXT,
+      avatar TEXT,
+      email_verified INTEGER DEFAULT 0,
+      verify_token TEXT,
+      verify_token_expiry TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS user_data (
+      user_id TEXT PRIMARY KEY,
+      favorites TEXT DEFAULT '[]',
+      achievements TEXT DEFAULT '[]',
+      quiz_progress TEXT DEFAULT '{}',
+      streak_count INTEGER DEFAULT 0,
+      streak_last_date TEXT,
+      settings TEXT DEFAULT '{}',
+      local_storage_data TEXT DEFAULT '{}',
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      plan TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      currency TEXT DEFAULT 'EGP',
+      txn_id TEXT,
+      paymob_order_id TEXT,
+      status TEXT DEFAULT 'active',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      expires_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+  `);
+  console.log('Tables created');
+}
 
 async function initDb() {
   console.log('initDb called, creating tables...');
@@ -1491,6 +1580,13 @@ app.get('/api/user/subscription', authMiddleware, (req, res) => {
 });
 
 const startServer = async () => {
+  console.log('==========================================');
+  console.log('STARTING SERVER');
+  console.log('==========================================');
+  
+  await initDatabase();
+  await initTables();
+  
   app.use(express.static(path.join(__dirname)));
   
   app.get('/', (req, res) => {
@@ -1502,16 +1598,21 @@ const startServer = async () => {
       const result = await db.prepare('SELECT 1 as test').get();
       res.json({ success: true, result });
     } catch (error) {
-      res.json({ success: false, error: error.message, stack: error.stack });
+      res.json({ success: false, error: error.message });
     }
   });
   
   app.get('/api/debug', (req, res) => {
-    res.json({ version: 'sql.js-only-v2', turso: isTurso, dbType: isTurso ? 'Turso' : 'sql.js' });
+    res.json({ version: 'turso-v1', turso: isTurso, dbType: isTurso ? 'Turso' : 'in-memory' });
   });
   
-  app.get('/api/init-status', (req, res) => {
-    res.json({ dbReady: !!db, isTurso });
+  app.get('/api/users-count', async (req, res) => {
+    try {
+      const result = await db.prepare('SELECT COUNT(*) as count FROM users').get();
+      res.json({ count: result.count, turso: isTurso });
+    } catch (error) {
+      res.json({ count: 0, error: error.message });
+    }
   });
   
   app.listen(PORT, '0.0.0.0', () => {
