@@ -51,6 +51,7 @@ const TURSO_TOKEN = undefined;
 
 let users = [];
 let userDataStore = [];
+const isTurso = false;
 
 function createDb() {
   return {
