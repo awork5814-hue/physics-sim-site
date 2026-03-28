@@ -1027,7 +1027,7 @@ app.post('/api/paymob/create-order', async (req, res) => {
       const decoded = verifyToken(token);
       if (decoded) {
         userId = decoded.userId;
-        const dbUser = db.prepare('SELECT email FROM users WHERE id = ?').get(decoded.userId);
+        const dbUser = await db.prepare('SELECT email FROM users WHERE id = ?').get(decoded.userId);
         if (dbUser) userEmail = dbUser.email;
       }
     }
