@@ -594,7 +594,7 @@
     </a>
     <div class="level-tabs">
       <button class="level-tab active" data-level="1">⚡ Level 1: Basics</button>
-      <button class="level-tab" data-level="2">🔧 Level 2: Build</button>
+      <button class="level-tab active" data-level="2">🔧 Level 2: Build</button>
       <button class="level-tab" data-level="3">🏠 Level 3: Real World</button>
     </div>
   </header>
@@ -639,16 +639,17 @@
           <div class="slider-label">
             <span class="slider-name">⚡ Resistance (R)</span>
             <span class="slider-value" id="resistanceValue">100 Ω</span>
-          </div>
-          <input type="range" id="resistanceSlider" min="1" max="2000" step="1" value="100">
-          <div class="preset-btns">
-            <button class="preset-btn" data-r="10">10Ω</button>
-            <button class="preset-btn" data-r="47">47Ω</button>
-            <button class="preset-btn" data-r="100">100Ω</button>
-            <button class="preset-btn" data-r="220">220Ω</button>
-            <button class="preset-btn" data-r="470">470Ω</button>
-            <button class="preset-btn" data-r="1000">1kΩ</button>
-          </div>
+</div>
+      
+      <div class="components-toolbar" id="toolbar">
+        <button class="component-btn" data-comp="battery">🔋 Battery</button>
+        <button class="component-btn" data-comp="resistor">⚡ Resistor 1</button>
+        <button class="component-btn" data-comp="resistor2">⚡ Resistor 2</button>
+        <button class="component-btn" data-comp="led">💡 LED</button>
+        <button class="component-btn" data-comp="bulb">💡 Bulb</button>
+        <button class="component-btn" data-comp="switch">🔀 Switch</button>
+      </div>
+    </div>
         </div>
       </div>
 
@@ -680,6 +681,76 @@
           <div class="formula-chip" data-formula="I=V/R">I = V ÷ R</div>
           <div class="formula-chip" data-formula="R=V/I">R = V ÷ I</div>
         </div>
+      </div>
+
+      <div class="panel" id="builderControls" style="display:none;">
+        <div class="panel-title">🔧 Component Settings</div>
+        
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">🔋 Battery Voltage</span>
+            <span class="slider-value" id="batteryVoltageValue">9 V</span>
+          </div>
+          <input type="range" id="batteryVoltageSlider" min="1.5" max="24" step="0.5" value="9">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">⚡ Resistor 1</span>
+            <span class="slider-value" id="r1Value">100 Ω</span>
+          </div>
+          <input type="range" id="r1Slider" min="10" max="1000" step="10" value="100">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;">
+            <input type="checkbox" id="r1Enabled" checked> Enable
+          </label>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">⚡ Resistor 2</span>
+            <span class="slider-value" id="r2Value">200 Ω</span>
+          </div>
+          <input type="range" id="r2Slider" min="10" max="1000" step="10" value="200">
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <label style="display:flex;align-items:center;gap:4px;font-size:11px;">
+              <input type="checkbox" id="r2Enabled"> Enable
+            </label>
+            <select id="r2Mode" style="background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:2px 6px;border-radius:4px;font-size:11px;">
+              <option value="series">Series</option>
+              <option value="parallel">Parallel</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">💡 LED</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <input type="checkbox" id="ledEnabled"> Enable LED
+          </label>
+          <select id="ledColor" style="margin-top:6px;background:rgba(0,0,0,0.3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:4px;">
+            <option value="#ff0000">Red</option>
+            <option value="#00ff00">Green</option>
+            <option value="#0088ff">Blue</option>
+            <option value="#ffff00">Yellow</option>
+            <option value="#ff8800">Orange</option>
+            <option value="#ff00ff">Pink</option>
+          </select>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">💡 Bulb</span>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;">
+            <input type="checkbox" id="bulbEnabled"> Enable Bulb
+          </label>
+        </div>
+
+        <button class="component-btn" id="toggleSwitch" style="width:100%;margin-top:8px;">
+          🔀 Switch: <span id="switchStatus">CLOSED</span>
+        </button>
       </div>
 
       <div class="panel" id="infoPanel">
@@ -828,34 +899,280 @@
       ctx.lineWidth = 4 + intensity * 4;
       ctx.lineCap = 'round';
       
-      // Main circuit rectangle
-      ctx.beginPath();
-      ctx.moveTo(left + 60, top);
-      ctx.lineTo(right - 60, top);
-      ctx.lineTo(right - 60, bottom);
-      ctx.lineTo(left + 60, bottom);
-      ctx.closePath();
-      ctx.stroke();
-      
-      ctx.shadowBlur = 0;
-      
-      // Draw battery (left side)
-      drawBattery(left, cy);
-      
-      // Draw resistor (top)
-      drawResistor(cx, top);
-      
-      // Draw meters
-      drawAmmeter(right - 60, cy);
-      drawVoltmeter(cx, bottom);
-      
-      // Draw electrons
-      if (state.current > 0.001) {
-        drawElectrons(left + 60, right - 60, top, bottom, cy);
+      if (state.mode === 'simple') {
+        // Simple mode: rectangular circuit
+        ctx.beginPath();
+        ctx.moveTo(left + 60, top);
+        ctx.lineTo(right - 60, top);
+        ctx.lineTo(right - 60, bottom);
+        ctx.lineTo(left + 60, bottom);
+        ctx.closePath();
+        ctx.stroke();
+        
+        ctx.shadowBlur = 0;
+        drawBattery(left, cy);
+        drawResistor(cx, top);
+        drawAmmeter(right - 60, cy);
+        drawVoltmeter(cx, bottom);
+        
+        if (state.current > 0.001) {
+          drawElectrons(left + 60, right - 60, top, bottom, cy);
+        }
+      } else {
+        // Builder mode: show all components
+        // Top wire
+        ctx.beginPath();
+        ctx.moveTo(left + 60, top);
+        ctx.lineTo(right - 60, top);
+        ctx.stroke();
+        
+        // Right wire  
+        ctx.beginPath();
+        ctx.moveTo(right - 60, top);
+        ctx.lineTo(right - 60, bottom);
+        ctx.stroke();
+        
+        // Bottom wire
+        ctx.beginPath();
+        ctx.moveTo(right - 60, bottom);
+        ctx.lineTo(left + 60, bottom);
+        ctx.stroke();
+        
+        // Left wire (through battery)
+        ctx.beginPath();
+        ctx.moveTo(left + 60, bottom);
+        ctx.lineTo(left + 60, cy + 40);
+        ctx.moveTo(left + 60, cy - 40);
+        ctx.lineTo(left + 60, top);
+        ctx.stroke();
+        
+        ctx.shadowBlur = 0;
+        
+        // Draw all components
+        const battery = state.components?.find(c => c.type === 'battery');
+        const resistor = state.components?.find(c => c.type === 'resistor');
+        const resistor2 = state.components?.find(c => c.type === 'resistor2');
+        const led = state.components?.find(c => c.type === 'led');
+        const bulb = state.components?.find(c => c.type === 'bulb');
+        const switch_ = state.components?.find(c => c.type === 'switch');
+        
+        if (battery) drawBattery(left, cy, battery.voltage);
+        if (resistor && resistor.enabled) drawResistorWithValue(cx, top, resistor.resistance);
+        if (resistor2 && resistor2.enabled) {
+          // Draw second resistor on bottom
+          const r2Color = resistor2.mode === 'series' ? '#ff6b6b' : '#4ecdc4';
+          drawResistorWithValue(cx, bottom, resistor2.resistance, r2Color);
+        }
+        if (led && led.enabled) drawLED(cx, top - 30, led.color);
+        if (bulb && bulb.enabled) drawBulb(cx, bottom - 30, bulb.brightness);
+        if (switch_) drawSwitch(right - 60, cy, switch_.open);
+        
+        drawAmmeter(right - 60, cy);
+        drawVoltmeter(cx, bottom);
+        
+        // Draw branch wires for LED and bulb
+        if (led && led.enabled) {
+          ctx.strokeStyle = wireColor;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx - 60, top);
+          ctx.lineTo(cx - 60, top - 30);
+          ctx.lineTo(cx + 60, top - 30);
+          ctx.lineTo(cx + 60, top);
+          ctx.stroke();
+        }
+        
+        if (bulb && bulb.enabled) {
+          ctx.strokeStyle = wireColor;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx - 60, bottom);
+          ctx.lineTo(cx - 60, bottom - 30);
+          ctx.lineTo(cx + 60, bottom - 30);
+          ctx.lineTo(cx + 60, bottom);
+          ctx.stroke();
+        }
+        
+        if (state.current > 0.001 && !state.switchOpen) {
+          drawElectronsBuilder(left, right, top, bottom, cy, led?.enabled, bulb?.enabled);
+        }
+        
+        // Show series/parallel indicator
+        if (resistor2 && resistor2.enabled) {
+          ctx.fillStyle = resistor2.mode === 'series' ? '#ff6b6b' : '#4ecdc4';
+          ctx.font = 'bold 12px Space Grotesk';
+          ctx.textAlign = 'center';
+          ctx.fillText(resistor2.mode.toUpperCase(), cx, bottom + 25);
+        }
       }
     }
 
-    function drawBattery(x, y) {
+    function drawResistorWithValue(x, y, resistance, color = '#6ad7ff') {
+      const width = 100;
+      const height = 25;
+      const heat = Math.min(state.power / 5, 1);
+      
+      ctx.fillStyle = 'rgba(40, 50, 60, 0.9)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(x - width/2, y - height/2, width, height, 4);
+      ctx.fill();
+      ctx.stroke();
+      
+      const bands = ['#8b4513', '#c0392b', '#f1c40f', '#2ecc71'];
+      bands.forEach((c, i) => {
+        ctx.fillStyle = c;
+        ctx.fillRect(x - width/2 + 10 + i * 20, y - height/2, 8, height);
+      });
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(formatResistance(resistance), x, y + 4);
+    }
+
+    function drawLED(x, y, color) {
+      const brightness = Math.min(state.current * 10, 1);
+      
+      // LED glow
+      if (brightness > 0.1) {
+        ctx.shadowColor = color;
+        ctx.shadowBlur = brightness * 30;
+      }
+      
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.shadowBlur = 0;
+      
+      // LED legs
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 12, y);
+      ctx.lineTo(x - 25, y + 15);
+      ctx.moveTo(x + 12, y);
+      ctx.lineTo(x + 25, y + 15);
+      ctx.stroke();
+      
+      // Brightness indicator
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('LED', x, y + 25);
+    }
+
+    function drawBulb(x, y, brightness) {
+      const glowIntensity = brightness;
+      
+      if (glowIntensity > 0.1) {
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = glowIntensity * 40;
+      }
+      
+      // Bulb body
+      ctx.fillStyle = brightness > 0.5 ? `rgba(255, 215, 0, ${0.8})` : 'rgba(100, 100, 100, 0.5)';
+      ctx.beginPath();
+      ctx.arc(x, y, 15, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Bulb base
+      ctx.fillStyle = '#666';
+      ctx.fillRect(x - 8, y + 12, 16, 10);
+      
+      ctx.shadowBlur = 0;
+      
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('💡', x, y + 28);
+    }
+
+    function drawSwitch(x, y, isOpen) {
+      ctx.strokeStyle = isOpen ? '#ff4757' : '#2ed573';
+      ctx.lineWidth = 3;
+      
+      // Switch base
+      ctx.beginPath();
+      ctx.arc(x, y - 15, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x, y + 15, 8, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      // Switch arm
+      ctx.beginPath();
+      ctx.moveTo(x, y - 15);
+      if (isOpen) {
+        ctx.lineTo(x + 15, y + 15);
+      } else {
+        ctx.lineTo(x, y + 15);
+      }
+      ctx.stroke();
+      
+      ctx.fillStyle = isOpen ? '#ff4757' : '#2ed573';
+      ctx.font = 'bold 10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(isOpen ? 'OPEN' : 'ON', x, y + 30);
+    }
+
+    function drawElectronsBuilder(left, right, top, bottom, cy, hasLED, hasBulb) {
+      const speed = state.current * 2;
+      const pathPoints = [];
+      
+      // Main circuit
+      for (let t = 0; t < 1; t += 0.02) {
+        const pathLen = (right - left - 120) * 2 + (bottom - top) * 2;
+        const dist = t * pathLen;
+        
+        let x, y;
+        if (dist < right - left - 120) {
+          x = left + 60 + dist;
+          y = top;
+        } else if (dist < right - left - 120 + bottom - top) {
+          x = right - 60;
+          y = top + (dist - (right - left - 120));
+        } else if (dist < (right - left - 120) * 2 + bottom - top) {
+          x = right - 60 - (dist - (right - left - 120 + bottom - top));
+          y = bottom;
+        } else {
+          x = left + 60;
+          y = bottom - (dist - ((right - left - 120) * 2 + bottom - top));
+        }
+        
+        // Skip around battery
+        if (x < left + 80 && y > cy - 30 && y < cy + 30) {
+          if (y < cy) y = top;
+          else y = bottom;
+        }
+        
+        pathPoints.push({x, y});
+      }
+      
+      state.electrons.forEach(e => {
+        e.t = (e.t + speed * 0.02) % 1;
+        const idx = Math.floor(e.t * pathPoints.length);
+        const p = pathPoints[idx];
+        if (!p) return;
+        
+        const glow = Math.min(state.current / 0.2, 1);
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = glow * 8;
+        
+        ctx.fillStyle = `rgba(0, 255, 255, ${0.6 + glow * 0.4})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+      });
+    }
+
+    function drawBattery(x, y, voltage) {
+      voltage = voltage || state.voltage;
       const width = 50;
       const height = 80;
       
@@ -878,7 +1195,7 @@
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 14px Space Grotesk';
       ctx.textAlign = 'center';
-      ctx.fillText(state.voltage.toFixed(1) + 'V', x, y + 5);
+      ctx.fillText(voltage.toFixed(1) + 'V', x, y + 5);
       
       // Charge indicator
       const charge = Math.max(0, 1 - state.power / 10);
@@ -1084,19 +1401,142 @@
       const breadcrumb = document.getElementById('breadcrumb');
       const title = document.getElementById('sectionTitle');
       const toolbar = document.getElementById('toolbar');
+      const controlPanel = document.querySelector('.control-panel');
+      const builderControls = document.getElementById('builderControls');
+      
+      // Hide Level 1 controls in builder mode
+      const level1Controls = controlPanel.querySelectorAll('.panel');
       
       if (state.level === 1) {
         breadcrumb.textContent = "Ohm's Law Lab / Introduction";
         title.textContent = '🔌 Simple Circuit';
         toolbar.style.display = 'flex';
+        builderControls.style.display = 'none';
+        level1Controls.forEach(p => p.style.display = '');
+        state.mode = 'simple';
+        resetToSimple();
       } else if (state.level === 2) {
         breadcrumb.textContent = "Ohm's Law Lab / Circuit Builder";
         title.textContent = '🔧 Build Your Circuit';
         toolbar.style.display = 'flex';
+        builderControls.style.display = '';
+        level1Controls.forEach(p => p.style.display = 'none');
+        state.mode = 'builder';
+        initBuilder();
       } else if (state.level === 3) {
         breadcrumb.textContent = "Ohm's Law Lab / Real World";
         title.textContent = '🏠 Real World Applications';
         toolbar.style.display = 'flex';
+        builderControls.style.display = 'none';
+        level1Controls.forEach(p => p.style.display = '');
+      }
+    }
+
+    function resetToSimple() {
+      state.voltage = 9;
+      state.resistance = 100;
+      state.current = state.voltage / state.resistance;
+      state.power = state.voltage * state.current;
+      state.heatLevel = Math.min(state.power / 5, 1);
+      state.switchOpen = false;
+      
+      voltageSlider.value = state.voltage;
+      resistanceSlider.value = state.resistance;
+      calculate();
+    }
+
+    function initBuilder() {
+      // Initialize builder mode with multiple components
+      state.components = [
+        { type: 'battery', x: 80, y: 225, voltage: 9 },
+        { type: 'resistor', x: 450, y: 80, resistance: 100, enabled: true },
+        { type: 'resistor2', x: 450, y: 370, resistance: 200, enabled: false, mode: 'series' },
+        { type: 'switch', x: 780, y: 225, open: false },
+        { type: 'led', x: 300, y: 80, enabled: false, color: '#ff0000', forwardVoltage: 2 },
+        { type: 'bulb', x: 300, y: 370, enabled: false, brightness: 0 }
+      ];
+      calculateBuilder();
+    }
+
+    function calculateBuilder() {
+      if (!state.components) return;
+      
+      const battery = state.components.find(c => c.type === 'battery');
+      const switch_ = state.components.find(c => c.type === 'switch');
+      const resistor = state.components.find(c => c.type === 'resistor');
+      const resistor2 = state.components.find(c => c.type === 'resistor2');
+      const led = state.components.find(c => c.type === 'led');
+      const bulb = state.components.find(c => c.type === 'bulb');
+      
+      // Check if switch is open
+      if (switch_ && switch_.open) {
+        state.current = 0;
+        state.power = 0;
+        state.voltage = battery ? battery.voltage : 9;
+        state.resistance = 0;
+        state.heatLevel = 0;
+      } else {
+        state.voltage = battery ? battery.voltage : 9;
+        
+        let totalR = 0;
+        
+        // Calculate total resistance
+        if (resistor && resistor.enabled) {
+          totalR = resistor.resistance;
+          
+          // Series or parallel with second resistor
+          if (resistor2 && resistor2.enabled) {
+            if (resistor2.mode === 'series') {
+              totalR = resistor.resistance + resistor2.resistance;
+            } else {
+              totalR = (resistor.resistance * resistor2.resistance) / (resistor.resistance + resistor2.resistance);
+            }
+          }
+        }
+        
+        // LED calculation
+        if (led && led.enabled) {
+          const ledCurrent = Math.max(0, (state.voltage - led.forwardVoltage) / totalR);
+          if (ledCurrent > 0.02) { // LED max current
+            totalR = totalR + (state.voltage - led.forwardVoltage) / 0.02;
+          }
+        }
+        
+        state.resistance = totalR || 1;
+        state.current = state.voltage / state.resistance;
+        state.power = state.voltage * state.current;
+        state.heatLevel = Math.min(state.power / 5, 1);
+        
+        // Bulb brightness
+        if (bulb && bulb.enabled) {
+          bulb.brightness = Math.min(state.power / 5, 1);
+        }
+      }
+      
+      // Update displays
+      voltageValue.textContent = state.voltage.toFixed(1) + ' V';
+      resistanceValue.textContent = formatResistance(state.resistance);
+      currentMeter.textContent = state.current.toFixed(3) + ' A';
+      voltageMeter.textContent = state.voltage.toFixed(1) + ' V';
+      powerMeter.textContent = state.power.toFixed(2) + ' W';
+      
+      updateBuilderInfo();
+    }
+
+    function updateBuilderInfo() {
+      const switchComp = state.components?.find(c => c.type === 'switch');
+      if (switchComp && switchComp.open) {
+        infoBox.className = 'info-box';
+        infoBox.innerHTML = `🔌 <strong>Circuit Open</strong> - The switch is open! Click "Toggle Switch" to close.`;
+      } else if (state.current > 0.5) {
+        infoBox.className = 'info-box danger';
+        infoBox.innerHTML = `⚠️ <strong>Danger!</strong> High current (${state.current.toFixed(2)}A)!`;
+      } else if (state.power > 2) {
+        infoBox.className = 'info-box warning';
+        infoBox.innerHTML = `⚡ <strong>High Power:</strong> ${state.power.toFixed(2)}W - Components getting hot!`;
+      } else {
+        infoBox.className = 'info-box';
+        infoBox.innerHTML = `✅ <strong>Circuit Active:</strong> I = ${state.current.toFixed(3)}A through R = ${formatResistance(state.resistance)}`;
       }
     }
 
@@ -1292,6 +1732,78 @@
 
     // Initialize help
     renderHelp();
+
+    // ============ BUILDER CONTROLS ============
+    state.switchOpen = false;
+    state.mode = 'simple';
+
+    document.getElementById('batteryVoltageSlider')?.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      document.getElementById('batteryVoltageValue').textContent = val + ' V';
+      const batt = state.components?.find(c => c.type === 'battery');
+      if (batt) batt.voltage = val;
+      state.voltage = val;
+      calculateBuilder();
+    });
+
+    document.getElementById('r1Slider')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('r1Value').textContent = formatResistance(val);
+      const r1 = state.components?.find(c => c.type === 'resistor');
+      if (r1) r1.resistance = val;
+      calculateBuilder();
+    });
+
+    document.getElementById('r1Enabled')?.addEventListener('change', (e) => {
+      const r1 = state.components?.find(c => c.type === 'resistor');
+      if (r1) r1.enabled = e.target.checked;
+      calculateBuilder();
+    });
+
+    document.getElementById('r2Slider')?.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value);
+      document.getElementById('r2Value').textContent = formatResistance(val);
+      const r2 = state.components?.find(c => c.type === 'resistor2');
+      if (r2) r2.resistance = val;
+      calculateBuilder();
+    });
+
+    document.getElementById('r2Enabled')?.addEventListener('change', (e) => {
+      const r2 = state.components?.find(c => c.type === 'resistor2');
+      if (r2) r2.enabled = e.target.checked;
+      calculateBuilder();
+    });
+
+    document.getElementById('r2Mode')?.addEventListener('change', (e) => {
+      const r2 = state.components?.find(c => c.type === 'resistor2');
+      if (r2) r2.mode = e.target.value;
+      calculateBuilder();
+    });
+
+    document.getElementById('ledEnabled')?.addEventListener('change', (e) => {
+      const led = state.components?.find(c => c.type === 'led');
+      if (led) led.enabled = e.target.checked;
+      calculateBuilder();
+    });
+
+    document.getElementById('ledColor')?.addEventListener('change', (e) => {
+      const led = state.components?.find(c => c.type === 'led');
+      if (led) led.color = e.target.value;
+    });
+
+    document.getElementById('bulbEnabled')?.addEventListener('change', (e) => {
+      const bulb = state.components?.find(c => c.type === 'bulb');
+      if (bulb) bulb.enabled = e.target.checked;
+      calculateBuilder();
+    });
+
+    document.getElementById('toggleSwitch')?.addEventListener('click', () => {
+      state.switchOpen = !state.switchOpen;
+      const switchComp = state.components?.find(c => c.type === 'switch');
+      if (switchComp) switchComp.open = state.switchOpen;
+      document.getElementById('switchStatus').textContent = state.switchOpen ? 'OPEN' : 'CLOSED';
+      calculateBuilder();
+    });
 
     // ============ INITIALIZE ============
     calculate();
