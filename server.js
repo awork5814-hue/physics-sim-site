@@ -45,13 +45,6 @@ const PLANS = {
 const TURSO_URL = undefined;
 const TURSO_TOKEN = undefined;
 
-let SQL;
-
-console.log('==========================================');
-console.log('STARTING FRESH WITH SQL.JS ONLY');
-console.log('==========================================');
-
-// Simple in-memory database (for testing only)
 let users = [];
 let userDataStore = [];
 
