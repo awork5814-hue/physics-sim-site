@@ -617,7 +617,7 @@
     </div>
 
     <div class="control-panel">
-      <div class="panel">
+      <div class="panel" id="panelCircuitControls">
         <div class="panel-title">⚡ Circuit Controls</div>
         
         <div class="slider-group">
@@ -639,21 +639,20 @@
           <div class="slider-label">
             <span class="slider-name">⚡ Resistance (R)</span>
             <span class="slider-value" id="resistanceValue">100 Ω</span>
-</div>
-      
-      <div class="components-toolbar" id="toolbar">
-        <button class="component-btn" data-comp="battery">🔋 Battery</button>
-        <button class="component-btn" data-comp="resistor">⚡ Resistor 1</button>
-        <button class="component-btn" data-comp="resistor2">⚡ Resistor 2</button>
-        <button class="component-btn" data-comp="led">💡 LED</button>
-        <button class="component-btn" data-comp="bulb">💡 Bulb</button>
-        <button class="component-btn" data-comp="switch">🔀 Switch</button>
-      </div>
-    </div>
+          </div>
+          <input type="range" id="resistanceSlider" min="1" max="2000" step="1" value="100">
+          <div class="preset-btns">
+            <button class="preset-btn" data-r="10">10Ω</button>
+            <button class="preset-btn" data-r="47">47Ω</button>
+            <button class="preset-btn" data-r="100">100Ω</button>
+            <button class="preset-btn" data-r="220">220Ω</button>
+            <button class="preset-btn" data-r="470">470Ω</button>
+            <button class="preset-btn" data-r="1000">1kΩ</button>
+          </div>
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panelMeasurements">
         <div class="panel-title">📊 Measurements</div>
         <div class="meter-display">
           <div class="meter">
@@ -674,7 +673,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" id="panelFormula">
         <div class="panel-title">📐 Ohm's Law</div>
         <div class="formula-display">
           <div class="formula-chip active" data-formula="V=IR">V = I × R</div>
@@ -1532,19 +1531,17 @@
       });
     });
 
-    function updateLevel() {
+function updateLevel() {
       const breadcrumb = document.getElementById('breadcrumb');
       const title = document.getElementById('sectionTitle');
       const toolbar = document.getElementById('toolbar');
-      const controlPanel = document.querySelector('.control-panel');
-      
-      // Get all panels by their IDs
-      const panel1 = document.querySelector('.control-panel > .panel:nth-of-type(1)'); // Circuit Controls
-      const panel2 = document.querySelector('.control-panel > .panel:nth-of-type(2)'); // Measurements
-      const panel3 = document.querySelector('.control-panel > .panel:nth-of-type(3)'); // Formula
       const builderControls = document.getElementById('builderControls');
       const level3Controls = document.getElementById('level3Controls');
       const infoPanel = document.getElementById('infoPanel');
+      
+      const panel1 = document.getElementById('panelCircuitControls');
+      const panel2 = document.getElementById('panelMeasurements');
+      const panel3 = document.getElementById('panelFormula');
       
       if (state.level === 1) {
         breadcrumb.textContent = "Ohm's Law Lab / Introduction";
@@ -1583,6 +1580,7 @@
         state.mode = 'realworld';
         initLevel3();
       }
+    }
     }
 
     function initLevel3() {
