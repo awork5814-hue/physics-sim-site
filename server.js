@@ -59,8 +59,10 @@ async function initDatabase() {
   if (urlValue && tokenValue) {
     try {
       const { createClient } = require('@libsql/client');
-      let url = urlValue.startsWith('libsql://') ? urlValue.replace('libsql://', 'https://') : urlValue;
-      libsqlClient = createClient({ url, authToken: tokenValue });
+      libsqlClient = createClient({ 
+        url: urlValue, 
+        authToken: tokenValue
+      });
       isTurso = true;
       
       db = {
@@ -110,14 +112,13 @@ async function initTables() {
   if (!libsqlClient) return;
   console.log('Creating tables with libsqlClient...');
   try {
-    const r1 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
-    console.log('Users table created:', r1);
-    const r2 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')');
-    console.log('User_data table created:', r2);
-    const r3 = await libsqlClient.execute('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)');
-    console.log('Subscriptions table created:', r3);
+    const createUsers = libsqlClient.execute('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
+    const createUserData = libsqlClient.execute('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')');
+    const createSubscriptions = libsqlClient.execute('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)');
+    await Promise.all([createUsers, createUserData, createSubscriptions]);
+    console.log('All tables created');
   } catch (e) {
-    console.log('Table error:', e.message, e.stack);
+    console.log('Table error:', e.message);
   }
 }
 
