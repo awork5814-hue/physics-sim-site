@@ -718,6 +718,18 @@
           Total R = 1/(1/${r.join(' + 1/')}) = ${formatResistance(total)}<br>
           Voltage is SAME across all branches<br>
           Current divides through each branch`;
+      } else if (state.level === 3) {
+        // Combined circuit
+        const seriesR = state.seriesResistors.reduce((a, b) => a + b.value, 0);
+        const parallelSum = state.parallelResistors.reduce((acc, val) => acc + 1/val.value, 0);
+        const parallelR = parallelSum > 0 ? 1 / parallelSum : 0;
+        const totalR = seriesR + parallelR;
+        
+        infoBox.innerHTML = `<strong>Combined Circuit:</strong><br>
+          🔴 Series: ${formatResistance(seriesR)}<br>
+          🔵 Parallel: ${formatResistance(parallelR)}<br>
+          <strong>Total: ${formatResistance(totalR)}</strong><br>
+          Current passes through series first, then splits in parallel branches`;
       }
     }
 
@@ -866,54 +878,86 @@
       const rightX = w - 60;
       
       const intensity = Math.min(state.current / 0.1, 1);
-      const wireColor = `rgba(255, 107, 107, ${0.3 + intensity * 0.5})`;
       
-      ctx.strokeStyle = wireColor;
+      // Get series and parallel resistors
+      const seriesResistors = state.seriesResistors || [];
+      const parallelResistors = state.parallelResistors || [];
+      
+      // Draw series section first
+      const seriesCount = seriesResistors.length;
+      const seriesSpacing = Math.min(60, (rightX - leftX - 100) / Math.max(seriesCount, 1));
+      const seriesStartX = leftX + 40;
+      
+      ctx.strokeStyle = `rgba(255, 107, 107, ${0.3 + intensity * 0.5})`;
       ctx.lineWidth = 4;
       ctx.shadowColor = '#ff6b6b';
       ctx.shadowBlur = 10;
       
-      // Series resistor before parallel group
-      const seriesR = state.resistors[0]?.value || 100;
-      const seriesX = leftX + 80;
+      // Draw series resistors in a chain
+      let currentX = seriesStartX;
+      for (let i = 0; i < seriesCount; i++) {
+        const r = seriesResistors[i].value;
+        
+        // Wire to resistor
+        ctx.beginPath();
+        ctx.moveTo(currentX, topY);
+        ctx.lineTo(currentX + seriesSpacing/2, topY);
+        ctx.stroke();
+        
+        // Draw resistor
+        drawResistor(currentX + seriesSpacing/2, topY, r, '#ff6b6b');
+        
+        // Wire after resistor
+        ctx.beginPath();
+        ctx.moveTo(currentX + seriesSpacing, topY);
+        ctx.stroke();
+        
+        currentX += seriesSpacing;
+      }
+      
+      // Connect to parallel section
+      const parallelStartX = currentX + 20;
       
       ctx.beginPath();
-      ctx.moveTo(leftX + 30, topY);
-      ctx.lineTo(seriesX, topY);
-      ctx.lineTo(seriesX, bottomY);
+      ctx.moveTo(currentX, topY);
+      ctx.lineTo(parallelStartX, topY);
+      ctx.lineTo(parallelStartX, bottomY);
       ctx.lineTo(rightX - 30, bottomY);
       ctx.stroke();
       
-      drawResistor(seriesX, topY, seriesR, '#ff6b6b');
-      
-      // Parallel section
-      if (state.resistors.length > 1) {
-        const parallelCount = state.resistors.length - 1;
-        const pSpacing = (rightX - seriesX - 60) / parallelCount;
+      // Draw parallel section
+      const parallelCount = parallelResistors.length;
+      if (parallelCount > 0) {
+        const pSpacing = Math.min(80, (rightX - parallelStartX - 60) / Math.max(parallelCount, 1));
         
         ctx.strokeStyle = `rgba(78, 205, 196, ${0.3 + intensity * 0.5})`;
         ctx.shadowColor = '#4ecdc4';
         
         // Parallel rails
         ctx.beginPath();
-        ctx.moveTo(seriesX + 30, topY);
+        ctx.moveTo(parallelStartX, topY);
         ctx.lineTo(rightX - 30, topY);
-        ctx.moveTo(seriesX + 30, bottomY);
+        ctx.moveTo(parallelStartX, bottomY);
         ctx.lineTo(rightX - 30, bottomY);
         ctx.stroke();
         
         // Parallel branches
         for (let i = 0; i < parallelCount; i++) {
-          const branchX = seriesX + 30 + i * pSpacing + pSpacing/2;
+          const branchX = parallelStartX + 20 + i * pSpacing;
+          const r = parallelResistors[i].value;
+          
           ctx.beginPath();
           ctx.moveTo(branchX, topY);
           ctx.lineTo(branchX, bottomY);
           ctx.stroke();
-          drawResistor(branchX, (topY + bottomY)/2, state.resistors[i+1].value, '#4ecdc4');
+          
+          drawResistor(branchX, (topY + bottomY)/2, r, '#4ecdc4');
         }
       }
       
-      // Close circuit
+      // Close circuit at battery
+      ctx.strokeStyle = `rgba(255, 107, 107, ${0.3 + intensity * 0.5})`;
+      ctx.shadowColor = '#ff6b6b';
       ctx.beginPath();
       ctx.moveTo(rightX - 30, bottomY);
       ctx.lineTo(rightX - 30, cy + 40);
@@ -923,7 +967,10 @@
       
       ctx.shadowBlur = 0;
       
+      // Draw battery
       drawBattery(leftX, cy);
+      
+      // Draw ammeter
       drawMeter(leftX + 30, cy, 'A', state.current.toFixed(2) + 'A', '#2ed573');
     }
 
