@@ -49,26 +49,25 @@ let db;
 let isTurso = false;
 
 async function initDatabase() {
-  // Check both lowercase and uppercase env var names
-  console.log('process.env keys:', Object.keys(process.env).join(', '));
-  const TURSO_URL = process.env.TURSO_DATABASE_URL || process.env.turso_database_url || process.env.DATABASE_URL;
-  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || process.env.AUTH_TOKEN;
+  // Try direct access
+  const urlValue = process.env.TURSO_DATABASE_URL;
+  const tokenValue = process.env.TURSO_AUTH_TOKEN;
   
   console.log('==========================================');
-  console.log('INIT DATABASE');
-  console.log('TURSO_URL raw:', TURSO_URL);
-  console.log('TURSO_URL type:', typeof TURSO_URL);
-  console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
+  console.log('INIT DATABASE - DIRECT ACCESS');
+  console.log('TURSO_DATABASE_URL value:', urlValue);
+  console.log('TURSO_AUTH_TOKEN value:', tokenValue ? 'exists' : 'undefined');
+  console.log('JSON stringified:', JSON.stringify(process.env).slice(0, 500));
   console.log('==========================================');
   
-  if (TURSO_URL && TURSO_URL.length > 0 && TURSO_TOKEN) {
+  if (urlValue && tokenValue) {
     console.log('Trying to connect to Turso...');
     
     try {
       const { createClient } = require('@libsql/client');
       
       // Turso expects https:// URL format
-      let url = TURSO_URL;
+      let url = urlValue;
       if (url.startsWith('libsql://')) {
         url = url.replace('libsql://', 'https://');
       }
@@ -76,7 +75,7 @@ async function initDatabase() {
       
       const client = createClient({
         url: url,
-        authToken: TURSO_TOKEN
+        authToken: tokenValue
       });
       
       isTurso = true;
