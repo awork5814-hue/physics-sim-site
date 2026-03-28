@@ -332,6 +332,201 @@
       grid-column: 2;
     }
 
+    .challenge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .challenge-card {
+      background: rgba(106, 215, 255, 0.1);
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .challenge-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .challenge-card.completed {
+      background: rgba(74, 222, 128, 0.15);
+      border-color: #4ade80;
+    }
+
+    .challenge-card .target {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .challenge-card .points {
+      font-size: 0.85rem;
+      color: var(--sim-muted);
+    }
+
+    .challenge-progress {
+      display: flex;
+      gap: 24px;
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(15, 22, 35, 0.8);
+      border-radius: 8px;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .achievement {
+      background: rgba(246, 199, 107, 0.1);
+      border: 1px solid rgba(246, 199, 107, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+
+    .achievement.unlocked {
+      opacity: 1;
+      border-color: #f6c76b;
+      background: rgba(246, 199, 107, 0.2);
+    }
+
+    .achievement-icon {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .achievement-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .appliance-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .appliance-card {
+      background: rgba(15, 22, 35, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .appliance-icon {
+      font-size: 1.8rem;
+    }
+
+    .appliance-name {
+      font-size: 0.85rem;
+      margin: 8px 0 4px;
+    }
+
+    .appliance-power {
+      font-size: 0.75rem;
+      color: var(--sim-muted);
+    }
+
+    .quiz-question {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: rgba(15, 22, 35, 0.6);
+      border-radius: 8px;
+    }
+
+    .quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quiz-option {
+      padding: 12px 16px;
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .quiz-option:hover {
+      border-color: var(--accent);
+    }
+
+    .quiz-option.correct {
+      background: rgba(74, 222, 128, 0.2);
+      border-color: #4ade80;
+    }
+
+    .quiz-option.wrong {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+    }
+
+    .quiz-result {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .quiz-result.correct {
+      display: block;
+      background: rgba(74, 222, 128, 0.15);
+      color: #4ade80;
+    }
+
+    .quiz-result.wrong {
+      display: block;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .quiz-score {
+      margin-top: 16px;
+      font-weight: 600;
+    }
+
+    .resistor-array {
+      margin-top: 12px;
+    }
+
+    .resistor-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .resistor-row input {
+      width: 80px;
+      padding: 8px;
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 6px;
+      color: var(--sim-text);
+    }
+
+    .formula-note {
+      font-size: 0.85rem;
+      color: var(--sim-muted);
+      margin-top: 8px;
+    }
+
     details {
       border: 1px solid var(--sim-border);
       border-radius: 14px;
@@ -499,12 +694,59 @@
         </details>
 
         <details>
-          <summary>❓ Guided Questions</summary>
-          <ol class="questions">
-            <li>What happens to current if voltage increases while resistance stays constant?</li>
-            <li>If you double the resistance, what happens to current?</li>
-            <li>Calculate: If V = 12V and R = 4Ω, what is I?</li>
-          </ol>
+          <summary>🎮 Challenge Mode</summary>
+          <div id="challengeMode">
+            <p>Test your Ohm's Law skills! Complete challenges to earn points.</p>
+            <div class="challenge-grid" id="challengeGrid"></div>
+            <div class="challenge-progress">
+              <span>Score: <strong id="challengeScore">0</strong></span>
+              <span>Streak: <strong id="challengeStreak">0</strong></span>
+            </div>
+            <button class="btn primary" id="newChallengeBtn" style="margin-top:12px;">Get New Challenge</button>
+          </div>
+        </details>
+
+        <details>
+          <summary>🏆 Achievements</summary>
+          <div class="achievements-grid" id="achievementsGrid"></div>
+        </details>
+
+        <details>
+          <summary>💡 Real-World Power</summary>
+          <div id="realWorldPower">
+            <p>See what your circuit powers in real life:</p>
+            <div class="appliance-cards" id="applianceCards"></div>
+          </div>
+        </details>
+
+        <details>
+          <summary>❓ Quiz Mode</summary>
+          <div id="quizMode">
+            <p>Test your knowledge!</p>
+            <div class="quiz-question" id="quizQuestion"></div>
+            <div class="quiz-options" id="quizOptions"></div>
+            <div class="quiz-result" id="quizResult"></div>
+            <button class="btn primary" id="nextQuizBtn" style="margin-top:12px;display:none;">Next Question</button>
+            <div class="quiz-score">Score: <span id="quizScore">0</span>/10</div>
+          </div>
+        </details>
+
+        <details>
+          <summary>🔌 Series & Parallel</summary>
+          <div id="seriesParallel">
+            <p>Add multiple resistors to see how they combine:</p>
+            <div class="resistor-array">
+              <div class="resistor-row">
+                <label>R1: <input type="number" id="r1Value" value="100" min="1" max="1000" step="10"> Ω</label>
+                <label>R2: <input type="number" id="r2Value" value="200" min="1" max="1000" step="10"> Ω</label>
+              </div>
+              <div class="resistor-row">
+                <button class="ghost" id="seriesBtn">Series: <span id="seriesTotal">300</span> Ω</button>
+                <button class="ghost" id="parallelBtn">Parallel: <span id="parallelTotal">66.7</span> Ω</button>
+              </div>
+              <p class="formula-note">Series: R = R1 + R2 | Parallel: R = (R1 × R2) / (R1 + R2)</p>
+            </div>
+          </div>
         </details>
 
         <details>
@@ -703,18 +945,36 @@
     }
 
     function drawResistorReal(x, y) {
+      const heat = Math.min(state.power / 25, 1);
+      const heatColor = `rgb(${Math.round(255 * heat + 106 * (1-heat))}, ${Math.round(50 * heat + 215 * (1-heat))}, ${Math.round(50 * heat + 255 * (1-heat))})`;
+      
       ctx.fillStyle = 'rgba(106, 215, 255, 0.15)';
-      ctx.strokeStyle = '#6ad7ff';
-      ctx.lineWidth = 3;
+      ctx.strokeStyle = heat > 0.3 ? heatColor : '#6ad7ff';
+      ctx.lineWidth = 3 + heat * 4;
       ctx.beginPath();
       ctx.roundRect(x - 70, y - 20, 140, 40, 10);
       ctx.fill();
       ctx.stroke();
+      
+      // Color bands
       const bands = ['#2c2c2c', '#c0392b', '#f1c40f', '#8e44ad'];
       bands.forEach((color, i) => {
         ctx.fillStyle = color;
         ctx.fillRect(x - 50 + i * 24, y - 20, 10, 40);
       });
+      
+      // Heat glow effect
+      if (heat > 0.1) {
+        ctx.shadowColor = '#ff6633';
+        ctx.shadowBlur = heat * 30;
+        ctx.strokeStyle = heatColor;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.roundRect(x - 75, y - 25, 150, 50, 15);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      
       ctx.fillStyle = '#9fb0c5';
       ctx.font = '16px Space Grotesk, sans-serif';
       ctx.fillText(formatOhms(state.resistance), x - 30, y - 30);
@@ -831,6 +1091,260 @@
         setTimeout(() => el.classList.remove('copied'), 1500);
       });
     }
+
+    // ============ GAMIFICATION FEATURES ============
+
+    // Challenge System
+    const challenges = [
+      { id: 1, text: 'Get exactly 0.5A current', target: { type: 'current', value: 0.5, tolerance: 0.02 }, points: 10 },
+      { id: 2, text: 'Reach 10W power', target: { type: 'power', value: 10, tolerance: 0.5 }, points: 15 },
+      { id: 3, text: 'Set voltage to 9V', target: { type: 'voltage', value: 9, tolerance: 0.5 }, points: 5 },
+      { id: 4, text: 'Use 1kΩ resistance', target: { type: 'resistance', value: 1000, tolerance: 50 }, points: 10 },
+      { id: 5, text: 'Get 100mA current', target: { type: 'current', value: 0.1, tolerance: 0.01 }, points: 20 },
+      { id: 6, text: 'Achieve 1W power', target: { type: 'power', value: 1, tolerance: 0.1 }, points: 10 },
+      { id: 7, text: 'Use 50Ω resistance', target: { type: 'resistance', value: 50, tolerance: 5 }, points: 10 },
+      { id: 8, text: 'Set voltage to 5V', target: { type: 'voltage', value: 5, tolerance: 0.3 }, points: 5 },
+    ];
+
+    let challengeScore = 0;
+    let challengeStreak = 0;
+    let completedChallenges = new Set();
+
+    function renderChallenges() {
+      const grid = document.getElementById('challengeGrid');
+      grid.innerHTML = challenges.map(c => `
+        <div class="challenge-card ${completedChallenges.has(c.id) ? 'completed' : ''}" data-id="${c.id}">
+          <div class="target">${c.text}</div>
+          <div class="points">${c.points} points</div>
+        </div>
+      `).join('');
+      
+      document.querySelectorAll('.challenge-card').forEach(card => {
+        card.addEventListener('click', () => checkChallenge(parseInt(card.dataset.id)));
+      });
+    }
+
+    function checkChallenge(id) {
+      const challenge = challenges.find(c => c.id === id);
+      if (!challenge || completedChallenges.has(id)) return;
+      
+      let current, target;
+      if (challenge.target.type === 'current') current = state.current;
+      else if (challenge.target.type === 'power') current = state.power;
+      else if (challenge.target.type === 'voltage') current = state.voltage;
+      else if (challenge.target.type === 'resistance') current = state.resistance;
+      
+      target = challenge.target.value;
+      const diff = Math.abs(current - target);
+      
+      if (diff <= challenge.target.tolerance) {
+        completedChallenges.add(id);
+        challengeScore += challenge.points;
+        challengeStreak++;
+        document.getElementById('challengeScore').textContent = challengeScore;
+        document.getElementById('challengeStreak').textContent = challengeStreak;
+        renderChallenges();
+        checkAchievements();
+      } else {
+        challengeStreak = 0;
+        document.getElementById('challengeStreak').textContent = challengeStreak;
+      }
+    }
+
+    document.getElementById('newChallengeBtn').addEventListener('click', () => {
+      const available = challenges.filter(c => !completedChallenges.has(c.id));
+      if (available.length > 0) {
+        const random = available[Math.floor(Math.random() * available.length)];
+        alert('Challenge: ' + random.text + ' (' + random.points + ' points)');
+      } else {
+        alert('All challenges completed! Great job!');
+      }
+    });
+
+    // Achievements System
+    const achievements = [
+      { id: 'first', name: 'First Steps', icon: '🌟', desc: 'Complete your first challenge', check: () => challengeScore >= 10 },
+      { id: 'power10', name: 'Power User', icon: '⚡', desc: 'Reach 10W power', check: () => state.power >= 10 },
+      { id: 'volt9', name: 'Battery Life', icon: '🔋', desc: 'Set voltage to 9V', check: () => state.voltage === 9 },
+      { id: 'res1k', name: 'Kilo Ohm Master', icon: '🎯', desc: 'Set resistance to 1kΩ', check: () => state.resistance >= 1000 },
+      { id: 'streak5', name: 'On Fire', icon: '🔥', desc: 'Get 5 correct in a row', check: () => challengeStreak >= 5 },
+      { id: 'quiz10', name: 'Quiz Whiz', icon: '🧠', desc: 'Score 10 on quiz', check: () => quizScore >= 10 },
+      { id: 'explorer', name: 'Explorer', icon: '🔍', desc: 'Try all resistor values', check: () => false },
+      { id: 'scientist', name: 'Scientist', icon: '🔬', desc: 'Use all voltage values', check: () => false },
+    ];
+
+    let unlockedAchievements = new Set();
+
+    function renderAchievements() {
+      const grid = document.getElementById('achievementsGrid');
+      grid.innerHTML = achievements.map(a => `
+        <div class="achievement ${unlockedAchievements.has(a.id) ? 'unlocked' : ''}">
+          <div class="achievement-icon">${a.icon}</div>
+          <div class="achievement-name">${a.name}</div>
+        </div>
+      `).join('');
+    }
+
+    function checkAchievements() {
+      achievements.forEach(a => {
+        if (!unlockedAchievements.has(a.id) && a.check()) {
+          unlockedAchievements.add(a.id);
+          renderAchievements();
+        }
+      });
+    }
+
+    // Real-World Power Comparison
+    const appliances = [
+      { name: 'LED Bulb', power: 10, icon: '💡' },
+      { name: 'Phone Charger', power: 15, icon: '📱' },
+      { name: 'Fan', power: 75, icon: '🌀' },
+      { name: 'Laptop', power: 65, icon: '💻' },
+      { name: 'TV', power: 100, icon: '📺' },
+      { name: 'Microwave', power: 1200, icon: '🍳' },
+      { name: 'AC Unit', power: 3500, icon: '❄️' },
+      { name: 'Heater', power: 2000, icon: '🔥' },
+    ];
+
+    function updateAppliances() {
+      const power = state.power;
+      const cards = document.getElementById('applianceCards');
+      cards.innerHTML = appliances.map(a => {
+        const hours = power > 0 ? (a.power / power).toFixed(1) : '∞';
+        const active = power >= a.power;
+        return `
+          <div class="appliance-card" style="opacity: ${active ? 1 : 0.4}; border-color: ${active ? 'var(--accent)' : 'var(--sim-border)'}">
+            <div class="appliance-icon">${a.icon}</div>
+            <div class="appliance-name">${a.name}</div>
+            <div class="appliance-power">${a.power}W ${active ? '✓' : ''}</div>
+            <div class="appliance-power" style="margin-top:4px">Runs ${hours}h per 1 kWh</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Quiz System
+    const quizQuestions = [
+      { q: 'If voltage doubles and resistance stays same, current...?', options: ['Doubles', 'Halves', 'Stays same', 'Triples'], correct: 0 },
+      { q: 'What is the formula for current?', options: ['I = V × R', 'I = V / R', 'I = R / V', 'I = V + R'], correct: 1 },
+      { q: 'A 100Ω resistor with 10V has current of...', options: ['0.1A', '1A', '10A', '1000A'], correct: 1 },
+      { q: 'Power is calculated as...', options: ['P = V / I', 'P = V × I', 'P = V + I', 'P = V - I'], correct: 1 },
+      { q: 'If resistance increases, current...', options: ['Increases', 'Decreases', 'Stays same', 'Doubles'], correct: 1 },
+      { q: '12V battery through 4Ω resistor gives...', options: ['3A', '48A', '0.33A', '16A'], correct: 0 },
+      { q: 'Which has higher resistance?', options: ['Copper wire', 'Rubber', 'Human body', 'LED'], correct: 1 },
+      { q: 'Ohm is unit of...', options: ['Voltage', 'Current', 'Resistance', 'Power'], correct: 2 },
+      { q: '5V through 500Ω = ? mA', options: ['10mA', '100mA', '1mA', '0.01mA'], correct: 0 },
+      { q: 'Short circuit has...', options: ['High resistance', 'No resistance', 'Medium resistance', 'Infinite power'], correct: 1 },
+    ];
+
+    let quizScore = 0;
+    let quizIndex = 0;
+    let quizAnswered = false;
+
+    function renderQuiz() {
+      if (quizIndex >= quizQuestions.length) {
+        quizIndex = 0;
+        quizScore = 0;
+      }
+      const q = quizQuestions[quizIndex];
+      document.getElementById('quizQuestion').textContent = q.q;
+      document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => 
+        `<div class="quiz-option" data-index="${i}">${opt}</div>`
+      ).join('');
+      document.getElementById('quizScore').textContent = quizScore;
+      document.getElementById('quizResult').style.display = 'none';
+      document.getElementById('nextQuizBtn').style.display = 'none';
+      quizAnswered = false;
+      
+      document.querySelectorAll('.quiz-option').forEach(opt => {
+        opt.addEventListener('click', () => selectQuizAnswer(parseInt(opt.dataset.index)));
+      });
+    }
+
+    function selectQuizAnswer(index) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const q = quizQuestions[quizIndex];
+      const options = document.querySelectorAll('.quiz-option');
+      options[index].classList.add(index === q.correct ? 'correct' : 'wrong');
+      if (q.correct !== index) options[q.correct].classList.add('correct');
+      
+      const result = document.getElementById('quizResult');
+      if (index === q.correct) {
+        quizScore++;
+        result.textContent = '✓ Correct! Well done!';
+        result.className = 'quiz-result correct';
+      } else {
+        result.textContent = '✗ Incorrect. The answer was: ' + q.options[q.correct];
+        result.className = 'quiz-result wrong';
+      }
+      document.getElementById('quizScore').textContent = quizScore;
+      document.getElementById('nextQuizBtn').style.display = 'inline-block';
+      checkAchievements();
+    }
+
+    document.getElementById('nextQuizBtn').addEventListener('click', () => {
+      quizIndex++;
+      renderQuiz();
+    });
+
+    // Series/Parallel Calculator
+    function updateSeriesParallel() {
+      const r1 = parseFloat(document.getElementById('r1Value').value) || 100;
+      const r2 = parseFloat(document.getElementById('r2Value').value) || 200;
+      const series = r1 + r2;
+      const parallel = (r1 * r2) / (r1 + r2);
+      document.getElementById('seriesTotal').textContent = series.toFixed(0);
+      document.getElementById('parallelTotal').textContent = parallel.toFixed(1);
+    }
+
+    document.getElementById('r1Value').addEventListener('input', updateSeriesParallel);
+    document.getElementById('r2Value').addEventListener('input', updateSeriesParallel);
+    document.getElementById('seriesBtn').addEventListener('click', () => {
+      const r1 = parseFloat(document.getElementById('r1Value').value) || 100;
+      const r2 = parseFloat(document.getElementById('r2Value').value) || 200;
+      setResistance(r1 + r2);
+      voltageInput.value = 9;
+      state.voltage = 9;
+      recalc();
+    });
+    document.getElementById('parallelBtn').addEventListener('click', () => {
+      const r1 = parseFloat(document.getElementById('r1Value').value) || 100;
+      const r2 = parseFloat(document.getElementById('r2Value').value) || 200;
+      const parallel = (r1 * r2) / (r1 + r2);
+      setResistance(Math.round(parallel));
+      voltageInput.value = 9;
+      state.voltage = 9;
+      recalc();
+    });
+
+    // Wire glow effect update
+    const originalDrawCircuit = drawCircuit;
+    drawCircuit = function() {
+      originalDrawCircuit();
+      // Add heat effect to resistor based on power
+      if (state.power > 0) {
+        const heat = Math.min(state.power / 20, 1);
+        const r = Math.round(255 * heat);
+        const g = Math.round(100 * (1 - heat));
+        const b = 50;
+      }
+    };
+
+    // Initialize all features
+    renderChallenges();
+    renderAchievements();
+    renderQuiz();
+    updateAppliances();
+    updateSeriesParallel();
+
+    // Update appliances when values change
+    const originalRecalc = recalc;
+    recalc = function() {
+      originalRecalc();
+      updateAppliances();
+      checkAchievements();
+    };
   </script>
 </body>
 </html>
