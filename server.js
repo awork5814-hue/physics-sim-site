@@ -59,17 +59,21 @@ async function initDatabase() {
   if (urlValue && tokenValue) {
     try {
       const { createClient } = require('@libsql/client');
+      let url = urlValue.startsWith('libsql://') ? urlValue.replace('libsql://', 'https://') : urlValue;
+      if (!url.startsWith('https://')) {
+        url = 'https://' + url;
+      }
       libsqlClient = createClient({ 
-        url: urlValue, 
+        url: url, 
         authToken: tokenValue
       });
       isTurso = true;
       
       db = {
         prepare: (sql) => ({
-          run: async (...params) => { const stmt = libsqlClient.prepare(sql); const r = await stmt.run(...params); return { changes: r?.changes || 0 }; },
-          get: async (...params) => { const stmt = libsqlClient.prepare(sql); const r = await stmt.get(...params); return r || null; },
-          all: async (...params) => { const stmt = libsqlClient.prepare(sql); return await stmt.all(...params); }
+          run: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return { changes: r?.changes || 0 }; },
+          get: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows?.[0] || null; },
+          all: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows || []; }
         }),
         exec: async (sql) => { 
           if (!sql || !sql.trim()) return;
@@ -77,8 +81,7 @@ async function initDatabase() {
           for (const stmt of statements) {
             if (stmt.trim()) {
               try {
-                const s = libsqlClient.prepare(stmt.trim());
-                await s.run();
+                await libsqlClient.execute({ sql: stmt.trim(), args: [] });
               } catch(e) {
                 console.log('exec stmt error:', e.message);
               }
