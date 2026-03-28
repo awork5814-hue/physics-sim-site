@@ -1351,12 +1351,12 @@
     }
 
     // ============ EVENT LISTENERS ============
-    voltageSlider.addEventListener('input', (e) => {
+    voltageSlider?.addEventListener('input', (e) => {
       state.voltage = parseFloat(e.target.value);
       calculate();
     });
 
-    resistanceSlider.addEventListener('input', (e) => {
+    resistanceSlider?.addEventListener('input', (e) => {
       state.resistance = parseInt(e.target.value);
       calculate();
     });
@@ -1365,7 +1365,7 @@
     document.querySelectorAll('.preset-btn[data-v]').forEach(btn => {
       btn.addEventListener('click', () => {
         state.voltage = parseFloat(btn.dataset.v);
-        voltageSlider.value = state.voltage;
+        if (voltageSlider) voltageSlider.value = state.voltage;
         calculate();
       });
     });
@@ -1373,7 +1373,7 @@
     document.querySelectorAll('.preset-btn[data-r]').forEach(btn => {
       btn.addEventListener('click', () => {
         state.resistance = parseInt(btn.dataset.r);
-        resistanceSlider.value = state.resistance;
+        if (resistanceSlider) resistanceSlider.value = state.resistance;
         calculate();
       });
     });
@@ -1440,8 +1440,8 @@
       state.heatLevel = Math.min(state.power / 5, 1);
       state.switchOpen = false;
       
-      voltageSlider.value = state.voltage;
-      resistanceSlider.value = state.resistance;
+      if (voltageSlider) voltageSlider.value = state.voltage;
+      if (resistanceSlider) resistanceSlider.value = state.resistance;
       calculate();
     }
 
