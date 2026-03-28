@@ -386,6 +386,187 @@
       margin-bottom: 8px;
     }
 
+    .help-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(0, 168, 255, 0.15), rgba(0, 212, 170, 0.1));
+      border: 1px solid rgba(0, 168, 255, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .help-toggle:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .help-toggle-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .help-toggle-icon {
+      font-size: 20px;
+    }
+
+    .help-toggle-text {
+      font-weight: 600;
+    }
+
+    .help-toggle-arrow {
+      transition: transform 0.2s;
+    }
+
+    .help-panel {
+      display: none;
+      background: rgba(0, 20, 40, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .help-panel.open {
+      display: block;
+    }
+
+    .help-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .help-tab {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .help-tab.active {
+      background: rgba(0, 168, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .help-content {
+      padding: 16px;
+      max-height: 350px;
+      overflow-y: auto;
+    }
+
+    .help-section {
+      margin-bottom: 16px;
+    }
+
+    .help-section h4 {
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .help-section p, .help-section li {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .help-section ul {
+      padding-left: 20px;
+    }
+
+    .help-section li {
+      margin-bottom: 6px;
+    }
+
+    .help-step {
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .help-step-num {
+      width: 24px;
+      height: 24px;
+      background: var(--accent);
+      color: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .help-step-text {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .help-color-legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .help-color-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .help-color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    .help-formula {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 16px;
+      margin: 8px 0;
+    }
+
+    .help-formula strong {
+      color: var(--accent);
+    }
+
+    .lang-toggle {
+      position: fixed;
+      top: 80px;
+      right: 32px;
+      z-index: 50;
+      padding: 8px 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .lang-toggle:hover {
+      border-color: var(--accent);
+    }
+
     @media (max-width: 900px) {
       .main-container {
         grid-template-columns: 1fr;
@@ -524,6 +705,18 @@
       </div>
     </div>
   </main>
+
+  <button class="lang-toggle" id="langToggle">English</button>
+
+  <div class="help-panel" id="helpPanel">
+    <div class="help-tabs">
+      <button class="help-tab active" data-lang="en">🇬🇧 English</button>
+      <button class="help-tab" data-lang="ar">🇸🇦 العربية</button>
+    </div>
+    <div class="help-content" id="helpContent">
+      <!-- Content populated by JavaScript -->
+    </div>
+  </div>
 
   <script>
     // ============ STATE ============
@@ -914,6 +1107,191 @@
         btn.classList.add('active');
       });
     });
+
+    // ============ HELP PANEL ============
+    let currentLang = 'en';
+    
+    const helpContent = {
+      en: {
+        title: '📖 How to Use',
+        sections: [
+          {
+            title: '🎚️ Adjust Voltage',
+            content: `<p>Use the <strong>Voltage slider</strong> or click preset buttons (1.5V - 12V) to change the power source.</p>
+            <ul>
+              <li>Higher voltage = stronger "push" for electrons</li>
+              <li>Lower voltage = weaker electron flow</li>
+            </ul>`
+          },
+          {
+            title: '⚡ Adjust Resistance',
+            content: `<p>Use the <strong>Resistance slider</strong> or preset values to change how much the circuit opposes current.</p>
+            <ul>
+              <li>Higher resistance = less current flows</li>
+              <li>Lower resistance = more current flows</li>
+            </ul>`
+          },
+          {
+            title: '👀 Watch the Effects',
+            content: `<p>Observe the visual feedback in the circuit:</p>
+            <div class="help-color-legend">
+              <div class="help-color-item"><div class="help-color-dot" style="background: #00a8ff;"></div> Low current</div>
+              <div class="help-color-item"><div class="help-color-dot" style="background: #ffa502;"></div> Medium current</div>
+              <div class="help-color-item"><div class="help-color-dot" style="background: #ff4757;"></div> High current (danger!)</div>
+            </div>
+            <p style="margin-top:8px">Moving dots = electrons flowing through the wire.</p>`
+          },
+          {
+            title: '📊 Read the Meters',
+            content: `<div class="help-formula"><strong>I = V ÷ R</strong></div>
+            <ul>
+              <li><strong>Ammeter (A)</strong> - Measures current flowing through circuit</li>
+              <li><strong>Voltmeter (V)</strong> - Shows voltage across the circuit</li>
+              <li><strong>Power (W)</strong> - Energy consumed per second (P = V × I)</li>
+            </ul>`
+          },
+          {
+            title: '⚠️ Safety Tips',
+            content: `<ul>
+              <li>High current (>0.5A) can damage components!</li>
+              <li>High power (>2W) makes resistors hot</li>
+              <li>Start with low voltage and increase gradually</li>
+              <li>Always check the meter readings before increasing values</li>
+            </ul>`
+          },
+          {
+            title: '🔬 Try This Experiment',
+            content: `<div class="help-step">
+              <div class="help-step-num">1</div>
+              <div class="help-step-text">Set voltage to 9V and resistance to 100Ω</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">2</div>
+              <div class="help-step-text">Notice the current is I = 9 ÷ 100 = 0.09A</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">3</div>
+              <div class="help-step-text">Now double the resistance to 200Ω - what happens?</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">4</div>
+              <div class="help-step-text">Answer: Current halves to 0.045A (I = V/R)</div>
+            </div>`
+          }
+        ]
+      },
+      ar: {
+        title: '📖 كيفية الاستخدام',
+        sections: [
+          {
+            title: '🎚️ ضبط الجهد',
+            content: `<p>استخدم <strong>شريط الجهد</strong> أو اضغط الأزرار المحددة مسبقاً (1.5V - 12V) لتغيير مصدر الطاقة.</p>
+            <ul>
+              <li>جهد أعلى = "دفع" أقوى للإلكترونات</li>
+              <li>جهد أقل = تدفق أضعف للإلكترونات</li>
+            </ul>`
+          },
+          {
+            title: '⚡ ضبط المقاومة',
+            content: `<p>استخدم <strong>شريط المقاومة</strong> أو القيم المحددة مسبقاً لتغيير مقدار مقاومة الدائرة.</p>
+            <ul>
+              <li>مقاومة أعلى = تيار أقل</li>
+              <li>مقاومة أقل = تيار أكثر</li>
+            </ul>`
+          },
+          {
+            title: '👀 مراقبة التأثيرات',
+            content: `<p>راقب التغذية البصرية في الدائرة:</p>
+            <div class="help-color-legend">
+              <div class="help-color-item"><div class="help-color-dot" style="background: #00a8ff;"></div> تيار منخفض</div>
+              <div class="help-color-item"><div class="help-color-dot" style="background: #ffa502;"></div> تيار متوسط</div>
+              <div class="help-color-item"><div class="help-color-dot" style="background: #ff4757;"></div> تيار عالي (خطر!)</div>
+            </div>
+            <p style="margin-top:8px">النقاط المتحركة = الإلكترونات تتدفق عبر السلك.</p>`
+          },
+          {
+            title: '📊 قراءة المقاييس',
+            content: `<div class="help-formula"><strong>I = V ÷ R</strong></div>
+            <ul>
+              <li><strong>الأميتر (A)</strong> - يقيس التيار المتدفق في الدائرة</li>
+              <li><strong>الفولتميتر (V)</strong> - يُظهر الجهد عبر الدائرة</li>
+              <li><strong>الطاقة (W)</strong> - الطاقة المستهلكة في الثانية (P = V × I)</li>
+            </ul>`
+          },
+          {
+            title: '⚠️ نصائح السلامة',
+            content: `<ul>
+              <li>التيار العالي (>0.5A) يمكن أن يتلف المكونات!</li>
+              <li>الطاقة العالية (>2W) تجعل المقاومات ساخنة</li>
+              <li>ابدأ بجهد منخفض وزده تدريجياً</li>
+              <li>دائماً تحقق من قراءات المقاييس قبل زيادة القيم</li>
+            </ul>`
+          },
+          {
+            title: '🔬 جرب هذا实验',
+            content: `<div class="help-step">
+              <div class="help-step-num">1</div>
+              <div class="help-step-text">اضبط الجهد على 9V والمقاومة على 100Ω</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">2</div>
+              <div class="help-step-text">لاحظ أن التيار = 9 ÷ 100 = 0.09A</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">3</div>
+              <div class="help-step-text">الآن ضاعف المقاومة إلى 200Ω - ماذا يحدث؟</div>
+            </div>
+            <div class="help-step">
+              <div class="help-step-num">4</div>
+              <div class="help-step-text">الإجابة: التيار ينخفض إلى 0.045A (I = V/R)</div>
+            </div>`
+          }
+        ]
+      }
+    };
+
+    function renderHelp() {
+      const content = helpContent[currentLang];
+      const html = content.sections.map(s => `
+        <div class="help-section">
+          <h4>${s.title}</h4>
+          ${s.content}
+        </div>
+      `).join('');
+      document.getElementById('helpContent').innerHTML = html;
+    }
+
+    // Toggle help panel
+    document.getElementById('infoPanel').style.cursor = 'pointer';
+    document.getElementById('infoPanel').addEventListener('click', () => {
+      const panel = document.getElementById('helpPanel');
+      panel.classList.toggle('open');
+    });
+
+    // Language tabs
+    document.querySelectorAll('.help-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentLang = tab.dataset.lang;
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+        renderHelp();
+      });
+    });
+
+    // Language toggle button
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+      document.querySelectorAll('.help-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.lang === currentLang);
+      });
+      renderHelp();
+      document.getElementById('helpPanel').classList.add('open');
+    });
+
+    // Initialize help
+    renderHelp();
 
     // ============ INITIALIZE ============
     calculate();
