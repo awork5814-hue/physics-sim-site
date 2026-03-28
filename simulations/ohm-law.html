@@ -1537,11 +1537,14 @@
       const title = document.getElementById('sectionTitle');
       const toolbar = document.getElementById('toolbar');
       const controlPanel = document.querySelector('.control-panel');
+      
+      // Get all panels by their IDs
+      const panel1 = document.querySelector('.control-panel > .panel:nth-of-type(1)'); // Circuit Controls
+      const panel2 = document.querySelector('.control-panel > .panel:nth-of-type(2)'); // Measurements
+      const panel3 = document.querySelector('.control-panel > .panel:nth-of-type(3)'); // Formula
       const builderControls = document.getElementById('builderControls');
       const level3Controls = document.getElementById('level3Controls');
-      
-      // Hide Level 1 controls in builder mode
-      const level1Controls = controlPanel.querySelectorAll('.panel');
+      const infoPanel = document.getElementById('infoPanel');
       
       if (state.level === 1) {
         breadcrumb.textContent = "Ohm's Law Lab / Introduction";
@@ -1549,7 +1552,10 @@
         toolbar.style.display = 'flex';
         if (builderControls) builderControls.style.display = 'none';
         if (level3Controls) level3Controls.style.display = 'none';
-        level1Controls.forEach(p => p.style.display = '');
+        if (panel1) panel1.style.display = '';
+        if (panel2) panel2.style.display = '';
+        if (panel3) panel3.style.display = '';
+        if (infoPanel) infoPanel.style.display = '';
         state.mode = 'simple';
         resetToSimple();
       } else if (state.level === 2) {
@@ -1558,7 +1564,10 @@
         toolbar.style.display = 'flex';
         if (builderControls) builderControls.style.display = '';
         if (level3Controls) level3Controls.style.display = 'none';
-        level1Controls.forEach(p => p.style.display = 'none');
+        if (panel1) panel1.style.display = 'none';
+        if (panel2) panel2.style.display = 'none';
+        if (panel3) panel3.style.display = 'none';
+        if (infoPanel) infoPanel.style.display = '';
         state.mode = 'builder';
         initBuilder();
       } else if (state.level === 3) {
@@ -1567,7 +1576,10 @@
         toolbar.style.display = 'flex';
         if (builderControls) builderControls.style.display = 'none';
         if (level3Controls) level3Controls.style.display = '';
-        level1Controls.forEach(p => p.style.display = 'none');
+        if (panel1) panel1.style.display = 'none';
+        if (panel2) panel2.style.display = 'none';
+        if (panel3) panel3.style.display = 'none';
+        if (infoPanel) infoPanel.style.display = '';
         state.mode = 'realworld';
         initLevel3();
       }
