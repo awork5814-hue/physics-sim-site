@@ -33,9 +33,6 @@ console.log('==========================================');
 console.log('SQL.JS ONLY VERSION - FRESH DEPLOY V4');
 console.log('==========================================');
 
-// Force override Turso - we don't want it
-process.env.TURSO_DATABASE_URL = undefined;
-process.env.TURSO_AUTH_TOKEN = undefined;
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
 const PAYMOB_BASE_URL = process.env.PAYMOB_BASE_URL || 'https://accept.paymob.com';
@@ -51,6 +48,7 @@ const PLANS = {
 
 let db;
 let isTurso = false;
+let libsqlClient;
 
 async function initDatabase() {
   const urlValue = RENDER_TURSO_URL;
@@ -62,14 +60,14 @@ async function initDatabase() {
     try {
       const { createClient } = require('@libsql/client');
       let url = urlValue.startsWith('libsql://') ? urlValue.replace('libsql://', 'https://') : urlValue;
-      const client = createClient({ url, authToken: tokenValue });
+      libsqlClient = createClient({ url, authToken: tokenValue });
       isTurso = true;
       
       db = {
         prepare: (sql) => ({
-          run: async (...params) => { await client.execute({ sql, args: params }); return { changes: 1 }; },
-          get: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows[0] || null; },
-          all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
+          run: async (...params) => { await libsqlClient.execute({ sql, args: params }); return { changes: 1 }; },
+          get: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r.rows[0] || null; },
+          all: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r.rows; }
         }),
         exec: async (sql) => { 
           if (!sql || !sql.trim()) return;
@@ -77,7 +75,7 @@ async function initDatabase() {
           for (const stmt of statements) {
             if (stmt.trim()) {
               try {
-                await client.execute({ sql: stmt.trim() });
+                await libsqlClient.execute({ sql: stmt.trim() });
               } catch(e) {
                 console.log('exec stmt error:', e.message);
               }
@@ -109,12 +107,14 @@ async function initDatabase() {
 }
 
 async function initTables() {
-  console.log('Creating tables...');
+  console.log('Creating tables with libsqlClient...');
   try {
-    await db.exec('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT "", created_at TEXT, last_login TEXT, plan TEXT DEFAULT "free", plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
-    await db.exec('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT "[]", achievements TEXT DEFAULT "[]", quiz_progress TEXT DEFAULT "{}", streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT "{}", local_storage_data TEXT DEFAULT "{}")');
-    await db.exec('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT "EGP", txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT "active", created_at TEXT, expires_at TEXT)');
-    console.log('All tables created');
+    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)' });
+    console.log('Users table created');
+    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')' });
+    console.log('User_data table created');
+    await libsqlClient.execute({ sql: 'CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)' });
+    console.log('Subscriptions table created');
   } catch (e) {
     console.log('Table error:', e.message);
   }
