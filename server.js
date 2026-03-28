@@ -72,13 +72,15 @@ async function initDatabase() {
           all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
         }),
         exec: async (sql) => { 
-          console.log('exec:', sql.substring(0, 50)); 
-          if (sql && sql.trim()) {
-            try {
-              await client.execute({ sql }); 
-              console.log('exec OK');
-            } catch(e) {
-              console.log('exec error:', e.message);
+          if (!sql || !sql.trim()) return;
+          const statements = sql.split(';').filter(s => s.trim());
+          for (const stmt of statements) {
+            if (stmt.trim()) {
+              try {
+                await client.execute({ sql: stmt.trim() });
+              } catch(e) {
+                console.log('exec stmt error:', e.message);
+              }
             }
           }
         }
@@ -110,13 +112,11 @@ async function initTables() {
   console.log('Creating tables...');
   try {
     await db.exec('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT "", created_at TEXT, last_login TEXT, plan TEXT DEFAULT "free", plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
-    console.log('Users table OK');
     await db.exec('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT "[]", achievements TEXT DEFAULT "[]", quiz_progress TEXT DEFAULT "{}", streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT "{}", local_storage_data TEXT DEFAULT "{}")');
-    console.log('User_data table OK');
     await db.exec('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT "EGP", txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT "active", created_at TEXT, expires_at TEXT)');
-    console.log('Subscriptions table OK');
+    console.log('All tables created');
   } catch (e) {
-    console.log('Table creation:', e.message);
+    console.log('Table error:', e.message);
   }
 }
 
