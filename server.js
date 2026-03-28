@@ -775,8 +775,8 @@ app.post('/api/auth/merge-local-data', authMiddleware, async (req, res) => {
   }
 });
 
-function getUserPublicData(userId) {
-  const user = db.prepare('SELECT id, email, created_at, last_login, plan, plan_expiry FROM users WHERE id = ?').get(userId);
+async function getUserPublicData(userId) {
+  const user = await db.prepare('SELECT id, email, created_at, last_login, plan, plan_expiry FROM users WHERE id = ?').get(userId);
   return user;
 }
 
