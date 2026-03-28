@@ -972,6 +972,74 @@
       
       // Draw ammeter
       drawMeter(leftX + 30, cy, 'A', state.current.toFixed(2) + 'A', '#2ed573');
+      
+      // Draw electrons for combined circuit
+      if (state.current > 0.001) {
+        drawElectronsCombined(leftX, rightX, topY, bottomY, seriesResistors, parallelResistors, seriesSpacing, parallelStartX);
+      }
+    }
+    
+    function drawElectronsCombined(leftX, rightX, topY, bottomY, seriesResistors, parallelResistors, seriesSpacing, parallelStartX) {
+      const speed = state.current * 0.3;
+      const topRailY = topY + 20;
+      const bottomRailY = bottomY - 20;
+      const seriesCount = seriesResistors.length;
+      const parallelCount = parallelResistors.length;
+      const pSpacing = parallelCount > 0 ? Math.min(80, (rightX - parallelStartX - 60) / Math.max(parallelCount, 1)) : 80;
+      
+      state.electrons.forEach(e => {
+        e.t = (e.t + speed * 0.03) % 1;
+        
+        // Path: battery -> through series resistors -> top rail -> parallel branches -> bottom rail -> back to battery
+        const seriesLen = seriesCount * seriesSpacing;
+        const topRailLen = rightX - leftX - 40;
+        const branchLen = bottomRailY - topRailY;
+        const bottomRailLen = rightX - leftX - 40;
+        
+        // Determine which section of the path we're in
+        const pathLen = seriesLen + topRailLen + branchLen * Math.max(parallelCount, 1) + bottomRailLen + (bottomRailY - topRailY);
+        const dist = e.t * pathLen;
+        
+        let x, y;
+        
+        if (dist < seriesLen) {
+          // Through series section (top wire)
+          const seriesProgress = dist / seriesSpacing;
+          x = leftX + 40 + seriesProgress * seriesSpacing;
+          y = topY;
+        } else if (dist < seriesLen + topRailLen) {
+          // Across top rail
+          x = leftX + 40 + seriesLen + (dist - seriesLen);
+          y = topRailY;
+        } else if (dist < seriesLen + topRailLen + branchLen * Math.max(parallelCount, 1)) {
+          // Down through parallel branches
+          const branchProgress = (dist - seriesLen - topRailLen) / branchLen;
+          const branchIndex = Math.floor(branchProgress) % Math.max(parallelCount, 1);
+          const branchLocalPos = branchProgress % 1;
+          x = parallelStartX + 20 + branchIndex * pSpacing + pSpacing/2;
+          y = topRailY + branchLocalPos * branchLen;
+        } else if (dist < seriesLen + topRailLen + branchLen * Math.max(parallelCount, 1) + bottomRailLen) {
+          // Across bottom rail (right to left)
+          x = rightX - 30 - (dist - seriesLen - topRailLen - branchLen * Math.max(parallelCount, 1));
+          y = bottomRailY;
+        } else {
+          // Back to battery (right side up)
+          const rightDist = dist - seriesLen - topRailLen - branchLen * Math.max(parallelCount, 1) - bottomRailLen;
+          x = rightX - 30;
+          y = bottomRailY - rightDist;
+        }
+        
+        // Draw electron
+        if (x >= leftX && x <= rightX && y >= topY && y <= bottomY) {
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 6;
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      });
     }
 
     function drawBattery(x, y) {
@@ -1038,66 +1106,113 @@
 
     function drawElectronsSeries(startX, topY, spacing, count, batteryX) {
       const speed = state.current * 0.5;
-      const bottomY = topY + 200;
+      const bottomY = topY + 260;
       const leftX = batteryX + 30;
       const rightX = startX + spacing * (count - 1);
+      
+      // Wire path: top wire (left→right) → right wire (top→bottom) → bottom wire (right→left) → left wire (bottom→top, through battery gap)
+      const topWireLen = rightX - leftX;
+      const rightWireLen = bottomY - topY;
+      const bottomWireLen = rightX - leftX;
+      const leftWireLen = bottomY - topY;
+      const pathLen = topWireLen + rightWireLen + bottomWireLen + leftWireLen;
       
       state.electrons.forEach(e => {
         e.t = (e.t + speed * 0.03) % 1;
         
-        // Path: top wire (left to right) -> right side (top to bottom) -> bottom wire (right to left) -> left side (bottom to top)
-        const pathLen = (rightX - leftX) * 2 + (bottomY - topY) * 2;
         const dist = e.t * pathLen;
-        
         let x, y;
         
-        if (dist < rightX - leftX) {
+        if (dist < topWireLen) {
           // Top wire - left to right
           x = leftX + dist;
           y = topY;
-        } else if (dist < rightX - leftX + bottomY - topY) {
-          // Right side - top to bottom
+        } else if (dist < topWireLen + rightWireLen) {
+          // Right wire - top to bottom
           x = rightX;
-          y = topY + (dist - (rightX - leftX));
-        } else if (dist < (rightX - leftX) * 2 + bottomY - topY) {
+          y = topY + (dist - topWireLen);
+        } else if (dist < topWireLen + rightWireLen + bottomWireLen) {
           // Bottom wire - right to left
-          x = rightX - (dist - (rightX - leftX + bottomY - topY));
+          x = rightX - (dist - topWireLen - rightWireLen);
           y = bottomY;
         } else {
-          // Left side - bottom to top (through battery area)
+          // Left wire - bottom to top (staying in wire, not through battery)
+          const leftDist = dist - topWireLen - rightWireLen - bottomWireLen;
           x = leftX;
-          y = bottomY - (dist - ((rightX - leftX) * 2 + bottomY - topY));
+          y = bottomY - leftDist;
         }
         
-        ctx.shadowColor = '#00ffff';
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
-        ctx.beginPath();
-        ctx.arc(x, y, 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        // Only draw if within valid wire bounds
+        if (y >= topY && y <= bottomY) {
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
       });
     }
 
     function drawElectronsParallel(leftX, rightX, topY, bottomY, spacing, count) {
       const speed = state.current * 0.3;
+      const batteryX = leftX - 40;
+      const cy = (topY + bottomY) / 2;
+      const topRailY = topY + 40;
+      const bottomRailY = bottomY - 40;
       
-      state.electrons.forEach(e => {
+      // Calculate path: battery -> up left wire -> across top -> down branches -> across bottom -> back to battery
+      const leftWireLen = topRailY - bottomRailY + 80; // up from battery to top
+      const topRailLen = rightX - leftX;
+      const branchLen = bottomRailY - topRailY;
+      const bottomRailLen = rightX - leftX;
+      const rightWireLen = bottomRailY - topRailY + 80; // from bottom rail back to battery
+      const pathLen = leftWireLen + topRailLen + branchLen * count + bottomRailLen + rightWireLen;
+      
+      // Draw electrons in main rails and branches
+      state.electrons.forEach((e, idx) => {
         e.t = (e.t + speed * 0.03) % 1;
         
-        // Simplified parallel flow visualization
-        const y = topY + 30 + e.t * (bottomY - topY - 60);
+        const dist = e.t * pathLen;
+        let x, y;
         
-        // Draw in each branch
-        for (let i = 0; i < count; i++) {
-          const branchX = leftX + 30 + i * spacing + spacing/2;
-          ctx.shadowColor = '#00ffff';
-          ctx.shadowBlur = 6;
-          ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
-          ctx.beginPath();
-          ctx.arc(branchX, y, 3, 0, Math.PI * 2);
-          ctx.fill();
+        // Main path along rails
+        if (dist < leftWireLen) {
+          // Up from battery to top rail
+          const progress = dist / leftWireLen;
+          x = batteryX + 30;
+          y = bottomY - progress * (bottomY - topRailY);
+        } else if (dist < leftWireLen + topRailLen) {
+          // Across top rail (left to right)
+          x = leftX + (dist - leftWireLen);
+          y = topRailY;
+        } else if (dist < leftWireLen + topRailLen + branchLen * count) {
+          // Down through branches
+          const branchProgress = (dist - leftWireLen - topRailLen) / branchLen;
+          const branchIndex = Math.floor(branchProgress) % Math.max(count, 1);
+          const branchLocalPos = branchProgress % 1;
+          x = leftX + 30 + branchIndex * spacing + spacing/2;
+          y = topRailY + branchLocalPos * branchLen;
+        } else if (dist < leftWireLen + topRailLen + branchLen * count + bottomRailLen) {
+          // Across bottom rail (right to left)
+          x = rightX - (dist - leftWireLen - topRailLen - branchLen * count);
+          y = bottomRailY;
+        } else {
+          // Back up to battery (right side)
+          const rightDist = dist - leftWireLen - topRailLen - branchLen * count - bottomRailLen;
+          const progress = rightDist / rightWireLen;
+          x = rightX;
+          y = bottomRailY - progress * (bottomRailY - topRailY);
         }
+        
+        // Draw electron
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 6;
+        ctx.fillStyle = 'rgba(0, 255, 255, 0.7)';
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fill();
         ctx.shadowBlur = 0;
       });
     }

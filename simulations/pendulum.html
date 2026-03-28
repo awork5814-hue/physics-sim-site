@@ -1,1125 +1,1319 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Simple Pendulum</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/simulation-theme.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Pendulum - Interactive Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/simulation-theme.css">
   <style>
     :root {
-      --accent: #3b82f6;
-      --accent-2: #60a5fa;
-      --energy-ke: #3b82f6;
-      --energy-pe: #f59e0b;
-      --string-color: #f8fafc;
-      --trail-color: rgba(59, 130, 246, 0.35);
-      --grid-color: rgba(148, 163, 184, 0.12);
-      --sim-bg: #0a0a0f;
-      --sim-text: #f8fafc;
-      --sim-muted: #94a3b8;
-      --sim-border: rgba(255, 255, 255, 0.08);
-      --panel: rgba(17, 24, 39, 0.72);
-      --graph-line: #3b82f6;
-      --graph-bg: rgba(10, 15, 25, 0.9);
-      --shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      --mono: "JetBrains Mono", monospace;
+      --accent: #00d4ff;
+      --accent-glow: #00ffff;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --success: #2ed573;
+      --bg-dark: #0a0f16;
+      --bg-panel: rgba(15, 23, 35, 0.95);
+      --border: rgba(100, 150, 200, 0.15);
+      --text: #e8f4fc;
+      --text-muted: #8ba3b8;
     }
 
-    body.light {
-      --sim-bg: #f5f7fa;
-      --sim-text: #0f172a;
-      --sim-muted: #475569;
-      --sim-border: rgba(15, 23, 42, 0.12);
-      --panel: rgba(255, 255, 255, 0.85);
-      --graph-bg: rgba(248, 250, 252, 0.9);
-      --grid-color: rgba(15, 23, 42, 0.08);
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
-      background: var(--sim-bg);
-      color: var(--sim-text);
-      font-family: "Inter", "Segoe UI", sans-serif;
-    }
-
-    .page {
+      font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      overflow-x: hidden;
     }
 
-    .topbar {
+    .background {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 400px at 80% 80%, rgba(255, 165, 2, 0.06) 0%, transparent 50%),
+        var(--bg-dark);
+      z-index: -1;
+    }
+
+    .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 28px;
-      border-bottom: 1px solid var(--sim-border);
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 15, 22, 0.8);
       backdrop-filter: blur(10px);
-      background: rgba(8, 12, 20, 0.7);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
     }
 
-    .topbar a {
-      color: var(--sim-text);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .toggle {
-      display: inline-flex;
-      gap: 8px;
+    .logo {
+      display: flex;
       align-items: center;
-      padding: 8px 14px;
-      border: 1px solid var(--sim-border);
-      border-radius: 999px;
-      background: rgba(14, 20, 32, 0.8);
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: #000;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .level-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .level-tab {
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-muted);
       cursor: pointer;
-      color: var(--sim-text);
+      font-weight: 500;
+      transition: all 0.2s;
     }
 
-    header.hero {
-      text-align: center;
-      padding: 34px 20px 18px;
+    .level-tab:hover {
+      border-color: var(--accent);
+      color: var(--text);
     }
 
-    header.hero h1 {
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
-      margin: 0 0 10px;
+    .level-tab.active {
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      color: #000;
+      border-color: transparent;
     }
 
-    header.hero p {
-      color: var(--sim-muted);
-      margin: 0;
-    }
-
-    .layout {
+    .main-container {
       display: grid;
-      grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      grid-template-columns: 1fr 340px;
       gap: 24px;
-      padding: 12px 28px 18px;
+      padding: 24px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
     }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-      backdrop-filter: blur(12px);
-    }
-
-    .canvas-wrap {
-      display: grid;
-      gap: 10px;
-    }
-
-    canvas {
-      width: 100%;
-      height: clamp(360px, 55vh, 520px);
-      background: rgba(6, 10, 18, 0.7);
+    .simulation-area {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
       border-radius: 16px;
-      border: 1px solid var(--sim-border);
+      padding: 20px;
+      min-height: 600px;
     }
 
-    .controls {
-      display: grid;
+    .simulation-canvas {
+      width: 100%;
+      height: 500px;
+      border-radius: 12px;
+      background: 
+        radial-gradient(circle at 50% 30%, rgba(0, 212, 255, 0.05) 0%, transparent 50%),
+        linear-gradient(180deg, rgba(0, 20, 40, 0.5) 0%, rgba(0, 10, 20, 0.8) 100%);
+      cursor: grab;
+    }
+
+    .simulation-canvas:active {
+      cursor: grabbing;
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
       gap: 16px;
     }
 
-    .control-group {
-      display: grid;
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
       gap: 8px;
     }
 
-    label {
-      font-size: 0.9rem;
-      color: var(--sim-muted);
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-label {
       display: flex;
       justify-content: space-between;
-      gap: 10px;
-    }
-
-    input[type="range"], select, input[type="number"] {
-      width: 100%;
-    }
-
-    .inline {
-      display: flex;
-      gap: 10px;
       align-items: center;
+      margin-bottom: 6px;
     }
 
-    .inline > * {
-      flex: 1;
+    .slider-name {
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .slider-value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-glow);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .preset-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--text);
+    }
+
+    .meter-display {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .meter {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .meter-value {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent-glow);
+    }
+
+    .meter-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .energy-bar {
+      height: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      margin-top: 8px;
+    }
+
+    .energy-kinetic {
+      background: linear-gradient(90deg, #2ed573, #7bed9f);
+      transition: width 0.05s;
+    }
+
+    .energy-potential {
+      background: linear-gradient(90deg, #ffa502, #ffbe76);
+      transition: width 0.05s;
+    }
+
+    .energy-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     .btn-row {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      background: rgba(12, 18, 28, 0.8);
-      color: var(--sim-text);
-      border: 1px solid var(--sim-border);
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    button.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(106, 215, 255, 0.2);
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-      border-color: rgba(59, 130, 246, 0.5);
-      box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
-    }
-
-    .data-panel {
-      padding: 0;
-      background: transparent;
-      border: none;
-      box-shadow: none;
-    }
-
-    .data-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 6px;
-    }
-
-    .data-card {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-      border: 1px solid var(--sim-border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .data-label {
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--sim-muted);
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .data-label::before {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .data-value {
-      font-size: 1rem;
-      font-weight: 700;
-      font-family: var(--mono);
-      line-height: 1.2;
-    }
-
-    .data-value.blue { color: var(--accent); }
-    .data-value.orange { color: #f59e0b; }
-    .data-value.green { color: #22c55e; }
-    .data-value.red { color: #ef4444; }
-    .data-value.gray { color: var(--sim-text); }
-
-    .energy-bars {
-      display: grid;
       gap: 8px;
-      margin-top: 6px;
+      margin-top: 12px;
     }
 
-    .bar {
-      height: 10px;
-      border-radius: 999px;
-      background: rgba(120, 150, 190, 0.2);
-      overflow: hidden;
+    .control-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
     }
 
-    .bar span {
-      display: block;
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.2s ease;
+    .control-btn:hover {
+      background: rgba(0, 168, 255, 0.15);
+      border-color: var(--accent);
     }
 
-    .graph-panel {
-      margin: 0 28px 20px;
+    .control-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      color: #000;
+      border-color: transparent;
     }
 
-    .graph-header {
+    .formula-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', monospace;
+      text-align: center;
+      margin: 8px 0;
+      border-left: 3px solid var(--accent);
+    }
+
+    .scenario-card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .scenario-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .scenario-card.active {
+      border-color: var(--success);
+      background: rgba(46, 213, 115, 0.1);
+    }
+
+    .scenario-title {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .scenario-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .graph-container {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 12px;
+    }
+
+    .graph-canvas {
+      width: 100%;
+      height: 100px;
+      border-radius: 4px;
+    }
+
+    .checkbox-group {
       display: flex;
-      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .checkbox-label {
+      display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--accent);
+    }
+
+    .lang-toggle {
+      position: fixed;
+      top: 80px;
+      right: 32px;
+      z-index: 50;
+      padding: 8px 16px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .lang-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    .help-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .help-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
       margin-bottom: 12px;
     }
 
-    .accordion {
-      display: grid;
-      gap: 12px;
-      margin: 0 28px 40px;
-    }
-
-    details {
-      border: 1px solid var(--sim-border);
-      border-radius: 14px;
-      background: rgba(12, 18, 28, 0.8);
-      padding: 12px 16px;
-    }
-
-    summary {
+    .help-tab {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
       cursor: pointer;
-      font-weight: 600;
+      font-weight: 500;
+    }
+
+    .help-tab.active {
+      background: rgba(0, 168, 255, 0.15);
       color: var(--accent);
-      list-style: none;
     }
 
-    summary::-webkit-details-marker {
-      display: none;
+    .help-content {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-muted);
     }
 
-    details p, details li {
-      color: var(--sim-muted);
+    .help-content h4 {
+      color: var(--accent);
+      margin: 12px 0 6px;
+      font-size: 14px;
     }
 
-    @media (max-width: 980px) {
-      .layout {
+    .help-content h4:first-child {
+      margin-top: 0;
+    }
+
+    @media (max-width: 900px) {
+      .main-container {
         grid-template-columns: 1fr;
-      }
-      canvas {
-        height: clamp(300px, 45vh, 420px);
+        padding: 16px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="page" id="pendulum">
-    <div class="topbar">
-      <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+  <div class="background"></div>
+  
+  <header class="header">
+    <a href="/index.html" class="logo">
+      <div class="logo-icon">⏱️</div>
+      <span class="logo-text">Physics Lab</span>
+    </a>
+    <div class="level-tabs">
+      <button class="level-tab active" data-level="1">📐 Basic</button>
+      <button class="level-tab" data-level="2">🔬 Advanced</button>
+      <button class="level-tab" data-level="3">⚖️ Compare</button>
+    </div>
+  </header>
+
+  <button class="lang-toggle" id="langToggle">English</button>
+  <button class="lang-toggle" id="helpToggle" style="top:130px;">📖 Help</button>
+
+  <main class="main-container">
+    <div class="simulation-area">
+      <canvas class="simulation-canvas" id="simCanvas"></canvas>
+      <div class="btn-row">
+        <button class="control-btn primary" id="playBtn">▶ Play</button>
+        <button class="control-btn" id="pauseBtn">⏸ Pause</button>
+        <button class="control-btn" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="help-panel" id="helpPanel" style="display:none; margin-top:12px;">
+        <div class="help-tabs">
+          <button class="help-tab active" data-lang="en">🇬🇧 English</button>
+          <button class="help-tab" data-lang="ar">🇸🇦 العربية</button>
+        </div>
+        <div class="help-content" id="helpContent"></div>
+      </div>
     </div>
 
-    <header class="hero">
-      <h1>The Simple Pendulum</h1>
-      <p>Period depends on length and gravity, not mass</p>
-    </header>
+    <div class="control-panel">
+      <div class="panel">
+        <div class="panel-title">🎚️ Parameters</div>
+        
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Length (L)</span>
+            <span class="slider-value" id="lengthValue">1.0 m</span>
+          </div>
+          <input type="range" id="lengthSlider" min="0.2" max="2" step="0.1" value="1">
+        </div>
 
-    <section class="layout">
-      <div class="panel canvas-wrap">
-        <canvas id="pendulumCanvas" width="900" height="520" aria-label="Pendulum simulation"></canvas>
-        <div style="color: var(--sim-muted); font-size: 0.85rem;">
-          Tip: if you pause and want motion again, press Play or drag the bob slightly and release.
+        <div class="slider-group" id="massGroup" style="display:none;">
+          <div class="slider-label">
+            <span class="slider-name">Mass (m)</span>
+            <span class="slider-value" id="massValue">1.0 kg</span>
+          </div>
+          <input type="range" id="massSlider" min="0.1" max="5" step="0.1" value="1">
         </div>
-        <div class="btn-row">
-          <button id="playPause">Play</button>
-          <button id="reset">Reset</button>
-          <button id="setVertical">Set Vertical</button>
-          <button id="stepBack">Step ◀</button>
-          <button id="stepForward">Step ▶</button>
+
+        <div class="slider-group" id="gravityGroup" style="display:none;">
+          <div class="slider-label">
+            <span class="slider-name">Gravity (g)</span>
+            <span class="slider-value" id="gravityValue">9.8 m/s²</span>
+          </div>
+          <input type="range" id="gravitySlider" min="1" max="25" step="0.1" value="9.8">
+          <div class="preset-btns">
+            <button class="preset-btn" data-g="1.62">Moon</button>
+            <button class="preset-btn" data-g="3.72">Mars</button>
+            <button class="preset-btn" data-g="9.8">Earth</button>
+            <button class="preset-btn" data-g="24.79">Jupiter</button>
+          </div>
         </div>
-        <div class="data-panel" aria-live="polite" id="dataPanel"></div>
-        <div class="energy-bars" id="energyBars">
-          <div>KE</div>
-          <div class="bar"><span id="keBar" style="background: var(--energy-ke); width: 0%;"></span></div>
-          <div>PE</div>
-          <div class="bar"><span id="peBar" style="background: var(--energy-pe); width: 0%;"></span></div>
-          <div>Total</div>
-          <div class="bar"><span id="totalBar" style="background: linear-gradient(90deg, var(--energy-ke), var(--energy-pe)); width: 100%;"></span></div>
+
+        <div class="slider-group" id="dampingGroup" style="display:none;">
+          <div class="slider-label">
+            <span class="slider-name">Damping</span>
+            <span class="slider-value" id="dampingValue">0%</span>
+          </div>
+          <input type="range" id="dampingSlider" min="0" max="10" step="0.5" value="0">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Initial Angle (θ)</span>
+            <span class="slider-value" id="angleValue">30°</span>
+          </div>
+          <input type="range" id="angleSlider" min="5" max="90" step="1" value="30">
+        </div>
+
+        <!-- Second Pendulum Controls (Compare Mode) -->
+        <div id="compareControls" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+          <div class="panel-title" style="color:#ff6b6b; margin-bottom:12px;">⚖️ Pendulum 2 (Red)</div>
+          
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Length (L₂)</span>
+              <span class="slider-value" id="length2Value" style="color:#ff6b6b;">1.0 m</span>
+            </div>
+            <input type="range" id="length2Slider" min="0.2" max="2" step="0.1" value="1">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Initial Angle (θ₂)</span>
+              <span class="slider-value" id="angle2Value" style="color:#ff6b6b;">30°</span>
+            </div>
+            <input type="range" id="angle2Slider" min="5" max="90" step="1" value="30">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Damping</span>
+              <span class="slider-value" id="damping2Value" style="color:#ff6b6b;">0%</span>
+            </div>
+            <input type="range" id="damping2Slider" min="0" max="10" step="0.5" value="0">
+          </div>
+
+          <div class="meter-display" style="margin-top:12px;">
+            <div class="meter">
+              <div class="meter-value" id="period2Display" style="color:#ff6b6b;">2.01 s</div>
+              <div class="meter-label">Period (T₂)</div>
+            </div>
+            <div class="meter">
+              <div class="meter-value" id="phaseDisplay">0°</div>
+              <div class="meter-label">Phase Diff</div>
+            </div>
+          </div>
+
+          <div class="checkbox-label" style="margin-top:12px;">
+            <input type="checkbox" id="showCompare" checked> Show Pendulum 2
+          </div>
         </div>
       </div>
 
-      <div class="panel controls" aria-label="Controls">
-        <h3 style="margin: 0 0 10px;">Pendulum Parameters</h3>
-        <div class="control-group">
-          <label for="length">Length <strong id="lengthLabel">1.00 m</strong></label>
-          <input type="range" id="length" min="0.5" max="3.0" step="0.01" value="1" />
-        </div>
-
-        <div class="control-group">
-          <label for="mass">Mass <strong id="massLabel">1.0 kg</strong></label>
-          <input type="range" id="mass" min="0.5" max="5.0" step="0.1" value="1" />
-        </div>
-
-        <div class="control-group">
-          <label>Gravity Presets</label>
-          <div class="btn-row" id="gravityPresets">
-            <button type="button" data-g="9.81">Earth</button>
-            <button type="button" data-g="1.62">Moon</button>
-            <button type="button" data-g="3.71">Mars</button>
+      <div class="panel">
+        <div class="panel-title">📊 Measurements</div>
+        <div class="meter-display">
+          <div class="meter">
+            <div class="meter-value" id="periodDisplay">0.00 s</div>
+            <div class="meter-label">Period (T)</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="frequencyDisplay">0.00 Hz</div>
+            <div class="meter-label">Frequency (f)</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="velocityDisplay">0.00 m/s</div>
+            <div class="meter-label">Max Velocity</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="energyDisplay">0.00 J</div>
+            <div class="meter-label">Total Energy</div>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="gravity">Gravity <strong id="gravityLabel">9.81 m/s²</strong></label>
-          <input type="range" id="gravity" min="0" max="20" step="0.01" value="9.81" />
+        <div class="formula-box" id="formulaBox">
+          T = 2π√(L/g) = 2π√(1.0/9.8) = 2.01 s
         </div>
 
-        <div class="control-group">
-          <label class="toggle"><input type="checkbox" id="dampingToggle" /> Air Resistance</label>
-          <div id="dampingWrap" class="hidden">
-            <label for="damping">Damping <strong id="dampingLabel">0.00</strong></label>
-            <input type="range" id="damping" min="0" max="0.2" step="0.005" value="0" />
+        <div style="margin-top: 12px;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Energy Distribution</div>
+          <div class="energy-bar">
+            <div class="energy-kinetic" id="kineticBar" style="width:50%;"></div>
+            <div class="energy-potential" id="potentialBar" style="width:50%;"></div>
           </div>
-        </div>
-
-        <h3 style="margin: 10px 0 0;">Simulation Controls</h3>
-        <div class="control-group">
-          <label for="angle">Initial Angle <strong id="angleLabel">30°</strong></label>
-          <input type="range" id="angle" min="-180" max="180" step="1" value="30" />
-        </div>
-
-        <div class="control-group">
-          <div class="inline">
-            <label for="angleInput">Angle</label>
-            <input type="number" id="angleInput" value="30" />
-            <select id="angleUnit">
-              <option value="deg" selected>°</option>
-              <option value="rad">rad</option>
-            </select>
+          <div class="energy-labels">
+            <span style="color:#2ed573;">KE: <span id="kineticVal">0</span></span>
+            <span style="color:#ffa502;">PE: <span id="potentialVal">0</span></span>
           </div>
-        </div>
-
-        <div class="control-group">
-          <label class="toggle"><input type="checkbox" id="dragMode" checked /> Drag to set angle</label>
-        </div>
-
-        <div class="control-group">
-          <label for="speed">Simulation Speed <strong id="speedLabel">1.00x</strong></label>
-          <input type="range" id="speed" min="0.25" max="2" step="0.05" value="1" />
-        </div>
-
-        <div class="control-group">
-          <label>Display Options</label>
-          <label><input type="checkbox" id="showGrid" checked /> Grid overlay</label>
-          <label><input type="checkbox" id="showAngle" checked /> Angle protractor</label>
-          <label><input type="checkbox" id="showVelocity" checked /> Velocity vector</label>
-          <label><input type="checkbox" id="showCOM" checked /> Center of mass</label>
-          <label><input type="checkbox" id="showEnergy" checked /> Energy bars</label>
-          <label><input type="checkbox" id="showPhase" checked /> Phase space overlay</label>
-          <label><input type="checkbox" id="showReadout" checked /> Numerical readouts</label>
-          <label><input type="checkbox" id="showTrail" checked /> Motion trail</label>
-          <label><input type="checkbox" id="rodMode" /> Rigid rod</label>
-          <label><input type="checkbox" id="precisionMode" /> Precision mode</label>
-        </div>
-
-        <div class="control-group">
-          <label>Units</label>
-          <select id="unitToggle">
-            <option value="metric" selected>Metric</option>
-            <option value="imperial">Imperial</option>
-          </select>
         </div>
       </div>
-    </section>
 
-    <section class="panel graph-panel">
-      <details open>
-        <summary>Angle vs Time</summary>
-        <canvas id="angleCanvas" width="900" height="220" aria-label="Angle graph"></canvas>
-      </details>
-      <details>
-        <summary>Energy Over Time</summary>
-        <canvas id="energyCanvas" width="900" height="220" aria-label="Energy graph"></canvas>
-      </details>
-      <details>
-        <summary>Phase Space</summary>
-        <canvas id="phaseCanvas" width="900" height="220" aria-label="Phase space graph"></canvas>
-      </details>
-    </section>
+      <div class="panel" id="panelVectors" style="display:none;">
+        <div class="panel-title">↗️ Vectors</div>
+        <div class="checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="showVelocity" checked> Velocity (green)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="showAcceleration" checked> Acceleration (red)
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="showTension"> Tension (yellow)
+          </label>
+        </div>
+      </div>
 
-    <section class="accordion">
-      <details open>
-        <summary>📚 Theory</summary>
-        <p>A simple pendulum is a mass (bob) attached to a fixed pivot by a massless string. For small angles, the period depends only on length and gravity.</p>
-        <p><strong>Formula:</strong> T = 2π√(L/g)</p>
-        <p>Longer length means a longer period, and stronger gravity means a shorter period. Mass does not affect the period.</p>
-      </details>
+      <div class="panel" id="panelGraphs" style="display:none;">
+        <div class="panel-title">📈 Graphs</div>
+        <div class="graph-container">
+          <canvas class="graph-canvas" id="angleGraph"></canvas>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Angle vs Time</div>
+      </div>
 
-      <details>
-        <summary>🔬 Investigation Questions</summary>
-        <ol>
-          <li>Keep g = 9.81 and θ₀ = 30°. Change L from 0.5 m to 2 m. What happens to the period?</li>
-          <li>Keep L = 1 m. Compare the period on Earth vs Moon. Which is longer and why?</li>
-          <li>Change mass from 0.5 kg to 5 kg with same L and g. Does period change?</li>
-          <li>Small angle (10°) vs large angle (60°): Is the formula accurate for both?</li>
-        </ol>
-      </details>
+      <div class="panel" id="panelScenarios">
+        <div class="panel-title">🎯 Preset Scenarios</div>
+        <div id="scenariosList"></div>
+      </div>
 
-      <details>
-        <summary>💡 Key Takeaways</summary>
-        <ul>
-          <li>Period formula: T = 2π√(L/g)</li>
-          <li>Independent of mass for small angles.</li>
-          <li>Useful for measuring gravity.</li>
-          <li>Best accuracy for angles below ~15°.</li>
-        </ul>
-      </details>
-
-      <details>
-        <summary>🎯 Mini-Challenge</summary>
-        <p>Set L and g so that T = 2 seconds (like a grandfather clock). Hint: L ≈ g/π².</p>
-      </details>
-    </section>
-  </div>
+    </div>
+  </main>
 
   <script>
-    const canvas = document.getElementById('pendulumCanvas');
-    const ctx = canvas.getContext('2d');
-    const angleCanvas = document.getElementById('angleCanvas');
-    const energyCanvas = document.getElementById('energyCanvas');
-    const phaseCanvas = document.getElementById('phaseCanvas');
-    const angleCtx = angleCanvas.getContext('2d');
-    const energyCtx = energyCanvas.getContext('2d');
-    const phaseCtx = phaseCanvas.getContext('2d');
+    let currentLang = 'en';
+    
+    const helpContent = {
+      en: {
+        title: '📖 How to Use',
+        sections: [
+          { title: '🎮 Controls', content: 'Click Play to start the pendulum. Drag the bob to set initial angle. Use sliders to adjust length, mass, gravity, and damping.' },
+          { title: '📐 Basic Mode', content: 'Adjust pendulum length (0.2-2m) and initial angle. Watch how the period changes with length.' },
+          { title: '🔬 Advanced Mode', content: 'Add mass, change gravity (Moon, Mars, Earth, Jupiter), add damping. Toggle vectors to see velocity, acceleration, and tension.' },
+          { title: '⚖️ Compare Mode', content: 'Compare two pendulums with different lengths. See how period difference causes phase drift over time.' },
+          { title: '🔊 Sound', content: 'Whooshing sound plays based on pendulum speed. Works best with headphones.' },
+          { title: '📊 Measurements', content: 'View period, frequency, max velocity, and energy conversion between kinetic and potential.' }
+        ]
+      },
+      ar: {
+        title: '📖 كيفية الاستخدام',
+        sections: [
+          { title: '🎮 عناصر التحكم', content: 'انقر تشغيل لبدء البندول. اسحب كرة البندول لتعيين الزاوية الأولية.' },
+          { title: '📐 الوضع الأساسي', content: 'ضبط طول البندول (0.2-2م) وزاويته الأولية.' },
+          { title: '🔬 الوضع المتقدم', content: 'أضف الكتلة، غير الجاذبية، أضف التخميد.' },
+          { title: '⚖️ وضع المقارنة', content: 'قارن بين بنيولين بطولين مختلفين.' },
+          { title: '🔊 الصوت', content: 'يبدأ صوت الهواء حسب سرعة البندول.' }
+        ]
+      }
+    };
 
-    const lengthInput = document.getElementById('length');
-    const angleInput = document.getElementById('angle');
-    const massInput = document.getElementById('mass');
-    const gravityInput = document.getElementById('gravity');
-    const dampingInput = document.getElementById('damping');
-    const dampingToggle = document.getElementById('dampingToggle');
-    const dampingWrap = document.getElementById('dampingWrap');
-    const speedInput = document.getElementById('speed');
-    const playPauseBtn = document.getElementById('playPause');
-    const resetBtn = document.getElementById('reset');
-    const setVerticalBtn = document.getElementById('setVertical');
-    const stepBackBtn = document.getElementById('stepBack');
-    const stepForwardBtn = document.getElementById('stepForward');
-    const angleInputField = document.getElementById('angleInput');
-    const angleUnit = document.getElementById('angleUnit');
-    const dragMode = document.getElementById('dragMode');
-    const unitToggle = document.getElementById('unitToggle');
-    const gravityPresets = document.getElementById('gravityPresets');
-
-    const lengthLabel = document.getElementById('lengthLabel');
-    const angleLabel = document.getElementById('angleLabel');
-    const massLabel = document.getElementById('massLabel');
-    const gravityLabel = document.getElementById('gravityLabel');
-    const dampingLabel = document.getElementById('dampingLabel');
-    const speedLabel = document.getElementById('speedLabel');
-
-    const dataPanel = document.getElementById('dataPanel');
-    const keBar = document.getElementById('keBar');
-    const peBar = document.getElementById('peBar');
-    const totalBar = document.getElementById('totalBar');
-    const energyBars = document.getElementById('energyBars');
-
-    const showGrid = document.getElementById('showGrid');
-    const showAngle = document.getElementById('showAngle');
-    const showVelocity = document.getElementById('showVelocity');
-    const showCOM = document.getElementById('showCOM');
-    const showEnergy = document.getElementById('showEnergy');
-    const showPhase = document.getElementById('showPhase');
-    const showReadout = document.getElementById('showReadout');
-    const showTrail = document.getElementById('showTrail');
-    const rodMode = document.getElementById('rodMode');
-    const precisionMode = document.getElementById('precisionMode');
+    function renderHelp() {
+      const content = helpContent[currentLang];
+      const html = `<h4>${content.title}</h4>` + content.sections.map(s => 
+        `<h4>${s.title}</h4><p>${s.content}</p>`
+      ).join('');
+      document.getElementById('helpContent').innerHTML = html;
+    }
 
     const state = {
-      length: 1,
-      mass: 1,
-      gravity: 9.81,
-      initialAngle: 30,
-      angle: toRad(30),
-      angularVelocity: 0,
+      level: 1,
+      length: 1.0,
+      mass: 1.0,
+      gravity: 9.8,
       damping: 0,
-      time: 0,
+      angle: 30 * Math.PI / 180,
+      angularVelocity: 0,
       playing: false,
-      speed: 1,
+      time: 0,
       trail: [],
-      unit: 'metric',
-      dragEnabled: true,
-      energy0: null
+      audioContext: null,
+      oscillators: [],
+      compareLength: 1.0,
+      compareAngle: 30 * Math.PI / 180,
+      compareAngularVelocity: 0,
+      compareDamping: 0,
+      showCompare: true,
+      trail2: [],
+      graphs: { angle: [], time: [] }
     };
 
-    const graphData = {
-      angle: [],
-      omega: [],
-      ke: [],
-      pe: [],
-      total: []
-    };
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    const graphCanvas = document.getElementById('angleGraph');
+    const graphCtx = graphCanvas.getContext('2d');
 
-    const maxGraphPoints = 240;
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width - 40;
+      canvas.height = 500;
+      graphCanvas.width = rect.width - 72;
+      graphCanvas.height = 100;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
-    function toRad(deg) {
-      return (deg * Math.PI) / 180;
+    const scenarios = [
+      { id: 'galileo', title: '🔭 Galileo\'s Experiment', desc: 'Original pendulum study (L=1m, g=9.8)', length: 1.0, gravity: 9.8, angle: 30 },
+      { id: 'moon', title: '🌙 Moon Walk', desc: 'Astronaut on Moon (L=1m, g=1.62)', length: 1.0, gravity: 1.62, angle: 30 },
+      { id: 'short', title: '⏱️ Short Pendulum', desc: 'Fast swings (L=0.3m, g=9.8)', length: 0.3, gravity: 9.8, angle: 25 },
+      { id: 'long', title: '🐢 Long Pendulum', desc: 'Slow graceful swings (L=1.8m, g=9.8)', length: 1.8, gravity: 9.8, angle: 35 },
+      { id: 'damped', title: '🌊 Damped Oscillation', desc: 'Energy loss over time (damping=3%)', length: 1.0, gravity: 9.8, damping: 3, angle: 45 }
+    ];
+
+    function renderScenarios() {
+      const list = document.getElementById('scenariosList');
+      list.innerHTML = scenarios.map(s => `
+        <div class="scenario-card" onclick="loadScenario('${s.id}')">
+          <div class="scenario-title">${s.title}</div>
+          <div class="scenario-desc">${s.desc}</div>
+        </div>
+      `).join('');
     }
 
-    function toDeg(rad) {
-      return (rad * 180) / Math.PI;
-    }
-
-    function cssVar(name, fallback) {
-      const value = getComputedStyle(document.body).getPropertyValue(name).trim();
-      return value || fallback;
-    }
-
-    function mToFt(m) {
-      return m * 3.28084;
-    }
-
-    function kgToLb(kg) {
-      return kg * 2.20462;
-    }
-
-    function jToFtLb(j) {
-      return j * 0.737562;
-    }
-
-    function gToImperial(g) {
-      return g * 3.28084;
-    }
-
-    function updateLabels() {
-      const lengthValue = state.unit === 'metric' ? state.length : mToFt(state.length);
-      const lengthUnit = state.unit === 'metric' ? 'm' : 'ft';
-      lengthLabel.textContent = `${lengthValue.toFixed(2)} ${lengthUnit}`;
-      angleLabel.textContent = `${state.initialAngle.toFixed(0)}°`;
-      const massValue = state.unit === 'metric' ? state.mass : kgToLb(state.mass);
-      const massUnit = state.unit === 'metric' ? 'kg' : 'lb';
-      massLabel.textContent = `${massValue.toFixed(1)} ${massUnit}`;
-      const gValue = state.unit === 'metric' ? state.gravity : gToImperial(state.gravity);
-      const gUnit = state.unit === 'metric' ? 'm/s²' : 'ft/s²';
-      gravityLabel.textContent = `${gValue.toFixed(2)} ${gUnit}`;
-      dampingLabel.textContent = state.damping.toFixed(2);
-      speedLabel.textContent = `${state.speed.toFixed(2)}x`;
-    }
-
-    function smallAnglePeriod() {
-      return 2 * Math.PI * Math.sqrt(state.length / state.gravity);
-    }
-
-    function computeEnergies() {
-      const v = state.length * state.angularVelocity;
-      const ke = 0.5 * state.mass * v * v;
-      const h = state.length * (1 - Math.cos(state.angle));
-      const pe = state.mass * state.gravity * h;
-      const total = ke + pe;
-      return { ke, pe, total, h, v };
-    }
-
-    function updatePhysics(dt) {
-      const b = state.damping;
-      const g = state.gravity;
-      const L = state.length;
-
-      const deriv = (theta, omega) => {
-        const domega = -(g / L) * Math.sin(theta) - b * omega;
-        return { dtheta: omega, domega };
-      };
-
-      const k1 = deriv(state.angle, state.angularVelocity);
-      const k2 = deriv(state.angle + k1.dtheta * dt / 2, state.angularVelocity + k1.domega * dt / 2);
-      const k3 = deriv(state.angle + k2.dtheta * dt / 2, state.angularVelocity + k2.domega * dt / 2);
-      const k4 = deriv(state.angle + k3.dtheta * dt, state.angularVelocity + k3.domega * dt);
-
-      state.angle += (dt / 6) * (k1.dtheta + 2 * k2.dtheta + 2 * k3.dtheta + k4.dtheta);
-      state.angularVelocity += (dt / 6) * (k1.domega + 2 * k2.domega + 2 * k3.domega + k4.domega);
-      state.time += dt;
-
-      const position = getBobPosition();
-      if (showTrail.checked) {
-        state.trail.push({ ...position, t: state.time });
-        const cutoff = state.time - 1.5;
-        state.trail = state.trail.filter((p) => p.t >= cutoff);
-      } else {
-        state.trail = [];
-      }
-    }
-
-    function resetPendulum() {
-      state.angle = toRad(state.initialAngle);
+    function loadScenario(id) {
+      const s = scenarios.find(x => x.id === id);
+      if (!s) return;
+      
+      state.length = s.length;
+      state.gravity = s.gravity;
+      state.damping = s.damping || 0;
+      state.angle = (s.angle || 30) * Math.PI / 180;
       state.angularVelocity = 0;
       state.time = 0;
       state.trail = [];
-      state.energy0 = null;
-      Object.keys(graphData).forEach((key) => (graphData[key] = []));
+      state.graphs = { angle: [], time: [] };
+      
+      document.getElementById('lengthSlider').value = state.length;
+      document.getElementById('gravitySlider').value = state.gravity;
+      document.getElementById('dampingSlider').value = state.damping;
+      document.getElementById('angleSlider').value = s.angle || 30;
+      
+      if (state.level === 2) {
+        document.getElementById('massSlider').value = state.mass;
+      }
+      
+      updateDisplays();
+      document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+      event.target.closest('.scenario-card').classList.add('active');
     }
 
-    function getBobPosition() {
-      const scale = Math.min(canvas.width, canvas.height) * 0.35;
-      const Lpix = scale * state.length;
-      const origin = { x: canvas.width / 2, y: canvas.height * 0.2 };
-      const x = origin.x + Lpix * Math.sin(state.angle);
-      const y = origin.y + Lpix * Math.cos(state.angle);
-      return { x, y, origin, Lpix };
+    function initAudio() {
+      if (!state.audioContext) {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playWhoosh(intensity) {
+      if (!state.audioContext || !state.playing) return;
+      
+      const vol = Math.min(intensity * 0.15, 0.15);
+      const freq = 100 + intensity * 200;
+      
+      const osc = state.audioContext.createOscillator();
+      const gain = state.audioContext.createGain();
+      const filter = state.audioContext.createBiquadFilter();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, state.audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, state.audioContext.currentTime + 0.1);
+      
+      filter.type = 'lowpass';
+      filter.frequency.value = 400;
+      
+      gain.gain.setValueAtTime(vol, state.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, state.audioContext.currentTime + 0.15);
+      
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(state.audioContext.destination);
+      
+      osc.start();
+      osc.stop(state.audioContext.currentTime + 0.15);
+    }
+
+    function calculate() {
+      const g = state.gravity;
+      const L = state.length;
+      const m = state.mass;
+      const d = state.damping / 100;
+      
+      const angularAcceleration = -(g / L) * Math.sin(state.angle) - d * state.angularVelocity;
+      
+      state.angularVelocity += angularAcceleration * 0.016;
+      state.angle += state.angularVelocity * 0.016;
+      state.time += 0.016;
+      
+      // Second pendulum physics
+      const L2 = state.compareLength;
+      const d2 = state.compareDamping / 100;
+      const angularAcceleration2 = -(g / L2) * Math.sin(state.compareAngle) - d2 * state.compareAngularVelocity;
+      
+      state.compareAngularVelocity += angularAcceleration2 * 0.016;
+      state.compareAngle += state.compareAngularVelocity * 0.016;
+      
+      state.trail2.push({ angle: state.compareAngle });
+      if (state.trail2.length > 100) state.trail2.shift();
+      
+      const linearVelocity = state.angularVelocity * L;
+      const maxVelocity = Math.sqrt(2 * state.mass * state.gravity * state.length * (1 - Math.cos(state.angle)));
+      const kineticEnergy = 0.5 * m * Math.pow(linearVelocity, 2);
+      const potentialEnergy = m * g * L * (1 - Math.cos(state.angle));
+      const totalEnergy = kineticEnergy + potentialEnergy;
+      
+      const period = 2 * Math.PI * Math.sqrt(L / g);
+      const frequency = 1 / period;
+      
+      document.getElementById('periodDisplay').textContent = period.toFixed(2) + ' s';
+      document.getElementById('frequencyDisplay').textContent = frequency.toFixed(2) + ' Hz';
+      document.getElementById('velocityDisplay').textContent = maxVelocity.toFixed(2) + ' m/s';
+      document.getElementById('energyDisplay').textContent = totalEnergy.toFixed(2) + ' J';
+      
+      document.getElementById('formulaBox').textContent = 
+        `T = 2π√(L/g) = 2π√(${L.toFixed(1)}/${g.toFixed(1)}) = ${period.toFixed(2)} s`;
+      
+      const kePercent = totalEnergy > 0 ? (kineticEnergy / totalEnergy) * 100 : 50;
+      const pePercent = totalEnergy > 0 ? (potentialEnergy / totalEnergy) * 100 : 50;
+      
+      document.getElementById('kineticBar').style.width = kePercent + '%';
+      document.getElementById('potentialBar').style.width = pePercent + '%';
+      document.getElementById('kineticVal').textContent = kineticEnergy.toFixed(2) + ' J';
+      document.getElementById('potentialVal').textContent = potentialEnergy.toFixed(2) + ' J';
+      
+      state.trail.push({ angle: state.angle, time: state.time });
+      if (state.trail.length > 100) state.trail.shift();
+      
+      if (state.graphs.angle.length > 300) {
+        state.graphs.angle.shift();
+        state.graphs.time.shift();
+      }
+      state.graphs.angle.push(state.angle * 180 / Math.PI);
+      state.graphs.time.push(state.time);
+      
+      const speed = Math.abs(state.angularVelocity * state.length);
+      if (speed > 0.5 && Math.random() < 0.3) {
+        playWhoosh(speed / 3);
+      }
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const { x, y, origin, Lpix } = getBobPosition();
-
-      if (showGrid.checked) drawGrid();
-      if (showAngle.checked) drawArcPath(origin, Lpix);
-
-      drawTrail();
-
-      const rodGrad = ctx.createLinearGradient(origin.x, origin.y, x, y);
-      rodGrad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-      rodGrad.addColorStop(1, 'rgba(148, 163, 184, 0.8)');
-      ctx.strokeStyle = rodMode.checked ? rodGrad : 'rgba(248, 250, 252, 0.7)';
-      ctx.lineWidth = rodMode.checked ? 3.2 : 2;
-      ctx.beginPath();
-      ctx.moveTo(origin.x, origin.y);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
-      ctx.beginPath();
-      ctx.arc(origin.x, origin.y, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      drawShadow(origin, Lpix, x, y);
-
-      const gradient = ctx.createRadialGradient(x - 10, y - 10, 6, x, y, 22);
-      gradient.addColorStop(0, '#e2e8f0');
-      gradient.addColorStop(1, '#64748b');
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = 'rgba(59, 130, 246, 0.35)';
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      if (showAngle.checked) drawAngleArc(origin, Lpix);
-      if (showVelocity.checked) drawVelocityVector(x, y);
-      drawCenterOfMass(origin, x, y);
-      if (showPhase.checked) drawPhaseOverlay();
-    }
-
-    function drawGrid() {
-      const step = 40;
-      ctx.strokeStyle = cssVar('--grid-color', 'rgba(148, 163, 184, 0.12)');
+      
+      const cx = canvas.width / 2;
+      const cy = 80;
+      const scale = 120;
+      const bobRadius = 15 + state.mass * 3;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
       ctx.lineWidth = 1;
-      for (let x = 0; x <= canvas.width; x += step) {
+      for (let i = 0; i < canvas.width; i += 40) {
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
         ctx.stroke();
       }
-      for (let y = 0; y <= canvas.height; y += step) {
+      for (let i = 0; i < canvas.height; i += 40) {
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+        ctx.moveTo(0, i);
+        ctx.lineTo(canvas.width, i);
         ctx.stroke();
       }
-    }
-
-    function drawArcPath(origin, Lpix) {
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
-      ctx.setLineDash([4, 6]);
+      
+      ctx.fillStyle = '#333';
+      ctx.fillRect(cx - 30, cy - 15, 60, 20);
+      ctx.fillStyle = '#555';
+      ctx.fillRect(cx - 25, cy - 10, 50, 10);
+      
+      const bobX = cx + Math.sin(state.angle) * state.length * scale;
+      const bobY = cy + Math.cos(state.angle) * state.length * scale;
+      
       ctx.beginPath();
-      ctx.arc(origin.x, origin.y, Lpix, Math.PI * 0.1, Math.PI * 0.9);
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.5)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.arc(cx, cy, 50, 0, state.angle, state.angle < 0);
       ctx.stroke();
       ctx.setLineDash([]);
-    }
-
-    function drawTrail() {
-      if (!showTrail.checked || state.trail.length < 2) return;
-      state.trail.forEach((p, i) => {
-        const alpha = (i / state.trail.length) * 0.6;
-        ctx.fillStyle = `rgba(59, 130, 246, ${alpha})`;
+      
+      const angleDeg = (state.angle * 180 / Math.PI).toFixed(1);
+      ctx.fillStyle = '#00d4ff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(angleDeg + '°', cx + 70, cy - 10);
+      
+      ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + 60 * Math.sin(state.angle), cy + 60 * Math.cos(state.angle));
+      ctx.stroke();
+      
+      if (state.trail.length > 1) {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 6 + i * 0.08, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
-
-    function drawAngleArc(origin, Lpix) {
-      const theta = state.angle;
-      const radius = Math.max(40, Lpix * 0.2);
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.7)';
-      ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.3)';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < state.trail.length; i++) {
+          const t = state.trail[i];
+          const tx = cx + Math.sin(t.angle) * state.length * scale;
+          const ty = cy + Math.cos(t.angle) * state.length * scale;
+          if (i === 0) ctx.moveTo(tx, ty);
+          else ctx.lineTo(tx, ty);
+        }
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+      }
+      
+      const velocity = state.angularVelocity * state.length * scale * 0.1;
+      const tension = state.mass * state.gravity * Math.cos(state.angle) * 2;
+      
+      if (document.getElementById('showTension').checked) {
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 200, 0, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.moveTo(bobX, bobY);
+        ctx.lineTo(bobX, bobY - tension);
+        ctx.stroke();
+        ctx.fillStyle = '#ffc800';
+        ctx.font = '12px Space Grotesk';
+        ctx.fillText('T', bobX + 10, bobY - tension + 20);
+      }
+      
+      if (document.getElementById('showAcceleration').checked) {
+        const accX = -Math.sin(state.angle) * 50;
+        const accY = -Math.cos(state.angle) * 50;
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 71, 87, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.moveTo(bobX, bobY);
+        ctx.lineTo(bobX + accX, bobY + accY);
+        ctx.stroke();
+        ctx.fillStyle = '#ff4757';
+        ctx.fillText('a', bobX + accX + 5, bobY + accY);
+      }
+      
+      if (document.getElementById('showVelocity').checked) {
+        const velX = Math.cos(state.angle) * velocity;
+        const velY = -Math.sin(state.angle) * velocity;
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(46, 213, 115, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.moveTo(bobX, bobY);
+        ctx.lineTo(bobX + velX, bobY + velY);
+        ctx.stroke();
+        ctx.fillStyle = '#2ed573';
+        ctx.fillText('v', bobX + velX + 5, bobY + velY);
+      }
+      
       ctx.beginPath();
-      ctx.arc(origin.x, origin.y, radius, Math.PI / 2, Math.PI / 2 + theta, theta < 0);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(bobX, bobY);
       ctx.stroke();
-      ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillText(`θ = ${toDeg(theta).toFixed(1)}°`, origin.x + radius + 8, origin.y + 8);
-    }
-
-    function drawVelocityVector(x, y) {
-      const v = state.length * state.angularVelocity;
-      const scale = 14;
-      const dx = Math.cos(state.angle + Math.PI / 2) * v * scale;
-      const dy = Math.sin(state.angle + Math.PI / 2) * v * scale;
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.85)';
-      ctx.lineWidth = 2;
+      
+      const gradient = ctx.createRadialGradient(bobX - 5, bobY - 5, 0, bobX, bobY, bobRadius);
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.3, '#6ad7ff');
+      gradient.addColorStop(1, '#0066aa');
+      
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + dx, y + dy);
-      ctx.stroke();
-    }
-
-    function drawCenterOfMass(origin, x, y) {
-      if (!showCOM.checked) return;
-      const cx = (origin.x + x) / 2;
-      const cy = (origin.y + y) / 2;
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
-      ctx.beginPath();
-      ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.arc(bobX, bobY, bobRadius, 0, Math.PI * 2);
       ctx.fill();
-    }
-
-    function drawShadow(origin, Lpix, x, y) {
-      const groundY = origin.y + Lpix + 40;
-      const blur = 18;
-      const stretch = 1 + Math.abs(Math.sin(state.angle)) * 0.6;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      
+      ctx.shadowColor = '#00d4ff';
+      ctx.shadowBlur = 20 + Math.abs(state.angularVelocity) * 50;
       ctx.beginPath();
-      ctx.ellipse(x, groundY, 24 * stretch, 8, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+      ctx.arc(bobX, bobY, bobRadius, 0, Math.PI * 2);
       ctx.fill();
-      ctx.shadowBlur = blur;
-      ctx.shadowColor = 'rgba(0,0,0,0.25)';
       ctx.shadowBlur = 0;
-    }
-
-    function drawPhaseOverlay() {
-      const box = { x: canvas.width - 180, y: 20, w: 160, h: 120 };
-      ctx.fillStyle = 'rgba(10, 15, 25, 0.7)';
-      ctx.fillRect(box.x, box.y, box.w, box.h);
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
-      ctx.strokeRect(box.x, box.y, box.w, box.h);
-      ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)';
-      ctx.beginPath();
-      graphData.omega.forEach((p, i) => {
-        const gx = box.x + box.w / 2 + (graphData.angle[i]?.v || 0) * 0.5;
-        const gy = box.y + box.h / 2 - p.v * 15;
-        if (i === 0) ctx.moveTo(gx, gy);
-        else ctx.lineTo(gx, gy);
-      });
-      ctx.stroke();
-    }
-
-    function updateDataPanel() {
-      const T = smallAnglePeriod();
-      const f = 1 / T;
-      const omega = Math.sqrt(state.gravity / state.length);
-      const { ke, pe, total, h, v } = computeEnergies();
-      if (state.energy0 === null) state.energy0 = total || 1;
-      const drift = Math.abs(total - state.energy0) / state.energy0;
-      const driftPct = (drift * 100).toFixed(2);
-      const driftClass = drift < 0.01 ? 'green' : drift < 0.03 ? 'orange' : 'red';
-
-      const energyUnit = state.unit === 'metric' ? 'J' : 'ft·lb';
-      const keDisplay = state.unit === 'metric' ? ke : jToFtLb(ke);
-      const peDisplay = state.unit === 'metric' ? pe : jToFtLb(pe);
-      const totalDisplay = state.unit === 'metric' ? total : jToFtLb(total);
-
-      dataPanel.innerHTML = `
-        <div class="data-grid">
-          <div class="data-card"><span class="data-label">Angle</span><span class="data-value blue">${toDeg(state.angle).toFixed(1)}°</span></div>
-          <div class="data-card"><span class="data-label">Angular Velocity</span><span class="data-value green">${state.angularVelocity.toFixed(2)} <small>rad/s</small></span></div>
-          <div class="data-card"><span class="data-label">Period</span><span class="data-value blue">${T.toFixed(2)} <small>s</small></span></div>
-          <div class="data-card"><span class="data-label">Frequency</span><span class="data-value blue">${f.toFixed(2)} <small>Hz</small></span></div>
-          <div class="data-card"><span class="data-label">Total Energy</span><span class="data-value orange">${totalDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
-          <div class="data-card"><span class="data-label">Kinetic</span><span class="data-value green">${keDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
-          <div class="data-card"><span class="data-label">Potential</span><span class="data-value orange">${peDisplay.toFixed(2)} <small>${energyUnit}</small></span></div>
-          <div class="data-card"><span class="data-label">Energy Drift</span><span class="data-value ${driftClass}">${driftPct}%</span></div>
-        </div>
-      `;
-
-      const maxE = Math.max(total, 0.001);
-      keBar.style.width = `${(ke / maxE) * 100}%`;
-      peBar.style.width = `${(pe / maxE) * 100}%`;
-      totalBar.style.width = '100%';
-      energyBars.style.display = showEnergy.checked ? 'grid' : 'none';
-    }
-
-    function updateGraphs() {
-      const t = state.time;
-      const { ke, pe, total } = computeEnergies();
-      graphData.angle.push({ t, v: toDeg(state.angle) });
-      graphData.omega.push({ t, v: state.angularVelocity });
-      graphData.ke.push({ t, v: ke });
-      graphData.pe.push({ t, v: pe });
-      graphData.total.push({ t, v: total });
-
-      Object.keys(graphData).forEach((key) => {
-        if (graphData[key].length > maxGraphPoints) graphData[key].shift();
-      });
+      
+      if (state.level === 3 && state.showCompare) {
+        const cx2 = cx + 220;
+        
+        // Draw trail for pendulum 2
+        if (state.trail2.length > 1) {
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
+          ctx.lineWidth = 3;
+          for (let i = 0; i < state.trail2.length; i++) {
+            const t = state.trail2[i];
+            const tx = cx2 + Math.sin(t.angle) * state.compareLength * scale;
+            const ty = cy + Math.cos(t.angle) * state.compareLength * scale;
+            if (i === 0) ctx.moveTo(tx, ty);
+            else ctx.lineTo(tx, ty);
+          }
+          ctx.stroke();
+        }
+        
+        const bobX2 = cx2 + Math.sin(state.compareAngle) * state.compareLength * scale;
+        const bobY2 = cy + Math.cos(state.compareAngle) * state.compareLength * scale;
+        
+        ctx.fillStyle = '#333';
+        ctx.fillRect(cx2 - 30, cy - 15, 60, 20);
+        ctx.fillStyle = '#555';
+        ctx.fillRect(cx2 - 25, cy - 10, 50, 10);
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 107, 107, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.moveTo(cx2, cy);
+        ctx.lineTo(bobX2, bobY2);
+        ctx.stroke();
+        
+        const gradient2 = ctx.createRadialGradient(bobX2 - 3, bobY2 - 3, 0, bobX2, bobY2, 15);
+        gradient2.addColorStop(0, '#ffffff');
+        gradient2.addColorStop(0.3, '#ff6b6b');
+        gradient2.addColorStop(1, '#aa3333');
+        
+        ctx.beginPath();
+        ctx.fillStyle = gradient2;
+        ctx.arc(bobX2, bobY2, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowColor = '#ff6b6b';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255, 107, 107, 0.3)';
+        ctx.arc(bobX2, bobY2, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        // Show angle for pendulum 2
+        const angleDeg2 = (state.compareAngle * 180 / Math.PI).toFixed(1);
+        ctx.fillStyle = '#ff6b6b';
+        ctx.font = 'bold 14px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText(angleDeg2 + '°', cx2 + 70, cy - 10);
+      }
+      
+      drawGraph();
     }
 
     function drawGraph() {
-      drawSeries(angleCtx, angleCanvas, graphData.angle, 'rgba(59, 130, 246, 0.9)');
-      drawEnergyGraph();
-      drawPhaseGraph();
-    }
-
-    function drawSeries(context, canvasEl, series, color) {
-      context.clearRect(0, 0, canvasEl.width, canvasEl.height);
-      context.fillStyle = 'rgba(10, 15, 25, 0.8)';
-      context.fillRect(0, 0, canvasEl.width, canvasEl.height);
-
-      const padding = 30;
-      const width = canvasEl.width - padding * 2;
-      const height = canvasEl.height - padding * 2;
-
-      context.strokeStyle = 'rgba(233, 242, 255, 0.2)';
-      context.beginPath();
-      context.moveTo(padding, padding);
-      context.lineTo(padding, padding + height);
-      context.lineTo(padding + width, padding + height);
-      context.stroke();
-
-      drawLineSeries(context, series, padding, width, height, color);
-    }
-
-    function drawLineSeries(context, series, padding, width, height, color) {
-      if (series.length < 2) return;
-      const t0 = series[0].t;
-      const t1 = series[series.length - 1].t;
-      let minV = Infinity;
-      let maxV = -Infinity;
-      series.forEach((p) => {
-        minV = Math.min(minV, p.v);
-        maxV = Math.max(maxV, p.v);
-      });
-      if (Math.abs(maxV - minV) < 1e-6) {
-        maxV += 1;
-        minV -= 1;
+      graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+      
+      graphCtx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      graphCtx.lineWidth = 1;
+      graphCtx.beginPath();
+      graphCtx.moveTo(0, graphCanvas.height / 2);
+      graphCtx.lineTo(graphCanvas.width, graphCanvas.height / 2);
+      graphCtx.stroke();
+      
+      if (state.graphs.angle.length < 2) return;
+      
+      const data = state.graphs.angle;
+      const maxAngle = 90;
+      const step = graphCanvas.width / Math.max(data.length - 1, 1);
+      
+      graphCtx.beginPath();
+      graphCtx.strokeStyle = '#00d4ff';
+      graphCtx.lineWidth = 2;
+      
+      for (let i = 0; i < data.length; i++) {
+        const x = i * step;
+        const y = graphCanvas.height / 2 - (data[i] / maxAngle) * (graphCanvas.height / 2);
+        if (i === 0) graphCtx.moveTo(x, y);
+        else graphCtx.lineTo(x, y);
       }
-      series.forEach((p, i) => {
-        const x = padding + ((p.t - t0) / (t1 - t0)) * width;
-        const y = padding + height - ((p.v - minV) / (maxV - minV)) * height;
-        if (i === 0) {
-          context.beginPath();
-          context.moveTo(x, y);
-        } else {
-          context.lineTo(x, y);
-        }
+      graphCtx.stroke();
+    }
+
+    function updateDisplays() {
+      document.getElementById('lengthValue').textContent = state.length.toFixed(1) + ' m';
+      document.getElementById('massValue').textContent = state.mass.toFixed(1) + ' kg';
+      document.getElementById('gravityValue').textContent = state.gravity.toFixed(1) + ' m/s²';
+      document.getElementById('dampingValue').textContent = state.damping + '%';
+      document.getElementById('angleValue').textContent = Math.round(state.angle * 180 / Math.PI) + '°';
+      document.getElementById('length2Value').textContent = state.compareLength.toFixed(1) + ' m';
+      document.getElementById('angle2Value').textContent = Math.round(state.compareAngle * 180 / Math.PI) + '°';
+      document.getElementById('damping2Value').textContent = state.compareDamping + '%';
+      
+      const period2 = 2 * Math.PI * Math.sqrt(state.compareLength / state.gravity);
+      document.getElementById('period2Display').textContent = period2.toFixed(2) + ' s';
+      
+      const period1 = 2 * Math.PI * Math.sqrt(state.length / state.gravity);
+      const phaseDiff = ((period2 - period1) / period1 * 100).toFixed(0);
+      document.getElementById('phaseDisplay').textContent = (phaseDiff >= 0 ? '+' : '') + phaseDiff + '%';
+    }
+
+    function updateLevel() {
+      const level = state.level;
+      
+      document.getElementById('massGroup').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('gravityGroup').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('dampingGroup').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('panelVectors').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('panelGraphs').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('compareControls').style.display = level >= 3 ? '' : 'none';
+      document.getElementById('panelScenarios').style.display = level === 1 ? '' : 'none';
+      
+      document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.level-tab[data-level="${level}"]`).classList.add('active');
+      
+      updateDisplays();
+    }
+
+    document.getElementById('lengthSlider').addEventListener('input', (e) => {
+      state.length = parseFloat(e.target.value);
+      state.angularVelocity = 0;
+      state.time = 0;
+      state.trail = [];
+      updateDisplays();
+    });
+
+    document.getElementById('massSlider').addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('gravitySlider').addEventListener('input', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      state.angularVelocity = 0;
+      state.time = 0;
+      state.trail = [];
+      updateDisplays();
+    });
+
+    document.getElementById('dampingSlider').addEventListener('input', (e) => {
+      state.damping = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('angleSlider').addEventListener('input', (e) => {
+      state.angle = parseFloat(e.target.value) * Math.PI / 180;
+      state.angularVelocity = 0;
+      state.time = 0;
+      state.trail = [];
+      state.graphs = { angle: [], time: [] };
+      updateDisplays();
+    });
+
+    document.getElementById('length2Slider').addEventListener('input', (e) => {
+      state.compareLength = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('angle2Slider').addEventListener('input', (e) => {
+      state.compareAngle = parseFloat(e.target.value) * Math.PI / 180;
+      state.compareAngularVelocity = 0;
+      state.trail2 = [];
+      updateDisplays();
+    });
+
+    document.getElementById('damping2Slider').addEventListener('input', (e) => {
+      state.compareDamping = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('showCompare').addEventListener('change', (e) => {
+      state.showCompare = e.target.checked;
+    });
+
+    document.querySelectorAll('.preset-btn[data-g]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.gravity = parseFloat(btn.dataset.g);
+        document.getElementById('gravitySlider').value = state.gravity;
+        state.angularVelocity = 0;
+        state.time = 0;
+        state.trail = [];
+        updateDisplays();
       });
-      context.strokeStyle = color;
-      context.lineWidth = 2;
-      context.stroke();
-    }
+    });
 
-    function drawEnergyGraph() {
-      energyCtx.clearRect(0, 0, energyCanvas.width, energyCanvas.height);
-      energyCtx.fillStyle = 'rgba(10, 15, 25, 0.8)';
-      energyCtx.fillRect(0, 0, energyCanvas.width, energyCanvas.height);
-      const padding = 30;
-      const width = energyCanvas.width - padding * 2;
-      const height = energyCanvas.height - padding * 2;
-      energyCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
-      energyCtx.beginPath();
-      energyCtx.moveTo(padding, padding);
-      energyCtx.lineTo(padding, padding + height);
-      energyCtx.lineTo(padding + width, padding + height);
-      energyCtx.stroke();
-      drawLineSeries(energyCtx, graphData.ke, padding, width, height, 'rgba(59, 130, 246, 0.9)');
-      drawLineSeries(energyCtx, graphData.pe, padding, width, height, 'rgba(245, 158, 11, 0.9)');
-      drawLineSeries(energyCtx, graphData.total, padding, width, height, 'rgba(226, 232, 240, 0.7)');
-    }
+    document.getElementById('playBtn').addEventListener('click', () => {
+      initAudio();
+      state.playing = true;
+    });
 
-    function drawPhaseGraph() {
-      phaseCtx.clearRect(0, 0, phaseCanvas.width, phaseCanvas.height);
-      phaseCtx.fillStyle = 'rgba(10, 15, 25, 0.8)';
-      phaseCtx.fillRect(0, 0, phaseCanvas.width, phaseCanvas.height);
-      const padding = 30;
-      const width = phaseCanvas.width - padding * 2;
-      const height = phaseCanvas.height - padding * 2;
-      phaseCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
-      phaseCtx.strokeRect(padding, padding, width, height);
-      phaseCtx.strokeStyle = 'rgba(59, 130, 246, 0.9)';
-      phaseCtx.beginPath();
-      graphData.omega.forEach((p, i) => {
-        const angle = graphData.angle[i]?.v || 0;
-        const x = padding + width / 2 + angle * 0.8;
-        const y = padding + height / 2 - p.v * 12;
-        if (i === 0) phaseCtx.moveTo(x, y);
-        else phaseCtx.lineTo(x, y);
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      state.playing = false;
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.playing = false;
+      state.angularVelocity = 0;
+      state.time = 0;
+      state.trail = [];
+      state.trail2 = [];
+      state.compareAngularVelocity = 0;
+      state.graphs = { angle: [], time: [] };
+      // Reset angles to initial values
+      state.angle = parseFloat(document.getElementById('angleSlider').value) * Math.PI / 180;
+      state.compareAngle = parseFloat(document.getElementById('angle2Slider').value) * Math.PI / 180;
+    });
+
+    document.querySelectorAll('.level-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        state.level = parseInt(tab.dataset.level);
+        updateLevel();
       });
-      phaseCtx.stroke();
-    }
+    });
 
-    function loop(timestamp) {
-      const dt = 1 / 60;
-      if (state.playing) {
-        const steps = precisionMode.checked ? 2 : 1;
-        for (let i = 0; i < steps; i++) {
-          updatePhysics((dt * state.speed) / steps);
-        }
-        updateGraphs();
+    let dragging = false;
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      
+      const cx = canvas.width / 2;
+      const cy = 80;
+      const scale = 120;
+      const bobX = cx + Math.sin(state.angle) * state.length * scale;
+      const bobY = cy + Math.cos(state.angle) * state.length * scale;
+      
+      const dist = Math.sqrt((mx - bobX) ** 2 + (my - bobY) ** 2);
+      if (dist < 40) {
+        dragging = true;
+        state.playing = false;
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      
+      const cx = canvas.width / 2;
+      const cy = 80;
+      
+      const dx = mx - cx;
+      const dy = my - cy;
+      
+      state.angle = Math.atan2(dx, dy);
+      state.angle = Math.max(-Math.PI/2, Math.min(Math.PI/2, state.angle));
+      
+      document.getElementById('angleSlider').value = Math.abs(state.angle * 180 / Math.PI);
+      updateDisplays();
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      if (dragging) {
+        dragging = false;
+        state.angularVelocity = 0;
+        state.time = 0;
+        state.trail = [];
+        state.graphs = { angle: [], time: [] };
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (dragging) {
+        dragging = false;
+      }
+    });
+
+    function loop() {
+      if (state.playing && !dragging) {
+        calculate();
       }
       draw();
-      updateDataPanel();
-      drawGraph();
       requestAnimationFrame(loop);
     }
 
-    canvas.addEventListener('mousedown', (event) => {
-      if (!dragMode.checked) return;
-      const rect = canvas.getBoundingClientRect();
-      const x = (event.clientX - rect.left) * (canvas.width / rect.width);
-      const y = (event.clientY - rect.top) * (canvas.height / rect.height);
-      const pos = getBobPosition();
-      const dist = Math.hypot(x - pos.x, y - pos.y);
-      if (dist < 26) {
-        canvas.style.cursor = 'grabbing';
-        const wasPlaying = state.playing;
-        state.playing = false;
-        playPauseBtn.textContent = 'Play';
-        const onMove = (e) => {
-          const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-          const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-          const dx = mx - pos.origin.x;
-          const dy = my - pos.origin.y;
-          const angle = Math.atan2(dx, dy);
-          state.angle = angle;
-          state.initialAngle = toDeg(angle);
-          angleInput.value = clamp(state.initialAngle, -180, 180);
-          angleInputField.value = angleUnit.value === 'rad' ? angle.toFixed(2) : state.initialAngle.toFixed(0);
-          updateLabels();
-        };
-        const onUp = () => {
-          canvas.style.cursor = 'default';
-          window.removeEventListener('mousemove', onMove);
-          window.removeEventListener('mouseup', onUp);
-          state.playing = wasPlaying;
-          playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
-        };
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-      }
+    renderScenarios();
+    renderHelp();
+    updateLevel();
+    loop();
+
+    document.getElementById('helpToggle').addEventListener('click', () => {
+      const panel = document.getElementById('helpPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     });
 
-    lengthInput.addEventListener('input', (e) => {
-      state.length = parseFloat(e.target.value);
-      updateLabels();
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+      renderHelp();
     });
 
-    massInput.addEventListener('input', (e) => {
-      state.mass = parseFloat(e.target.value);
-      updateLabels();
-    });
-
-    gravityInput.addEventListener('input', (e) => {
-      state.gravity = parseFloat(e.target.value);
-      updateLabels();
-    });
-
-    gravityPresets.querySelectorAll('button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.gravity = parseFloat(btn.dataset.g);
-        gravityInput.value = state.gravity;
-        updateLabels();
+    document.querySelectorAll('.help-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentLang = tab.dataset.lang;
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+        renderHelp();
       });
     });
-
-    dampingToggle.addEventListener('change', () => {
-      dampingWrap.classList.toggle('hidden', !dampingToggle.checked);
-      if (!dampingToggle.checked) state.damping = 0;
-      dampingInput.value = state.damping;
-      updateLabels();
-    });
-
-    dampingInput.addEventListener('input', (e) => {
-      state.damping = parseFloat(e.target.value);
-      updateLabels();
-    });
-
-    speedInput.addEventListener('input', (e) => {
-      state.speed = parseFloat(e.target.value);
-      updateLabels();
-    });
-
-    playPauseBtn.addEventListener('click', () => {
-      state.playing = !state.playing;
-      playPauseBtn.textContent = state.playing ? 'Pause' : 'Play';
-    });
-
-    setVerticalBtn.addEventListener('click', () => {
-      state.initialAngle = 0;
-      state.angle = 0;
-      state.angularVelocity = 0;
-      angleInput.value = 0;
-      angleInputField.value = 0;
-      updateLabels();
-    });
-
-    stepForwardBtn.addEventListener('click', () => {
-      updatePhysics(1 / 60);
-      updateGraphs();
-    });
-
-    stepBackBtn.addEventListener('click', () => {
-      updatePhysics(-1 / 60);
-      updateGraphs();
-    });
-
-    resetBtn.addEventListener('click', () => {
-      resetPendulum();
-    });
-
-    angleInputField.addEventListener('input', (e) => {
-      const raw = parseFloat(e.target.value);
-      if (Number.isNaN(raw)) return;
-      const angleDeg = angleUnit.value === 'rad' ? toDeg(raw) : raw;
-      state.initialAngle = clamp(angleDeg, -180, 180);
-      state.angle = toRad(state.initialAngle);
-      angleInput.value = state.initialAngle;
-      updateLabels();
-    });
-
-    angleUnit.addEventListener('change', () => {
-      const current = angleUnit.value === 'rad' ? toRad(state.initialAngle) : state.initialAngle;
-      angleInputField.value = angleUnit.value === 'rad' ? current.toFixed(2) : current.toFixed(0);
-    });
-
-    angleInput.addEventListener('input', (e) => {
-      state.initialAngle = parseFloat(e.target.value);
-      state.angle = toRad(state.initialAngle);
-      state.angularVelocity = 0;
-      angleInputField.value = state.initialAngle.toFixed(0);
-      updateLabels();
-    });
-
-    unitToggle.addEventListener('change', (e) => {
-      state.unit = e.target.value;
-      updateLabels();
-      updateDataPanel();
-    });
-
-
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
-    });
-
-    function clamp(val, min, max) {
-      return Math.min(Math.max(val, min), max);
-    }
-
-    updateLabels();
-    angleInputField.value = state.initialAngle.toFixed(0);
-    dampingWrap.classList.toggle('hidden', !dampingToggle.checked);
-    resetPendulum();
-    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
