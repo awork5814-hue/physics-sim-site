@@ -261,7 +261,7 @@ app.post('/api/auth/signin', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
+    const user = await db.prepare('SELECT * FROM users WHERE email = ?').get(email.toLowerCase());
     if (!user) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
@@ -303,7 +303,7 @@ app.post('/api/auth/signin', async (req, res) => {
   }
 });
 
-app.post('/api/auth/verify', authMiddleware, (req, res) => {
+app.post('/api/auth/verify', authMiddleware, async (req, res) => {
   const user = getUserPublicData(req.userId);
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -427,7 +427,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    const user = db.prepare('SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > ?').get(
+    const user = await db.prepare('SELECT * FROM users WHERE reset_token = ? AND reset_token_expiry > ?').get(
       token,
       new Date().toISOString()
     );
@@ -451,7 +451,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 app.post('/api/auth/send-verification', authMiddleware, async (req, res) => {
   try {
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.userId);
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -464,7 +464,7 @@ app.post('/api/auth/send-verification', authMiddleware, async (req, res) => {
     const verifyToken = uuidv4();
     const verifyExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     
-    db.prepare('UPDATE users SET verify_token = ?, verify_token_expiry = ? WHERE id = ?').run(
+    await db.prepare('UPDATE users SET verify_token = ?, verify_token_expiry = ? WHERE id = ?').run(
       verifyToken,
       verifyExpiry,
       user.id
@@ -501,7 +501,7 @@ app.get('/api/auth/verify-email', async (req, res) => {
       return res.status(400).json({ error: 'Token is required' });
     }
     
-    const user = db.prepare('SELECT * FROM users WHERE verify_token = ? AND verify_token_expiry > ?').get(
+    const user = await db.prepare('SELECT * FROM users WHERE verify_token = ? AND verify_token_expiry > ?').get(
       token,
       new Date().toISOString()
     );
@@ -519,9 +519,9 @@ app.get('/api/auth/verify-email', async (req, res) => {
   }
 });
 
-app.get('/api/auth/profile', authMiddleware, (req, res) => {
-  const user = db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified, avatar FROM users WHERE id = ?').get(req.userId);
-  const userData = db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(req.userId);
+app.get('/api/auth/profile', authMiddleware, async (req, res) => {
+  const user = await db.prepare('SELECT id, email, name, created_at, last_login, plan, plan_expiry, email_verified, avatar FROM users WHERE id = ?').get(req.userId);
+  const userData = await db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(req.userId);
   
   if (!user) {
     return res.status(404).json({ error: 'User not found' });
@@ -551,7 +551,7 @@ app.get('/api/auth/profile', authMiddleware, (req, res) => {
   });
 });
 
-app.post('/api/auth/avatar', authMiddleware, (req, res) => {
+app.post('/api/auth/avatar', authMiddleware, async (req, res) => {
   try {
     const { image } = req.body;
     
@@ -598,7 +598,7 @@ app.post('/api/auth/avatar', authMiddleware, (req, res) => {
   }
 });
 
-app.delete('/api/auth/avatar', authMiddleware, (req, res) => {
+app.delete('/api/auth/avatar', authMiddleware, async (req, res) => {
   try {
     const user = db.prepare('SELECT avatar FROM users WHERE id = ?').get(req.userId);
     
@@ -614,7 +614,7 @@ app.delete('/api/auth/avatar', authMiddleware, (req, res) => {
   }
 });
 
-app.put('/api/auth/profile', authMiddleware, (req, res) => {
+app.put('/api/auth/profile', authMiddleware, async (req, res) => {
   try {
     const { name, email } = req.body;
     const updates = [];
@@ -631,7 +631,7 @@ app.put('/api/auth/profile', authMiddleware, (req, res) => {
         return res.status(400).json({ error: 'Invalid email format' });
       }
       
-      const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.toLowerCase(), req.userId);
+      const existing = await db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.toLowerCase(), req.userId);
       if (existing) {
         return res.status(400).json({ error: 'Email already in use' });
       }
@@ -643,10 +643,10 @@ app.put('/api/auth/profile', authMiddleware, (req, res) => {
     
     if (updates.length > 0) {
       values.push(req.userId);
-      db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+      await db.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).run(...values);
     }
     
-    const user = db.prepare('SELECT id, email, name, email_verified FROM users WHERE id = ?').get(req.userId);
+    const user = await db.prepare('SELECT id, email, name, email_verified FROM users WHERE id = ?').get(req.userId);
     res.json({
       success: true,
       profile: {
@@ -662,7 +662,7 @@ app.put('/api/auth/profile', authMiddleware, (req, res) => {
   }
 });
 
-app.put('/api/auth/change-password', authMiddleware, (req, res) => {
+app.put('/api/auth/change-password', authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     
@@ -694,7 +694,7 @@ app.put('/api/auth/change-password', authMiddleware, (req, res) => {
   }
 });
 
-app.delete('/api/auth/account', authMiddleware, (req, res) => {
+app.delete('/api/auth/account', authMiddleware, async (req, res) => {
   try {
     db.prepare('DELETE FROM user_data WHERE user_id = ?').run(req.userId);
     db.prepare('DELETE FROM subscriptions WHERE user_id = ?').run(req.userId);
@@ -707,7 +707,7 @@ app.delete('/api/auth/account', authMiddleware, (req, res) => {
   }
 });
 
-app.post('/api/auth/merge-local-data', authMiddleware, (req, res) => {
+app.post('/api/auth/merge-local-data', authMiddleware, async (req, res) => {
   try {
     const { localData } = req.body;
     
@@ -1389,7 +1389,7 @@ app.get('/admin/payment-events.json', (req, res) => {
   res.json({ events });
 });
 
-app.get('/api/user/subscription', authMiddleware, (req, res) => {
+app.get('/api/user/subscription', authMiddleware, async (req, res) => {
   const user = db.prepare('SELECT plan, plan_expiry FROM users WHERE id = ?').get(req.userId);
   
   if (!user || user.plan === 'free' || !user.plan_expiry) {
