@@ -50,103 +50,33 @@ let isTurso = false;
 let libsqlClient;
 
 async function initDatabase() {
-  let TURSO_URL = process.env.TURSO_DATABASE_URL;
-  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+  // Skip Turso for now - use in-memory
+  // To enable Turso later, set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Render env vars
+  console.log('Using in-memory database (for now)');
   
-  console.log('Checking Turso config:', TURSO_URL ? 'URL set' : 'no URL');
+  let users = [];
   
-  // Fix URL format - libsql:// URLs need http scheme for HTTP client
-  if (TURSO_URL && TURSO_URL.startsWith('libsql://')) {
-    TURSO_URL = TURSO_URL.replace('libsql://', 'https://');
-    console.log('Fixed URL to:', TURSO_URL);
-  }
-  
-  if (TURSO_URL && TURSO_TOKEN) {
-    console.log('Initializing Turso database...');
-    const { createClient } = require('@libsql/client');
-    libsqlClient = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
-    isTurso = true;
-    
-    db = {
-      prepare: (sql) => ({
-        run: async (...params) => {
-          try {
-            await libsqlClient.execute({ sql, args: params });
-            return { changes: 1 };
-          } catch(e) {
-            console.error('DB run error:', e.message);
-            throw e;
-          }
-        },
-        get: async (...params) => {
-          try {
-            const result = await libsqlClient.execute({ sql, args: params });
-            return result.rows[0] || null;
-          } catch(e) {
-            console.error('DB get error:', e.message);
-            throw e;
-          }
-        },
-        all: async (...params) => {
-          try {
-            const result = await libsqlClient.execute({ sql, args: params });
-            return result.rows;
-          } catch(e) {
-            console.error('DB all error:', e.message);
-            throw e;
-          }
+  db = {
+    prepare: (sql) => ({
+      run: (...params) => { 
+        if (sql.includes('INSERT INTO users')) {
+          users.push({ 
+            id: params[0], email: params[1], password_hash: params[2], name: params[3],
+            verify_token: params[4], verify_token_expiry: params[5],
+            created_at: new Date().toISOString(), plan: 'free', email_verified: 0, last_login: null
+          });
         }
-      }),
-      exec: async (sql) => {
-        const statements = sql.split(';').filter(s => s.trim());
-        for (const stmt of statements) {
-          if (stmt.trim()) {
-            try {
-              await libsqlClient.execute({ sql: stmt });
-            } catch(e) {
-              console.error('DB exec error:', e.message);
-            }
-          }
-        }
-      }
-    };
-    
-    console.log('Testing Turso connection...');
-    try {
-      const test = await db.prepare('SELECT 1 as test').get();
-      console.log('Turso connection OK:', test);
-    } catch(e) {
-      console.error('Turso test failed:', e.message);
-    }
-    
-    console.log('Using Turso database (persistent)');
-  } else {
-    console.log('No Turso config - using in-memory (data will be lost)');
-    let users = [];
-    let userDataStore = [];
-    
-    db = {
-      prepare: (sql) => ({
-        run: (...params) => { 
-          if (sql.includes('INSERT INTO users')) {
-            users.push({ 
-              id: params[0], email: params[1], password_hash: params[2], name: params[3],
-              verify_token: params[4], verify_token_expiry: params[5],
-              created_at: new Date().toISOString(), plan: 'free', email_verified: 0, last_login: null
-            });
-          }
-          return { changes: 1 }; 
-        },
-        get: (...params) => { 
-          if (sql.includes('FROM users WHERE email')) return users.find(u => u.email === params[0]) || null;
-          if (sql.includes('FROM users WHERE id')) return users.find(u => u.id === params[0]) || null;
-          return null;
-        },
-        all: () => []
-      }),
-      exec: () => {}
-    };
-  }
+        return { changes: 1 }; 
+      },
+      get: (...params) => { 
+        if (sql.includes('FROM users WHERE email')) return users.find(u => u.email === params[0]) || null;
+        if (sql.includes('FROM users WHERE id')) return users.find(u => u.id === params[0]) || null;
+        return null;
+      },
+      all: () => []
+    }),
+    exec: () => {}
+  };
 }
 
 async function initTables() {
