@@ -31,15 +31,15 @@ const PLANS = {
   monthly: { amountEGP: 50, amountUSD: 1, name: 'Monthly Subscription', months: 1 }
 };
 
-const TURSO_URL = process.env.TURSO_DATABASE_URL;
-const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+// Turso disabled - using sql.js only
+const TURSO_URL = undefined;
+const TURSO_TOKEN = undefined;
 
 let db;
 let isTurso = false;
 let SQL;
 
-console.log('TURSO_URL:', TURSO_URL ? 'set' : 'not set');
-console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
+console.log('Using sql.js only (Turso disabled)');
 
 async function initDatabase() {
   console.log('Initializing sql.js...');
