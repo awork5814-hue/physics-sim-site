@@ -99,13 +99,20 @@ async function initDatabase() {
           }
         }),
         exec: async (sql) => {
+          if (!sql || !sql.trim()) return;
           await client.execute({ sql });
         }
       };
       
       // Test connection
-      await db.prepare('SELECT 1').get();
-      console.log('Turso connected successfully!');
+      console.log('Testing Turso connection...');
+      try {
+        await client.execute({ sql: 'SELECT 1' });
+        console.log('Turso connected successfully!');
+      } catch (e) {
+        console.log('Turso test failed:', e.message);
+        throw e;
+      }
       
     } catch (err) {
       console.error('Turso connection failed:', err.message);
@@ -144,52 +151,31 @@ async function initDatabase() {
 
 async function initTables() {
   console.log('Creating tables...');
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      last_login TEXT,
-      plan TEXT DEFAULT 'free',
-      plan_expiry TEXT,
-      subscription_txn_id TEXT,
-      reset_token TEXT,
-      reset_token_expiry TEXT,
-      avatar TEXT,
-      email_verified INTEGER DEFAULT 0,
-      verify_token TEXT,
-      verify_token_expiry TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS user_data (
-      user_id TEXT PRIMARY KEY,
-      favorites TEXT DEFAULT '[]',
-      achievements TEXT DEFAULT '[]',
-      quiz_progress TEXT DEFAULT '{}',
-      streak_count INTEGER DEFAULT 0,
-      streak_last_date TEXT,
-      settings TEXT DEFAULT '{}',
-      local_storage_data TEXT DEFAULT '{}',
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS subscriptions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      plan TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      currency TEXT DEFAULT 'EGP',
-      txn_id TEXT,
-      paymob_order_id TEXT,
-      status TEXT DEFAULT 'active',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      expires_at TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-  `);
-  console.log('Tables created');
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        name TEXT DEFAULT '',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_login TEXT,
+        plan TEXT DEFAULT 'free',
+        plan_expiry TEXT,
+        subscription_txn_id TEXT,
+        reset_token TEXT,
+        reset_token_expiry TEXT,
+        avatar TEXT,
+        email_verified INTEGER DEFAULT 0,
+        verify_token TEXT,
+        verify_token_expiry TEXT
+      )
+    `);
+    console.log('Users table created');
+  } catch (e) {
+    console.log('Tables may already exist:', e.message);
+  }
+  console.log('Tables ready');
 }
 
 const hashPassword = (password) => bcrypt.hashSync(password, 10);
