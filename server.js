@@ -172,10 +172,41 @@ async function initTables() {
       )
     `);
     console.log('Users table created');
+    
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS user_data (
+        user_id TEXT PRIMARY KEY,
+        favorites TEXT DEFAULT '[]',
+        achievements TEXT DEFAULT '[]',
+        quiz_progress TEXT DEFAULT '{}',
+        streak_count INTEGER DEFAULT 0,
+        streak_last_date TEXT,
+        settings TEXT DEFAULT '{}',
+        local_storage_data TEXT DEFAULT '{}'
+      )
+    `);
+    console.log('User_data table created');
+    
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        plan TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        currency TEXT DEFAULT 'EGP',
+        txn_id TEXT,
+        paymob_order_id TEXT,
+        status TEXT DEFAULT 'active',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        expires_at TEXT
+      )
+    `);
+    console.log('Subscriptions table created');
+    
   } catch (e) {
     console.log('Tables may already exist:', e.message);
   }
-  console.log('Tables ready');
+  console.log('All tables ready');
 }
 
 const hashPassword = (password) => bcrypt.hashSync(password, 10);
