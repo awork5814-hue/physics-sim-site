@@ -45,52 +45,47 @@ const PLANS = {
 const TURSO_URL = undefined;
 const TURSO_TOKEN = undefined;
 
-let db;
-let isTurso = false;
 let SQL;
 
 console.log('==========================================');
 console.log('STARTING FRESH WITH SQL.JS ONLY');
 console.log('==========================================');
 
-async function initDatabase() {
-  console.log('Initializing sql.js...');
-  const initSqlJs = require('sql.js');
-  SQL = await initSqlJs();
-  db = new SQL.Database();
-  
-  db.prepare = (sql) => ({
-    run: (...params) => { 
-      db.run(sql, params); 
-      return { changes: db.getRowsModified() }; 
-    },
-    get: (...params) => { 
-      const stmt = db.prepare(sql); 
-      if (params.length > 0) stmt.bind(params);
-      if (stmt.step()) { 
-        const row = stmt.getAsObject(); 
-        stmt.free(); 
-        return row; 
-      } 
-      stmt.free(); 
-      return null; 
-    },
-    all: (...params) => { 
-      const results = []; 
-      const stmt = db.prepare(sql); 
-      if (params.length > 0) stmt.bind(params);
-      while (stmt.step()) results.push(stmt.getAsObject()); 
-      stmt.free(); 
-      return results; 
+// Simple in-memory database (for testing only)
+let users = [];
+let userDataStore = [];
+
+function createDb() {
+  return {
+    prepare: (sql) => ({
+      run: (...params) => { 
+        console.log('RUN:', sql, params);
+        // Simple in-memory simulation
+        if (sql.includes('INSERT INTO users')) {
+          users.push({ id: params[0], email: params[1], password_hash: params[2], name: params[3] });
+        }
+        return { changes: 1 }; 
+      },
+      get: (...params) => { 
+        console.log('GET:', sql, params);
+        if (sql.includes('FROM users WHERE email')) {
+          return users.find(u => u.email === params[0]) || null;
+        }
+        return null;
+      },
+      all: (...params) => { 
+        console.log('ALL:', sql, params);
+        return []; 
+      }
+    }),
+    exec: (sql) => { 
+      console.log('EXEC:', sql.substring(0, 100));
     }
-  });
-  
-  db.exec = (sql) => { 
-    db.run(sql); 
   };
-  
-  console.log('Using in-memory SQLite (sql.js)');
 }
+
+let db = createDb();
+console.log('Using in-memory database');
 
 async function initDb() {
   console.log('initDb called, creating tables...');
@@ -1484,13 +1479,6 @@ const startServer = async () => {
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
   });
-  
-  try {
-    await initDatabase();
-    await initDb();
-  } catch (error) {
-    console.error('Failed to initialize database:', error);
-  }
   
   app.get('/api/db-test', async (req, res) => {
     try {
