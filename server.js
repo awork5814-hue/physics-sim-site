@@ -47,36 +47,91 @@ const PLANS = {
 
 let db;
 let isTurso = false;
-let libsqlClient;
 
 async function initDatabase() {
-  // Skip Turso for now - use in-memory
-  // To enable Turso later, set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in Render env vars
-  console.log('Using in-memory database (for now)');
+  const TURSO_URL = process.env.TURSO_DATABASE_URL;
+  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
   
-  let users = [];
+  console.log('TURSO_URL:', TURSO_URL);
+  console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
   
-  db = {
-    prepare: (sql) => ({
-      run: (...params) => { 
-        if (sql.includes('INSERT INTO users')) {
-          users.push({ 
-            id: params[0], email: params[1], password_hash: params[2], name: params[3],
-            verify_token: params[4], verify_token_expiry: params[5],
-            created_at: new Date().toISOString(), plan: 'free', email_verified: 0, last_login: null
-          });
+  if (TURSO_URL && TURSO_TOKEN) {
+    console.log('Trying to connect to Turso...');
+    
+    try {
+      const { createClient } = require('@libsql/client');
+      
+      // Turso expects https:// URL format
+      let url = TURSO_URL;
+      if (url.startsWith('libsql://')) {
+        url = url.replace('libsql://', 'https://');
+      }
+      console.log('Using URL:', url);
+      
+      const client = createClient({
+        url: url,
+        authToken: TURSO_TOKEN
+      });
+      
+      isTurso = true;
+      
+      db = {
+        prepare: (sql) => ({
+          run: async (...params) => {
+            await client.execute({ sql, args: params });
+            return { changes: 1 };
+          },
+          get: async (...params) => {
+            const result = await client.execute({ sql, args: params });
+            return result.rows[0] || null;
+          },
+          all: async (...params) => {
+            const result = await client.execute({ sql, args: params });
+            return result.rows;
+          }
+        }),
+        exec: async (sql) => {
+          await client.execute({ sql });
         }
-        return { changes: 1 }; 
-      },
-      get: (...params) => { 
-        if (sql.includes('FROM users WHERE email')) return users.find(u => u.email === params[0]) || null;
-        if (sql.includes('FROM users WHERE id')) return users.find(u => u.id === params[0]) || null;
-        return null;
-      },
-      all: () => []
-    }),
-    exec: () => {}
-  };
+      };
+      
+      // Test connection
+      await db.prepare('SELECT 1').get();
+      console.log('Turso connected successfully!');
+      
+    } catch (err) {
+      console.error('Turso connection failed:', err.message);
+      console.log('Falling back to in-memory...');
+    }
+  }
+  
+  if (!isTurso) {
+    console.log('Using in-memory database');
+    
+    let users = [];
+    
+    db = {
+      prepare: (sql) => ({
+        run: (...params) => { 
+          if (sql.includes('INSERT INTO users')) {
+            users.push({ 
+              id: params[0], email: params[1], password_hash: params[2], name: params[3],
+              verify_token: params[4], verify_token_expiry: params[5],
+              created_at: new Date().toISOString(), plan: 'free', email_verified: 0, last_login: null
+            });
+          }
+          return { changes: 1 }; 
+        },
+        get: (...params) => { 
+          if (sql.includes('FROM users WHERE email')) return users.find(u => u.email === params[0]) || null;
+          if (sql.includes('FROM users WHERE id')) return users.find(u => u.id === params[0]) || null;
+          return null;
+        },
+        all: () => []
+      }),
+      exec: () => {}
+    };
+  }
 }
 
 async function initTables() {
