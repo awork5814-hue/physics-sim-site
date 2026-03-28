@@ -12,6 +12,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+app.get('/v4', (req, res) => res.send('v4'));
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'physics_sim_secret_key_change_in_production';
 const JWT_EXPIRY = '30d';
@@ -19,13 +21,13 @@ const JWT_EXPIRY = '30d';
 const PAYMOB_API_KEY = process.env.PAYMOB_API_KEY;
 const PAYMOB_PUBLIC_KEY = process.env.PAYMOB_PUBLIC_KEY;
 
+console.log('==========================================');
+console.log('SQL.JS ONLY VERSION - FRESH DEPLOY V4');
+console.log('==========================================');
+
 // Force override Turso - we don't want it
 process.env.TURSO_DATABASE_URL = undefined;
 process.env.TURSO_AUTH_TOKEN = undefined;
-
-console.log('==========================================');
-console.log('SQL.JS ONLY VERSION - FRESH DEPLOY');
-console.log('==========================================');
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
 const PAYMOB_BASE_URL = process.env.PAYMOB_BASE_URL || 'https://accept.paymob.com';
