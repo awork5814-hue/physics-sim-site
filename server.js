@@ -63,9 +63,6 @@ async function initDatabase() {
   
   if (TURSO_URL && TURSO_TOKEN) {
     console.log('Initializing Turso database...');
-  
-  if (TURSO_URL && TURSO_TOKEN) {
-    console.log('Initializing Turso database...');
     const { createClient } = require('@libsql/client');
     libsqlClient = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
     isTurso = true;
@@ -200,112 +197,6 @@ async function initTables() {
     );
   `);
   console.log('Tables created');
-}
-
-async function initDb() {
-  console.log('initDb called, creating tables...');
-  console.log('db object:', typeof db);
-  console.log('db.prepare:', typeof db.prepare);
-  console.log('Creating database tables...');
-  
-  try {
-    await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id TEXT PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      last_login TEXT,
-      plan TEXT DEFAULT 'free',
-      plan_expiry TEXT,
-      subscription_txn_id TEXT,
-      reset_token TEXT,
-      reset_token_expiry TEXT,
-      avatar TEXT,
-      email_verified INTEGER DEFAULT 0,
-      verify_token TEXT,
-      verify_token_expiry TEXT
-    );
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      name TEXT DEFAULT '',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      last_login TEXT,
-      plan TEXT DEFAULT 'free',
-      plan_expiry TEXT,
-      subscription_txn_id TEXT,
-      reset_token TEXT,
-      reset_token_expiry TEXT,
-      avatar TEXT,
-      email_verified INTEGER DEFAULT 0,
-      verify_token TEXT,
-      verify_token_expiry TEXT
-    );
-
-    CREATE TABLE IF NOT EXISTS user_data (
-      user_id TEXT PRIMARY KEY,
-      favorites TEXT DEFAULT '[]',
-      achievements TEXT DEFAULT '[]',
-      quiz_progress TEXT DEFAULT '{}',
-      streak_count INTEGER DEFAULT 0,
-      streak_last_date TEXT,
-      settings TEXT DEFAULT '{}',
-      local_storage_data TEXT DEFAULT '{}',
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS subscriptions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      plan TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      currency TEXT DEFAULT 'EGP',
-      txn_id TEXT,
-      paymob_order_id TEXT,
-      status TEXT DEFAULT 'active',
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      expires_at TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS paytabs_orders (
-      cart_id TEXT PRIMARY KEY,
-      user_id TEXT,
-      plan TEXT NOT NULL,
-      amount REAL NOT NULL,
-      currency TEXT DEFAULT 'USD',
-      status TEXT DEFAULT 'pending',
-      tran_ref TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE TABLE IF NOT EXISTS payment_events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      provider TEXT NOT NULL,
-      event_type TEXT NOT NULL,
-      status TEXT DEFAULT 'info',
-      order_id TEXT,
-      amount REAL,
-      currency TEXT,
-      user_id TEXT,
-      txn_id TEXT,
-      payload TEXT,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-  
-  await db.exec(`
-    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id);
-    CREATE INDEX IF NOT EXISTS idx_paytabs_orders_user ON paytabs_orders(user_id);
-    CREATE INDEX IF NOT EXISTS idx_payment_events_provider ON payment_events(provider);
-    CREATE INDEX IF NOT EXISTS idx_payment_events_order ON payment_events(order_id);
-  `);
-  console.log('Database tables initialized');
-  } catch (e) {
-    console.error('Error creating tables:', e);
-  }
 }
 
 const hashPassword = (password) => bcrypt.hashSync(password, 10);
