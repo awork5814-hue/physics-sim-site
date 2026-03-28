@@ -50,10 +50,19 @@ let isTurso = false;
 let libsqlClient;
 
 async function initDatabase() {
-  const TURSO_URL = process.env.TURSO_DATABASE_URL;
+  let TURSO_URL = process.env.TURSO_DATABASE_URL;
   const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
   
   console.log('Checking Turso config:', TURSO_URL ? 'URL set' : 'no URL');
+  
+  // Fix URL format - libsql:// URLs need http scheme for HTTP client
+  if (TURSO_URL && TURSO_URL.startsWith('libsql://')) {
+    TURSO_URL = TURSO_URL.replace('libsql://', 'https://');
+    console.log('Fixed URL to:', TURSO_URL);
+  }
+  
+  if (TURSO_URL && TURSO_TOKEN) {
+    console.log('Initializing Turso database...');
   
   if (TURSO_URL && TURSO_TOKEN) {
     console.log('Initializing Turso database...');
