@@ -1536,7 +1536,11 @@ const startServer = async () => {
   });
   
   app.get('/api/debug', (req, res) => {
-    res.json({ turso: isTurso, dbType: isTurso ? 'Turso' : 'sql.js' });
+    res.json({ version: 'sql.js-only-v2', turso: isTurso, dbType: isTurso ? 'Turso' : 'sql.js' });
+  });
+  
+  app.get('/api/init-status', (req, res) => {
+    res.json({ dbReady: !!db, isTurso });
   });
   
   app.listen(PORT, '0.0.0.0', () => {
