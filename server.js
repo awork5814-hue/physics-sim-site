@@ -50,8 +50,15 @@ let isTurso = false;
 
 async function initDatabase() {
   // Check both lowercase and uppercase env var names
-  const TURSO_URL = process.env.TURSO_DATABASE_URL || process.env.turso_database_url;
-  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token;
+  const TURSO_URL = process.env.TURSO_DATABASE_URL || process.env.turso_database_url || process.env.DATABASE_URL;
+  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token || process.env.AUTH_TOKEN;
+  
+  console.log('==========================================');
+  console.log('INIT DATABASE');
+  console.log('All env vars:', Object.keys(process.env).filter(k => k.toLowerCase().includes('turso') || k.toLowerCase().includes('database')));
+  console.log('TURSO_URL:', TURSO_URL);
+  console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
+  console.log('==========================================');
   
   console.log('TURSO_URL:', TURSO_URL);
   console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
