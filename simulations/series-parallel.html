@@ -628,6 +628,9 @@
         { id: 1, value: 100 },
         { id: 2, value: 200 }
       ],
+      // For combined circuit - separate series and parallel
+      seriesResistors: [{ id: 1, value: 100 }],
+      parallelResistors: [{ id: 1, value: 200 }],
       current: 0,
       totalResistance: 0,
       power: 0,
@@ -662,15 +665,23 @@
 
     // ============ CALCULATIONS ============
     function calculate() {
-      const r = state.resistors.map(res => res.value);
-      
-      if (state.level === 1 || state.level === 3) {
-        // Series
-        state.totalResistance = r.reduce((a, b) => a + b, 0);
+      if (state.level === 3) {
+        // Combined: Series + Parallel
+        const seriesR = state.seriesResistors.reduce((a, b) => a + b.value, 0);
+        const parallelSum = state.parallelResistors.reduce((acc, val) => acc + 1/val.value, 0);
+        const parallelR = parallelSum > 0 ? 1 / parallelSum : 0;
+        state.totalResistance = seriesR + parallelR;
       } else {
-        // Parallel
-        state.totalResistance = r.reduce((acc, val) => acc + 1/val, 0);
-        state.totalResistance = 1 / state.totalResistance;
+        const r = state.resistors.map(res => res.value);
+        
+        if (state.level === 1) {
+          // Series
+          state.totalResistance = r.reduce((a, b) => a + b, 0);
+        } else {
+          // Parallel
+          state.totalResistance = r.reduce((acc, val) => acc + 1/val, 0);
+          state.totalResistance = 1 / state.totalResistance;
+        }
       }
       
       state.current = state.totalResistance > 0 ? state.voltage / state.totalResistance : 0;
@@ -1043,24 +1054,103 @@
     function renderResistors() {
       const list = document.getElementById('resistorsList');
       const isSeries = state.level === 1;
+      const isParallel = state.level === 2;
+      const isCombined = state.level === 3;
       
-      document.getElementById('resistorsTitle').textContent = 
-        `⚡ Resistors (${isSeries ? 'Series' : 'Parallel'})`;
+      document.getElementById('formulaSeries').style.display = isSeries || isCombined ? '' : 'none';
+      document.getElementById('formulaParallel').style.display = isParallel || isCombined ? '' : 'none';
       
-      document.getElementById('formulaSeries').style.display = isSeries ? '' : 'none';
-      document.getElementById('formulaParallel').style.display = !isSeries ? '' : 'none';
-      
-      list.innerHTML = state.resistors.map((res, i) => `
-        <div class="resistor-row">
-          <label>R${i + 1}:</label>
-          <input type="number" value="${res.value}" min="1" max="10000" 
-            onchange="updateResistor(${i}, this.value)">
-          <span>Ω</span>
-          ${state.resistors.length > 2 ? `<button class="remove-btn" onclick="removeResistor(${i})">✕</button>` : ''}
-        </div>
-      `).join('');
+      if (isCombined) {
+        // Combined: Show both series and parallel sections
+        document.getElementById('resistorsTitle').textContent = '⚡ Combined Circuit';
+        
+        const seriesHtml = `
+          <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+            <div style="font-size:11px;color:#ff6b6b;margin-bottom:6px;">📍 SERIES SECTION</div>
+            ${state.seriesResistors.map((res, i) => `
+              <div class="resistor-row">
+                <label style="color:#ff6b6b;">R${i+1}:</label>
+                <input type="number" value="${res.value}" min="1" max="10000" 
+                  onchange="updateSeriesResistor(${i}, this.value)">
+                <span>Ω</span>
+                ${state.seriesResistors.length > 1 ? `<button class="remove-btn" onclick="removeSeriesResistor(${i})">✕</button>` : ''}
+              </div>
+            `).join('')}
+            <button class="component-btn" onclick="addSeriesResistor()" style="width:100%;margin-top:4px;font-size:10px;">+ Add Series</button>
+          </div>
+        `;
+        
+        const parallelHtml = `
+          <div>
+            <div style="font-size:11px;color:#4ecdc4;margin-bottom:6px;">📍 PARALLEL SECTION</div>
+            ${state.parallelResistors.map((res, i) => `
+              <div class="resistor-row">
+                <label style="color:#4ecdc4;">R${i+1}:</label>
+                <input type="number" value="${res.value}" min="1" max="10000" 
+                  onchange="updateParallelResistor(${i}, this.value)">
+                <span>Ω</span>
+                ${state.parallelResistors.length > 1 ? `<button class="remove-btn" onclick="removeParallelResistor(${i})">✕</button>` : ''}
+              </div>
+            `).join('')}
+            <button class="component-btn" onclick="addParallelResistor()" style="width:100%;margin-top:4px;font-size:10px;">+ Add Parallel</button>
+          </div>
+        `;
+        
+        list.innerHTML = seriesHtml + parallelHtml;
+        
+      } else {
+        // Regular series or parallel
+        document.getElementById('resistorsTitle').textContent = 
+          `⚡ Resistors (${isSeries ? 'Series' : 'Parallel'})`;
+        
+        list.innerHTML = state.resistors.map((res, i) => `
+          <div class="resistor-row">
+            <label>R${i + 1}:</label>
+            <input type="number" value="${res.value}" min="1" max="10000" 
+              onchange="updateResistor(${i}, this.value)">
+            <span>Ω</span>
+            ${state.resistors.length > 2 ? `<button class="remove-btn" onclick="removeResistor(${i})">✕</button>` : ''}
+          </div>
+        `).join('');
+      }
       
       calculate();
+    }
+
+    // Series resistor functions (for combined)
+    function updateSeriesResistor(index, value) {
+      state.seriesResistors[index].value = parseInt(value) || 100;
+      calculate();
+    }
+    
+    function addSeriesResistor() {
+      state.seriesResistors.push({ id: state.seriesResistors.length + 1, value: 100 });
+      renderResistors();
+    }
+    
+    function removeSeriesResistor(index) {
+      if (state.seriesResistors.length > 1) {
+        state.seriesResistors.splice(index, 1);
+        renderResistors();
+      }
+    }
+    
+    // Parallel resistor functions (for combined)
+    function updateParallelResistor(index, value) {
+      state.parallelResistors[index].value = parseInt(value) || 100;
+      calculate();
+    }
+    
+    function addParallelResistor() {
+      state.parallelResistors.push({ id: state.parallelResistors.length + 1, value: 100 });
+      renderResistors();
+    }
+    
+    function removeParallelResistor(index) {
+      if (state.parallelResistors.length > 1) {
+        state.parallelResistors.splice(index, 1);
+        renderResistors();
+      }
     }
 
     function updateResistor(index, value) {
@@ -1109,12 +1199,18 @@
     }
 
     function updateComparison() {
-      const r = state.resistors.map(res => res.value);
-      const seriesTotal = r.reduce((a, b) => a + b, 0);
-      const parallelTotal = 1 / r.reduce((acc, val) => acc + 1/val, 0);
+      // For combined - compare same configuration
+      const seriesTotal = state.seriesResistors.reduce((a, b) => a + b.value, 0);
+      const parallelSum = state.parallelResistors.reduce((acc, val) => acc + 1/val.value, 0);
+      const parallelTotal = parallelSum > 0 ? 1 / parallelSum : 0;
       
-      document.getElementById('seriesR').textContent = formatResistance(seriesTotal);
-      document.getElementById('parallelR').textContent = formatResistance(parallelTotal);
+      // Also show what same resistors would give in series vs parallel
+      const allR = [...state.seriesResistors, ...state.parallelResistors].map(r => r.value);
+      const seriesOnly = allR.reduce((a, b) => a + b, 0);
+      const parallelOnly = 1 / allR.reduce((acc, val) => acc + 1/val, 0);
+      
+      document.getElementById('seriesR').textContent = formatResistance(seriesTotal + parallelTotal);
+      document.getElementById('parallelR').textContent = formatResistance(parallelOnly);
     }
 
     // ============ EVENT LISTENERS ============
