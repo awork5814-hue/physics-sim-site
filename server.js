@@ -67,9 +67,9 @@ async function initDatabase() {
       
       db = {
         prepare: (sql) => ({
-          run: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return { changes: r?.changes || 0 }; },
-          get: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows?.[0] || null; },
-          all: async (...params) => { const r = await libsqlClient.execute({ sql, args: params }); return r?.rows || []; }
+          run: async (...params) => { const stmt = libsqlClient.prepare(sql); const r = await stmt.run(...params); return { changes: r?.changes || 0 }; },
+          get: async (...params) => { const stmt = libsqlClient.prepare(sql); const r = await stmt.get(...params); return r || null; },
+          all: async (...params) => { const stmt = libsqlClient.prepare(sql); return await stmt.all(...params); }
         }),
         exec: async (sql) => { 
           if (!sql || !sql.trim()) return;
@@ -77,7 +77,8 @@ async function initDatabase() {
           for (const stmt of statements) {
             if (stmt.trim()) {
               try {
-                await libsqlClient.execute(stmt.trim());
+                const s = libsqlClient.prepare(stmt.trim());
+                await s.run();
               } catch(e) {
                 console.log('exec stmt error:', e.message);
               }
