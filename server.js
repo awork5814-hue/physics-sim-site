@@ -57,22 +57,32 @@ function createDb() {
   return {
     prepare: (sql) => ({
       run: (...params) => { 
-        console.log('RUN:', sql, params);
-        // Simple in-memory simulation
+        console.log('RUN:', sql.substring(0, 50), params.slice(0,3));
         if (sql.includes('INSERT INTO users')) {
-          users.push({ id: params[0], email: params[1], password_hash: params[2], name: params[3] });
+          users.push({ 
+            id: params[0], 
+            email: params[1], 
+            password_hash: params[2], 
+            name: params[3],
+            created_at: new Date().toISOString(),
+            plan: 'free',
+            email_verified: 0
+          });
         }
         return { changes: 1 }; 
       },
       get: (...params) => { 
-        console.log('GET:', sql, params);
+        console.log('GET:', sql.substring(0, 50), params[0]);
         if (sql.includes('FROM users WHERE email')) {
           return users.find(u => u.email === params[0]) || null;
+        }
+        if (sql.includes('FROM users WHERE id')) {
+          return users.find(u => u.id === params[0]) || null;
         }
         return null;
       },
       all: (...params) => { 
-        console.log('ALL:', sql, params);
+        console.log('ALL:', sql.substring(0, 50));
         return []; 
       }
     }),
