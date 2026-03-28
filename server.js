@@ -49,8 +49,9 @@ let db;
 let isTurso = false;
 
 async function initDatabase() {
-  const TURSO_URL = process.env.TURSO_DATABASE_URL;
-  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+  // Check both lowercase and uppercase env var names
+  const TURSO_URL = process.env.TURSO_DATABASE_URL || process.env.turso_database_url;
+  const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN || process.env.turso_auth_token;
   
   console.log('TURSO_URL:', TURSO_URL);
   console.log('TURSO_TOKEN:', TURSO_TOKEN ? 'set' : 'not set');
