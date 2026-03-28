@@ -71,7 +71,17 @@ async function initDatabase() {
           get: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows[0] || null; },
           all: async (...params) => { const r = await client.execute({ sql, args: params }); return r.rows; }
         }),
-        exec: async (sql) => { if (sql && sql.trim()) await client.execute({ sql }); }
+        exec: async (sql) => { 
+          console.log('exec:', sql.substring(0, 50)); 
+          if (sql && sql.trim()) {
+            try {
+              await client.execute({ sql }); 
+              console.log('exec OK');
+            } catch(e) {
+              console.log('exec error:', e.message);
+            }
+          }
+        }
       };
       console.log('Database: Turso (cloud)');
       await initTables();
