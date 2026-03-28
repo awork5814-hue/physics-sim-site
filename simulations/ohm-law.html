@@ -617,7 +617,7 @@
     </div>
 
     <div class="control-panel">
-      <div class="panel" id="panelCircuitControls">
+      <div class="panel" id="panelCircuitControls" style="display:none;">
         <div class="panel-title">⚡ Circuit Controls</div>
         
         <div class="slider-group">
@@ -652,7 +652,7 @@
         </div>
       </div>
 
-      <div class="panel" id="panelMeasurements">
+      <div class="panel" id="panelMeasurements" style="display:none;">
         <div class="panel-title">📊 Measurements</div>
         <div class="meter-display">
           <div class="meter">
@@ -673,7 +673,7 @@
         </div>
       </div>
 
-      <div class="panel" id="panelFormula">
+      <div class="panel" id="panelFormula" style="display:none;">
         <div class="panel-title">📐 Ohm's Law</div>
         <div class="formula-display">
           <div class="formula-chip active" data-formula="V=IR">V = I × R</div>
@@ -2097,6 +2097,7 @@ function updateLevel() {
 
     // ============ INITIALIZE ============
     calculate();
+    updateLevel(); // Set initial panel visibility
     loop();
   </script>
 </body>
