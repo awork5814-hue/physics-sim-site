@@ -22,6 +22,10 @@ const PAYMOB_PUBLIC_KEY = process.env.PAYMOB_PUBLIC_KEY;
 // Force override Turso - we don't want it
 process.env.TURSO_DATABASE_URL = undefined;
 process.env.TURSO_AUTH_TOKEN = undefined;
+
+console.log('==========================================');
+console.log('SQL.JS ONLY VERSION - FRESH DEPLOY');
+console.log('==========================================');
 const PAYMOB_INTEGRATION_ID = process.env.PAYMOB_INTEGRATION_ID;
 const PAYMOB_IFRAME_ID = process.env.PAYMOB_IFRAME_ID;
 const PAYMOB_BASE_URL = process.env.PAYMOB_BASE_URL || 'https://accept.paymob.com';
