@@ -39,7 +39,9 @@ let db;
 let isTurso = false;
 let SQL;
 
-console.log('Using sql.js only (Turso disabled)');
+console.log('==========================================');
+console.log('STARTING FRESH WITH SQL.JS ONLY');
+console.log('==========================================');
 
 async function initDatabase() {
   console.log('Initializing sql.js...');
