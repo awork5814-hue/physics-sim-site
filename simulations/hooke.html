@@ -829,6 +829,11 @@
       const massY = equilibriumY + clampedDisplacement * scale;
       const massSize = (30 + state.mass * 8) * state.zoom;
       
+      if (!isFinite(massY) || !isFinite(massSize) || massSize <= 0) {
+        requestAnimationFrame(draw);
+        return;
+      }
+      
       drawSpring(ctx, centerX - 20, anchorY, centerX - 20, massY - massSize / 2, state.displacement < 0);
       
       const gradient = ctx.createRadialGradient(
@@ -884,8 +889,10 @@
         ctx.beginPath();
         for (let i = 0; i < state.trail.length; i++) {
           const t = state.trail[i];
+          if (!isFinite(t.x)) continue;
           const clampedX = Math.max(-maxDisplacement, Math.min(maxDisplacement, t.x));
           const ty = equilibriumY + clampedX * scale;
+          if (!isFinite(ty)) continue;
           if (i === 0) ctx.moveTo(centerX + 60 + i, ty);
           else ctx.lineTo(centerX + 60 + i * 1.5, ty);
         }
@@ -894,9 +901,14 @@
       
       if (state.level >= 3 && state.showCompare) {
         const centerX2 = w / 2 + 120;
-        const clampedDisplacement2 = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.compareDisplacement));
+        let clampedDisplacement2 = isFinite(state.compareDisplacement) ? Math.max(-maxDisplacement, Math.min(maxDisplacement, state.compareDisplacement)) : 0;
         const massY2 = equilibriumY + clampedDisplacement2 * scale;
         const massSize2 = (30 + state.compareMass * 8) * state.zoom;
+        
+        if (!isFinite(massY2) || !isFinite(massSize2) || massSize2 <= 0) {
+          requestAnimationFrame(draw);
+          return;
+        }
         
         drawSpring(ctx, centerX2 - 20, anchorY, centerX2 - 20, massY2 - massSize2 / 2, state.compareDisplacement < 0, '#ffd93d');
         
@@ -1108,8 +1120,11 @@
       const h = canvas.offsetHeight;
       const centerX = w / 2 - 100;
       const equilibriumY = h / 2;
-      const massY = equilibriumY + state.displacement * 280;
+      const disp = isFinite(state.displacement) ? state.displacement : 0;
+      const massY = equilibriumY + disp * 280;
       const massSize = 30 + state.mass * 8;
+      
+      if (!isFinite(massY) || !isFinite(massSize)) return;
       
       const dist = Math.sqrt((mx - centerX) ** 2 + (my - massY) ** 2);
       if (dist < massSize) {
@@ -1123,10 +1138,13 @@
         const rect = canvas.getBoundingClientRect();
         const my = e.clientY - rect.top;
         const h = canvas.offsetHeight;
+        if (!h || h <= 0) return;
         const equilibriumY = h / 2;
         const scale = 280;
         
-        state.displacement = Math.max(-0.5, Math.min(0.5, (my - equilibriumY) / scale));
+        let newDisp = (my - equilibriumY) / scale;
+        if (!isFinite(newDisp)) newDisp = 0;
+        state.displacement = Math.max(-0.5, Math.min(0.5, newDisp));
         state.velocity = 0;
         updateDisplays();
       }
