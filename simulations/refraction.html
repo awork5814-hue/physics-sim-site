@@ -802,6 +802,19 @@
         tab.classList.add('active');
         document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
         currentTab = tab.dataset.tab;
+        
+        // Reinitialize canvas for the active tab (canvas needs visible dimensions)
+        const canvasMap = {
+          'snell': snellCanvas,
+          'tir': tirCanvas,
+          'lenses': lensCanvas,
+          'applications': appCanvas
+        };
+        const activeCanvas = canvasMap[currentTab];
+        if (activeCanvas) {
+          setupCanvas(activeCanvas, activeCanvas.getContext('2d'));
+        }
+        
         draw();
       });
     });
