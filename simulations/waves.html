@@ -635,6 +635,8 @@
     function resizeCanvas(canvas) {
       canvas.width = canvas.offsetWidth * 2;
       canvas.height = canvas.offsetHeight * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
     }
 
     [transCanvas, longCanvas, standCanvas, rippleCanvas].forEach(resizeCanvas);
@@ -682,7 +684,8 @@
         document.getElementById(`${currentTab}-canvas`).classList.remove('hidden');
         document.getElementById(`${currentTab}-controls`).classList.remove('hidden');
         
-        resizeCanvas(document.getElementById(`${currentTab}Canvas`) || document.getElementById(`${currentTab.slice(0,5)}Canvas`));
+        const canvasMap = { transverse: 'transCanvas', longitudinal: 'longCanvas', standing: 'standCanvas', ripple: 'rippleCanvas' };
+        resizeCanvas(document.getElementById(canvasMap[currentTab]));
       });
     });
 
