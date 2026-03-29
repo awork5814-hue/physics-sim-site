@@ -10,39 +10,30 @@
     :root {
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --incident-color: #f6c76b;
-      --refracted-color: #6ad7ff;
-      --reflected-color: #ff9a6c;
-      --medium-1-color: rgba(200, 230, 255, 0.1);
-      --medium-2-color: rgba(100, 150, 200, 0.2);
-      --normal-line: rgba(255, 255, 255, 0.5);
-      --lens-color: rgba(150, 200, 255, 0.3);
-      --focal-point: #f6c76b;
-      --object-color: #ff6b6b;
-      --image-color: #6bff6b;
+      --accent-3: #a78bfa;
       --sim-bg: rgba(10, 16, 26, 0.95);
       --sim-text: #e9f2ff;
       --sim-muted: #9fb0c5;
       --sim-border: rgba(120, 150, 190, 0.18);
       --panel: rgba(15, 22, 35, 0.92);
       --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+      --success: #6bff6b;
+      --warning: #ffa94d;
+      --danger: #ff6b6b;
     }
 
     body {
       margin: 0;
-      background:
-        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
-        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
-        #0a111c;
+      background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.08), transparent),
+                  radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.08), transparent),
+                  radial-gradient(800px 600px at 50% 100%, rgba(167, 139, 250, 0.06), transparent),
+                  #0a111c;
       color: var(--sim-text);
       font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+      min-height: 100vh;
     }
 
-    .page {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
 
     .topbar {
       display: flex;
@@ -54,13 +45,16 @@
       background: rgba(8, 12, 20, 0.7);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
     }
 
     .topbar a {
       color: var(--sim-text);
       text-decoration: none;
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .toggle {
@@ -73,52 +67,99 @@
       background: rgba(14, 20, 32, 0.8);
       cursor: pointer;
       color: var(--sim-text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(106, 215, 255, 0.2);
     }
 
     header.hero {
       text-align: center;
-      padding: 34px 20px 18px;
+      padding: 28px 20px 16px;
     }
 
     header.hero h1 {
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      font-size: clamp(1.6rem, 2.4vw, 2.5rem);
-      margin: 0 0 10px;
+      font-size: clamp(1.4rem, 2.2vw, 2.2rem);
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     header.hero p {
       color: var(--sim-muted);
       margin: 0;
+      font-size: 14px;
+    }
+
+    .formula-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(167, 139, 250, 0.1));
+      border: 1px solid rgba(106, 215, 255, 0.3);
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .formula-pill .label {
+      color: var(--sim-muted);
+      font-size: 12px;
+      font-family: "Space Grotesk", sans-serif;
     }
 
     .tabs {
       display: flex;
-      gap: 10px;
-      padding: 0 28px 10px;
+      gap: 8px;
+      padding: 0 28px 16px;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .tab {
       border: 1px solid var(--sim-border);
       border-radius: 999px;
-      padding: 8px 14px;
+      padding: 10px 20px;
       cursor: pointer;
       background: rgba(12, 18, 28, 0.8);
       color: var(--sim-text);
       font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
     }
 
     .tab.active {
       border-color: var(--accent);
       color: var(--accent);
+      background: rgba(106, 215, 255, 0.15);
+      box-shadow: 0 0 20px rgba(106, 215, 255, 0.15);
     }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-      gap: 24px;
-      padding: 12px 28px 18px;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      padding: 0 28px 24px;
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
     }
 
     .panel {
@@ -129,22 +170,27 @@
       padding: 18px;
     }
 
-    .canvas-wrap {
-      display: grid;
-      gap: 16px;
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sim-muted);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     canvas {
       width: 100%;
-      height: 420px;
+      height: 380px;
       background: rgba(6, 10, 18, 0.7);
-      border-radius: 16px;
+      border-radius: 14px;
       border: 1px solid var(--sim-border);
+      cursor: crosshair;
     }
 
     .controls {
       display: grid;
-      gap: 16px;
+      gap: 14px;
     }
 
     .control-group {
@@ -153,603 +199,1452 @@
     }
 
     label {
-      font-size: 0.9rem;
+      font-size: 12px;
       color: var(--sim-muted);
       display: flex;
       justify-content: space-between;
-      gap: 10px;
-    }
-
-    input[type="range"], select {
-      width: 100%;
-    }
-
-    .inline {
-      display: flex;
-      gap: 10px;
       align-items: center;
-    }
-
-    .inline > * {
-      flex: 1;
-    }
-
-    .btn-row {
-      display: flex;
       gap: 10px;
-      flex-wrap: wrap;
     }
 
-    button {
-      background: rgba(12, 18, 28, 0.8);
-      color: var(--sim-text);
-      border: 1px solid var(--sim-border);
-      padding: 10px 14px;
+    label span.value {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.4);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
       border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    button.active {
-      border-color: var(--accent);
-      color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(106, 215, 255, 0.2);
-    }
-
-    .data-panel {
-      display: grid;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: var(--sim-muted);
-    }
-
-    .data-panel strong {
-      color: var(--accent);
-      font-weight: 600;
-    }
-
-    .accordion {
-      display: grid;
-      gap: 12px;
-      margin: 0 28px 40px;
-    }
-
-    details {
       border: 1px solid var(--sim-border);
-      border-radius: 14px;
-      background: rgba(12, 18, 28, 0.8);
-      padding: 12px 16px;
-    }
-
-    summary {
+      background: rgba(12, 18, 28, 0.9);
+      color: var(--sim-text);
+      font-family: inherit;
+      font-size: 13px;
       cursor: pointer;
-      font-weight: 600;
-      color: var(--accent);
-      list-style: none;
     }
 
-    summary::-webkit-details-marker {
-      display: none;
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    details p, details li {
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .checkbox-item:hover {
+      border-color: var(--accent);
+    }
+
+    .checkbox-item input {
+      accent-color: var(--accent);
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .data-card {
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .data-label {
+      font-size: 10px;
       color: var(--sim-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
     }
 
-    .hidden {
+    .data-value {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: "JetBrains Mono", monospace;
+    }
+
+    .data-value.blue { color: var(--accent); }
+    .data-value.yellow { color: var(--accent-2); }
+    .data-value.purple { color: var(--accent-3); }
+    .data-value.green { color: var(--success); }
+    .data-value.orange { color: var(--warning); }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--sim-border);
+      background: rgba(12, 18, 28, 0.9);
+      color: var(--sim-text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #4fc3f7);
+      color: #0a111c;
+      border: none;
+    }
+
+    .btn.primary:hover {
+      box-shadow: 0 4px 20px rgba(106, 215, 255, 0.3);
+    }
+
+    .lens-type-toggle {
+      display: flex;
+      background: rgba(12, 18, 28, 0.9);
+      border-radius: 12px;
+      padding: 4px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .lens-type-toggle button {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--sim-muted);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .lens-type-toggle button.active {
+      background: linear-gradient(135deg, var(--accent), #4fc3f7);
+      color: #0a111c;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .app-card {
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .app-card:hover {
+      border-color: var(--accent-2);
+      background: rgba(246, 199, 107, 0.1);
+    }
+
+    .app-card .icon {
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .app-card .name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sim-text);
+    }
+
+    .image-info {
+      background: rgba(12, 18, 28, 0.9);
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .image-info .type {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .image-info .type.real { color: var(--success); }
+    .image-info .type.virtual { color: var(--accent-2); }
+
+    .image-info .details {
+      font-size: 12px;
+      color: var(--sim-muted);
+      line-height: 1.6;
+    }
+
+    .theory-box {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(106, 215, 255, 0.05));
+      border: 1px solid rgba(167, 139, 250, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--sim-muted);
+      line-height: 1.6;
+    }
+
+    .theory-box strong {
+      color: var(--accent-3);
+    }
+
+    .investigation {
+      margin-top: 14px;
+      padding: 14px;
+      background: rgba(12, 18, 28, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+    }
+
+    .investigation h4 {
+      font-size: 12px;
+      color: var(--accent-2);
+      margin: 0 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .investigation ul {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
+      color: var(--sim-muted);
+      line-height: 1.8;
+    }
+
+    .tab-content {
       display: none;
     }
 
-    @media (max-width: 980px) {
-      .layout {
-        grid-template-columns: 1fr;
-      }
-      canvas {
-        height: 320px;
-      }
+    .tab-content.active {
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div class="page" id="refraction">
+  <div class="page">
     <div class="topbar">
-      <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+      <a href="/">← Physics Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
     </div>
 
     <header class="hero">
       <h1>Refraction & Lenses</h1>
-      <p>Snell's Law • Total Internal Reflection • Image Formation</p>
+      <p>Explore how light bends at interfaces and forms images through lenses</p>
+      <div class="formula-pill">
+        <span class="label">Snell's Law</span>
+        n₁ sin θ₁ = n₂ sin θ₂
+      </div>
     </header>
 
     <div class="tabs">
-      <button class="tab active" data-mode="snell">Snell's Law</button>
-      <button class="tab" data-mode="tir">Total Internal Reflection</button>
-      <button class="tab" data-mode="lens">Lenses</button>
-      <button class="tab" data-mode="apps">Applications</button>
+      <button class="tab active" data-tab="snell">Snell's Law</button>
+      <button class="tab" data-tab="tir">Total Internal Reflection</button>
+      <button class="tab" data-tab="lenses">Lenses</button>
+      <button class="tab" data-tab="applications">Applications</button>
     </div>
 
-    <section class="layout">
-      <div class="panel canvas-wrap">
-        <canvas id="refractionCanvas" width="900" height="520" aria-label="Refraction canvas"></canvas>
-        <div class="btn-row">
-          <button id="raySingle" class="active">Single Ray</button>
-          <button id="rayParallel">Parallel</button>
-          <button id="rayDiverge">Diverging</button>
+    <!-- Snell's Law Tab -->
+    <div class="tab-content active" id="tab-snell">
+      <div class="layout">
+        <div class="panel">
+          <div class="panel-title">Interactive Simulation</div>
+          <canvas id="snellCanvas"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="controls">
+            <div class="control-group">
+              <label>Medium 1 (Above)</label>
+              <select id="medium1">
+                <option value="1.00">Air (n = 1.00)</option>
+                <option value="1.33" selected>Water (n = 1.33)</option>
+                <option value="1.31">Ice (n = 1.31)</option>
+                <option value="1.00">Vacuum (n = 1.00)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Medium 2 (Below)</label>
+              <select id="medium2">
+                <option value="1.00">Air (n = 1.00)</option>
+                <option value="1.33">Water (n = 1.33)</option>
+                <option value="1.52" selected>Glass (n = 1.52)</option>
+                <option value="2.42">Diamond (n = 2.42)</option>
+                <option value="1.49">Plastic (n = 1.49)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Angle of Incidence <span class="value" id="incAngle">45°</span></label>
+              <input type="range" id="incAngleSlider" min="0" max="89" value="45">
+            </div>
+            <div class="control-group">
+              <label>Ray Type</label>
+              <select id="rayType">
+                <option value="single">Single Ray</option>
+                <option value="parallel">Parallel Rays</option>
+                <option value="diverging">Diverging Rays</option>
+              </select>
+            </div>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="showNormal" checked>
+                Show Normal
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="showAngles" checked>
+                Show Angles
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="showReflected" checked>
+                Show Reflected
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="animateWaves">
+                Animate Waves
+              </label>
+            </div>
+            <div class="data-grid">
+              <div class="data-card">
+                <div class="data-label">θ₁ (incidence)</div>
+                <div class="data-value blue" id="theta1">45.0°</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">θ₂ (refraction)</div>
+                <div class="data-value yellow" id="theta2">29.4°</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">v₁ (m/s)</div>
+                <div class="data-value purple" id="v1">2.26×10⁸</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">v₂ (m/s)</div>
+                <div class="data-value green" id="v2">1.97×10⁸</div>
+              </div>
+            </div>
+            <div class="theory-box">
+              <strong>Observation:</strong> When n₁ &lt; n₂, light bends <em>toward</em> the normal. 
+              When n₁ &gt; n₂, light bends <em>away</em> from the normal.
+            </div>
+          </div>
         </div>
       </div>
+    </div>
 
-      <div class="panel controls" aria-label="Controls">
-        <div id="snellControls">
-          <div class="control-group">
-            <label for="angle">Angle of Incidence <strong id="angleLabel">45°</strong></label>
-            <input type="range" id="angle" min="0" max="89" step="1" value="45" />
-          </div>
-
-          <div class="control-group">
-            <label for="medium1">Medium 1 (Above)</label>
-            <select id="medium1">
-              <option value="1.00">Air (1.00)</option>
-              <option value="1.33">Water (1.33)</option>
-              <option value="1.31">Ice (1.31)</option>
-              <option value="1.00">Vacuum (1.00)</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label for="medium2">Medium 2 (Below)</label>
-            <select id="medium2">
-              <option value="1.00">Air (1.00)</option>
-              <option value="1.33">Water (1.33)</option>
-              <option value="1.52" selected>Glass (1.52)</option>
-              <option value="2.42">Diamond (2.42)</option>
-              <option value="1.49">Plastic (1.49)</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label>Ray Options</label>
-            <label><input type="checkbox" id="showNormal" checked /> Show normal line</label>
-            <label><input type="checkbox" id="showAngles" checked /> Show angles</label>
-            <label><input type="checkbox" id="showReflected" checked /> Show reflected ray</label>
-          </div>
+    <!-- TIR Tab -->
+    <div class="tab-content" id="tab-tir">
+      <div class="layout">
+        <div class="panel">
+          <div class="panel-title">Total Internal Reflection</div>
+          <canvas id="tirCanvas"></canvas>
         </div>
-
-        <div id="lensControls" class="hidden">
-          <div class="control-group">
-            <label for="lensType">Lens Type</label>
-            <select id="lensType">
-              <option value="convex" selected>Convex (Converging)</option>
-              <option value="concave">Concave (Diverging)</option>
-            </select>
-          </div>
-
-          <div class="control-group">
-            <label for="focal">Focal Length <strong id="fLabel">10 cm</strong></label>
-            <input type="range" id="focal" min="5" max="50" step="1" value="10" />
-          </div>
-
-          <div class="control-group">
-            <label for="objectDist">Object Distance <strong id="uLabel">30 cm</strong></label>
-            <input type="range" id="objectDist" min="5" max="100" step="1" value="30" />
-          </div>
-
-          <div class="control-group">
-            <label for="objectHeight">Object Height <strong id="hLabel">5 cm</strong></label>
-            <input type="range" id="objectHeight" min="1" max="20" step="1" value="5" />
-          </div>
-
-          <div class="control-group">
-            <label>Ray Options</label>
-            <label><input type="checkbox" id="showExtended" checked /> Show extended rays</label>
-            <label><input type="checkbox" id="showAxis" checked /> Show principal axis</label>
-          </div>
-        </div>
-
-        <div id="appControls" class="hidden">
-          <div class="control-group">
-            <label>Applications</label>
-            <p style="margin:0;color:var(--sim-muted);">Try switching materials to see critical angle and TIR used in fiber optics. For lenses, adjust object distance to create real or virtual images.</p>
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="controls">
+            <div class="control-group">
+              <label>Medium 1 (Higher n)</label>
+              <select id="tirMedium1">
+                <option value="1.50" selected>Glass (n = 1.50)</option>
+                <option value="1.33">Water (n = 1.33)</option>
+                <option value="1.47">Diamond (n = 1.47)</option>
+                <option value="1.52">Dense Glass (n = 1.52)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Medium 2 (Lower n)</label>
+              <select id="tirMedium2">
+                <option value="1.00" selected>Air (n = 1.00)</option>
+                <option value="1.33">Water (n = 1.33)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Incident Angle <span class="value" id="tirIncAngle">45°</span></label>
+              <input type="range" id="tirAngleSlider" min="0" max="90" value="45">
+            </div>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="tirShowNormal" checked>
+                Show Normal
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="tirShowCritical" checked>
+                Show Critical Angle
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="tirAnimate" checked>
+                Animate Pulse
+              </label>
+            </div>
+            <div class="data-grid">
+              <div class="data-card">
+                <div class="data-label">Critical Angle</div>
+                <div class="data-value yellow" id="criticalAngle">41.8°</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">Incident Angle</div>
+                <div class="data-value blue" id="tirTheta1">45.0°</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">Reflected %</div>
+                <div class="data-value green" id="reflectedPct">100%</div>
+              </div>
+              <div class="data-card">
+                <div class="data-label">Status</div>
+                <div class="data-value orange" id="tirStatus">TIR Active</div>
+              </div>
+            </div>
+            <div class="theory-box">
+              <strong>Total Internal Reflection</strong> occurs when light travels from a higher to lower refractive index 
+              and the incident angle exceeds the critical angle. This principle enables <strong>fiber optics</strong> and <strong>prisms</strong>.
+            </div>
+            <button class="btn primary" id="fiberDemo">Launch Fiber Optics Demo</button>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="panel" style="margin: 0 28px 18px;">
-      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
-    </section>
+    <!-- Lenses Tab -->
+    <div class="tab-content" id="tab-lenses">
+      <div class="layout">
+        <div class="panel">
+          <div class="panel-title">Lens Image Formation</div>
+          <canvas id="lensCanvas"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="controls">
+            <div class="lens-type-toggle">
+              <button class="active" data-lens="convex">Convex (Converging)</button>
+              <button data-lens="concave">Concave (Diverging)</button>
+            </div>
+            <div class="control-group">
+              <label>Focal Length <span class="value" id="focalVal">15 cm</span></label>
+              <input type="range" id="focalSlider" min="5" max="30" value="15">
+            </div>
+            <div class="control-group">
+              <label>Object Distance (u) <span class="value" id="objDistVal">30 cm</span></label>
+              <input type="range" id="objDistSlider" min="5" max="60" value="30">
+            </div>
+            <div class="control-group">
+              <label>Object Height <span class="value" id="objHeightVal">4 cm</span></label>
+              <input type="range" id="objHeightSlider" min="1" max="10" value="4">
+            </div>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="lensShowRays" checked>
+                Show Ray Diagram
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="lensShowPrincipal" checked>
+                Show Principal Axis
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="lensAnimate">
+                Animate Rays
+              </label>
+            </div>
+            <div class="image-info">
+              <div class="type real" id="imageType">Real Image</div>
+              <div class="details" id="imageDetails">
+                Image distance (v) = 30.0 cm<br>
+                Magnification (m) = -1.00<br>
+                Image height = -4.0 cm (inverted)
+              </div>
+            </div>
+            <div class="theory-box">
+              <strong>Thin Lens Equation:</strong> 1/f = 1/u + 1/v<br>
+              <strong>Magnification:</strong> m = -v/u = h'/h
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <section class="accordion">
-      <details open>
-        <summary>📚 Theory</summary>
-        <p>Refraction occurs when light changes speed as it moves between media. Snell's Law relates the angles and refractive indices: n₁ sin θ₁ = n₂ sin θ₂.</p>
-        <p>Total internal reflection happens when light goes from a higher index to a lower index and the angle exceeds the critical angle.</p>
-      </details>
+    <!-- Applications Tab -->
+    <div class="tab-content" id="tab-applications">
+      <div class="layout">
+        <div class="panel">
+          <div class="panel-title">Real-World Applications</div>
+          <canvas id="appCanvas"></canvas>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Choose Application</div>
+          <div class="app-grid">
+            <div class="app-card" data-app="prism">
+              <div class="icon">🌈</div>
+              <div class="name">Prism Dispersion</div>
+            </div>
+            <div class="app-card" data-app="eye">
+              <div class="icon">👁️</div>
+              <div class="name">Human Eye</div>
+            </div>
+            <div class="app-card" data-app="microscope">
+              <div class="icon">🔬</div>
+              <div class="name">Microscope</div>
+            </div>
+            <div class="app-card" data-app="telescope">
+              <div class="icon">🔭</div>
+              <div class="name">Telescope</div>
+            </div>
+          </div>
+          <div class="controls" style="margin-top: 14px;">
+            <div class="control-group" id="appControls">
+              <!-- Dynamic controls based on selected app -->
+            </div>
+            <div class="theory-box" id="appTheory">
+              <strong>Prism Dispersion:</strong> White light contains all visible wavelengths. 
+              Since each wavelength refracts differently (n varies with λ), the colors separate - 
+              creating a rainbow spectrum. This is called <strong>chromatic dispersion</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-      <details>
-        <summary>🔬 Investigation Questions</summary>
-        <ol>
-          <li>When light goes from air to glass, does it bend toward or away from the normal?</li>
-          <li>What happens when θ₁ exceeds the critical angle?</li>
-          <li>Move the object closer than the focal length. What type of image is formed?</li>
-        </ol>
-      </details>
-
-      <details>
-        <summary>💡 Key Takeaways</summary>
-        <ul>
-          <li>n₁ &lt; n₂: bends toward the normal.</li>
-          <li>n₁ &gt; n₂: bends away from the normal.</li>
-          <li>Total internal reflection enables fiber optics.</li>
-          <li>Lens images depend on focal length and object distance.</li>
-        </ul>
-      </details>
-    </section>
   </div>
 
   <script>
-    const canvas = document.getElementById('refractionCanvas');
-    const ctx = canvas.getContext('2d');
+    const C = 2.998e8;
+    let isDark = true;
+    let currentTab = 'snell';
+    let animationId = null;
+    let time = 0;
 
-    const tabs = document.querySelectorAll('.tab');
-    const angleInput = document.getElementById('angle');
-    const angleLabel = document.getElementById('angleLabel');
-    const medium1 = document.getElementById('medium1');
-    const medium2 = document.getElementById('medium2');
-    const showNormal = document.getElementById('showNormal');
-    const showAngles = document.getElementById('showAngles');
-    const showReflected = document.getElementById('showReflected');
+    // Canvas setup
+    const snellCanvas = document.getElementById('snellCanvas');
+    const snellCtx = snellCanvas.getContext('2d');
+    const tirCanvas = document.getElementById('tirCanvas');
+    const tirCtx = tirCanvas.getContext('2d');
+    const lensCanvas = document.getElementById('lensCanvas');
+    const lensCtx = lensCanvas.getContext('2d');
+    const appCanvas = document.getElementById('appCanvas');
+    const appCtx = appCanvas.getContext('2d');
 
-    const lensType = document.getElementById('lensType');
-    const focalInput = document.getElementById('focal');
-    const objectDistInput = document.getElementById('objectDist');
-    const objectHeightInput = document.getElementById('objectHeight');
-    const fLabel = document.getElementById('fLabel');
-    const uLabel = document.getElementById('uLabel');
-    const hLabel = document.getElementById('hLabel');
-    const showExtended = document.getElementById('showExtended');
-    const showAxis = document.getElementById('showAxis');
-
-    const snellControls = document.getElementById('snellControls');
-    const lensControls = document.getElementById('lensControls');
-    const appControls = document.getElementById('appControls');
-
-    const dataPanel = document.getElementById('dataPanel');
-
-    const rayButtons = {
-      single: document.getElementById('raySingle'),
-      parallel: document.getElementById('rayParallel'),
-      diverge: document.getElementById('rayDiverge')
-    };
-
-    const state = {
-      mode: 'snell',
-      rayMode: 'single',
-      angle: 45,
-      n1: 1.0,
-      n2: 1.52,
-      lensType: 'convex',
-      focal: 10,
-      objectDist: 30,
-      objectHeight: 5
-    };
-
-    function toRad(deg) {
-      return (deg * Math.PI) / 180;
+    function setupCanvas(canvas, ctx) {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      ctx.scale(2, 2);
     }
 
-    function toDeg(rad) {
-      return (rad * 180) / Math.PI;
-    }
-
-    function clamp(val, min, max) {
-      return Math.min(Math.max(val, min), max);
-    }
-
-    function drawMedia() {
-      const mid = canvas.height / 2;
-      ctx.fillStyle = 'rgba(200, 230, 255, 0.1)';
-      ctx.fillRect(0, 0, canvas.width, mid);
-      ctx.fillStyle = 'rgba(100, 150, 200, 0.2)';
-      ctx.fillRect(0, mid, canvas.width, mid);
-      ctx.strokeStyle = 'rgba(233, 242, 255, 0.3)';
-      ctx.beginPath();
-      ctx.moveTo(0, mid);
-      ctx.lineTo(canvas.width, mid);
-      ctx.stroke();
-    }
-
-    function calculateRefraction() {
-      const theta1 = toRad(state.angle);
-      const sin2 = (state.n1 / state.n2) * Math.sin(theta1);
-      if (sin2 > 1) {
-        return { isTIR: true, theta2: null, critical: Math.asin(state.n2 / state.n1) };
-      }
-      return { isTIR: false, theta2: Math.asin(sin2), critical: state.n1 > state.n2 ? Math.asin(state.n2 / state.n1) : null };
-    }
-
-    function drawRefraction() {
-      drawMedia();
-      const mid = canvas.height / 2;
-      const origin = { x: canvas.width * 0.45, y: mid };
-
-      if (showNormal.checked) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-        ctx.setLineDash([6, 6]);
-        ctx.beginPath();
-        ctx.moveTo(origin.x, 40);
-        ctx.lineTo(origin.x, canvas.height - 40);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      const { isTIR, theta2, critical } = calculateRefraction();
-      const theta1 = toRad(state.angle);
-
-      drawRay(origin, theta1, -1, '#f6c76b');
-
-      if (showReflected.checked) {
-        drawRay(origin, theta1, -1, '#ff9a6c', true);
-      }
-
-      if (!isTIR && theta2 !== null) {
-        drawRay(origin, theta2, 1, '#6ad7ff');
-      } else {
-        ctx.fillStyle = 'rgba(255, 120, 120, 0.8)';
-        ctx.font = '16px Space Grotesk, sans-serif';
-        ctx.fillText('Total Internal Reflection', origin.x + 20, origin.y + 40);
-      }
-
-      if (showAngles.checked) {
-        drawAngleArc(origin, theta1, '#f6c76b', 'θ₁');
-        if (!isTIR && theta2 !== null) {
-          drawAngleArc(origin, theta2, '#6ad7ff', 'θ₂', true);
-        }
-        if (critical && state.mode === 'tir') {
-          ctx.fillStyle = 'rgba(255, 200, 120, 0.8)';
-          ctx.fillText(`θc = ${toDeg(critical).toFixed(1)}°`, origin.x + 20, origin.y - 20);
-        }
-      }
-    }
-
-    function drawRay(origin, angle, direction, color, reflect = false) {
-      const length = 300;
-      const sign = reflect ? -1 : direction;
-      const dx = Math.sin(angle) * length;
-      const dy = Math.cos(angle) * length;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(origin.x, origin.y);
-      ctx.lineTo(origin.x + dx, origin.y + sign * dy);
-      ctx.stroke();
-    }
-
-    function drawAngleArc(origin, angle, color, label, below = false) {
-      const radius = 40;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(origin.x, origin.y, radius, -Math.PI / 2, -Math.PI / 2 + (below ? angle : -angle), below);
-      ctx.stroke();
-      ctx.fillStyle = color;
-      ctx.font = '14px Space Grotesk, sans-serif';
-      ctx.fillText(label, origin.x + radius + 6, origin.y + (below ? radius : -radius));
-    }
-
-    function drawLens() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const midY = canvas.height / 2;
-      const lensX = canvas.width * 0.5;
-      const scale = 5;
-      const f = state.focal * scale;
-      const u = state.objectDist * scale;
-      const h = state.objectHeight * 4;
-      const fSign = state.lensType === 'convex' ? 1 : -1;
-
-      if (showAxis.checked) {
-        ctx.strokeStyle = 'rgba(233,242,255,0.3)';
-        ctx.beginPath();
-        ctx.moveTo(40, midY);
-        ctx.lineTo(canvas.width - 40, midY);
-        ctx.stroke();
-      }
-
-      ctx.fillStyle = 'rgba(150, 200, 255, 0.25)';
-      ctx.beginPath();
-      if (state.lensType === 'convex') {
-        ctx.ellipse(lensX, midY, 30, 100, 0, 0, Math.PI * 2);
-      } else {
-        ctx.ellipse(lensX, midY, 30, 100, 0, 0, Math.PI * 2);
-        ctx.clearRect(lensX - 18, midY - 100, 36, 200);
-      }
-      ctx.fill();
-
-      drawFocalPoint(lensX - f, midY, 'F');
-      drawFocalPoint(lensX + f, midY, "F'");
-
-      const objX = lensX - u;
-      drawArrow(objX, midY, -h, '#ff6b6b');
-
-      const v = 1 / (1 / (fSign * state.focal) - 1 / state.objectDist);
-      const imageX = lensX + v * scale;
-      const magnification = v / (-state.objectDist);
-      const imageH = h * magnification;
-
-      drawArrow(imageX, midY, -imageH, '#6bff6b');
-
-      drawLensRays(objX, midY - h, lensX, midY, f, v * scale);
-
-      updateLensData(v, magnification, imageH / 4);
-    }
-
-    function drawFocalPoint(x, y, label) {
-      ctx.fillStyle = '#f6c76b';
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillText(label, x - 6, y - 10);
-    }
-
-    function drawArrow(x, baseY, height, color) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(x, baseY);
-      ctx.lineTo(x, baseY + height);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(x, baseY + height);
-      ctx.lineTo(x - 6, baseY + height + (height < 0 ? 10 : -10));
-      ctx.lineTo(x + 6, baseY + height + (height < 0 ? 10 : -10));
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
-    }
-
-    function drawLensRays(objX, objY, lensX, lensY, f, imageDx) {
-      const axisY = lensY;
-      const ray1End = { x: lensX + f, y: axisY };
-      const ray2End = { x: lensX, y: axisY + (objY - axisY) * 0.0 };
-      const ray3Start = { x: lensX - f, y: axisY };
-
-      ctx.strokeStyle = '#6ad7ff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(objX, objY);
-      ctx.lineTo(lensX, objY);
-      ctx.lineTo(ray1End.x + imageDx, ray1End.y + (objY - axisY));
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(objX, objY);
-      ctx.lineTo(lensX, lensY + (objY - axisY));
-      ctx.lineTo(lensX + imageDx, lensY + (objY - axisY));
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(objX, objY);
-      ctx.lineTo(ray3Start.x, ray3Start.y);
-      ctx.lineTo(lensX, axisY);
-      ctx.lineTo(lensX + imageDx, axisY);
-      ctx.stroke();
-
-      if (showExtended.checked && imageDx < 0) {
-        ctx.setLineDash([6, 6]);
-        ctx.beginPath();
-        ctx.moveTo(lensX, objY);
-        ctx.lineTo(lensX + imageDx, objY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
-
-    function updateDataPanel(content) {
-      dataPanel.innerHTML = content;
-    }
-
-    function updateSnellData() {
-      const { isTIR, theta2 } = calculateRefraction();
-      const sin1 = Math.sin(toRad(state.angle));
-      const sin2 = isTIR || theta2 === null ? 0 : Math.sin(theta2);
-      updateDataPanel(`
-        <div><strong>Snell's Law:</strong> n₁ sin θ₁ = n₂ sin θ₂</div>
-        <div><strong>Medium 1:</strong> n₁ = ${state.n1.toFixed(2)}, θ₁ = ${state.angle.toFixed(1)}°</div>
-        <div><strong>Medium 2:</strong> n₂ = ${state.n2.toFixed(2)}, θ₂ = ${isTIR ? '—' : toDeg(theta2).toFixed(1) + '°'}</div>
-        <div><strong>Verification:</strong> n₁sinθ₁ = ${(state.n1 * sin1).toFixed(3)}, n₂sinθ₂ = ${(state.n2 * sin2).toFixed(3)}</div>
-      `);
-    }
-
-    function updateLensData(v, m, h) {
-      const type = v > 0 ? 'REAL' : 'VIRTUAL';
-      const orientation = h < 0 ? 'INVERTED' : 'UPRIGHT';
-      const mag = Math.abs(m) > 1 ? 'MAGNIFIED' : 'DIMINISHED';
-      updateDataPanel(`
-        <div><strong>Lens Type:</strong> ${state.lensType === 'convex' ? 'Convex (Converging)' : 'Concave (Diverging)'}</div>
-        <div><strong>Focal Length:</strong> ${state.focal.toFixed(1)} cm</div>
-        <div><strong>Object:</strong> u = ${(-state.objectDist).toFixed(1)} cm, h = ${state.objectHeight.toFixed(1)} cm</div>
-        <div><strong>Image:</strong> v = ${(v).toFixed(1)} cm, h' = ${(h).toFixed(1)} cm</div>
-        <div><strong>Magnification:</strong> m = ${m.toFixed(2)} (${type}, ${orientation}, ${mag})</div>
-      `);
-    }
-
-    function setMode(mode) {
-      state.mode = mode;
-      snellControls.classList.toggle('hidden', mode === 'lens' || mode === 'apps');
-      lensControls.classList.toggle('hidden', mode !== 'lens');
-      appControls.classList.toggle('hidden', mode !== 'apps');
-      rayButtons.single.parentElement.classList.toggle('hidden', mode === 'lens');
-    }
-
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      if (state.mode === 'lens') {
-        drawLens();
-      } else {
-        drawRefraction();
-        updateSnellData();
-      }
-      requestAnimationFrame(render);
-    }
-
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        tabs.forEach((t) => t.classList.remove('active'));
-        tab.classList.add('active');
-        setMode(tab.dataset.mode);
+    function initCanvases() {
+      [snellCanvas, tirCanvas, lensCanvas, appCanvas].forEach((canvas, i) => {
+        setupCanvas(canvas, canvas.getContext('2d'));
       });
-    });
+    }
 
-    Object.entries(rayButtons).forEach(([key, btn]) => {
-      btn.addEventListener('click', () => {
-        Object.values(rayButtons).forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        state.rayMode = key;
-      });
-    });
-
-    angleInput.addEventListener('input', (e) => {
-      state.angle = parseFloat(e.target.value);
-      angleLabel.textContent = `${state.angle.toFixed(0)}°`;
-    });
-
-    medium1.addEventListener('change', (e) => {
-      state.n1 = parseFloat(e.target.value);
-    });
-
-    medium2.addEventListener('change', (e) => {
-      state.n2 = parseFloat(e.target.value);
-    });
-
-    lensType.addEventListener('change', (e) => {
-      state.lensType = e.target.value;
-    });
-
-    focalInput.addEventListener('input', (e) => {
-      state.focal = parseFloat(e.target.value);
-      fLabel.textContent = `${state.focal.toFixed(0)} cm`;
-    });
-
-    objectDistInput.addEventListener('input', (e) => {
-      state.objectDist = parseFloat(e.target.value);
-      uLabel.textContent = `${state.objectDist.toFixed(0)} cm`;
-    });
-
-    objectHeightInput.addEventListener('input', (e) => {
-      state.objectHeight = parseFloat(e.target.value);
-      hLabel.textContent = `${state.objectHeight.toFixed(0)} cm`;
-    });
-
+    // Theme toggle
     document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
+      isDark = !isDark;
+      document.body.classList.toggle('light', !isDark);
+      document.getElementById('themeToggle').textContent = isDark ? 'Light/Dark' : 'Dark/Light';
+      draw();
     });
 
-    angleLabel.textContent = `${state.angle.toFixed(0)}°`;
-    fLabel.textContent = `${state.focal.toFixed(0)} cm`;
-    uLabel.textContent = `${state.objectDist.toFixed(0)} cm`;
-    hLabel.textContent = `${state.objectHeight.toFixed(0)} cm`;
-    setMode('snell');
-    requestAnimationFrame(render);
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        currentTab = tab.dataset.tab;
+        draw();
+      });
+    });
+
+    // Colors
+    function getColors() {
+      return {
+        bg: isDark ? '#0b1018' : '#f0f4f8',
+        medium1: isDark ? 'rgba(106, 215, 255, 0.15)' : 'rgba(59, 130, 246, 0.15)',
+        medium2: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+        border: isDark ? 'rgba(120, 150, 190, 0.3)' : 'rgba(59, 130, 246, 0.3)',
+        normal: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+        incident: '#f6c76b',
+        reflected: '#ff9a6c',
+        refracted: '#6ad7ff',
+        text: isDark ? '#e9f2ff' : '#1e293b',
+        muted: isDark ? '#9fb0c5' : '#64748b'
+      };
+    }
+
+    // Draw Snell's Law simulation
+    function drawSnell() {
+      const ctx = snellCtx;
+      const w = snellCanvas.offsetWidth;
+      const h = snellCanvas.offsetHeight;
+      const colors = getColors();
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Get values
+      const n1 = parseFloat(document.getElementById('medium1').value);
+      const n2 = parseFloat(document.getElementById('medium2').value);
+      const theta1 = parseFloat(document.getElementById('incAngleSlider').value);
+      const rayType = document.getElementById('rayType').value;
+      const showNormal = document.getElementById('showNormal').checked;
+      const showAngles = document.getElementById('showAngles').checked;
+      const showReflected = document.getElementById('showReflected').checked;
+      const animateWaves = document.getElementById('animateWaves').checked;
+
+      // Calculate refraction
+      const theta1Rad = theta1 * Math.PI / 180;
+      let theta2Rad = Math.asin(n1 * Math.sin(theta1Rad) / n2);
+      const isTIR = isNaN(theta2Rad);
+      if (isTIR) theta2Rad = 0;
+
+      // Interface line
+      const interfaceY = h * 0.45;
+      
+      // Draw media
+      ctx.fillStyle = colors.medium1;
+      ctx.fillRect(0, 0, w, interfaceY);
+      ctx.fillStyle = colors.medium2;
+      ctx.fillRect(0, interfaceY, w, h - interfaceY);
+
+      // Interface
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, interfaceY);
+      ctx.lineTo(w, interfaceY);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = colors.muted;
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText(`n = ${n1}`, 20, 30);
+      ctx.fillText(`n = ${n2}`, 20, interfaceY + 25);
+
+      // Normal line
+      if (showNormal) {
+        const normalX = w / 2;
+        ctx.strokeStyle = colors.normal;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(normalX, 20);
+        ctx.lineTo(normalX, h - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Source point (left side)
+      const sourceX = w * 0.15;
+      const sourceY = interfaceY - 80;
+      
+      // Draw rays based on type
+      const drawRay = (offsetY = 0) => {
+        const startX = sourceX;
+        const startY = sourceY + offsetY;
+        
+        // Incident ray
+        ctx.strokeStyle = colors.incident;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        
+        let endX, endY;
+        if (rayType === 'single') {
+          endX = w / 2 + 80;
+          endY = interfaceY;
+          const angle = Math.atan2(interfaceY - startY, w / 2 + 80 - startX);
+          endX = startX + Math.cos(angle) * 200;
+          endY = startY + Math.sin(angle) * 200;
+        } else {
+          endX = w / 2;
+          endY = interfaceY;
+        }
+        
+        ctx.lineTo(Math.min(endX, w - 50), Math.min(endY, interfaceY));
+        ctx.stroke();
+
+        // Calculate intersection point
+        const intX = rayType === 'single' ? Math.min(endX, w - 50) : w / 2;
+        
+        if (!isTIR && n2 > 0) {
+          // Refracted ray
+          ctx.strokeStyle = colors.refracted;
+          ctx.beginPath();
+          ctx.moveTo(intX, interfaceY);
+          
+          const refractedLength = 150;
+          const refractedX = intX + Math.sin(theta2Rad) * refractedLength;
+          const refractedY = interfaceY + Math.cos(theta2Rad) * refractedLength;
+          ctx.lineTo(refractedX, refractedY);
+          ctx.stroke();
+
+          // Animate waves
+          if (animateWaves && rayType === 'single') {
+            drawWavefronts(ctx, startX, startY, intX, interfaceY, colors.incident, 0);
+            drawWavefronts(ctx, intX, interfaceY, refractedX, refractedY, colors.refracted, theta1 - theta2 * 180 / Math.PI);
+          }
+        }
+
+        // Reflected ray
+        if (showReflected) {
+          ctx.strokeStyle = colors.reflected;
+          ctx.beginPath();
+          ctx.moveTo(intX, interfaceY);
+          const reflectAngle = Math.PI - theta1Rad;
+          ctx.lineTo(intX + Math.sin(reflectAngle) * 120, interfaceY - Math.cos(reflectAngle) * 120);
+          ctx.stroke();
+        }
+
+        // Draw angles
+        if (showAngles && rayType === 'single') {
+          drawAngle(ctx, w / 2, interfaceY, theta1, colors.incident, 'θ₁');
+          if (!isTIR) {
+            drawAngle(ctx, w / 2, interfaceY, -theta2 * 180 / Math.PI, colors.refracted, 'θ₂');
+          }
+        }
+      };
+
+      if (rayType === 'single') {
+        drawRay(0);
+      } else if (rayType === 'parallel') {
+        for (let i = -2; i <= 2; i++) {
+          drawRay(i * 25);
+        }
+      } else {
+        for (let i = -2; i <= 2; i++) {
+          drawRay(i * 35);
+        }
+      }
+
+      // Update displays
+      document.getElementById('theta1').textContent = theta1.toFixed(1) + '°';
+      document.getElementById('theta2').textContent = isTIR ? 'TIR' : (theta2Rad * 180 / Math.PI).toFixed(1) + '°';
+      document.getElementById('v1').textContent = (C / n1 / 1e8).toFixed(2) + '×10⁸';
+      document.getElementById('v2').textContent = isTIR ? '—' : (C / n2 / 1e8).toFixed(2) + '×10⁸';
+    }
+
+    function drawWavefronts(ctx, x1, y1, x2, y2, color, rotation) {
+      const dist = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+      const angle = Math.atan2(y2-y1, x2-x1);
+      const waveSpacing = 25;
+      
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.4;
+      
+      for (let d = 0; d < dist; d += waveSpacing) {
+        const x = x1 + Math.cos(angle) * ((d + time * 2) % dist);
+        const y = y1 + Math.sin(angle) * ((d + time * 2) % dist);
+        
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawAngle(ctx, cx, cy, angleDeg, color, label) {
+      const angle = angleDeg * Math.PI / 180;
+      const radius = 35;
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, angle < 0 ? angle : 0, angle < 0 ? 0 : angle, angle < 0);
+      ctx.stroke();
+      
+      ctx.fillStyle = color;
+      ctx.font = 'bold 11px Space Grotesk';
+      const labelX = cx + Math.sin(angle) * (radius + 12);
+      const labelY = cy - Math.cos(angle) * (radius + 12);
+      ctx.fillText(label, labelX, labelY);
+    }
+
+    // Draw TIR simulation
+    function drawTIR() {
+      const ctx = tirCtx;
+      const w = tirCanvas.offsetWidth;
+      const h = tirCanvas.offsetHeight;
+      const colors = getColors();
+
+      ctx.clearRect(0, 0, w, h);
+
+      const n1 = parseFloat(document.getElementById('tirMedium1').value);
+      const n2 = parseFloat(document.getElementById('tirMedium2').value);
+      const theta = parseFloat(document.getElementById('tirAngleSlider').value);
+      const showNormal = document.getElementById('tirShowNormal').checked;
+      const showCritical = document.getElementById('tirShowCritical').checked;
+      const animate = document.getElementById('tirAnimate').checked;
+
+      const criticalAngle = Math.asin(n2 / n1) * 180 / Math.PI;
+      const thetaRad = theta * Math.PI / 180;
+      const isTIR = theta > criticalAngle;
+
+      // Interface
+      const interfaceY = h * 0.45;
+      
+      ctx.fillStyle = colors.medium1;
+      ctx.fillRect(0, 0, w, interfaceY);
+      ctx.fillStyle = colors.medium2;
+      ctx.fillRect(0, interfaceY, w, h - interfaceY);
+
+      ctx.strokeStyle = colors.border;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, interfaceY);
+      ctx.lineTo(w, interfaceY);
+      ctx.stroke();
+
+      ctx.fillStyle = colors.muted;
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText(`n = ${n1}`, 20, 30);
+      ctx.fillText(`n = ${n2}`, 20, interfaceY + 25);
+
+      // Normal
+      if (showNormal) {
+        const normalX = w / 2;
+        ctx.strokeStyle = colors.normal;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(normalX, 20);
+        ctx.lineTo(normalX, h - 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Critical angle indicator
+      if (showCritical && n1 > n2) {
+        ctx.strokeStyle = colors.success || '#6bff6b';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(w / 2, interfaceY);
+        ctx.lineTo(w / 2 + Math.sin(criticalAngle * Math.PI / 180) * 120, interfaceY - Math.cos(criticalAngle * Math.PI / 180) * 120);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = colors.success || '#6bff6b';
+        ctx.font = '11px Space Grotesk';
+        ctx.fillText(`θc = ${criticalAngle.toFixed(1)}°`, w / 2 + 60, interfaceY - 45);
+      }
+
+      // Incident ray
+      const sourceX = w * 0.15;
+      const sourceY = interfaceY - 80;
+      
+      ctx.strokeStyle = colors.incident;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(sourceX, sourceY);
+      const endX = w / 2 + Math.sin(thetaRad) * 150;
+      const endY = interfaceY - Math.cos(thetaRad) * 150;
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+
+      if (isTIR) {
+        // Total internal reflection
+        ctx.strokeStyle = colors.reflected;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, interfaceY);
+        const reflectAngle = Math.PI - thetaRad;
+        ctx.lineTo(w / 2 + Math.sin(reflectAngle) * 150, interfaceY - Math.cos(reflectAngle) * 150);
+        ctx.stroke();
+
+        document.getElementById('tirStatus').textContent = 'TIR Active';
+        document.getElementById('tirStatus').style.color = '#6bff6b';
+        document.getElementById('reflectedPct').textContent = '100%';
+      } else {
+        // Partial transmission
+        const theta2 = Math.asin(n1 * Math.sin(thetaRad) / n2);
+        
+        ctx.strokeStyle = colors.refracted;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, interfaceY);
+        ctx.lineTo(w / 2 + Math.sin(theta2) * 120, interfaceY + Math.cos(theta2) * 120);
+        ctx.stroke();
+
+        document.getElementById('tirStatus').textContent = 'Partial Transmission';
+        document.getElementById('tirStatus').style.color = '#f6c76b';
+        
+        const reflectivity = Math.pow((n1 - n2) / (n1 + n2), 2);
+        document.getElementById('reflectedPct').textContent = (reflectivity * 100).toFixed(0) + '%';
+      }
+
+      // Animated pulse
+      if (animate) {
+        const pulseProgress = (time % 60) / 60;
+        const pulseX = sourceX + (w / 2 - sourceX) * pulseProgress;
+        const pulseY = sourceY + (interfaceY - sourceY) * pulseProgress;
+        
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(pulseX, pulseY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        
+        if (isTIR && pulseProgress > 0.5) {
+          const reflectProgress = (pulseProgress - 0.5) * 2;
+          const reflX = w / 2 + Math.sin(reflectAngle) * 150 * reflectProgress;
+          const reflY = interfaceY - Math.cos(reflectAngle) * 150 * reflectProgress;
+          ctx.beginPath();
+          ctx.arc(reflX, reflY, 6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Update displays
+      document.getElementById('criticalAngle').textContent = criticalAngle.toFixed(1) + '°';
+      document.getElementById('tirTheta1').textContent = theta.toFixed(1) + '°';
+      document.getElementById('tirIncAngle').textContent = theta + '°';
+    }
+
+    // Draw Lenses simulation
+    function drawLenses() {
+      const ctx = lensCtx;
+      const w = lensCanvas.offsetWidth;
+      const h = lensCanvas.offsetHeight;
+      const colors = getColors();
+
+      ctx.clearRect(0, 0, w, h);
+
+      const isConvex = document.querySelector('.lens-type-toggle button.active').dataset.lens === 'convex';
+      const f = parseFloat(document.getElementById('focalSlider').value);
+      const u = parseFloat(document.getElementById('objDistSlider').value);
+      const hObj = parseFloat(document.getElementById('objHeightSlider').value);
+      const showRays = document.getElementById('lensShowRays').checked;
+      const showPrincipal = document.getElementById('lensShowPrincipal').checked;
+      const animate = document.getElementById('lensAnimate').checked;
+
+      // Calculate image
+      const fSign = isConvex ? f : -f;
+      const v = 1 / (1 / fSign - 1 / u);
+      const m = -v / u;
+      const hImg = hObj * m;
+      const isReal = v > 0;
+
+      // Draw principal axis
+      if (showPrincipal) {
+        ctx.strokeStyle = colors.normal;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(30, h / 2);
+        ctx.lineTo(w - 30, h / 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw lens
+      const lensX = w / 2;
+      const lensThickness = isConvex ? 25 : 15;
+      
+      ctx.fillStyle = isConvex ? 'rgba(106, 215, 255, 0.3)' : 'rgba(246, 199, 107, 0.3)';
+      ctx.strokeStyle = isConvex ? colors.accent : '#f6c76b';
+      ctx.lineWidth = 3;
+      
+      ctx.beginPath();
+      if (isConvex) {
+        ctx.moveTo(lensX, h / 2 - 80);
+        ctx.quadraticCurveTo(lensX + lensThickness, h / 2, lensX, h / 2 + 80);
+        ctx.quadraticCurveTo(lensX - lensThickness, h / 2, lensX, h / 2 - 80);
+      } else {
+        ctx.moveTo(lensX, h / 2 - 80);
+        ctx.quadraticCurveTo(lensX - lensThickness, h / 2, lensX, h / 2 + 80);
+        ctx.quadraticCurveTo(lensX + lensThickness, h / 2, lensX, h / 2 - 80);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      // Focal points
+      const fPx = lensX + (isConvex ? f * 5 : -f * 5);
+      const fNx = lensX - (isConvex ? f * 5 : -f * 5);
+      
+      ctx.fillStyle = colors.muted;
+      ctx.font = '10px Space Grotesk';
+      ctx.fillText('F', fPx, h / 2 + 95);
+      ctx.fillText("F'", fNx, h / 2 + 95);
+      
+      ctx.strokeStyle = colors.muted;
+      ctx.lineWidth = 1;
+      for (const fx of [fPx, fNx]) {
+        ctx.beginPath();
+        ctx.moveTo(fx, h / 2 - 90);
+        ctx.lineTo(fx, h / 2 + 90);
+        ctx.stroke();
+      }
+
+      // Object
+      const objX = lensX - u * 5;
+      const objY = h / 2 - hObj * 5;
+      
+      ctx.fillStyle = colors.incident;
+      ctx.strokeStyle = colors.incident;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(objX, h / 2);
+      ctx.lineTo(objX, objY);
+      ctx.lineTo(objX + 8, objY - 8);
+      ctx.moveTo(objX, objY);
+      ctx.lineTo(objX - 8, objY - 8);
+      ctx.stroke();
+      
+      ctx.fillStyle = colors.muted;
+      ctx.fillText('Object', objX - 15, h / 2 + 15);
+
+      // Image
+      if (Math.abs(v) < 100) {
+        const imgX = lensX + v * 5;
+        const imgY = h / 2 + hImg * 5;
+        
+        ctx.fillStyle = isReal ? colors.success : colors.accent2;
+        ctx.strokeStyle = isReal ? colors.success : colors.accent2;
+        
+        if (Math.abs(hImg) < 20) {
+          ctx.beginPath();
+          ctx.moveTo(imgX, h / 2);
+          ctx.lineTo(imgX, imgY);
+          ctx.lineTo(imgX + 8 * Math.sign(m), imgY - 8);
+          ctx.moveTo(imgX, imgY);
+          ctx.lineTo(imgX - 8 * Math.sign(m), imgY - 8);
+          ctx.stroke();
+        }
+        
+        ctx.fillText(isReal ? 'Real Image' : 'Virtual Image', imgX - 25, imgY + 25);
+      }
+
+      // Ray diagram
+      if (showRays) {
+        ctx.globalAlpha = 0.6;
+        
+        // Ray 1: Parallel to axis, then through F
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(objX, objY);
+        ctx.lineTo(lensX, objY);
+        const dest1 = isConvex ? fPx : fNx;
+        ctx.lineTo(dest1, h / 2);
+        ctx.stroke();
+
+        // Ray 2: Through F', then parallel
+        ctx.beginPath();
+        ctx.moveTo(objX, objY);
+        ctx.lineTo(fNx, h / 2 - (objY - h / 2) * (f / u));
+        ctx.lineTo(imgX, h / 2 - (objY - h / 2) * (v / u));
+        ctx.stroke();
+
+        // Ray 3: Through center (no deviation)
+        ctx.beginPath();
+        ctx.moveTo(objX, objY);
+        ctx.lineTo(imgX, h / 2 + (objY - h / 2) * (v / u));
+        ctx.stroke();
+        
+        ctx.globalAlpha = 1;
+      }
+
+      // Update info
+      const imageType = document.getElementById('imageType');
+      if (isReal) {
+        imageType.textContent = 'Real Image';
+        imageType.className = 'type real';
+      } else {
+        imageType.textContent = 'Virtual Image';
+        imageType.className = 'type virtual';
+      }
+
+      document.getElementById('imageDetails').innerHTML = `
+        Image distance (v) = ${v.toFixed(1)} cm<br>
+        Magnification (m) = ${m.toFixed(2)}<br>
+        Image height = ${hImg.toFixed(1)} cm (${m < 0 ? 'inverted' : 'upright'})
+      `;
+
+      document.getElementById('focalVal').textContent = f + ' cm';
+      document.getElementById('objDistVal').textContent = u + ' cm';
+      document.getElementById('objHeightVal').textContent = hObj + ' cm';
+    }
+
+    // Draw Applications
+    let currentApp = 'prism';
+    
+    function drawApp() {
+      const ctx = appCtx;
+      const w = appCanvas.offsetWidth;
+      const h = appCanvas.offsetHeight;
+      const colors = getColors();
+
+      ctx.clearRect(0, 0, w, h);
+
+      switch (currentApp) {
+        case 'prism':
+          drawPrism(ctx, w, h, colors);
+          break;
+        case 'eye':
+          drawEye(ctx, w, h, colors);
+          break;
+        case 'microscope':
+          drawMicroscope(ctx, w, h, colors);
+          break;
+        case 'telescope':
+          drawTelescope(ctx, w, h, colors);
+          break;
+      }
+    }
+
+    function drawPrism(ctx, w, h, colors) {
+      const prismY = h * 0.35;
+      const prismH = 120;
+      const prismW = 100;
+      const px = w / 2;
+      
+      // Draw prism
+      ctx.fillStyle = 'rgba(167, 139, 250, 0.2)';
+      ctx.strokeStyle = colors.accent3 || '#a78bfa';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(px, prismY);
+      ctx.lineTo(px - prismW/2, prismY + prismH);
+      ctx.lineTo(px + prismW/2, prismY + prismH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // White light ray in
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(50, prismY - 40);
+      ctx.lineTo(px - 20, prismY);
+      ctx.stroke();
+
+      // Rainbow out
+      const colors_rainbow = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+      const angleStep = 0.12;
+      let angle = -0.4;
+      
+      colors_rainbow.forEach((color, i) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px - 20, prismY);
+        ctx.lineTo(px + 30 + i * 12, prismY + 60 + angle * 100);
+        ctx.stroke();
+        angle += angleStep;
+      });
+
+      // Labels
+      ctx.fillStyle = colors.text;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('White Light', 45, prismY - 55);
+      ctx.fillText('Spectrum', w - 60, prismY + 75);
+    }
+
+    function drawEye(ctx, w, h, colors) {
+      const cx = w / 2;
+      const cy = h / 2;
+      
+      // Eye outline
+      ctx.fillStyle = isDark ? '#1a1a2e' : '#fff';
+      ctx.strokeStyle = colors.text;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, 120, 70, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Cornea
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(cx - 90, cy, 30, 50, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Lens
+      ctx.fillStyle = 'rgba(167, 139, 250, 0.5)';
+      ctx.beginPath();
+      ctx.ellipse(cx - 50, cy, 15, 35, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Retina
+      ctx.fillStyle = isDark ? '#8b0000' : '#ffcccc';
+      ctx.beginPath();
+      ctx.ellipse(cx + 90, cy, 20, 55, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Light rays
+      ctx.strokeStyle = colors.incident;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(20, cy - 30);
+      ctx.quadraticCurveTo(cx - 30, cy, cx + 80, cy);
+      ctx.stroke();
+
+      ctx.fillStyle = colors.text;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('Cornea', cx - 105, cy - 35);
+      ctx.fillText('Lens', cx - 65, cy - 35);
+      ctx.fillText('Retina', cx + 70, cy - 35);
+    }
+
+    function drawMicroscope(ctx, w, h, colors) {
+      // Objective lens
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.35, h / 2, 15, 40, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Eyepiece
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.3)';
+      ctx.strokeStyle = colors.accent2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.75, h / 2, 15, 35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Tube
+      ctx.strokeStyle = colors.muted;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.38, h / 2 - 35);
+      ctx.lineTo(w * 0.72, h / 2 - 30);
+      ctx.stroke();
+
+      // Object
+      ctx.fillStyle = colors.incident;
+      ctx.fillRect(w * 0.2, h / 2 - 8, 20, 16);
+
+      // Rays
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.22, h / 2);
+      ctx.lineTo(w * 0.35, h / 2);
+      ctx.lineTo(w * 0.75, h / 2 - 25);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(w * 0.22, h / 2);
+      ctx.lineTo(w * 0.35, h / 2);
+      ctx.lineTo(w * 0.75, h / 2 + 25);
+      ctx.stroke();
+
+      ctx.fillStyle = colors.text;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('Object', w * 0.15, h / 2 + 5);
+      ctx.fillText('Objective', w * 0.3, h / 2 + 55);
+      ctx.fillText('Eyepiece', w * 0.7, h / 2 + 55);
+      ctx.fillText('Final Image →', w * 0.82, h / 2);
+    }
+
+    function drawTelescope(ctx, w, h, colors) {
+      // Objective lens
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.25, h / 2, 12, 50, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Eyepiece
+      ctx.fillStyle = 'rgba(246, 199, 107, 0.3)';
+      ctx.strokeStyle = colors.accent2;
+      ctx.beginPath();
+      ctx.ellipse(w * 0.75, h / 2, 12, 35, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Tube
+      ctx.strokeStyle = colors.muted;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(w * 0.28, h / 2 - 45);
+      ctx.lineTo(w * 0.72, h / 2 - 30);
+      ctx.moveTo(w * 0.28, h / 2 + 45);
+      ctx.lineTo(w * 0.72, h / 2 + 30);
+      ctx.stroke();
+
+      // Parallel rays in
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 1.5;
+      for (let i = -2; i <= 2; i++) {
+        ctx.beginPath();
+        ctx.moveTo(30, h / 2 + i * 15);
+        ctx.lineTo(w * 0.24, h / 2 + i * 12);
+        ctx.stroke();
+      }
+
+      // Converging to eyepiece
+      ctx.beginPath();
+      ctx.moveTo(w * 0.28, h / 2 - 10);
+      ctx.lineTo(w * 0.75, h / 2 - 20);
+      ctx.moveTo(w * 0.28, h / 2 + 10);
+      ctx.lineTo(w * 0.75, h / 2 + 20);
+      ctx.stroke();
+
+      ctx.fillStyle = colors.text;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('Objective', w * 0.18, h / 2 + 65);
+      ctx.fillText('Eyepiece', w * 0.7, h / 2 + 50);
+      ctx.fillText('← Parallel rays', 30, h / 2 - 60);
+    }
+
+    // Main draw loop
+    function draw() {
+      time++;
+      
+      switch (currentTab) {
+        case 'snell':
+          drawSnell();
+          break;
+        case 'tir':
+          drawTIR();
+          break;
+        case 'lenses':
+          drawLenses();
+          break;
+        case 'applications':
+          drawApp();
+          break;
+      }
+
+      animationId = requestAnimationFrame(draw);
+    }
+
+    // Event listeners
+    function setupControls() {
+      // Snell controls
+      ['medium1', 'medium2', 'incAngleSlider', 'rayType', 'showNormal', 'showAngles', 'showReflected', 'animateWaves'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          document.getElementById('incAngle').textContent = document.getElementById('incAngleSlider').value + '°';
+          drawSnell();
+        });
+      });
+
+      // TIR controls
+      ['tirMedium1', 'tirMedium2', 'tirAngleSlider', 'tirShowNormal', 'tirShowCritical', 'tirAnimate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', drawTIR);
+        }
+      });
+
+      // Lens controls
+      document.querySelectorAll('.lens-type-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.lens-type-toggle button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          drawLenses();
+        });
+      });
+
+      ['focalSlider', 'objDistSlider', 'objHeightSlider', 'lensShowRays', 'lensShowPrincipal', 'lensAnimate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', drawLenses);
+        }
+      });
+
+      // App selection
+      document.querySelectorAll('.app-card').forEach(card => {
+        card.addEventListener('click', () => {
+          currentApp = card.dataset.app;
+          document.querySelectorAll('.app-card').forEach(c => c.style.borderColor = '');
+          card.style.borderColor = 'var(--accent-2)';
+          
+          const theory = document.getElementById('appTheory');
+          const theories = {
+            prism: '<strong>Prism Dispersion:</strong> White light contains all visible wavelengths. Since each wavelength refracts differently (n varies with λ), the colors separate - creating a rainbow spectrum. This is called <strong>chromatic dispersion</strong>.',
+            eye: '<strong>Human Eye:</strong> The cornea and lens focus light onto the retina. The lens can change shape (accommodation) to focus on objects at different distances. Abnormalities like myopia and hyperopia occur when the focal point falls short or beyond the retina.',
+            microscope: '<strong>Compound Microscope:</strong> Uses two converging lenses. The objective creates a magnified real image, which the eyepiece then magnifies further as a virtual image. Total magnification = objective × eyepiece magnification.',
+            telescope: '<strong>Refracting Telescope:</strong> Uses two lenses to gather distant light. The objective lens forms a real image at its focal point, which the eyepiece magnifies. Astronomical telescopes produce inverted images.'
+          };
+          theory.innerHTML = theories[currentApp];
+          
+          drawApp();
+        });
+      });
+
+      // Fiber demo button
+      document.getElementById('fiberDemo').addEventListener('click', () => {
+        currentTab = 'applications';
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        document.querySelector('[data-tab="applications"]').classList.add('active');
+        document.getElementById('tab-applications').classList.add('active');
+        draw();
+      });
+    }
+
+    // Initialize
+    function init() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('theme') === 'light') {
+        isDark = false;
+        document.body.classList.add('light');
+      }
+
+      initCanvases();
+      setupControls();
+      draw();
+    }
+
+    window.addEventListener('load', init);
+    window.addEventListener('resize', () => {
+      initCanvases();
+      draw();
+    });
   </script>
 </body>
 </html>
