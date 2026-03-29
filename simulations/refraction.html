@@ -1028,6 +1028,7 @@
       const criticalAngle = Math.asin(n2 / n1) * 180 / Math.PI;
       const thetaRad = theta * Math.PI / 180;
       const isTIR = theta > criticalAngle;
+      const reflectAngle = Math.PI - thetaRad;
 
       // Interface
       const interfaceY = h * 0.45;
@@ -1097,7 +1098,6 @@
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(w / 2, interfaceY);
-        const reflectAngle = Math.PI - thetaRad;
         ctx.lineTo(w / 2 + Math.sin(reflectAngle) * 150, interfaceY - Math.cos(reflectAngle) * 150);
         ctx.stroke();
 
