@@ -3,528 +3,1821 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Heat Capacity</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <title>Heat Capacity & Thermal Energy</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
   <style>
     :root {
-      --bg: #0b1020;
-      --panel: rgba(12, 18, 30, 0.82);
-      --ink: #f8fafc;
-      --muted: #94a3b8;
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --accent-3: #22c55e;
-      --line: rgba(255,255,255,0.08);
-      --mono: "JetBrains Mono", monospace;
+      --accent-3: #a78bfa;
+      --accent-4: #22c55e;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+      --cold: #6fb7ff;
+      --hot: #ff6b6b;
+      --warm: #f6c76b;
     }
-    body.light {
-      --bg: #f5f7fa;
-      --ink: #0f172a;
-      --muted: #475569;
-      --line: rgba(15, 23, 42, 0.12);
-      --panel: rgba(255,255,255,0.9);
-    }
-    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Inter", sans-serif;
+      background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.08), transparent),
+                  radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.08), transparent),
+                  radial-gradient(800px 600px at 50% 100%, rgba(167, 139, 250, 0.06), transparent),
+                  #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", sans-serif;
+      min-height: 100vh;
     }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
     .topbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px; border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
-      position: sticky; top: 0; z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
     .toggle {
-      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
-      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
-      cursor: pointer; color: var(--ink);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
-
-    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
-    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
-    header .subtitle { color: var(--muted); font-size: 13px; }
-
-    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      backdrop-filter: blur(12px);
-    }
-    .canvas-wrap { position: relative; }
-    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
-
-    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .control {
-      background: #0f151c;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+      font-weight: 500;
       font-size: 13px;
-      color: var(--muted);
     }
-    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
-    .control input[type="range"] { width: 100%; }
-    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
-    .control .row { display: flex; justify-content: space-between; }
-    .control .value { font-weight: 600; color: var(--ink); }
 
-    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn {
-      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
-      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    header.hero {
+      text-align: center;
+      padding: 28px 20px 16px;
     }
-    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
 
-    .data-panel { padding: 0; background: transparent; border: none; }
-    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
-    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
-    .data-value.blue { color: var(--accent); }
-    .data-value.orange { color: var(--accent-2); }
-    .data-value.green { color: var(--accent-3); }
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.4rem, 2.2vw, 2.2rem);
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    .formula {
-      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
-      border: 1px solid rgba(106,215,255,0.5);
-      border-radius: 10px;
-      padding: 10px 12px;
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.15);
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr);
+      gap: 24px;
+      padding: 12px 28px 24px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 380px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(15, 25, 40, 0.9), rgba(6, 10, 18, 0.95));
+      border-radius: 14px;
+      border: 1px solid var(--sim-border);
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-container { position: relative; }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
       font-size: 12px;
-      color: var(--ink);
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-group label span.value {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--sim-text);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.5);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(12, 18, 28, 0.6);
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .checkbox-group:hover { border-color: var(--accent); }
+
+    .checkbox-group input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .checkbox-group span { font-size: 13px; }
+
+    .data-card {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.08), rgba(167, 139, 250, 0.05));
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 14px;
+      border-top: 3px solid var(--accent);
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(120, 150, 190, 0.1);
+    }
+
+    .data-row:last-child { border-bottom: none; }
+
+    .data-row .label { font-size: 12px; color: var(--sim-muted); }
+
+    .data-row .val { font-size: 14px; font-weight: 600; color: var(--accent); }
+    .data-row .val.hot { color: var(--hot); }
+    .data-row .val.cold { color: var(--cold); }
+    .data-row .val.warm { color: var(--warm); }
+
+    .formula-box {
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--accent-2);
+      font-weight: 500;
+    }
+
+    .phase-visual-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+      padding: 6px;
+    }
+
+    .phase-segment {
+      flex: 1;
+      padding: 8px 4px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.4);
+      transition: all 0.3s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .phase-segment span {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .phase-segment.active {
+      color: #fff;
+      transform: scale(1.05);
+    }
+
+    .phase-segment.ice.active {
+      background: rgba(165, 216, 255, 0.3);
+      box-shadow: 0 0 15px rgba(165, 216, 255, 0.4);
+    }
+
+    .phase-segment.melt.active {
+      background: rgba(106, 215, 255, 0.3);
+      box-shadow: 0 0 15px rgba(106, 215, 255, 0.4);
+    }
+
+    .phase-segment.water.active {
+      background: rgba(52, 152, 219, 0.3);
+      box-shadow: 0 0 15px rgba(52, 152, 219, 0.4);
+    }
+
+    .phase-segment.boil.active {
+      background: rgba(255, 150, 150, 0.3);
+      box-shadow: 0 0 15px rgba(255, 100, 100, 0.4);
+    }
+
+    .phase-segment.steam.active {
+      background: rgba(200, 200, 220, 0.3);
+      box-shadow: 0 0 15px rgba(200, 200, 220, 0.4);
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(106, 215, 255, 0.2);
+    }
+
+    .btn.active {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .hidden { display: none !important; }
+
+    .game-panel {
+      background: linear-gradient(135deg, rgba(246, 199, 107, 0.1), rgba(167, 139, 250, 0.08));
+      border: 2px solid var(--accent-2);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .game-panel .panel-title {
+      color: var(--accent-2);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .game-stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .game-stat {
+      text-align: center;
+    }
+
+    .game-stat .num {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .game-stat .label {
+      font-size: 11px;
+      color: var(--sim-muted);
+    }
+
+    .challenge-info {
+      background: rgba(167, 139, 250, 0.15);
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .challenge-info .target {
+      color: var(--accent-3);
+      font-weight: 600;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .instructions {
+      font-size: 11px;
+      color: var(--sim-muted);
+      padding: 8px 12px;
+      background: rgba(12, 18, 28, 0.5);
+      border-radius: 8px;
       line-height: 1.5;
     }
 
-    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+    .material-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <a href="/index.html">← Back to Library</a>
-    <button class="toggle" id="themeToggle">Light/Dark</button>
-  </div>
-  <header>
-    <h1>Heat Capacity</h1>
-    <div class="subtitle">Q = mcΔT — energy required to change temperature</div>
-  </header>
-
-  <div class="wrap">
-    <div class="card">
-      <div class="canvas-wrap">
-        <canvas id="scene" width="960" height="460"></canvas>
-      </div>
-      <div class="data-panel" id="readout"></div>
+  <div class="page">
+    <div class="topbar">
+      <a href="/">← Physics Simulations</a>
+      <span class="toggle">Heat Capacity</span>
     </div>
 
-    <div class="card">
-      <div class="controls">
-        <div class="control">
-          <label>Simulation</label>
-          <div class="button-row">
-            <button class="btn" id="playPause">Pause</button>
-            <button class="btn" id="reset">Reset</button>
+    <header class="hero">
+      <h1>Heat Capacity & Thermal Energy</h1>
+      <p>Q = mcΔT — Energy, Temperature & Phase Changes</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="heating">🔥 Heating</button>
+      <button class="tab" data-tab="mixing">🫗 Mixing</button>
+      <button class="tab" data-tab="phase">🌡️ Phase Change</button>
+      <button class="tab" data-tab="challenge">🎯 Challenge</button>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="panel-title">Simulation</div>
+        
+        <div id="heating-canvas" class="canvas-container">
+          <canvas id="heatCanvas"></canvas>
+        </div>
+        
+        <div id="mixing-canvas" class="canvas-container hidden">
+          <canvas id="mixCanvas"></canvas>
+        </div>
+        
+        <div id="phase-canvas" class="canvas-container hidden">
+          <canvas id="phaseCanvas"></canvas>
+        </div>
+        
+        <div id="challenge-canvas" class="canvas-container hidden">
+          <canvas id="challengeCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Controls</div>
+
+        <!-- Heating Controls -->
+        <div id="heating-controls" class="controls">
+          <div class="formula-box">Q = mcΔT</div>
+          
+          <div class="control-group">
+            <label>Material A <span class="value" id="matAVal">Water</span></label>
+            <select id="materialA">
+              <option value="water">Water (4.18 J/g·K)</option>
+              <option value="iron">Iron (0.45 J/g·K)</option>
+              <option value="aluminum">Aluminum (0.90 J/g·K)</option>
+              <option value="copper">Copper (0.39 J/g·K)</option>
+              <option value="oil">Oil (2.00 J/g·K)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Material B <span class="value" id="matBVal">Iron</span></label>
+            <select id="materialB">
+              <option value="water">Water (4.18 J/g·K)</option>
+              <option value="iron" selected>Iron (0.45 J/g·K)</option>
+              <option value="aluminum">Aluminum (0.90 J/g·K)</option>
+              <option value="copper">Copper (0.39 J/g·K)</option>
+              <option value="oil">Oil (2.00 J/g·K)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label>Heat Energy (J) <span class="value" id="heatVal">10000 J</span></label>
+            <input type="range" id="heatSlider" min="0" max="50000" step="500" value="10000">
+          </div>
+
+          <div class="control-group">
+            <label>Animation Speed <span class="value" id="speedVal">1.0x</span></label>
+            <input type="range" id="speedSlider" min="0.2" max="3" step="0.1" value="1">
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="heatPlayPause">Pause</button>
+            <button class="btn" id="heatReset">Reset</button>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="showParticles" checked>
+            <span>Show Particles</span>
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="showArrows" checked>
+            <span>Heat Flow Arrows</span>
+          </div>
+
+          <div class="data-card">
+            <div class="panel-title">Material A</div>
+            <div class="data-row">
+              <span class="label">Temperature</span>
+              <span class="val" id="tempA">20.0°C</span>
+            </div>
+            <div class="data-row">
+              <span class="label">ΔT</span>
+              <span class="val warm" id="dTA">0.0 K</span>
+            </div>
+          </div>
+
+          <div class="data-card">
+            <div class="panel-title">Material B</div>
+            <div class="data-row">
+              <span class="label">Temperature</span>
+              <span class="val" id="tempB">20.0°C</span>
+            </div>
+            <div class="data-row">
+              <span class="label">ΔT</span>
+              <span class="val warm" id="dTB">0.0 K</span>
+            </div>
           </div>
         </div>
-        <div class="control">
-          <label>Animation Speed</label>
-          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
-          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
-        </div>
-        <div class="control">
-          <label>Mass (g)</label>
-          <input id="mass" type="range" min="10" max="1000" step="10" value="100" />
-          <div class="row"><span>10</span><span id="massVal" class="value">100 g</span><span>1000</span></div>
-        </div>
-        <div class="control">
-          <label>Material</label>
-          <select id="material">
-            <option value="water">Water (4.18 J/g·K)</option>
-            <option value="iron">Iron (0.45 J/g·K)</option>
-            <option value="aluminum">Aluminum (0.90 J/g·K)</option>
-            <option value="copper">Copper (0.39 J/g·K)</option>
-            <option value="gold">Gold (0.13 J/g·K)</option>
-          </select>
-        </div>
-        <div class="control">
-          <label>Initial Temperature (°C)</label>
-          <input id="initTemp" type="range" min="0" max="100" step="1" value="20" />
-          <div class="row"><span>0</span><span id="initVal" class="value">20 °C</span><span>100</span></div>
-        </div>
-        <div class="control">
-          <label>Heat Added (J)</label>
-          <input id="heat" type="range" min="0" max="50000" step="500" value="10000" />
-          <div class="row"><span>0</span><span id="heatVal" class="value">10000 J</span><span>50000</span></div>
-        </div>
-        <div class="control">
-          <label>Display Options</label>
-          <div class="checks">
-            <label><input id="showGrid" type="checkbox" checked /> Grid</label>
-            <label><input id="showFlame" type="checkbox" checked /> Burner</label>
-            <label><input id="showThermo" type="checkbox" checked /> Thermometer</label>
-            <label><input id="showLabels" type="checkbox" checked /> Labels</label>
-            <label><input id="showFlux" type="checkbox" /> Heat flux arrows</label>
-            <label><input id="showChart" type="checkbox" checked /> Temp-time chart</label>
+
+        <!-- Mixing Controls -->
+        <div id="mixing-controls" class="controls hidden">
+          <div class="formula-box">Thermal Equilibrium</div>
+          
+          <div class="control-group">
+            <label>Hot Water Mass (g) <span class="value" id="hotMassVal">200g</span></label>
+            <input type="range" id="hotMass" min="50" max="500" step="10" value="200">
+          </div>
+
+          <div class="control-group">
+            <label>Hot Temperature (°C) <span class="value" id="hotTempVal">80°C</span></label>
+            <input type="range" id="hotTemp" min="40" max="100" step="1" value="80">
+          </div>
+
+          <div class="control-group">
+            <label>Cold Water Mass (g) <span class="value" id="coldMassVal">200g</span></label>
+            <input type="range" id="coldMass" min="50" max="500" step="10" value="200">
+          </div>
+
+          <div class="control-group">
+            <label>Cold Temperature (°C) <span class="value" id="coldTempVal">20°C</span></label>
+            <input type="range" id="coldTemp" min="0" max="30" step="1" value="20">
+          </div>
+
+          <button class="btn" id="mixBtn" style="width:100%; padding: 14px;">🫗 Mix Waters</button>
+          <button class="btn" id="mixReset" style="width:100%;">Reset</button>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Hot Water Energy</span>
+              <span class="val hot" id="hotEnergy">50,240 J</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Cold Water Energy</span>
+              <span class="val cold" id="coldEnergy">16,720 J</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Final Temperature</span>
+              <span class="val warm" id="mixTemp">--</span>
+            </div>
           </div>
         </div>
-        <div class="control">
-          <div class="formula">
-            <div><strong>Heat:</strong> <span style="font-family: var(--mono);">Q = mcΔT</span></div>
-            <div><strong>ΔT:</strong> <span style="font-family: var(--mono);">ΔT = Q/(mc)</span></div>
+
+        <!-- Phase Change Controls -->
+        <div id="phase-controls" class="controls hidden">
+          <div class="formula-box">Q = mL (Latent Heat)</div>
+          
+          <div class="phase-visual-bar">
+            <div class="phase-segment ice" id="segIce">❄️<span>Ice</span></div>
+            <div class="phase-segment melt" id="segMelt">🧊<span>Melt</span></div>
+            <div class="phase-segment water" id="segWater">💧<span>Water</span></div>
+            <div class="phase-segment boil" id="segBoil">🔵<span>Boil</span></div>
+            <div class="phase-segment steam" id="segSteam">♨️<span>Steam</span></div>
+          </div>
+
+          <div class="control-group">
+            <label>Heat Rate <span class="value" id="heatRateVal">500 J/s</span></label>
+            <input type="range" id="heatRate" min="100" max="2000" step="100" value="500">
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="phasePlayPause">⏸️ Pause</button>
+            <button class="btn" id="phaseReset">🔄 Reset</button>
+          </div>
+
+          <div class="instructions">
+            Watch the heating curve as ice melts to water, then boils to steam
+          </div>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Current Phase</span>
+              <span class="val" id="currentPhase">❄️ Ice</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Temperature</span>
+              <span class="val" id="phaseTemp">-20°C</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Heat Added</span>
+              <span class="val warm" id="phaseHeat">0 J</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Phase Progress</span>
+              <span class="val" id="phaseProgress">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Challenge Controls -->
+        <div id="challenge-controls" class="controls hidden">
+          <div class="game-panel">
+            <div class="panel-title">
+              <span>🎯 Thermal Challenge</span>
+              <button class="btn" id="challengeStart" style="padding: 4px 10px; font-size: 11px;">Start</button>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat"><div class="num" id="levelNum">1</div><div class="label">Level</div></div>
+              <div class="game-stat"><div class="num" id="challengeScore">0</div><div class="label">Score</div></div>
+              <div class="game-stat"><div class="num" id="attemptsNum">3</div><div class="label">Attempts</div></div>
+            </div>
+            <div class="challenge-info" id="challengeInfo">
+              Click Start to begin! Target: Heat water to reach exactly 50°C
+            </div>
+          </div>
+
+          <div class="formula-box">Target: <span id="targetTemp">50°C</span></div>
+
+          <div class="control-group">
+            <label>Your Heat Input (J) <span class="value" id="playerHeatVal">0 J</span></label>
+            <input type="range" id="playerHeat" min="0" max="50000" step="100" value="0">
+          </div>
+
+          <button class="btn" id="submitGuess" style="width:100%; padding: 14px;">Submit Answer</button>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Your Result</span>
+              <span class="val" id="yourResult">--</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Actual Temp</span>
+              <span class="val warm" id="actualTemp">--</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Accuracy</span>
+              <span class="val" id="accuracy">--</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
-  <footer>
-    Tip: Larger mass or higher specific heat requires more energy to raise the temperature.
-  </footer>
 
   <script>
-    const canvas = document.getElementById('scene');
-    const ctx = canvas.getContext('2d');
+    let currentTab = 'heating';
+    let time = 0;
+
+    // Polyfill for roundRect
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+        if (w < 2 * r) r = w / 2;
+        if (h < 2 * r) r = h / 2;
+        this.moveTo(x + r, y);
+        this.arcTo(x + w, y, x + w, y + h, r);
+        this.arcTo(x + w, y + h, x, y + h, r);
+        this.arcTo(x, y + h, x, y, r);
+        this.arcTo(x, y, x + w, y, r);
+        this.closePath();
+        return this;
+      };
+    }
 
     const materials = {
-      water: { c: 4.18, color: '#3498db' },
-      iron: { c: 0.45, color: '#9ca3af' },
-      aluminum: { c: 0.90, color: '#cbd5f5' },
-      copper: { c: 0.39, color: '#f59e0b' },
-      gold: { c: 0.13, color: '#facc15' }
+      water: { c: 4.18, color: '#3498db', name: 'Water' },
+      iron: { c: 0.45, color: '#9ca3af', name: 'Iron' },
+      aluminum: { c: 0.90, color: '#cbd5f5', name: 'Aluminum' },
+      copper: { c: 0.39, color: '#f59e0b', name: 'Copper' },
+      oil: { c: 2.00, color: '#84cc16', name: 'Oil' }
     };
 
-    const state = {
-      mass: 100,
-      material: 'water',
-      initT: 20,
-      Q: 10000,
-      tempDisplay: 20,
+    // Heating Tab State
+    const heatState = {
+      materialA: 'water',
+      materialB: 'iron',
+      heat: 10000,
       speed: 1,
       running: true,
-      showGrid: true,
-      showFlame: true,
-      showThermo: true,
-      showLabels: true,
-      showFlux: false,
-      showChart: true,
-      t: 0
+      tempA: 20,
+      tempB: 20,
+      targetA: 20,
+      targetB: 20,
+      mass: 100,
+      showParticles: true,
+      showArrows: true,
+      particlesA: [],
+      particlesB: []
     };
-    const tempHistory = [];
 
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // Mixing Tab State
+    const mixState = {
+      hotMass: 200,
+      hotTemp: 80,
+      coldMass: 200,
+      coldTemp: 20,
+      mixing: false,
+      mixed: false,
+      finalTemp: 20,
+      progress: 0
+    };
+
+    // Phase Tab State
+    const phaseState = {
+      substance: 'water',
+      heatRate: 500,
+      running: true,
+      temp: -20,
+      heat: 0,
+      phase: 'ice', // ice, melting, water, boiling, steam
+      progress: 0
+    };
+
+    // Challenge Tab State
+    const challengeState = {
+      active: false,
+      level: 1,
+      score: 0,
+      attempts: 3,
+      targetTemp: 50,
+      playerHeat: 0,
+      mass: 100,
+      material: 'water'
+    };
+
+    // Canvas setup
+    const heatCanvas = document.getElementById('heatCanvas');
+    const heatCtx = heatCanvas.getContext('2d');
+    const mixCanvas = document.getElementById('mixCanvas');
+    const mixCtx = mixCanvas.getContext('2d');
+    const phaseCanvas = document.getElementById('phaseCanvas');
+    const phaseCtx = phaseCanvas.getContext('2d');
+    const challengeCanvas = document.getElementById('challengeCanvas');
+    const challengeCtx = challengeCanvas.getContext('2d');
+
+    function resizeCanvas(canvas) {
+      if (canvas.offsetWidth === 0 || canvas.offsetHeight === 0) return;
+      canvas.width = canvas.offsetWidth * 2;
+      canvas.height = canvas.offsetHeight * 2;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(2, 2);
     }
 
-    function computeTemps() {
-      const c = materials[state.material].c;
-      const dT = state.Q / (state.mass * c);
-      const Tf = state.initT + dT;
-      return { c, dT, Tf };
-    }
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        resizeCanvas(heatCanvas);
+        resizeCanvas(mixCanvas);
+        resizeCanvas(phaseCanvas);
+        resizeCanvas(challengeCanvas);
+        initParticles();
+      }, 100);
+    });
 
-    function drawBackground() {
-      const isLight = document.body.classList.contains('light');
-      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
-      if (isLight) {
-        grad.addColorStop(0, '#f8fafc');
-        grad.addColorStop(0.55, '#e2e8f0');
-        grad.addColorStop(1, '#f1f5f9');
-      } else {
-        grad.addColorStop(0, '#05070e');
-        grad.addColorStop(0.6, '#0a0f1f');
-        grad.addColorStop(1, '#0b1224');
+    function initParticles() {
+      heatState.particlesA = [];
+      heatState.particlesB = [];
+      for (let i = 0; i < 30; i++) {
+        heatState.particlesA.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0 });
+        heatState.particlesB.push({ x: Math.random(), y: Math.random(), vx: 0, vy: 0 });
       }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    }
 
-      if (!state.showGrid) return;
-      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < canvas.clientWidth; x += 40) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentTab = tab.dataset.tab;
+        
+        document.querySelectorAll('.canvas-container').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.controls').forEach(c => c.classList.add('hidden'));
+        
+        document.getElementById(`${currentTab}-canvas`).classList.remove('hidden');
+        document.getElementById(`${currentTab}-controls`).classList.remove('hidden');
+        
+        const canvasMap = { heating: heatCanvas, mixing: mixCanvas, phase: phaseCanvas, challenge: challengeCanvas };
+        resizeCanvas(canvasMap[currentTab]);
+      });
+    });
+
+    // ============ HEATING TAB ============
+    function drawHeating() {
+      const ctx = heatCtx;
+      const w = heatCanvas.offsetWidth;
+      const h = heatCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0a0f1a');
+      grad.addColorStop(1, '#0f1525');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Grid
+      if (heatState.showParticles) {
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+        for (let x = 0; x < w; x += 30) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        }
+        for (let y = 0; y < h; y += 30) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        }
       }
-      for (let y = 0; y < canvas.clientHeight; y += 40) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
+
+      // Calculate target temps
+      const cA = materials[heatState.materialA].c;
+      const cB = materials[heatState.materialB].c;
+      const dT_A = heatState.heat / (heatState.mass * cA);
+      const dT_B = heatState.heat / (heatState.mass * cB);
+      heatState.targetA = 20 + dT_A;
+      heatState.targetB = 20 + dT_B;
+
+      // Animate temps
+      if (heatState.running) {
+        const alpha = 0.02 * heatState.speed;
+        heatState.tempA += (heatState.targetA - heatState.tempA) * alpha;
+        heatState.tempB += (heatState.targetB - heatState.tempB) * alpha;
       }
+
+      // Draw containers side by side
+      const containerW = 140;
+      const containerH = 200;
+      const gap = 80;
+      const startX = (w - gap - containerW * 2) / 2;
+      const baseY = h - 80;
+
+      // Container A
+      drawContainer(ctx, startX, baseY, containerW, containerH, heatState.materialA, heatState.tempA, heatState.particlesA, 'A');
+      
+      // Container B
+      drawContainer(ctx, startX + containerW + gap, baseY, containerW, containerH, heatState.materialB, heatState.tempB, heatState.particlesB, 'B');
+
+      // Heat arrows
+      if (heatState.showArrows) {
+        drawHeatArrows(ctx, startX + containerW/2, baseY + containerH + 10);
+        drawHeatArrows(ctx, startX + containerW + gap + containerW/2, baseY + containerH + 10);
+      }
+
+      // Update display
+      document.getElementById('tempA').textContent = heatState.tempA.toFixed(1) + '°C';
+      document.getElementById('tempB').textContent = heatState.tempB.toFixed(1) + '°C';
+      document.getElementById('dTA').textContent = dT_A.toFixed(1) + ' K';
+      document.getElementById('dTB').textContent = dT_B.toFixed(1) + ' K';
+
+      // Color coding
+      document.getElementById('tempA').style.color = getTempColor(heatState.tempA);
+      document.getElementById('tempB').style.color = getTempColor(heatState.tempB);
     }
 
-    function drawBeaker(cx, cy, w, h) {
-      ctx.strokeStyle = 'rgba(226,232,240,0.6)';
-      ctx.lineWidth = 2;
+    function getTempColor(temp) {
+      if (temp < 30) return '#6fb7ff';
+      if (temp < 60) return '#6ad7ff';
+      if (temp < 80) return '#f6c76b';
+      return '#ff6b6b';
+    }
+
+    function drawContainer(ctx, x, y, w, h, material, temp, particles, label) {
+      const mat = materials[material];
+      
+      // Container outline
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(cx - w / 2, cy - h / 2 + 10);
-      ctx.lineTo(cx - w / 2, cy + h / 2);
-      ctx.lineTo(cx + w / 2, cy + h / 2);
-      ctx.lineTo(cx + w / 2, cy - h / 2 + 10);
+      ctx.moveTo(x, y - h);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y - h);
       ctx.stroke();
 
-      ctx.strokeStyle = 'rgba(148,163,184,0.5)';
-      ctx.beginPath();
-      ctx.moveTo(cx - w / 2 - 6, cy - h / 2 + 10);
-      ctx.lineTo(cx + w / 2 + 6, cy - h / 2 + 10);
-      ctx.stroke();
+      // Liquid fill
+      const fillLevel = 0.7;
+      const tempNorm = Math.min(1, temp / 100);
+      const liquidColor = lerpColor('#3498db', '#ff6b6b', tempNorm);
+      
+      ctx.fillStyle = liquidColor;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(x + 3, y - h * fillLevel, w - 6, h * fillLevel - 3);
+      ctx.globalAlpha = 1;
+
+      // Particles
+      if (heatState.showParticles) {
+        particles.forEach(p => {
+          const px = x + 10 + p.x * (w - 20);
+          const speed = temp / 50;
+          p.vx += (Math.random() - 0.5) * speed * 0.3;
+          p.vy += (Math.random() - 0.5) * speed * 0.3;
+          p.vx *= 0.95;
+          p.vy *= 0.95;
+          p.x += p.vx * 0.02;
+          p.y += p.vy * 0.02;
+          if (p.x < 0) p.x = 1;
+          if (p.x > 1) p.x = 0;
+          if (p.y < 0) p.y = 1;
+          if (p.y > 1) p.y = 0;
+          
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.beginPath();
+          ctx.arc(px, y - 10 - p.y * (h * fillLevel - 15), 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // Label
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(mat.name, x + w/2, y + 25);
+      ctx.font = '12px Space Grotesk';
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillText(`c = ${mat.c} J/g·K`, x + w/2, y + 42);
+
+      // Temperature display
+      ctx.fillStyle = getTempColor(temp);
+      ctx.font = 'bold 16px Space Grotesk';
+      ctx.fillText(`${temp.toFixed(1)}°C`, x + w/2, y - h - 15);
     }
 
-    function drawLiquid(cx, cy, w, h, fill, Tf) {
-      const tempColor = Tf < 50 ? '#6ad7ff' : Tf < 80 ? '#f6c76b' : '#ff6b6b';
-      const base = materials[state.material].color;
-      const grad = ctx.createLinearGradient(0, cy - h / 2 + h * (1 - fill), 0, cy + h / 2);
-      grad.addColorStop(0, base);
-      grad.addColorStop(1, tempColor);
-      ctx.fillStyle = grad;
-      ctx.fillRect(cx - w / 2 + 2, cy + h / 2 - h * fill, w - 4, h * fill - 2);
-    }
-
-    function drawFlame(cx, cy, w, h) {
-      if (!state.showFlame) return;
-      const flameH = Math.min(90, state.Q / 800);
-      if (flameH < 6) return;
-      const grad = ctx.createRadialGradient(cx, cy + h / 2 + 12, 0, cx, cy + h / 2 + 12, flameH);
-      grad.addColorStop(0, 'rgba(255, 170, 0, 0.8)');
-      grad.addColorStop(0.5, 'rgba(255, 80, 0, 0.45)');
-      grad.addColorStop(1, 'rgba(255, 80, 0, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(cx - 30, cy + h / 2 + 10);
-      ctx.lineTo(cx, cy + h / 2 + 10 - flameH);
-      ctx.lineTo(cx + 30, cy + h / 2 + 10);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    function drawThermometer(cx, cy, h, Tf) {
-      if (!state.showThermo) return;
-      const x = cx + 150;
-      const y = cy - h / 2;
-      ctx.strokeStyle = 'rgba(148,163,184,0.6)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x, y + h);
-      ctx.stroke();
-      const tempNorm = Math.min(1, Tf / 120);
-      ctx.strokeStyle = '#f87171';
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x, y + h);
-      ctx.lineTo(x, y + h - tempNorm * h);
-      ctx.stroke();
-      ctx.fillStyle = '#f87171';
-      ctx.beginPath();
-      ctx.arc(x, y + h + 10, 6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function drawLabels(cx, cy, w, h, Tf, dT) {
-      if (!state.showLabels) return;
-      ctx.fillStyle = 'rgba(248,250,252,0.85)';
-      ctx.font = '12px Inter, sans-serif';
-      ctx.fillText(`T = ${Tf.toFixed(1)}°C`, cx - 36, cy - h / 2 - 12);
-      ctx.fillText(`ΔT = ${dT.toFixed(1)} K`, cx - 40, cy + h / 2 + 24);
-    }
-
-    function drawFlux(cx, cy, w, h) {
-      if (!state.showFlux) return;
+    function drawHeatArrows(ctx, x, y) {
+      const intensity = heatState.running ? heatState.speed : 0;
       ctx.save();
-      ctx.strokeStyle = 'rgba(106,215,255,0.7)';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 4; i++) {
-        const x = cx - w / 2 - 20 + i * 12;
-        const y = cy + h / 2 + 8;
+      ctx.strokeStyle = `rgba(255, 100, 50, ${0.3 * intensity})`;
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 3; i++) {
+        const offset = (Date.now() / 500 + i * 0.3) % 1;
+        const y1 = y + offset * 40;
+        const y2 = y + offset * 40 - 15;
         ctx.beginPath();
-        ctx.moveTo(x, y + 18);
-        ctx.lineTo(x, y - 10);
+        ctx.moveTo(x - 10 + i * 10, y1);
+        ctx.lineTo(x - 10 + i * 10, y2);
         ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function lerpColor(a, b, t) {
+      const ah = parseInt(a.replace('#', ''), 16);
+      const bh = parseInt(b.replace('#', ''), 16);
+      const ar = ah >> 16, ag = (ah >> 8) & 0xff, ab = ah & 0xff;
+      const br = bh >> 16, bg = (bh >> 8) & 0xff, bb = bh & 0xff;
+      const rr = ar + (br - ar) * t;
+      const rg = ag + (bg - ag) * t;
+      const rb = ab + (bb - ab) * t;
+      return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+    }
+
+    // ============ MIXING TAB ============
+    function drawMixing() {
+      const ctx = mixCtx;
+      const w = mixCanvas.offsetWidth;
+      const h = mixCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0a0f1a');
+      grad.addColorStop(1, '#0f1525');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const baseY = h - 100;
+
+      if (!mixState.mixed) {
+        // Draw two beakers
+        drawBeaker(ctx, cx - 120, baseY, 100, 180, mixState.coldTemp, '#6fb7ff', `${mixState.coldTemp}°C\n${mixState.coldMass}g`);
+        drawBeaker(ctx, cx + 20, baseY, 100, 180, mixState.hotTemp, '#ff6b6b', `${mixState.hotTemp}°C\n${mixState.hotMass}g`);
+        
+        // Pour arrow
+        if (mixState.mixing) {
+          ctx.save();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([10, 5]);
+          const pourProgress = mixState.progress;
+          ctx.beginPath();
+          ctx.moveTo(cx - 70, baseY - 100);
+          ctx.quadraticCurveTo(cx - 70, baseY + 50, cx, baseY + 30);
+          ctx.stroke();
+          ctx.restore();
+        }
+      } else {
+        // Mixed result
+        const finalT = mixState.finalTemp.toFixed(1);
+        drawBeaker(ctx, cx - 60, baseY, 120, 200, finalT, getTempColor(mixState.finalTemp), `Mixed!\n${finalT}°C\n${mixState.hotMass + mixState.coldMass}g`);
+        
+        // Animation
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = getTempColor(mixState.finalTemp);
+        for (let i = 0; i < 20; i++) {
+          const x = cx + Math.sin(time * 0.05 + i) * 80;
+          const y = baseY - 50 + Math.cos(time * 0.05 + i * 0.5) * 30;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Calculate energies
+      const hotEnergy = mixState.hotMass * 4.18 * (mixState.hotTemp - 20);
+      const coldEnergy = mixState.coldMass * 4.18 * (20 - mixState.coldTemp);
+      document.getElementById('hotEnergy').textContent = Math.round(hotEnergy).toLocaleString() + ' J';
+      document.getElementById('coldEnergy').textContent = Math.round(coldEnergy).toLocaleString() + ' J';
+      
+      if (mixState.mixed) {
+        document.getElementById('mixTemp').textContent = mixState.finalTemp.toFixed(1) + '°C';
+        document.getElementById('mixTemp').style.color = getTempColor(mixState.finalTemp);
+      }
+
+      // Animate mixing
+      if (mixState.mixing && mixState.progress < 1) {
+        mixState.progress += 0.02;
+        if (mixState.progress >= 1) {
+          mixState.mixed = true;
+          // Calculate final temp: (m1*c1*T1 + m2*c2*T2) / (m1*c1 + m2*c2)
+          mixState.finalTemp = (mixState.hotMass * 4.18 * mixState.hotTemp + mixState.coldMass * 4.18 * mixState.coldTemp) / 
+                              ((mixState.hotMass + mixState.coldMass) * 4.18);
+        }
+      }
+    }
+
+    function drawBeaker(ctx, x, y, w, h, temp, color, text) {
+      // Glass
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y - h);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + w, y);
+      ctx.lineTo(x + w, y - h);
+      ctx.stroke();
+
+      // Liquid
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(x + 3, y - h * 0.75, w - 6, h * 0.73);
+      ctx.globalAlpha = 1;
+
+      // Text
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Space Grotesk';
+      ctx.textAlign = 'center';
+      const lines = text.split('\n');
+      lines.forEach((line, i) => {
+        ctx.fillText(line, x + w/2, y + 20 + i * 16);
+      });
+    }
+
+    // Phase particles
+    let phaseParticles = [];
+    for (let i = 0; i < 40; i++) {
+      phaseParticles.push({
+        x: 0, y: 0, vx: 0, vy: 0, 
+        phase: 'ice', 
+        size: Math.random() * 4 + 2,
+        rotation: Math.random() * Math.PI * 2
+      });
+    }
+    let heatFlameOffset = 0;
+
+    function initPhaseParticles() {
+      phaseParticles = [];
+      for (let i = 0; i < 50; i++) {
+        phaseParticles.push({
+          x: Math.random(),
+          y: Math.random(),
+          vx: (Math.random() - 0.5) * 0.01,
+          vy: (Math.random() - 0.5) * 0.01,
+          size: Math.random() * 3 + 2,
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.1
+        });
+      }
+    }
+    initPhaseParticles();
+
+    // ============ PHASE TAB ============
+    function drawPhase() {
+      const ctx = phaseCtx;
+      const w = phaseCanvas.offsetWidth;
+      const h = phaseCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background with gradient
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0a0f1a');
+      grad.addColorStop(1, '#0f1525');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Animated background particles
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.03)';
+      for (let i = 0; i < 20; i++) {
+        const px = (Date.now() / 50 + i * 50) % (w + 100) - 50;
+        const py = h - 100 - Math.sin(Date.now() / 1000 + i) * 30;
         ctx.beginPath();
-        ctx.moveTo(x, y - 10);
-        ctx.lineTo(x - 4, y - 2);
-        ctx.lineTo(x + 4, y - 2);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(106,215,255,0.7)';
+        ctx.arc(px, py, 2, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      const cx = w / 2;
+      const baseY = h - 100;
+
+      // Phase data
+      const substanceData = {
+        water: { mp: 0, bp: 100, Lf: 334, Lv: 2260, color: '#3498db' },
+        ice: { mp: 0, bp: 100, Lf: 334, Lv: 2260, color: '#a5d8ff' },
+        steam: { mp: 0, bp: 100, Lf: 334, Lv: 2260, color: '#e9ecef' }
+      };
+
+      const data = substanceData[phaseState.substance];
+
+      if (phaseState.running) {
+        phaseState.heat += phaseState.heatRate * 0.016;
+        
+        // Temperature and phase logic
+        if (phaseState.temp < data.mp && phaseState.heat < 100) {
+          phaseState.temp = -20 + phaseState.heat / 100 * 20;
+          phaseState.phase = 'ice';
+          phaseState.progress = phaseState.heat / 100;
+        } else if (phaseState.temp < data.mp) {
+          phaseState.temp = data.mp;
+          const meltingHeat = data.Lf * 100 / 1000;
+          if (phaseState.heat < 100 + meltingHeat) {
+            phaseState.phase = 'melting';
+            phaseState.progress = (phaseState.heat - 100) / meltingHeat;
+          } else {
+            phaseState.temp = data.mp + (phaseState.heat - 100 - meltingHeat) / (4.18 * 0.1);
+            phaseState.phase = 'water';
+            phaseState.progress = Math.min(1, (phaseState.temp - data.mp) / (data.bp - data.mp));
+          }
+        } else if (phaseState.temp < data.bp) {
+          phaseState.temp = data.mp + (phaseState.heat - 100 - data.Lf * 100 / 1000) / (4.18 * 0.1);
+          if (phaseState.temp >= data.bp) phaseState.temp = data.bp;
+          phaseState.phase = 'water';
+          phaseState.progress = (phaseState.temp - data.mp) / (data.bp - data.mp);
+        } else {
+          const boilingHeat = data.Lv * 100 / 1000;
+          if (phaseState.heat < 100 + data.Lf * 100 / 1000 + boilingHeat) {
+            phaseState.temp = data.bp;
+            phaseState.phase = 'boiling';
+            const bHeat = phaseState.heat - 100 - data.Lf * 100 / 1000;
+            phaseState.progress = bHeat / boilingHeat;
+          } else {
+            phaseState.temp = data.bp + (phaseState.heat - 100 - data.Lf * 100 / 1000 - boilingHeat) / (2.0 * 0.1);
+            phaseState.phase = 'steam';
+            phaseState.progress = 1;
+          }
+        }
+      }
+
+      // Draw heating curve with glow
+      drawHeatingCurve(ctx, 40, h - 320, w - 80, 160);
+
+      // Draw heat source (flame)
+      const flameX = cx - 120;
+      const flameY = baseY + 20;
+      drawFlame(ctx, flameX, flameY, phaseState.running);
+
+      // Heat arrow
+      if (phaseState.running) {
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.6 + Math.sin(Date.now() / 200) * 0.3;
+        ctx.beginPath();
+        ctx.moveTo(flameX + 20, flameY - 10);
+        ctx.lineTo(flameX + 20, flameY - 50);
+        ctx.lineTo(flameX + 15, flameY - 45);
+        ctx.moveTo(flameX + 20, flameY - 50);
+        ctx.lineTo(flameX + 25, flameY - 45);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // Draw container with glow
+      ctx.shadowColor = 'rgba(106, 215, 255, 0.5)';
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 60, baseY - 160);
+      ctx.lineTo(cx - 60, baseY);
+      ctx.lineTo(cx + 60, baseY);
+      ctx.lineTo(cx + 60, baseY - 160);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+
+      // Determine fill based on phase
+      let fillColor, fillHeight, alpha = 1;
+      
+      if (phaseState.phase === 'ice') {
+        fillColor = '#a5d8ff';
+        fillHeight = 110;
+        alpha = 0.9;
+      } else if (phaseState.phase === 'melting') {
+        // Mixed ice/water
+        fillColor = lerpColor('#a5d8ff', '#3498db', phaseState.progress);
+        fillHeight = 100 + phaseState.progress * 10;
+        alpha = 0.9;
+      } else if (phaseState.phase === 'water') {
+        fillColor = lerpColor('#3498db', '#6fb7ff', phaseState.progress);
+        fillHeight = 110;
+        alpha = 0.8;
+      } else if (phaseState.phase === 'boiling') {
+        fillColor = 'rgba(200, 220, 255, 0.6)';
+        fillHeight = 100;
+        alpha = 0.7;
+      } else if (phaseState.phase === 'steam') {
+        fillColor = 'rgba(220, 230, 245, 0.25)';
+        fillHeight = 140;
+        alpha = 0.4;
+      }
+
+      // Draw fill with gradient
+      const fillGrad = ctx.createLinearGradient(0, baseY - fillHeight, 0, baseY);
+      if (phaseState.phase === 'ice') {
+        fillGrad.addColorStop(0, fillColor);
+        fillGrad.addColorStop(1, lerpColor(fillColor, '#6fa8dc', 0.5));
+      } else if (phaseState.phase === 'steam' || phaseState.phase === 'boiling') {
+        fillGrad.addColorStop(0, 'rgba(255,255,255,0.1)');
+        fillGrad.addColorStop(1, 'rgba(255,255,255,0.3)');
+      } else {
+        fillGrad.addColorStop(0, fillColor);
+        fillGrad.addColorStop(1, lerpColor(fillColor, '#2980b9', 0.5));
+      }
+      
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = fillGrad;
+      
+      if (phaseState.phase === 'steam') {
+        // Steam - wispy clouds
+        for (let i = 0; i < 15; i++) {
+          const px = cx - 50 + Math.sin(Date.now() / 500 + i * 0.5) * 20 + Math.random() * 10;
+          const py = baseY - 30 - (i * 8) - Math.sin(Date.now() / 300 + i) * 5;
+          const size = 20 + Math.sin(Date.now() / 400 + i * 2) * 8;
+          ctx.beginPath();
+          ctx.arc(px, py, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.fillRect(cx - 57, baseY - fillHeight, 114, fillHeight);
+      }
+      ctx.globalAlpha = 1;
+
+      // Draw phase-specific particles
+      drawPhaseParticles(ctx, cx, baseY, fillHeight);
+
+      // Phase transition indicators
+      if (phaseState.phase === 'melting') {
+        drawPhaseTransition(ctx, cx, baseY - fillHeight/2, 'MELTING', '#6ad7ff');
+      } else if (phaseState.phase === 'boiling') {
+        drawPhaseTransition(ctx, cx, baseY - fillHeight/2, 'BOILING', '#ff6b6b');
+      }
+
+      // Temperature display with glow
+      ctx.shadowColor = getTempColor(phaseState.temp);
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = getTempColor(phaseState.temp);
+      ctx.font = 'bold 32px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${phaseState.temp.toFixed(1)}°C`, cx, baseY - 185);
+      ctx.shadowBlur = 0;
+
+      // Phase label
+      const phaseNames = { ice: '❄️ Ice', melting: '🧊 Melting...', water: '💧 Water', boiling: '🔵 Boiling...', steam: '♨️ Steam' };
+      document.getElementById('currentPhase').textContent = phaseNames[phaseState.phase];
+      document.getElementById('phaseTemp').textContent = phaseState.temp.toFixed(1) + '°C';
+      document.getElementById('phaseHeat').textContent = Math.round(phaseState.heat).toLocaleString() + ' J';
+      document.getElementById('phaseProgress').textContent = Math.round(phaseState.progress * 100) + '%';
+      
+      document.getElementById('phaseTemp').style.color = getTempColor(phaseState.temp);
+
+      // Update phase visual bar
+      const segments = ['segIce', 'segMelt', 'segWater', 'segBoil', 'segSteam'];
+      const phaseMap = { ice: 0, melting: 1, water: 2, boiling: 3, steam: 4 };
+      segments.forEach((id, i) => {
+        const el = document.getElementById(id);
+        if (phaseMap[phaseState.phase] === i) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+
+      // Phase labels on container
+      ctx.font = '12px Space Grotesk';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.textAlign = 'left';
+      ctx.fillText('-20°C', cx - 55, baseY + 15);
+      ctx.fillText('0°C', cx - 55, baseY - 85);
+      ctx.fillText('100°C', cx - 55, baseY - 155);
+    }
+
+    function drawFlame(ctx, x, y, burning) {
+      if (!burning) {
+        ctx.fillStyle = '#444';
+        ctx.beginPath();
+        ctx.ellipse(x, y, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        return;
+      }
+      
+      const flicker = Math.sin(Date.now() / 50) * 3;
+      
+      // Outer flame
+      const grad = ctx.createRadialGradient(x, y - 10, 0, x, y - 20, 30);
+      grad.addColorStop(0, 'rgba(255, 200, 50, 0.9)');
+      grad.addColorStop(0.4, 'rgba(255, 100, 30, 0.7)');
+      grad.addColorStop(1, 'rgba(255, 50, 0, 0)');
+      
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(x - 15, y);
+      ctx.quadraticCurveTo(x - 10 + flicker, y - 25, x, y - 45 - flicker);
+      ctx.quadraticCurveTo(x + 10 + flicker, y - 25, x + 15, y);
+      ctx.quadraticCurveTo(x, y + 5, x - 15, y);
+      ctx.fill();
+      
+      // Inner flame
+      const innerGrad = ctx.createRadialGradient(x, y - 15, 0, x, y - 15, 15);
+      innerGrad.addColorStop(0, 'rgba(255, 255, 200, 0.9)');
+      innerGrad.addColorStop(0.5, 'rgba(255, 200, 50, 0.7)');
+      innerGrad.addColorStop(1, 'rgba(255, 100, 30, 0)');
+      
+      ctx.fillStyle = innerGrad;
+      ctx.beginPath();
+      ctx.moveTo(x - 8, y);
+      ctx.quadraticCurveTo(x - 5 + flicker * 0.5, y - 20, x, y - 30 - flicker * 0.5);
+      ctx.quadraticCurveTo(x + 5 + flicker * 0.5, y - 20, x + 8, y);
+      ctx.quadraticCurveTo(x, y + 3, x - 8, y);
+      ctx.fill();
+    }
+
+    function drawPhaseParticles(ctx, cx, baseY, fillHeight) {
+      const temp = phaseState.temp;
+      const speed = Math.max(0.1, (temp + 20) / 120) * 2;
+      
+      phaseParticles.forEach((p, i) => {
+        // Update position
+        p.x += p.vx * speed;
+        p.y += p.vy * speed;
+        p.rotation += p.rotSpeed * speed;
+        
+        // Wrap around
+        if (p.x < 0) p.x = 1;
+        if (p.x > 1) p.x = 0;
+        if (p.y < 0) p.y = 1;
+        if (p.y > 1) p.y = 0;
+        
+        const px = cx - 50 + p.x * 100;
+        const py = baseY - 10 - p.y * (fillHeight - 20);
+        
+        if (phaseState.phase === 'ice') {
+          // Crystalline ice particles
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(p.rotation);
+          ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size);
+          ctx.lineTo(p.size * 0.7, 0);
+          ctx.lineTo(0, p.size);
+          ctx.lineTo(-p.size * 0.7, 0);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+        } else if (phaseState.phase === 'water' || phaseState.phase === 'melting') {
+          // Water droplets
+          ctx.fillStyle = 'rgba(150, 200, 255, 0.6)';
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (phaseState.phase === 'boiling') {
+          // Bubbles rising
+          const bubbleY = (Date.now() / 20 + i * 30) % fillHeight;
+          const bubbleX = px + Math.sin(Date.now() / 200 + i) * 10;
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(bubbleX, baseY - bubbleY - 10, 4 + Math.sin(i) * 2, 0, Math.PI * 2);
+          ctx.stroke();
+        } else if (phaseState.phase === 'steam') {
+          // Fast moving steam molecules
+          ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.random() * 0.3})`;
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * 0.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    }
+
+    function drawPhaseTransition(ctx, x, y, text, color) {
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 150) * 0.3;
+      ctx.fillStyle = color;
+      ctx.font = 'bold 16px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 15;
+      ctx.fillText(text, x, y);
       ctx.restore();
     }
 
-    function drawMiniChart(x, y, w, h) {
-      const maxPoints = 160;
-      if (tempHistory.length > maxPoints) tempHistory.splice(0, tempHistory.length - maxPoints);
-      const minT = Math.min(...tempHistory, state.initT);
-      const maxT = Math.max(...tempHistory, state.initT + 10);
-      const pad = 6;
-      ctx.save();
-      ctx.fillStyle = 'rgba(8,12,20,0.7)';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = 'rgba(148,163,184,0.3)';
-      ctx.strokeRect(x, y, w, h);
-      ctx.strokeStyle = 'rgba(106,215,255,0.7)';
-      ctx.lineWidth = 2;
+    function drawHeatingCurve(ctx, x, y, w, h) {
+      // Background with border
+      ctx.fillStyle = 'rgba(10, 15, 30, 0.8)';
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 1;
       ctx.beginPath();
-      tempHistory.forEach((T, i) => {
-        const px = x + pad + (i / (maxPoints - 1)) * (w - 2 * pad);
-        const py = y + h - pad - ((T - minT) / (maxT - minT || 1)) * (h - 2 * pad);
-        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-      });
+      ctx.roundRect(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+      
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(x + i * w / 4, y);
+        ctx.lineTo(x + i * w / 4, y + h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + i * h / 4);
+        ctx.lineTo(x + w, y + i * h / 4);
+        ctx.stroke();
+      }
+      
+      // Temperature axis labels
+      ctx.fillStyle = '#6fb7ff';
+      ctx.font = '10px Space Grotesk';
+      ctx.textAlign = 'right';
+      ctx.fillText('100°C', x - 5, y + 15);
+      ctx.fillText('0°C', x - 5, y + h * 0.75);
+      ctx.fillText('-20°C', x - 5, y + h - 5);
+      
+      // Heat axis
+      ctx.textAlign = 'center';
+      ctx.fillText('Heat Energy (J)', x + w / 2, y + h + 15);
+      
+      // Phase region labels
+      ctx.font = '9px Space Grotesk';
+      ctx.fillStyle = 'rgba(165, 216, 255, 0.6)';
+      ctx.fillText('ICE', x + w * 0.03, y + h - 8);
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.6)';
+      ctx.fillText('MELTING', x + w * 0.1, y + h - 8);
+      ctx.fillStyle = 'rgba(52, 152, 219, 0.6)';
+      ctx.fillText('WATER', x + w * 0.35, y + h - 8);
+      ctx.fillStyle = 'rgba(255, 150, 150, 0.6)';
+      ctx.fillText('BOILING', x + w * 0.65, y + h - 8);
+      ctx.fillStyle = 'rgba(200, 200, 210, 0.6)';
+      ctx.fillText('STEAM', x + w * 0.88, y + h - 8);
+      
+      // Phase boundaries (vertical lines)
+      const maxHeat = 3000;
+      const meltingStart = 100 / maxHeat;
+      const meltingEnd = (100 + 33.4) / maxHeat;
+      const boilingStart = (100 + 33.4 + 418) / maxHeat;
+      const boilingEnd = (100 + 33.4 + 418 + 226) / maxHeat;
+      
+      ctx.setLineDash([4, 4]);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(x + meltingStart * w, y);
+      ctx.lineTo(x + meltingStart * w, y + h);
+      ctx.moveTo(x + meltingEnd * w, y);
+      ctx.lineTo(x + meltingEnd * w, y + h);
+      ctx.stroke();
+      
+      ctx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
+      ctx.beginPath();
+      ctx.moveTo(x + boilingStart * w, y);
+      ctx.lineTo(x + boilingStart * w, y + h);
+      ctx.moveTo(x + boilingEnd * w, y);
+      ctx.lineTo(x + boilingEnd * w, y + h);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw heating curve with glow
+      const currentHeat = phaseState.heat;
+      
+      // Glow effect
+      ctx.shadowColor = '#f6c76b';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      
+      for (let heatVal = 0; heatVal <= Math.min(currentHeat, maxHeat); heatVal += 20) {
+        let t;
+        if (heatVal < 100) t = -20 + heatVal / 100 * 20;
+        else if (heatVal < 100 + 33.4) t = 0;
+        else if (heatVal < 100 + 33.4 + 418) t = (heatVal - 100 - 33.4) / 4.18;
+        else if (heatVal < 100 + 33.4 + 418 + 226) t = 100;
+        else t = 100 + (heatVal - 100 - 33.4 - 418 - 226) / 2.0;
+        
+        const px = x + (heatVal / maxHeat) * w;
+        let py;
+        if (t <= -20) py = y + h;
+        else if (t <= 0) py = y + h - (t + 20) / 20 * (h * 0.2);
+        else if (t <= 100) py = y + h * 0.75 - t / 100 * (h * 0.65);
+        else py = y + h * 0.1 - Math.min(50, t - 100) / 50 * (h * 0.1);
+        
+        if (heatVal === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      
+      // Current point with pulsing effect
+      const progressX = x + (currentHeat / maxHeat) * w;
+      let currentY;
+      const t = phaseState.temp;
+      if (t <= -20) currentY = y + h;
+      else if (t <= 0) currentY = y + h - (t + 20) / 20 * (h * 0.2);
+      else if (t <= 100) currentY = y + h * 0.75 - t / 100 * (h * 0.65);
+      else currentY = y + h * 0.1 - Math.min(50, t - 100) / 50 * (h * 0.1);
+      
+      // Outer glow
+      ctx.shadowColor = '#ff6b6b';
+      ctx.shadowBlur = 15 + Math.sin(Date.now() / 200) * 5;
+      ctx.fillStyle = '#ff6b6b';
+      ctx.beginPath();
+      ctx.arc(progressX, currentY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Inner dot
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(progressX, currentY, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // ============ CHALLENGE TAB ============
+    function drawChallenge() {
+      const ctx = challengeCtx;
+      const w = challengeCanvas.offsetWidth;
+      const h = challengeCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, '#0a0f1a');
+      grad.addColorStop(1, '#0f1525');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w / 2;
+      const baseY = h - 100;
+
+      // Draw beaker
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 70, baseY - 180);
+      ctx.lineTo(cx - 70, baseY);
+      ctx.lineTo(cx + 70, baseY);
+      ctx.lineTo(cx + 70, baseY - 180);
       ctx.stroke();
 
-      if (state.material === 'water') {
-        const yPhase = y + h - pad - ((100 - minT) / (maxT - minT || 1)) * (h - 2 * pad);
-        ctx.strokeStyle = 'rgba(248,113,113,0.7)';
-        ctx.setLineDash([6, 6]);
-        ctx.beginPath();
-        ctx.moveTo(x + pad, yPhase);
-        ctx.lineTo(x + w - pad, yPhase);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(248,113,113,0.8)';
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillText('100°C phase change', x + 8, Math.max(y + 10, yPhase - 4));
+      // Calculate actual temp
+      const c = materials[challengeState.material].c;
+      const actualTemp = 20 + challengeState.playerHeat / (challengeState.mass * c);
+      
+      // Fill based on heat
+      const heatRatio = Math.min(1, challengeState.playerHeat / 50000);
+      const fillColor = lerpColor('#3498db', '#ff6b6b', heatRatio);
+      ctx.fillStyle = fillColor;
+      ctx.globalAlpha = 0.7;
+      ctx.fillRect(cx - 67, baseY - 126 * heatRatio, 134, 126 * heatRatio);
+      ctx.globalAlpha = 1;
+
+      // Water label
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText(`Water (${challengeState.mass}g)`, cx, baseY + 25);
+      
+      // Temperature display
+      ctx.font = 'bold 28px Space Grotesk';
+      ctx.fillStyle = getTempColor(actualTemp);
+      ctx.fillText(`${actualTemp.toFixed(1)}°C`, cx, baseY - 200);
+
+      // Target indicator
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      const targetY = baseY - 126 * (Math.min(100, challengeState.targetTemp - 20) / 80);
+      ctx.beginPath();
+      ctx.moveTo(cx - 90, targetY);
+      ctx.lineTo(cx + 90, targetY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '12px Space Grotesk';
+      ctx.fillText(`Target: ${challengeState.targetTemp}°C`, cx + 100, targetY + 4);
+
+      // Update displays
+      document.getElementById('yourResult').textContent = challengeState.playerHeat > 0 ? `${actualTemp.toFixed(1)}°C` : '--';
+      document.getElementById('actualTemp').textContent = challengeState.playerHeat > 0 ? `${actualTemp.toFixed(1)}°C` : '--';
+      
+      if (challengeState.playerHeat > 0) {
+        const diff = Math.abs(actualTemp - challengeState.targetTemp);
+        const accuracy = Math.max(0, 100 - diff * 2);
+        document.getElementById('accuracy').textContent = accuracy.toFixed(0) + '%';
+        document.getElementById('accuracy').style.color = accuracy > 80 ? '#22c55e' : accuracy > 50 ? '#f6c76b' : '#ff6b6b';
       }
-
-      ctx.fillStyle = 'rgba(248,250,252,0.75)';
-      ctx.font = '10px Inter, sans-serif';
-      ctx.fillText('Temp vs Time', x + 8, y + 12);
-      ctx.restore();
     }
 
-    function draw() {
-      drawBackground();
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      const cx = w / 2 - 40;
-      const cy = h / 2 + 10;
-      const beakerW = 180;
-      const beakerH = 240;
-      const fill = Math.min(0.95, state.mass / 1000);
-      const { dT, Tf } = computeTemps();
-      const displayT = state.tempDisplay;
+    // ============ EVENT LISTENERS ============
+    // Heating controls
+    document.getElementById('materialA').addEventListener('change', e => {
+      heatState.materialA = e.target.value;
+      document.getElementById('matAVal').textContent = materials[e.target.value].name;
+    });
+    document.getElementById('materialB').addEventListener('change', e => {
+      heatState.materialB = e.target.value;
+      document.getElementById('matBVal').textContent = materials[e.target.value].name;
+    });
+    document.getElementById('heatSlider').addEventListener('input', e => {
+      heatState.heat = parseFloat(e.target.value);
+      document.getElementById('heatVal').textContent = heatState.heat.toLocaleString() + ' J';
+    });
+    document.getElementById('speedSlider').addEventListener('input', e => {
+      heatState.speed = parseFloat(e.target.value);
+      document.getElementById('speedVal').textContent = heatState.speed.toFixed(1) + 'x';
+    });
+    document.getElementById('heatPlayPause').addEventListener('click', e => {
+      heatState.running = !heatState.running;
+      e.target.textContent = heatState.running ? 'Pause' : 'Play';
+      e.target.classList.toggle('active', !heatState.running);
+    });
+    document.getElementById('heatReset').addEventListener('click', () => {
+      heatState.tempA = 20;
+      heatState.tempB = 20;
+      heatState.heat = 10000;
+      document.getElementById('heatSlider').value = 10000;
+      document.getElementById('heatVal').textContent = '10,000 J';
+      initParticles();
+    });
+    document.getElementById('showParticles').addEventListener('change', e => heatState.showParticles = e.target.checked);
+    document.getElementById('showArrows').addEventListener('change', e => heatState.showArrows = e.target.checked);
 
-      drawBeaker(cx, cy, beakerW, beakerH);
-      drawLiquid(cx, cy, beakerW, beakerH, fill, displayT);
-      drawFlame(cx, cy, beakerW, beakerH);
-      drawThermometer(cx, cy, beakerH, displayT);
-      drawLabels(cx, cy, beakerW, beakerH, displayT, dT);
-      drawFlux(cx, cy, beakerW, beakerH);
-      if (state.showChart) drawMiniChart(cx + 120, cy - beakerH / 2 - 10, 220, 90);
-    }
-
-    function updateReadout() {
-      const { c, dT } = computeTemps();
-      const Tf = state.tempDisplay;
-      document.getElementById('readout').innerHTML = `
-        <div class="data-grid">
-          <div class="data-card"><span class="data-label">Final Temp</span><span class="data-value orange">${Tf.toFixed(1)} °C</span></div>
-          <div class="data-card"><span class="data-label">ΔT</span><span class="data-value blue">${dT.toFixed(1)} K</span></div>
-          <div class="data-card"><span class="data-label">Specific Heat</span><span class="data-value green">${c.toFixed(2)} J/g·K</span></div>
-          <div class="data-card"><span class="data-label">Mass</span><span class="data-value blue">${state.mass.toFixed(0)} g</span></div>
-          <div class="data-card"><span class="data-label">Heat Input</span><span class="data-value orange">${state.Q.toFixed(0)} J</span></div>
-        </div>
-      `;
-    }
-
-    function tick() {
-      if (state.running) {
-        state.t += 0.02 * state.speed;
-        const { Tf } = computeTemps();
-        const alpha = 1 - Math.exp(-0.02 * state.speed * 1.2);
-        state.tempDisplay += (Tf - state.tempDisplay) * alpha;
-        tempHistory.push(state.tempDisplay);
+    // Mixing controls
+    document.getElementById('hotMass').addEventListener('input', e => {
+      mixState.hotMass = parseFloat(e.target.value);
+      document.getElementById('hotMassVal').textContent = mixState.hotMass + 'g';
+    });
+    document.getElementById('hotTemp').addEventListener('input', e => {
+      mixState.hotTemp = parseFloat(e.target.value);
+      document.getElementById('hotTempVal').textContent = mixState.hotTemp + '°C';
+    });
+    document.getElementById('coldMass').addEventListener('input', e => {
+      mixState.coldMass = parseFloat(e.target.value);
+      document.getElementById('coldMassVal').textContent = mixState.coldMass + 'g';
+    });
+    document.getElementById('coldTemp').addEventListener('input', e => {
+      mixState.coldTemp = parseFloat(e.target.value);
+      document.getElementById('coldTempVal').textContent = mixState.coldTemp + '°C';
+    });
+    document.getElementById('mixBtn').addEventListener('click', () => {
+      if (!mixState.mixing && !mixState.mixed) {
+        mixState.mixing = true;
+        mixState.progress = 0;
       }
-      draw();
-      updateReadout();
-      requestAnimationFrame(tick);
+    });
+    document.getElementById('mixReset').addEventListener('click', () => {
+      mixState.mixing = false;
+      mixState.mixed = false;
+      mixState.progress = 0;
+      mixState.finalTemp = 20;
+    });
+
+    // Phase controls
+    document.getElementById('heatRate').addEventListener('input', e => {
+      phaseState.heatRate = parseFloat(e.target.value);
+      document.getElementById('heatRateVal').textContent = phaseState.heatRate + ' J/s';
+    });
+    document.getElementById('phasePlayPause').addEventListener('click', e => {
+      phaseState.running = !phaseState.running;
+      e.target.textContent = phaseState.running ? '⏸️ Pause' : '▶️ Play';
+    });
+    document.getElementById('phaseReset').addEventListener('click', () => {
+      phaseState.temp = -20;
+      phaseState.heat = 0;
+      phaseState.phase = 'ice';
+      phaseState.progress = 0;
+    });
+
+    // Challenge controls
+    document.getElementById('challengeStart').addEventListener('click', () => {
+      challengeState.active = true;
+      challengeState.attempts = 3;
+      challengeState.level = 1;
+      challengeState.targetTemp = 30 + Math.floor(Math.random() * 50);
+      challengeState.playerHeat = 0;
+      document.getElementById('targetTemp').textContent = challengeState.targetTemp + '°C';
+      document.getElementById('challengeInfo').textContent = `Heat the water to exactly ${challengeState.targetTemp}°C!`;
+      document.getElementById('challengeStart').textContent = 'Restart';
+    });
+    document.getElementById('playerHeat').addEventListener('input', e => {
+      challengeState.playerHeat = parseFloat(e.target.value);
+      document.getElementById('playerHeatVal').textContent = challengeState.playerHeat.toLocaleString() + ' J';
+    });
+    document.getElementById('submitGuess').addEventListener('click', () => {
+      if (!challengeState.active) return;
+      
+      const c = materials.water.c;
+      const actualTemp = 20 + challengeState.playerHeat / (challengeState.mass * c);
+      const diff = Math.abs(actualTemp - challengeState.targetTemp);
+      
+      if (diff < 2) {
+        challengeState.score += Math.max(100 - challengeState.attempts * 20, 20);
+        challengeState.level++;
+        challengeState.targetTemp = 30 + Math.floor(Math.random() * 50);
+        challengeState.playerHeat = 0;
+        document.getElementById('playerHeat').value = 0;
+        document.getElementById('targetTemp').textContent = challengeState.targetTemp + '°C';
+        document.getElementById('challengeInfo').innerHTML = `<span style="color:#22c55e">✓ Correct! Next target: ${challengeState.targetTemp}°C</span>`;
+      } else {
+        challengeState.attempts--;
+        if (challengeState.attempts <= 0) {
+          challengeState.active = false;
+          document.getElementById('challengeInfo').innerHTML = `<span style="color:#ff6b6b">Game Over! Score: ${challengeState.score}</span>`;
+        } else {
+          document.getElementById('challengeInfo').innerHTML = `<span style="color:#ff6b6b">Off by ${diff.toFixed(1)}°C. ${challengeState.attempts} attempts left!</span>`;
+        }
+      }
+      
+      document.getElementById('challengeScore').textContent = challengeState.score;
+      document.getElementById('levelNum').textContent = challengeState.level;
+      document.getElementById('attemptsNum').textContent = challengeState.attempts;
+    });
+
+    // Animation loop
+    function animate() {
+      time++;
+      
+      switch (currentTab) {
+        case 'heating':
+          drawHeating();
+          break;
+        case 'mixing':
+          drawMixing();
+          break;
+        case 'phase':
+          drawPhase();
+          break;
+        case 'challenge':
+          drawChallenge();
+          break;
+      }
+      
+      requestAnimationFrame(animate);
     }
 
-    document.getElementById('mass').addEventListener('input', e => {
-      state.mass = parseFloat(e.target.value);
-      document.getElementById('massVal').textContent = `${state.mass.toFixed(0)} g`;
-    });
-    document.getElementById('material').addEventListener('change', e => {
-      state.material = e.target.value;
-      tempHistory.length = 0;
-    });
-    document.getElementById('initTemp').addEventListener('input', e => {
-      state.initT = parseFloat(e.target.value);
-      document.getElementById('initVal').textContent = `${state.initT.toFixed(0)} °C`;
-      if (!state.running) state.tempDisplay = state.initT;
-    });
-    document.getElementById('heat').addEventListener('input', e => {
-      state.Q = parseFloat(e.target.value);
-      document.getElementById('heatVal').textContent = `${state.Q.toFixed(0)} J`;
-    });
-
-    document.getElementById('showGrid').addEventListener('change', e => state.showGrid = e.target.checked);
-    document.getElementById('showFlame').addEventListener('change', e => state.showFlame = e.target.checked);
-    document.getElementById('showThermo').addEventListener('change', e => state.showThermo = e.target.checked);
-    document.getElementById('showLabels').addEventListener('change', e => state.showLabels = e.target.checked);
-    document.getElementById('showFlux').addEventListener('change', e => state.showFlux = e.target.checked);
-    document.getElementById('showChart').addEventListener('change', e => state.showChart = e.target.checked);
-
-    document.getElementById('speed').addEventListener('input', e => {
-      state.speed = parseFloat(e.target.value);
-      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
-    });
-
-    document.getElementById('playPause').addEventListener('click', e => {
-      state.running = !state.running;
-      e.target.textContent = state.running ? 'Pause' : 'Play';
-    });
-
-    document.getElementById('reset').addEventListener('click', () => {
-      state.mass = 100;
-      state.material = 'water';
-      state.initT = 20;
-      state.Q = 10000;
-      state.tempDisplay = 20;
-      state.speed = 1;
-      state.running = true;
-      state.showGrid = true;
-      state.showFlame = true;
-      state.showThermo = true;
-      state.showLabels = true;
-      state.showFlux = false;
-      state.showChart = true;
-      tempHistory.length = 0;
-      document.getElementById('mass').value = 100;
-      document.getElementById('material').value = 'water';
-      document.getElementById('initTemp').value = 20;
-      document.getElementById('heat').value = 10000;
-      document.getElementById('speed').value = 1;
-      document.getElementById('massVal').textContent = '100 g';
-      document.getElementById('initVal').textContent = '20 °C';
-      document.getElementById('heatVal').textContent = '10000 J';
-      document.getElementById('speedVal').textContent = '1.00x';
-      document.getElementById('showGrid').checked = true;
-      document.getElementById('showFlame').checked = true;
-      document.getElementById('showThermo').checked = true;
-      document.getElementById('showLabels').checked = true;
-      document.getElementById('showFlux').checked = false;
-      document.getElementById('showChart').checked = true;
-      document.getElementById('playPause').textContent = 'Pause';
-    });
-
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
-    });
-
-    window.addEventListener('resize', resize);
-    resize();
-    tick();
+    animate();
   </script>
 </body>
 </html>
