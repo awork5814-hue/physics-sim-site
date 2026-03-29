@@ -1,596 +1,1187 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Boyle's Law</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/simulation-theme.css" />
-  <style>
-    :root {
-      color-scheme: dark;
-      --accent: #6ad7ff;
-      --accent-2: #f6c76b;
-      --sim-text: #e9f2ff;
-      --sim-muted: #9fb0c5;
-      --panel: rgba(16, 24, 36, 0.86);
-      --panel-strong: rgba(12, 20, 32, 0.95);
-      --glass-border: rgba(106, 215, 255, 0.2);
-      --glass-glow: rgba(106, 215, 255, 0.16);
-      --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boyle's Law Simulation</title>
+    <style>
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #3498db;
+            --accent-hover: #2980b9;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --cylinder: #b8c5d0;
+            --cylinder-border: #8a9aaa;
+            --piston: #7f8c8d;
+            --piston-handle: #95a5a6;
+            --gas-color: rgba(52, 152, 219, 0.6);
+            --particle-color: #3498db;
+            --gauge-bg: #ecf0f1;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --bg-dark: #0a0f16;
+            --bg-panel: rgba(15, 23, 35, 0.95);
+            --border: rgba(100, 150, 200, 0.15);
+            --text: #e8f4fc;
+            --text-muted: #8ba3b8;
+            --accent-glow: #00d4ff;
+        }
 
-    * { box-sizing: border-box; }
+        .dark {
+            --bg-primary: #0a0f16;
+            --bg-secondary: rgba(15, 23, 35, 0.95);
+            --bg-tertiary: rgba(0, 0, 0, 0.3);
+            --text-primary: #e8f4fc;
+            --text-secondary: #8ba3b8;
+            --accent: #00a8ff;
+            --accent-hover: #00d4ff;
+            --success: #2ed573;
+            --warning: #ffa502;
+            --danger: #ff4757;
+            --cylinder: #1a3a52;
+            --cylinder-border: #2a5a7a;
+            --piston: #3a5a72;
+            --piston-handle: #4a6a82;
+            --gas-color: rgba(0, 168, 255, 0.4);
+            --particle-color: #00a8ff;
+            --gauge-bg: rgba(0, 20, 40, 0.5);
+            --shadow: rgba(0, 0, 0, 0.3);
+            --bg-dark: #0a0f16;
+            --bg-panel: rgba(15, 23, 35, 0.95);
+            --border: rgba(100, 150, 200, 0.15);
+            --text: #e8f4fc;
+            --text-muted: #8ba3b8;
+            --accent-glow: #00d4ff;
+        }
 
-    body {
-      margin: 0;
-      background:
-        radial-gradient(1200px 700px at 12% 0%, rgba(106, 215, 255, 0.12), transparent),
-        radial-gradient(900px 700px at 88% 15%, rgba(246, 199, 107, 0.12), transparent),
-        #0a111c;
-      color: var(--sim-text);
-      font-family: "IBM Plex Sans", sans-serif;
-      min-height: 100vh;
-    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .page {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 28px clamp(16px, 4vw, 36px) 36px;
-    }
+        body {
+            font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 0 18px;
-    }
+        .background {
+            position: fixed;
+            inset: 0;
+            background: 
+                radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 168, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse 600px 400px at 80% 80%, rgba(46, 213, 115, 0.06) 0%, transparent 50%),
+                var(--bg-dark);
+            z-index: -1;
+        }
 
-    .topbar a {
-      color: var(--sim-text);
-      text-decoration: none;
-      font-weight: 600;
-    }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px 32px;
+        }
 
-    .toggle {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 14px;
-      border: 1px solid var(--glass-border);
-      border-radius: 999px;
-      background: rgba(14, 20, 32, 0.8);
-      cursor: pointer;
-      color: var(--sim-text);
-    }
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            background: rgba(10, 15, 22, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 24px;
+        }
 
-    header.hero {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      padding: 8px 0 18px;
-    }
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-    .hero-title { max-width: 720px; }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
 
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(106, 215, 255, 0.3);
-      background: rgba(106, 215, 255, 0.12);
-      color: var(--accent);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
+        .formula {
+            display: inline-block;
+            background: rgba(0, 168, 255, 0.15);
+            border: 1px solid var(--border);
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.4rem;
+            margin-top: 10px;
+            color: var(--accent);
+        }
 
-    header.hero h1 {
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
-      margin: 0 0 10px;
-      font-family: "Space Grotesk", sans-serif;
-    }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
 
-    header.hero p { color: var(--sim-muted); margin: 0; }
+        @media (max-width: 1000px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
 
-    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 15px var(--shadow);
+        }
 
-    .btn {
-      background: rgba(12, 18, 28, 0.85);
-      color: var(--sim-text);
-      border: 1px solid var(--glass-border);
-      padding: 10px 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
-    }
-    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.45); }
-    .btn.primary {
-      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
-      color: #0a0f16;
-      border: none;
-      box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
-    }
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text);
+        }
 
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 18px;
-    }
+        .simulation-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-    .stat {
-      background: var(--panel);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 12px 14px;
-      box-shadow: var(--shadow);
-    }
+        .canvas-container {
+            position: relative;
+            margin: 15px 0;
+        }
 
-    .stat span {
-      display: block;
-      color: var(--sim-muted);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-bottom: 6px;
-    }
+        canvas {
+            border-radius: 12px;
+            cursor: pointer;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(0, 168, 255, 0.03) 0%, transparent 70%),
+                linear-gradient(180deg, rgba(0, 20, 40, 0.5) 0%, rgba(0, 10, 20, 0.8) 100%);
+        }
 
-    .stat strong {
-      display: block;
-      font-size: 1.05rem;
-      font-family: "Space Grotesk", sans-serif;
-    }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 15px;
+            justify-content: center;
+        }
 
-    .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr);
-      gap: 20px;
-    }
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            color: #000;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-    .panel {
-      background: var(--panel);
-      border: 1px solid var(--glass-border);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 18px;
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-    }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 168, 255, 0.3);
+        }
 
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 10% 10%, var(--glass-glow), transparent 45%);
-      pointer-events: none;
-    }
+        button:active {
+            transform: translateY(0);
+        }
 
-    canvas {
-      width: 100%;
-      height: 460px;
-      background: rgba(6, 10, 18, 0.7);
-      border-radius: 16px;
-      border: 1px solid var(--glass-border);
-    }
+        button.secondary {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
 
-    .controls { display: grid; gap: 16px; }
+        button.secondary:hover {
+            background: rgba(0, 168, 255, 0.1);
+            border-color: var(--accent);
+            color: var(--text);
+        }
 
-    .control-group {
-      display: grid;
-      gap: 8px;
-      background: var(--panel-strong);
-      border: 1px solid var(--glass-border);
-      border-radius: 14px;
-      padding: 12px;
-    }
+        .view-toggle {
+            display: flex;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 4px;
+        }
 
-    label {
-      font-size: 0.9rem;
-      color: var(--sim-muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
+        .view-toggle button {
+            background: transparent;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
 
-    .value-chip {
-      background: rgba(106, 215, 255, 0.12);
-      border: 1px solid rgba(106, 215, 255, 0.25);
-      color: var(--accent);
-      padding: 2px 8px;
-      border-radius: 999px;
-      font-weight: 600;
-      font-size: 0.75rem;
-    }
+        .view-toggle button.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            color: #000;
+        }
 
-    input[type="range"] { width: 100%; }
+        .readouts {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
 
-    .readout {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-    }
+        .readout {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+        }
 
-    .read-card {
-      background: var(--panel-strong);
-      border: 1px solid var(--glass-border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 12px;
-    }
+        .readout-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
 
-    .read-card span {
-      display: block;
-      color: var(--sim-muted);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      margin-bottom: 6px;
-    }
+        .readout-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
 
-    .read-card strong {
-      font-size: 16px;
-      font-family: "Space Grotesk", sans-serif;
-      font-weight: 600;
-    }
+        .weight-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
 
-    .graph-panel { margin-top: 18px; }
+        .weight-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-    @media (max-width: 980px) {
-      header.hero { flex-direction: column; align-items: flex-start; }
-      .layout { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      canvas { height: 360px; }
-    }
-  </style>
+        .weight-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3a5a72, #4a6a82);
+            color: var(--text);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--border);
+            transition: all 0.2s;
+        }
+
+        .weight-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 168, 255, 0.3);
+        }
+
+        .weight-btn.active {
+            border-color: var(--success);
+            box-shadow: 0 0 15px rgba(46, 213, 115, 0.4);
+        }
+
+        .weight-btn.minus {
+            background: linear-gradient(135deg, #ff4757, #ff6b7a);
+        }
+
+        .graph-panel canvas {
+            width: 100%;
+            height: 250px;
+        }
+
+        .data-panel {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        th {
+            background: rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            color: var(--text-muted);
+        }
+
+        .data-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .inquiry-panel {
+            margin-top: 20px;
+        }
+
+        .challenge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .challenge h4 {
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+
+        .challenge p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .challenge-btn {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+
+        .real-world {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .real-world h3 {
+            margin-bottom: 12px;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .example-chip {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .example-chip:hover {
+            border-color: var(--accent);
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            color: #000;
+        }
+
+        .feedback {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .feedback.show {
+            display: block;
+        }
+
+        .feedback.correct {
+            background: rgba(46, 213, 115, 0.15);
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+
+        .feedback.incorrect {
+            background: rgba(255, 71, 87, 0.15);
+            border-left: 4px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(180deg);
+            box-shadow: 0 0 20px rgba(0, 168, 255, 0.3);
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .instructions strong {
+            color: var(--accent);
+        }
+
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            color: var(--text-muted);
+        }
+
+        .slider-control input[type="range"] {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 168, 255, 0.3);
+        }
+
+        .molecule-count {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            color: var(--text-muted);
+        }
+
+        .molecule-count input {
+            width: 80px;
+            padding: 6px;
+            border: 2px solid var(--bg-tertiary);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="page" id="boyle">
-    <div class="topbar">
-      <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+    <div class="background"></div>
+    <button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+    
+    <div class="container">
+        <header>
+            <h1>Boyle's Law Simulation</h1>
+            <p class="subtitle">Explore the relationship between gas pressure and volume</p>
+            <div class="formula">P₁V₁ = P₂V₂</div>
+        </header>
+
+        <div class="main-content">
+            <div class="panel simulation-panel">
+                <div class="panel-title">
+                    <span>🔬</span> Interactive Simulation
+                </div>
+                
+                <div class="view-toggle">
+                    <button id="macroView" class="active">Macroscopic</button>
+                    <button id="microView">Molecular</button>
+                </div>
+
+                <div class="instructions">
+                    <strong>Instructions:</strong> Drag the piston up/down to change volume, or add/remove weights to change pressure.
+                </div>
+
+                <div class="canvas-container">
+                    <canvas id="simulationCanvas" width="400" height="350"></canvas>
+                </div>
+
+                <div class="readouts">
+                    <div class="readout">
+                        <div class="readout-label">Pressure (P)</div>
+                        <div class="readout-value" id="pressureValue">101.3 kPa</div>
+                    </div>
+                    <div class="readout">
+                        <div class="readout-label">Volume (V)</div>
+                        <div class="readout-value" id="volumeValue">1000 mL</div>
+                    </div>
+                    <div class="readout">
+                        <div class="readout-label">PV Constant</div>
+                        <div class="readout-value" id="pvConstant">101300</div>
+                    </div>
+                    <div class="readout">
+                        <div class="readout-label">Temperature</div>
+                        <div class="readout-value">298 K (constant)</div>
+                    </div>
+                </div>
+
+                <div class="weight-controls">
+                    <div style="text-align: center; color: var(--text-secondary);">Add/Remove Weights</div>
+                    <div class="weight-buttons">
+                        <button class="weight-btn minus" id="removeWeight" title="Remove weight">−</button>
+                        <button class="weight-btn" id="weight1" data-weight="1">1</button>
+                        <button class="weight-btn" id="weight2" data-weight="2">2</button>
+                        <button class="weight-btn" id="weight3" data-weight="3">3</button>
+                        <button class="weight-btn" id="weight4" data-weight="4">4</button>
+                        <button class="weight-btn" id="weight5" data-weight="5">5</button>
+                        <button class="weight-btn" id="addWeight" title="Add weight">+</button>
+                    </div>
+                    <div class="slider-control">
+                        <span>Piston Position:</span>
+                        <input type="range" id="pistonSlider" min="50" max="250" value="150">
+                    </div>
+                    <div class="molecule-count" id="moleculeControl" style="display: none;">
+                        <span>Particles:</span>
+                        <input type="number" id="particleCount" value="50" min="10" max="200">
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button id="recordData" class="secondary">📊 Record Data Point</button>
+                    <button id="resetSim" class="secondary">🔄 Reset</button>
+                    <button id="autoRecord" class="secondary">⏺️ Auto-Record</button>
+                </div>
+            </div>
+
+            <div class="right-column" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="panel graph-panel">
+                    <div class="panel-title">
+                        <span>📈</span> Pressure vs Volume Graph
+                    </div>
+                    <canvas id="graphCanvas" width="400" height="250"></canvas>
+                </div>
+
+                <div class="panel data-panel">
+                    <div class="panel-title">
+                        <span>📋</span> Data Table
+                    </div>
+                    <div class="data-actions">
+                        <button id="exportCSV" class="secondary">📥 Export CSV</button>
+                        <button id="clearData" class="secondary">🗑️ Clear</button>
+                    </div>
+                    <table id="dataTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>P (kPa)</th>
+                                <th>V (mL)</th>
+                                <th>PV</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataBody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="panel inquiry-panel">
+                    <div class="panel-title">
+                        <span>🎯</span> Guided Challenges
+                    </div>
+                    
+                    <div class="challenge">
+                        <h4>Challenge 1: Double the Pressure</h4>
+                        <p>Add weights to double the pressure. What happens to the volume?</p>
+                        <button class="challenge-btn" onclick="checkChallenge(1)">Check Answer</button>
+                    </div>
+                    
+                    <div class="challenge">
+                        <h4>Challenge 2: Half the Volume</h4>
+                        <p>Compress the gas to half the original volume. What happens to pressure?</p>
+                        <button class="challenge-btn" onclick="checkChallenge(2)">Check Answer</button>
+                    </div>
+                    
+                    <div class="challenge">
+                        <h4>Challenge 3: Predict the PV</h4>
+                        <p>Make 3 different measurements. Is PV constant?</p>
+                        <button class="challenge-btn" onclick="checkChallenge(3)">Check Answer</button>
+                    </div>
+
+                    <div class="feedback" id="feedback"></div>
+
+                    <div class="real-world">
+                        <h3>🔗 Real-World Examples</h3>
+                        <div class="examples">
+                            <span class="example-chip" onclick="showExample('syringe')">💉 Syringe</span>
+                            <span class="example-chip" onclick="showExample('scuba')">🤿 Scuba Tank</span>
+                            <span class="example-chip" onclick="showExample('lungs')">🫁 Breathing</span>
+                            <span class="example-chip" onclick="showExample('chips')">🥔 Chip Bag</span>
+                            <span class="example-chip" onclick="showExample('bicycle')">🚲 Bicycle Pump</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <header class="hero">
-      <div class="hero-title">
-        <div class="hero-badge">Precision Lab</div>
-        <h1>Boyle's Law</h1>
-        <p>Pressure and volume are inversely proportional at constant temperature.</p>
-      </div>
-      <div class="hero-actions">
-        <button class="btn primary" id="run">Run</button>
-        <button class="btn" id="reset">Reset</button>
-      </div>
-    </header>
+    <script>
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
 
-    <div class="stats">
-      <div class="stat"><span>Pressure</span><strong id="pStat">0.0 kPa</strong></div>
-      <div class="stat"><span>Volume</span><strong id="vStat">0.0 L</strong></div>
-      <div class="stat"><span>P × V</span><strong id="pvStat">0.0</strong></div>
-      <div class="stat"><span>Temperature</span><strong id="tStat">300 K</strong></div>
-    </div>
+        let isDark = false;
+        let currentVolume = 1000;
+        let currentPressure = 101.3;
+        let pistonY = 150;
+        let weights = 0;
+        let viewMode = 'macro';
+        let dataPoints = [];
+        let isRecording = false;
+        let particles = [];
+        let particleCount = 50;
 
-    <section class="layout">
-      <div class="panel">
-        <canvas id="scene" width="900" height="520" aria-label="Boyle's law piston"></canvas>
-      </div>
+        const PISTON_MIN_Y = 50;
+        const PISTON_MAX_Y = 250;
+        const INITIAL_VOLUME = 1000;
+        const BASE_PRESSURE = 101.3;
 
-      <div class="panel controls">
-        <div class="control-group">
-          <label for="mass">Applied Mass <span class="value-chip" id="massLabel">5 kg</span></label>
-          <input type="range" id="mass" min="0" max="20" step="0.5" value="5" />
-        </div>
-        <div class="control-group">
-          <label for="area">Piston Area <span class="value-chip" id="areaLabel">0.01 m²</span></label>
-          <input type="range" id="area" min="0.005" max="0.03" step="0.001" value="0.01" />
-        </div>
-        <div class="control-group">
-          <label for="temp">Temperature <span class="value-chip" id="tempLabel">300 K</span></label>
-          <input type="range" id="temp" min="250" max="400" step="5" value="300" />
-        </div>
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * (canvas.width - 100) + 50,
+                    y: Math.random() * (pistonY - 60) + 60,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: (Math.random() - 0.5) * 4,
+                    radius: 4
+                });
+            }
+        }
 
-        <div class="readout">
-          <div class="read-card"><span>Force</span><strong id="forceRead">0 N</strong></div>
-          <div class="read-card"><span>Pressure</span><strong id="pRead">0 kPa</strong></div>
-          <div class="read-card"><span>Volume</span><strong id="vRead">0 L</strong></div>
-          <div class="read-card"><span>PV</span><strong id="pvRead">0</strong></div>
-        </div>
+        function getColors() {
+            return {
+                bg: isDark ? '#16213e' : '#ffffff',
+                cylinder: isDark ? '#3d5a80' : '#b8c5d0',
+                cylinderBorder: isDark ? '#5c7a9e' : '#8a9aaa',
+                piston: isDark ? '#5d6d7e' : '#7f8c8d',
+                pistonHandle: isDark ? '#85929e' : '#95a5a6',
+                gas: isDark ? 'rgba(79, 195, 247, 0.5)' : 'rgba(52, 152, 219, 0.5)',
+                particle: isDark ? '#4fc3f7' : '#3498db',
+                text: isDark ? '#e8e8e8' : '#2c3e50'
+            };
+        }
 
-        <section class="panel graph-panel">
-          <canvas id="pvCanvas" width="600" height="220" aria-label="PV curve"></canvas>
-        </section>
-      </div>
-    </section>
-  </div>
+        function drawSimulation() {
+            const colors = getColors();
+            ctx.fillStyle = colors.bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  <script>
-    const canvas = document.getElementById('scene');
-    const ctx = canvas.getContext('2d');
-    const pvCanvas = document.getElementById('pvCanvas');
-    const pvCtx = pvCanvas.getContext('2d');
+            const cylinderX = 80;
+            const cylinderWidth = 240;
+            const cylinderTop = 40;
+            const cylinderBottom = 320;
 
-    const massInput = document.getElementById('mass');
-    const areaInput = document.getElementById('area');
-    const tempInput = document.getElementById('temp');
+            ctx.fillStyle = colors.cylinder;
+            ctx.strokeStyle = colors.cylinderBorder;
+            ctx.lineWidth = 4;
+            ctx.fillRect(cylinderX, cylinderTop, cylinderWidth, cylinderBottom - cylinderTop);
+            ctx.strokeRect(cylinderX, cylinderTop, cylinderWidth, cylinderBottom - cylinderTop);
 
-    const massLabel = document.getElementById('massLabel');
-    const areaLabel = document.getElementById('areaLabel');
-    const tempLabel = document.getElementById('tempLabel');
+            if (viewMode === 'macro') {
+                const gasHeight = pistonY - cylinderTop;
+                ctx.fillStyle = colors.gas;
+                ctx.fillRect(cylinderX + 4, cylinderTop, cylinderWidth - 8, gasHeight);
 
-    const pStat = document.getElementById('pStat');
-    const vStat = document.getElementById('vStat');
-    const pvStat = document.getElementById('pvStat');
-    const tStat = document.getElementById('tStat');
+                drawPiston(colors, cylinderX, cylinderTop, cylinderWidth);
+                drawWeights(colors, cylinderX, cylinderTop, cylinderWidth);
+                drawGauges(colors, cylinderX, cylinderWidth);
+            } else {
+                const gasHeight = pistonY - cylinderTop;
+                ctx.fillStyle = colors.gas;
+                ctx.fillRect(cylinderX + 4, cylinderTop, cylinderWidth - 8, gasHeight);
 
-    const forceRead = document.getElementById('forceRead');
-    const pRead = document.getElementById('pRead');
-    const vRead = document.getElementById('vRead');
-    const pvRead = document.getElementById('pvRead');
+                updateParticles(cylinderX + 4, cylinderTop + 4, cylinderWidth - 8, gasHeight - 4);
+                drawParticles(colors);
+                drawPiston(colors, cylinderX, cylinderTop, cylinderWidth);
+            }
 
-    const state = {
-      mass: 5,
-      area: 0.01,
-      temp: 300,
-      P0: 0,
-      V0: 6,
-      V: 6,
-      P: 101,
-      k: 0,
-      running: true,
-      molecules: [],
-      pistonY: 0
-    };
+            if (viewMode === 'micro') {
+                drawMolecularLegend(colors);
+            }
+        }
 
-    function resizeCanvas() {
-      const ratio = window.devicePixelRatio || 1;
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        function drawPiston(colors, cylinderX, cylinderTop, cylinderWidth) {
+            const pistonHeight = 25;
+            const pistonWidth = cylinderWidth - 8;
+            
+            ctx.fillStyle = colors.piston;
+            ctx.fillRect(cylinderX + 4, pistonY - pistonHeight, pistonWidth, pistonHeight);
+            
+            ctx.fillStyle = colors.pistonHandle;
+            ctx.fillRect(cylinderX + 80, pistonY - pistonHeight - 15, pistonWidth - 160, 15);
+            
+            ctx.strokeStyle = colors.cylinderBorder;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cylinderX + 4, pistonY - pistonHeight, pistonWidth, pistonHeight);
+        }
 
-      const gw = pvCanvas.getBoundingClientRect();
-      pvCanvas.width = Math.round(gw.width * ratio);
-      pvCanvas.height = Math.round(gw.height * ratio);
-      pvCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
-    }
+        function drawWeights(colors, cylinderX, cylinderTop, cylinderWidth) {
+            if (weights === 0) return;
+            
+            const weightWidth = 30;
+            const weightHeight = 20;
+            const startX = cylinderX + (cylinderWidth - weights * weightWidth) / 2;
+            
+            for (let i = 0; i < weights; i++) {
+                ctx.fillStyle = colors.piston;
+                ctx.strokeStyle = colors.cylinderBorder;
+                ctx.lineWidth = 2;
+                ctx.fillRect(startX + i * weightWidth, pistonY - 50, weightWidth, weightHeight);
+                ctx.strokeRect(startX + i * weightWidth, pistonY - 50, weightWidth, weightHeight);
+                
+                ctx.fillStyle = isDark ? '#e8e8e8' : '#2c3e50';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('1', startX + i * weightWidth + weightWidth/2, pistonY - 35);
+            }
+        }
 
-    function initMolecules() {
-      state.molecules = Array.from({ length: 40 }, () => ({
-        x: Math.random(),
-        y: Math.random(),
-        vx: (Math.random() - 0.5) * 0.4,
-        vy: (Math.random() - 0.5) * 0.4
-      }));
-    }
+        function drawGauges(colors, cylinderX, cylinderWidth) {
+            const gaugeX = cylinderX + cylinderWidth + 30;
+            const gaugeY = 100;
+            
+            ctx.fillStyle = colors.bg;
+            ctx.strokeStyle = colors.cylinderBorder;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(gaugeX, gaugeY, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
 
-    function updateState() {
-      const g = 9.81;
-      const Patm = 101;
-      const force = state.mass * g;
-      const pressureExtra = force / state.area / 1000; // kPa
-      state.P = Patm + pressureExtra;
-      const k0 = state.P0 * state.V0;
-      state.k = k0 * (state.temp / 300);
-      state.V = Math.max(0.5, Math.min(16, state.k / state.P));
-      state.k = state.P * state.V;
+            ctx.strokeStyle = colors.text;
+            ctx.lineWidth = 3;
+            const angle = (currentPressure / 300) * Math.PI - Math.PI;
+            ctx.beginPath();
+            ctx.moveTo(gaugeX, gaugeY);
+            ctx.lineTo(gaugeX + Math.cos(angle - Math.PI/2) * 30, gaugeY + Math.sin(angle - Math.PI/2) * 30);
+            ctx.stroke();
 
-      massLabel.textContent = `${state.mass.toFixed(1)} kg`;
-      areaLabel.textContent = `${state.area.toFixed(3)} m²`;
-      tempLabel.textContent = `${state.temp.toFixed(0)} K`;
-      tStat.textContent = `${state.temp.toFixed(0)} K`;
+            ctx.fillStyle = colors.text;
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('P', gaugeX, gaugeY + 5);
+            ctx.font = '10px Arial';
+            ctx.fillText('kPa', gaugeX, gaugeY + 55);
+        }
 
-      pStat.textContent = `${state.P.toFixed(1)} kPa`;
-      vStat.textContent = `${state.V.toFixed(2)} L`;
-      pvStat.textContent = `${state.k.toFixed(1)}`;
+        function drawMolecularLegend(colors) {
+            ctx.fillStyle = colors.text;
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Each particle = gas molecule', 10, 20);
+            ctx.fillText('More collisions = higher pressure', 10, 35);
+        }
 
-      forceRead.textContent = `${force.toFixed(1)} N`;
-      pRead.textContent = `${state.P.toFixed(1)} kPa`;
-      vRead.textContent = `${state.V.toFixed(2)} L`;
-      pvRead.textContent = `${state.k.toFixed(1)}`;
-    }
+        function updateParticles(minX, minY, maxWidth, maxHeight) {
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
 
-    function drawPiston() {
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
-      ctx.clearRect(0, 0, w, h);
+                if (p.x - p.radius < minX || p.x + p.radius > minX + maxWidth) {
+                    p.vx *= -1;
+                    p.x = Math.max(minX + p.radius, Math.min(minX + maxWidth - p.radius, p.x));
+                }
+                if (p.y - p.radius < minY || p.y + p.radius > minY + maxHeight) {
+                    p.vy *= -1;
+                    p.y = Math.max(minY + p.radius, Math.min(minY + maxHeight - p.radius, p.y));
+                }
+            });
+        }
 
-      const cylX = w * 0.22;
-      const cylY = 30;
-      const cylW = w * 0.34;
-      const cylH = h * 0.8;
-      const minVol = 0.5;
-      const maxVol = 16;
-      const t = (state.V - minVol) / (maxVol - minVol);
-      const targetPistonY = cylY + 20 + (1 - t) * (cylH - 100);
-      state.pistonY = state.pistonY || targetPistonY;
-      state.pistonY += (targetPistonY - state.pistonY) * 0.12;
-      const pistonY = state.pistonY;
+        function drawParticles(colors) {
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = colors.particle;
+                ctx.fill();
+            });
+        }
 
-      // glass
-      const glassGrad = ctx.createLinearGradient(cylX, 0, cylX + cylW, 0);
-      glassGrad.addColorStop(0, 'rgba(140,190,255,0.06)');
-      glassGrad.addColorStop(0.5, 'rgba(200,230,255,0.08)');
-      glassGrad.addColorStop(1, 'rgba(140,190,255,0.04)');
-      ctx.fillStyle = glassGrad;
-      ctx.strokeStyle = 'rgba(140,190,255,0.5)';
-      ctx.lineWidth = 2;
-      ctx.fillRect(cylX, cylY, cylW, cylH);
-      ctx.strokeRect(cylX, cylY, cylW, cylH);
-      // glass shine
-      ctx.strokeStyle = 'rgba(200,240,255,0.2)';
-      ctx.beginPath();
-      ctx.moveTo(cylX + 8, cylY + 10);
-      ctx.lineTo(cylX + 8, cylY + cylH - 10);
-      ctx.stroke();
-      // volume ticks
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      for (let i = 0; i <= 6; i++) {
-        const y = cylY + 30 + (i / 6) * (cylH - 60);
-        ctx.beginPath();
-        ctx.moveTo(cylX + cylW + 6, y);
-        ctx.lineTo(cylX + cylW + 16, y);
-        ctx.stroke();
-      }
+        function updatePhysics() {
+            const volumeRange = INITIAL_VOLUME;
+            const normalizedPos = (pistonY - PISTON_MIN_Y) / (PISTON_MAX_Y - PISTON_MIN_Y);
+            currentVolume = Math.round(volumeRange * (1 - normalizedPos * 0.8) + volumeRange * 0.2);
+            
+            const pressureFromWeights = BASE_PRESSURE + weights * 20;
+            const volumeFactor = INITIAL_VOLUME / currentVolume;
+            currentPressure = Math.round(pressureFromWeights * volumeFactor * 10) / 10;
 
-      // piston
-      ctx.fillStyle = '#0b4f6b';
-      ctx.fillRect(cylX, pistonY, cylW, 16);
-      ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.fillRect(cylX, pistonY, cylW, 3);
+            updateDisplay();
+        }
 
-      // rod and weight
-      ctx.fillStyle = '#0e6a86';
-      ctx.fillRect(cylX + cylW * 0.45, cylY, cylW * 0.1, pistonY - cylY);
-      ctx.fillStyle = '#f6c76b';
-      ctx.fillRect(cylX + cylW * 0.38, cylY - 20, cylW * 0.24, 20);
-      ctx.fillStyle = '#0a0f16';
-      ctx.font = '12px "Space Grotesk", sans-serif';
-      ctx.fillText(`${state.mass.toFixed(1)} kg`, cylX + cylW * 0.39, cylY - 6);
+        function updateDisplay() {
+            document.getElementById('pressureValue').textContent = currentPressure.toFixed(1) + ' kPa';
+            document.getElementById('volumeValue').textContent = currentVolume + ' mL';
+            document.getElementById('pvConstant').textContent = Math.round(currentPressure * currentVolume).toLocaleString();
+        }
 
-      // arrows
-      ctx.fillStyle = '#f6c76b';
-      ctx.beginPath();
-      ctx.moveTo(cylX + cylW * 0.5, pistonY - 30);
-      ctx.lineTo(cylX + cylW * 0.5 - 8, pistonY - 10);
-      ctx.lineTo(cylX + cylW * 0.5 + 8, pistonY - 10);
-      ctx.closePath();
-      ctx.fill();
+        function drawGraph() {
+            const colors = getColors();
+            graphCtx.fillStyle = colors.bg;
+            graphCtx.fillRect(0, 0, graphCanvas.width, graphCanvas.height);
 
-      // molecules
-      const gasTop = pistonY + 16;
-      const gasBottom = cylY + cylH;
-      const gasHeight = gasBottom - gasTop;
-      const gasWidth = cylW;
-      ctx.fillStyle = 'rgba(255,120,180,0.9)';
-      state.molecules.forEach((m) => {
-        const x = cylX + m.x * gasWidth;
-        const y = gasTop + m.y * gasHeight;
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    }
+            const padding = 50;
+            const width = graphCanvas.width - padding * 2;
+            const height = graphCanvas.height - padding * 2;
 
-    function updateMolecules() {
-      const speed = 0.3 + state.P / 220 + (state.temp - 300) / 600;
-      state.molecules.forEach((m) => {
-        m.x += m.vx * speed * 0.01;
-        m.y += m.vy * speed * 0.01;
-        if (m.x < 0 || m.x > 1) m.vx *= -1;
-        if (m.y < 0 || m.y > 1) m.vy *= -1;
-        m.x = Math.max(0, Math.min(1, m.x));
-        m.y = Math.max(0, Math.min(1, m.y));
-      });
-    }
+            graphCtx.strokeStyle = colors.cylinderBorder;
+            graphCtx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (height / 4) * i;
+                graphCtx.beginPath();
+                graphCtx.moveTo(padding, y);
+                graphCtx.lineTo(padding + width, y);
+                graphCtx.stroke();
+            }
+            for (let i = 0; i <= 4; i++) {
+                const x = padding + (width / 4) * i;
+                graphCtx.beginPath();
+                graphCtx.moveTo(x, padding);
+                graphCtx.lineTo(x, padding + height);
+                graphCtx.stroke();
+            }
 
-    function drawPV() {
-      const w = pvCanvas.width / (window.devicePixelRatio || 1);
-      const h = pvCanvas.height / (window.devicePixelRatio || 1);
-      pvCtx.clearRect(0, 0, w, h);
-      pvCtx.fillStyle = 'rgba(8, 13, 22, 0.8)';
-      pvCtx.fillRect(0, 0, w, h);
+            graphCtx.fillStyle = colors.text;
+            graphCtx.font = '12px Arial';
+            graphCtx.textAlign = 'center';
+            graphCtx.fillText('Volume (mL)', graphCanvas.width / 2, graphCanvas.height - 10);
+            
+            graphCtx.save();
+            graphCtx.translate(15, graphCanvas.height / 2);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Pressure (kPa)', 0, 0);
+            graphCtx.restore();
 
-      const pad = 30;
-      pvCtx.strokeStyle = 'rgba(233, 242, 255, 0.2)';
-      pvCtx.beginPath();
-      pvCtx.moveTo(pad, pad);
-      pvCtx.lineTo(pad, h - pad);
-      pvCtx.lineTo(w - pad, h - pad);
-      pvCtx.stroke();
+            const maxP = Math.max(300, ...dataPoints.map(p => p.pressure));
+            const maxV = Math.max(1200, ...dataPoints.map(p => p.volume));
 
-      const pMin = 50;
-      const pMax = 250;
-      pvCtx.strokeStyle = '#6ad7ff';
-      pvCtx.beginPath();
-      for (let i = 0; i <= 100; i++) {
-        const P = pMin + (pMax - pMin) * (i / 100);
-        const V = state.k / P;
-        const x = pad + ((V - 1) / 9) * (w - 2 * pad);
-        const y = h - pad - ((P - pMin) / (pMax - pMin)) * (h - 2 * pad);
-        if (i === 0) pvCtx.moveTo(x, y); else pvCtx.lineTo(x, y);
-      }
-      pvCtx.stroke();
+            if (dataPoints.length > 1) {
+                graphCtx.strokeStyle = colors.gas;
+                graphCtx.lineWidth = 3;
+                graphCtx.beginPath();
+                dataPoints.forEach((p, i) => {
+                    const x = padding + (p.volume / maxV) * width;
+                    const y = padding + height - (p.pressure / maxP) * height;
+                    if (i === 0) graphCtx.moveTo(x, y);
+                    else graphCtx.lineTo(x, y);
+                });
+                graphCtx.stroke();
+            }
 
-      const cx = pad + ((state.V - 1) / 9) * (w - 2 * pad);
-      const cy = h - pad - ((state.P - pMin) / (pMax - pMin)) * (h - 2 * pad);
-      pvCtx.fillStyle = '#f6c76b';
-      pvCtx.beginPath();
-      pvCtx.arc(cx, cy, 5, 0, Math.PI * 2);
-      pvCtx.fill();
-    }
+            dataPoints.forEach((p, i) => {
+                const x = padding + (p.volume / maxV) * width;
+                const y = padding + height - (p.pressure / maxP) * height;
+                
+                graphCtx.beginPath();
+                graphCtx.arc(x, y, 6, 0, Math.PI * 2);
+                graphCtx.fillStyle = i === dataPoints.length - 1 ? '#e74c3c' : colors.particle;
+                graphCtx.fill();
+            });
+        }
 
-    function loop() {
-      if (state.running) {
-        updateState();
-        updateMolecules();
-      }
-      drawPiston();
-      drawPV();
-      requestAnimationFrame(loop);
-    }
+        function recordDataPoint() {
+            dataPoints.push({
+                pressure: currentPressure,
+                volume: currentVolume,
+                pv: currentPressure * currentVolume
+            });
+            updateDataTable();
+            drawGraph();
+        }
 
-    function reset() {
-      state.mass = 5;
-      state.area = 0.01;
-      state.temp = 300;
-      state.P0 = 120;
-      state.V0 = 6;
-      state.P = state.P0;
-      state.V = state.V0;
-      state.k = state.P * state.V;
-      massInput.value = state.mass;
-      areaInput.value = state.area;
-      tempInput.value = state.temp;
-      updateState();
-    }
+        function updateDataTable() {
+            const tbody = document.getElementById('dataBody');
+            tbody.innerHTML = '';
+            dataPoints.forEach((p, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td>${p.pressure.toFixed(1)}</td>
+                    <td>${p.volume}</td>
+                    <td>${Math.round(p.pv).toLocaleString()}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
 
-    massInput.addEventListener('input', (e) => {
-      state.mass = parseFloat(e.target.value);
-      updateState();
-    });
+        function exportToCSV() {
+            let csv = 'Index,Pressure (kPa),Volume (mL),PV Constant\n';
+            dataPoints.forEach((p, i) => {
+                csv += `${i + 1},${p.pressure.toFixed(1)},${p.volume},${Math.round(p.pv)}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'boyle_law_data.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
 
-    areaInput.addEventListener('input', (e) => {
-      state.area = parseFloat(e.target.value);
-      updateState();
-    });
+        function checkChallenge(challengeNum) {
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('show');
+            
+            if (challengeNum === 1) {
+                const originalPV = INITIAL_VOLUME * BASE_PRESSURE;
+                const currentPV = currentPressure * currentVolume;
+                const pressureRatio = currentPressure / BASE_PRESSURE;
+                
+                if (pressureRatio >= 1.9 && pressureRatio <= 2.1) {
+                    feedback.className = 'feedback show correct';
+                    feedback.textContent = '✓ Correct! When pressure doubles, volume halves (P₁V₁ = P₂V₂).';
+                } else if (pressureRatio > 1.1) {
+                    feedback.className = 'feedback show incorrect';
+                    feedback.textContent = '✗ Add more weights to approximately double the pressure (should be ~202.6 kPa).';
+                } else {
+                    feedback.className = 'feedback show incorrect';
+                    feedback.textContent = '✗ Add weights to increase the pressure first.';
+                }
+            } else if (challengeNum === 2) {
+                const volumeRatio = currentVolume / INITIAL_VOLUME;
+                
+                if (volumeRatio >= 0.45 && volumeRatio <= 0.55) {
+                    feedback.className = 'feedback show correct';
+                    feedback.textContent = '✓ Correct! When volume halves, pressure doubles.';
+                } else if (volumeRatio < 0.9) {
+                    feedback.className = 'feedback show incorrect';
+                    feedback.textContent = '✗ Compress the piston more to reach about 500 mL (half of 1000 mL).';
+                } else {
+                    feedback.className = 'feedback show incorrect';
+                    feedback.textContent = '✗ Compress the gas by lowering the piston.';
+                }
+            } else if (challengeNum === 3) {
+                if (dataPoints.length >= 3) {
+                    const avgPV = dataPoints.reduce((sum, p) => sum + p.pv, 0) / dataPoints.length;
+                    const variance = dataPoints.reduce((sum, p) => sum + Math.pow(p.pv - avgPV, 2), 0) / dataPoints.length;
+                    const stdDev = Math.sqrt(variance);
+                    const percentDiff = (stdDev / avgPV) * 100;
+                    
+                    if (percentDiff < 10) {
+                        feedback.className = 'feedback show correct';
+                        feedback.textContent = `✓ Excellent! PV is approximately constant (avg: ${Math.round(avgPV).toLocaleString()}, variation: ${percentDiff.toFixed(1)}%). This confirms Boyle's Law!`;
+                    } else {
+                        feedback.className = 'feedback show incorrect';
+                        feedback.textContent = `PV varies more than expected. Make measurements at different piston positions.`;
+                    }
+                } else {
+                    feedback.className = 'feedback show incorrect';
+                    feedback.textContent = '✗ Record at least 3 data points first by clicking "Record Data Point".';
+                }
+            }
+        }
 
-    tempInput.addEventListener('input', (e) => {
-      state.temp = parseFloat(e.target.value);
-      updateState();
-    });
+        function showExample(example) {
+            const descriptions = {
+                syringe: '💉 Syringe: When you push the plunger, the volume decreases and pressure increases, forcing liquid out.',
+                scuba: '🤿 Scuba Tank: Air is compressed at high pressure. Opening the valve releases air as pressure drops.',
+                lungs: '🫁 Breathing: Diaphragm expands lungs → volume ↑ → pressure ↓ → air flows in. Reverse for exhale.',
+                chips: '🥔 Chip Bag: At high altitudes, external pressure drops, causing the bag to puff up (volume ↑, internal P constant).',
+                bicycle: '🚲 Bicycle Pump: Pushing the plunger compresses air, increasing pressure to force air into the tire.'
+            };
+            alert(descriptions[example]);
+        }
 
-    document.getElementById('run').addEventListener('click', (e) => {
-      state.running = !state.running;
-      e.currentTarget.textContent = state.running ? 'Pause' : 'Run';
-    });
+        function animate() {
+            if (viewMode === 'micro') {
+                drawSimulation();
+            }
+            requestAnimationFrame(animate);
+        }
 
-    document.getElementById('reset').addEventListener('click', () => {
-      reset();
-      document.getElementById('run').textContent = 'Run';
-    });
+        function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('theme') === 'dark') {
+                document.body.classList.add('dark');
+                isDark = true;
+                document.getElementById('themeToggle').textContent = '☀️';
+            }
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
-    });
+            document.getElementById('themeToggle').addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                isDark = !isDark;
+                document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+                drawSimulation();
+                drawGraph();
+            });
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    initMolecules();
-    reset();
-    requestAnimationFrame(loop);
-  </script>
+            document.getElementById('macroView').addEventListener('click', () => {
+                viewMode = 'macro';
+                document.getElementById('macroView').classList.add('active');
+                document.getElementById('microView').classList.remove('active');
+                document.getElementById('moleculeControl').style.display = 'none';
+                drawSimulation();
+            });
+
+            document.getElementById('microView').addEventListener('click', () => {
+                viewMode = 'micro';
+                document.getElementById('microView').classList.add('active');
+                document.getElementById('macroView').classList.remove('active');
+                document.getElementById('moleculeControl').style.display = 'flex';
+                initParticles();
+                drawSimulation();
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                if (Math.abs(y - pistonY) < 30) {
+                    canvas.addEventListener('mousemove', handleDrag);
+                    canvas.addEventListener('mouseup', () => {
+                        canvas.removeEventListener('mousemove', handleDrag);
+                    });
+                }
+            });
+
+            function handleDrag(e) {
+                const rect = canvas.getBoundingClientRect();
+                const y = e.clientY - rect.top;
+                pistonY = Math.max(PISTON_MIN_Y, Math.min(PISTON_MAX_Y, y));
+                document.getElementById('pistonSlider').value = pistonY;
+                updatePhysics();
+                drawSimulation();
+            }
+
+            document.getElementById('pistonSlider').addEventListener('input', (e) => {
+                pistonY = parseInt(e.target.value);
+                updatePhysics();
+                drawSimulation();
+            });
+
+            document.querySelectorAll('.weight-btn[data-weight]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const w = parseInt(btn.dataset.weight);
+                    weights = weights === w ? 0 : w;
+                    document.querySelectorAll('.weight-btn[data-weight]').forEach(b => b.classList.remove('active'));
+                    if (weights > 0) btn.classList.add('active');
+                    updatePhysics();
+                    drawSimulation();
+                });
+            });
+
+            document.getElementById('addWeight').addEventListener('click', () => {
+                if (weights < 5) {
+                    weights++;
+                    document.querySelectorAll('.weight-btn[data-weight]').forEach(b => b.classList.remove('active'));
+                    document.getElementById(`weight${weights}`).classList.add('active');
+                    updatePhysics();
+                    drawSimulation();
+                }
+            });
+
+            document.getElementById('removeWeight').addEventListener('click', () => {
+                if (weights > 0) {
+                    document.getElementById(`weight${weights}`).classList.remove('active');
+                    weights--;
+                    updatePhysics();
+                    drawSimulation();
+                }
+            });
+
+            document.getElementById('recordData').addEventListener('click', recordDataPoint);
+            
+            document.getElementById('autoRecord').addEventListener('click', () => {
+                isRecording = !isRecording;
+                document.getElementById('autoRecord').textContent = isRecording ? '⏹️ Stop Auto' : '⏺️ Auto-Record';
+                if (isRecording) autoRecord();
+            });
+
+            document.getElementById('resetSim').addEventListener('click', () => {
+                pistonY = 150;
+                weights = 0;
+                dataPoints = [];
+                document.querySelectorAll('.weight-btn[data-weight]').forEach(b => b.classList.remove('active'));
+                document.getElementById('pistonSlider').value = pistonY;
+                updatePhysics();
+                updateDataTable();
+                drawSimulation();
+                drawGraph();
+            });
+
+            document.getElementById('exportCSV').addEventListener('click', exportToCSV);
+            document.getElementById('clearData').addEventListener('click', () => {
+                dataPoints = [];
+                updateDataTable();
+                drawGraph();
+            });
+
+            document.getElementById('particleCount').addEventListener('change', (e) => {
+                particleCount = Math.max(10, Math.min(200, parseInt(e.target.value) || 50));
+                e.target.value = particleCount;
+                initParticles();
+                drawSimulation();
+            });
+
+            updatePhysics();
+            drawSimulation();
+            drawGraph();
+            animate();
+        }
+
+        function autoRecord() {
+            if (!isRecording) return;
+            recordDataPoint();
+            
+            if (pistonY > PISTON_MIN_Y) {
+                pistonY -= 10;
+                document.getElementById('pistonSlider').value = pistonY;
+                updatePhysics();
+                drawSimulation();
+            } else {
+                isRecording = false;
+                document.getElementById('autoRecord').textContent = '⏺️ Auto-Record';
+                return;
+            }
+            setTimeout(autoRecord, 500);
+        }
+
+        window.addEventListener('load', init);
+    </script>
 </body>
 </html>

@@ -769,6 +769,8 @@
     }
 
     function draw() {
+      calculate();
+      
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
       
@@ -827,9 +829,12 @@
       }
       
       const massY = equilibriumY + clampedDisplacement * scale;
-      const massSize = (30 + state.mass * 8) * state.zoom;
+      let massSize = (30 + state.mass * 8) * state.zoom;
+      if (!isFinite(state.mass) || !isFinite(state.zoom)) massSize = 30;
+      massSize = Math.max(1, massSize);
       
-      if (!isFinite(massY) || !isFinite(massSize) || massSize <= 0) {
+      const gradY = massY - massSize / 3;
+      if (!isFinite(massY) || !isFinite(gradY) || !isFinite(centerX)) {
         requestAnimationFrame(draw);
         return;
       }
@@ -837,7 +842,7 @@
       drawSpring(ctx, centerX - 20, anchorY, centerX - 20, massY - massSize / 2, state.displacement < 0);
       
       const gradient = ctx.createRadialGradient(
-        centerX - 5, massY - massSize / 3, 0,
+        centerX - 5, gradY, 0,
         centerX, massY, massSize
       );
       gradient.addColorStop(0, '#ffffff');
@@ -901,11 +906,22 @@
       
       if (state.level >= 3 && state.showCompare) {
         const centerX2 = w / 2 + 120;
-        let clampedDisplacement2 = isFinite(state.compareDisplacement) ? Math.max(-maxDisplacement, Math.min(maxDisplacement, state.compareDisplacement)) : 0;
-        const massY2 = equilibriumY + clampedDisplacement2 * scale;
-        const massSize2 = (30 + state.compareMass * 8) * state.zoom;
+        let clampedDisplacement2 = 0;
+        let massY2 = equilibriumY;
+        let massSize2 = 30;
         
-        if (!isFinite(massY2) || !isFinite(massSize2) || massSize2 <= 0) {
+        if (isFinite(state.compareDisplacement) && isFinite(maxDisplacement)) {
+          clampedDisplacement2 = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.compareDisplacement));
+        }
+        if (isFinite(equilibriumY) && isFinite(clampedDisplacement2) && isFinite(scale)) {
+          massY2 = equilibriumY + clampedDisplacement2 * scale;
+        }
+        if (isFinite(state.compareMass) && isFinite(state.zoom)) {
+          massSize2 = (30 + state.compareMass * 8) * state.zoom;
+        }
+        
+        const gradY = massY2 - massSize2 / 3;
+        if (!isFinite(centerX2) || !isFinite(gradY) || !isFinite(massY2) || !isFinite(massSize2) || massSize2 <= 0) {
           requestAnimationFrame(draw);
           return;
         }
@@ -913,7 +929,7 @@
         drawSpring(ctx, centerX2 - 20, anchorY, centerX2 - 20, massY2 - massSize2 / 2, state.compareDisplacement < 0, '#ffd93d');
         
         const gradient2 = ctx.createRadialGradient(
-          centerX2 - 5, massY2 - massSize2 / 3, 0,
+          centerX2 - 5, gradY, 0,
           centerX2, massY2, massSize2
         );
         gradient2.addColorStop(0, '#ffffff');
@@ -952,7 +968,6 @@
       ctx.fillText('🔍 ' + state.zoom.toFixed(1) + 'x', w - 20, 25);
       ctx.textAlign = 'left';
       
-      calculate();
       requestAnimationFrame(draw);
     }
 
