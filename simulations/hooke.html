@@ -771,6 +771,13 @@
     function draw() {
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
+      
+      // Validate canvas dimensions to prevent NaN
+      if (!w || !h || w <= 0 || h <= 0 || !state.zoom || state.zoom <= 0) {
+        requestAnimationFrame(draw);
+        return;
+      }
+      
       ctx.clearRect(0, 0, w, h);
       
       const centerX = w / 2 - 100;
@@ -784,12 +791,16 @@
       
       const equilibriumY = h / 2;
       
-      // Calculate visible bounds
-      const maxDisplacement = (h / 2 - padding - 40) / scale;
+      // Calculate visible bounds with validation
+      let maxDisplacement = (h / 2 - padding - 40) / scale;
+      if (!isFinite(maxDisplacement) || maxDisplacement <= 0) maxDisplacement = 0.5;
       
-      // Clamp displacement for display
-      const clampedDisplacement = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.displacement));
-      const isAtBoundary = Math.abs(state.displacement) > maxDisplacement * 0.9;
+      // Clamp displacement for display with validation
+      let clampedDisplacement = state.displacement || 0;
+      if (isFinite(state.displacement)) {
+        clampedDisplacement = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.displacement));
+      }
+      const isAtBoundary = isFinite(state.displacement) && Math.abs(state.displacement) > maxDisplacement * 0.9;
       
       if (document.getElementById('showEquilibrium')?.checked !== false) {
         ctx.strokeStyle = isAtBoundary ? 'rgba(255, 71, 87, 0.6)' : 'rgba(255, 255, 255, 0.2)';
