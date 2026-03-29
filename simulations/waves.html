@@ -3,25 +3,1285 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Coming Soon</title>
+  <title>Waves</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/simulation-theme.css" />
   <style>
-    :root { --accent: #6ad7ff; --accent-2: #f6c76b; --sim-bg: rgba(10, 16, 26, 0.95); --sim-text: #e9f2ff; --sim-muted: #9fb0c5; --sim-border: rgba(120, 150, 190, 0.18); --panel: rgba(15, 22, 35, 0.92); }
-    body { margin: 0; background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent), radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent), #0a111c; color: var(--sim-text); font-family: "Space Grotesk", sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-    .coming { text-align: center; }
-    .coming h1 { font-size: 3rem; color: var(--accent); margin-bottom: 10px; }
-    .coming p { color: var(--sim-muted); font-size: 1.2rem; }
-    .soon { display: inline-block; margin-top: 20px; padding: 10px 30px; border: 2px solid var(--accent-2); border-radius: 30px; color: var(--accent-2); font-weight: bold; }
-    a { color: var(--accent); }
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #a78bfa;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+      --success: #6bff6b;
+      --crest-color: #6bff6b;
+      --trough-color: #ff6b6b;
+      --particle-color: #f6c76b;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.08), transparent),
+                  radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.08), transparent),
+                  radial-gradient(800px 600px at 50% 100%, rgba(167, 139, 250, 0.06), transparent),
+                  #0a111c;
+      color: var(--sim-text);
+      font-family: "Space Grotesk", "Archivo", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px);
+      background: rgba(8, 12, 20, 0.7);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      background: rgba(14, 20, 32, 0.8);
+      cursor: pointer;
+      color: var(--sim-text);
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(106, 215, 255, 0.2);
+    }
+
+    header.hero {
+      text-align: center;
+      padding: 28px 20px 16px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: clamp(1.4rem, 2.2vw, 2.2rem);
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header.hero p {
+      color: var(--sim-muted);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 0 28px 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      border: 1px solid var(--sim-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      cursor: pointer;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.15);
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.75fr);
+      gap: 24px;
+      padding: 12px 28px 24px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 400px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(15, 25, 40, 0.9), rgba(6, 10, 18, 0.95));
+      border-radius: 14px;
+      border: 1px solid var(--sim-border);
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .canvas-container {
+      position: relative;
+    }
+
+    .canvas-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .canvas-tab {
+      padding: 6px 12px;
+      border: 1px solid var(--sim-border);
+      border-radius: 8px;
+      background: rgba(12, 18, 28, 0.6);
+      color: var(--sim-muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .canvas-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .control-group label {
+      font-size: 12px;
+      color: var(--sim-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-group label span.value {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--sim-text);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.5);
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--sim-text);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.5);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: rgba(12, 18, 28, 0.6);
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .checkbox-group:hover {
+      border-color: var(--accent);
+    }
+
+    .checkbox-group input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .checkbox-group span {
+      font-size: 13px;
+      color: var(--sim-text);
+    }
+
+    .data-card {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.08), rgba(167, 139, 250, 0.05));
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 14px;
+      border-top: 3px solid var(--accent);
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(120, 150, 190, 0.1);
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-row .label {
+      font-size: 12px;
+      color: var(--sim-muted);
+    }
+
+    .data-row .val {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .formula-box {
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--accent-2);
+      font-weight: 500;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--sim-border);
+      border-radius: 10px;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(106, 215, 255, 0.2);
+    }
+
+    .btn.active {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .toggle-btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btns .btn {
+      flex: 1;
+      min-width: 80px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="coming">
-    <h1>Coming Soon</h1>
-    <p>This simulation is under development</p>
-    <span class="soon">IN DEVELOPMENT</span>
-    <p style="margin-top: 30px;"><a href="/">← Back to Physics Lab</a></p>
+  <div class="page">
+    <div class="topbar">
+      <a href="/">← Physics Simulations</a>
+      <span class="toggle">Waves</span>
+    </div>
+
+    <header class="hero">
+      <h1>Waves</h1>
+      <p>Transverse, Longitudinal, Standing & 2D Ripple Tank</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="transverse">Transverse</button>
+      <button class="tab" data-tab="longitudinal">Longitudinal</button>
+      <button class="tab" data-tab="standing">Standing Waves</button>
+      <button class="tab" data-tab="ripple">2D Ripple Tank</button>
+    </div>
+
+    <div class="layout">
+      <div class="panel">
+        <div class="panel-title">Simulation</div>
+        
+        <div id="transverse-canvas" class="canvas-container">
+          <canvas id="transCanvas"></canvas>
+        </div>
+        
+        <div id="longitudinal-canvas" class="canvas-container hidden">
+          <canvas id="longCanvas"></canvas>
+        </div>
+        
+        <div id="standing-canvas" class="canvas-container hidden">
+          <canvas id="standCanvas"></canvas>
+        </div>
+        
+        <div id="ripple-canvas" class="canvas-container hidden">
+          <canvas id="rippleCanvas"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Controls</div>
+
+        <!-- Transverse Controls -->
+        <div id="transverse-controls" class="controls">
+          <div class="formula-box">v = f · λ</div>
+          
+          <div class="control-group">
+            <label>Amplitude <span class="value" id="transAmpVal">50</span></label>
+            <input type="range" id="transAmp" min="10" max="100" value="50">
+          </div>
+          
+          <div class="control-group">
+            <label>Frequency (Hz) <span class="value" id="transFreqVal">2</span></label>
+            <input type="range" id="transFreq" min="0.5" max="10" step="0.1" value="2">
+          </div>
+          
+          <div class="control-group">
+            <label>Wavelength (px) <span class="value" id="transWaveLenVal">200</span></label>
+            <input type="range" id="transWaveLen" min="80" max="400" value="200">
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="transShowParticles" checked>
+            <span>Show Particles</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="transShowMarkers" checked>
+            <span>Show Wave Markers</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="transAnimate" checked>
+            <span>Animate</span>
+          </div>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Wave Speed</span>
+              <span class="val" id="transSpeed">400 px/s</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Period</span>
+              <span class="val" id="transPeriod">0.50 s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Longitudinal Controls -->
+        <div id="longitudinal-controls" class="controls hidden">
+          <div class="formula-box">Sound: v = 331 + 0.6T</div>
+          
+          <div class="control-group">
+            <label>Amplitude <span class="value" id="longAmpVal">30</span></label>
+            <input type="range" id="longAmp" min="5" max="60" value="30">
+          </div>
+          
+          <div class="control-group">
+            <label>Frequency (Hz) <span class="value" id="longFreqVal">2</span></label>
+            <input type="range" id="longFreq" min="0.5" max="10" step="0.1" value="2">
+          </div>
+          
+          <div class="control-group">
+            <label>Particle Spacing <span class="value" id="longSpacingVal">15</span></label>
+            <input type="range" id="longSpacing" min="8" max="30" value="15">
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="longShowParticles" checked>
+            <span>Show Particles</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="longShowCompressions" checked>
+            <span>Highlight Compressions</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="longAnimate" checked>
+            <span>Animate</span>
+          </div>
+
+          <div class="checkbox-group" style="border-color: var(--accent-2);">
+            <input type="checkbox" id="longEnableSound">
+            <span>🔊 Enable Sound</span>
+          </div>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Wave Speed</span>
+              <span class="val" id="longSpeed">--</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Wavelength</span>
+              <span class="val" id="longWaveLen">--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standing Waves Controls -->
+        <div id="standing-controls" class="controls hidden">
+          <div class="formula-box">fₙ = n · v / 2L</div>
+          
+          <div class="toggle-btns">
+            <button class="btn active" id="standFixed">Fixed End</button>
+            <button class="btn" id="standFree">Free End</button>
+          </div>
+          
+          <div class="control-group">
+            <label>Harmonic (n) <span class="value" id="standHarmonicVal">1</span></label>
+            <input type="range" id="standHarmonic" min="1" max="10" value="1">
+          </div>
+          
+          <div class="control-group">
+            <label>Amplitude <span class="value" id="standAmpVal">60</span></label>
+            <input type="range" id="standAmp" min="20" max="100" value="60">
+          </div>
+          
+          <div class="control-group">
+            <label>String Length <span class="value" id="standLengthVal">400</span></label>
+            <input type="range" id="standLength" min="200" max="500" value="400">
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="standShowNodes" checked>
+            <span>Show Nodes</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="standShowAntinodes" checked>
+            <span>Show Antinodes</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="standAnimate" checked>
+            <span>Animate</span>
+          </div>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Nodes</span>
+              <span class="val" id="standNodes">2</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Antinodes</span>
+              <span class="val" id="standAntinodes">1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ripple Tank Controls -->
+        <div id="ripple-controls" class="controls hidden">
+          <div class="formula-box">Circular Waves</div>
+          
+          <div class="toggle-btns">
+            <button class="btn active" id="rippleSingle">Single Source</button>
+            <button class="btn" id="rippleDouble">Double Source</button>
+          </div>
+          
+          <div class="control-group">
+            <label>Frequency <span class="value" id="rippleFreqVal">3</span></label>
+            <input type="range" id="rippleFreq" min="1" max="8" value="3">
+          </div>
+          
+          <div class="control-group">
+            <label>Amplitude <span class="value" id="rippleAmpVal">50</span></label>
+            <input type="range" id="rippleAmp" min="20" max="100" value="50">
+          </div>
+          
+          <div class="control-group">
+            <label>Damping <span class="value" id="rippleDampingVal">0.02</span></label>
+            <input type="range" id="rippleDamping" min="0" max="0.1" step="0.005" value="0.02">
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="rippleShowSources" checked>
+            <span>Show Sources</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="rippleShowReflection">
+            <span>Show Wall Reflection</span>
+          </div>
+          
+          <div class="checkbox-group">
+            <input type="checkbox" id="rippleAnimate" checked>
+            <span>Animate</span>
+          </div>
+
+          <div class="data-card">
+            <div class="data-row">
+              <span class="label">Wavelength</span>
+              <span class="val" id="rippleWaveLen">--</span>
+            </div>
+            <div class="data-row">
+              <span class="label">Sources</span>
+              <span class="val" id="rippleSources">1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    let currentTab = 'transverse';
+    let time = 0;
+    let audioContext = null;
+    let oscillator = null;
+    let gainNode = null;
+    let soundEnabled = false;
+
+    const transCanvas = document.getElementById('transCanvas');
+    const transCtx = transCanvas.getContext('2d');
+    const longCanvas = document.getElementById('longCanvas');
+    const longCtx = longCanvas.getContext('2d');
+    const standCanvas = document.getElementById('standCanvas');
+    const standCtx = standCanvas.getContext('2d');
+    const rippleCanvas = document.getElementById('rippleCanvas');
+    const rippleCtx = rippleCanvas.getContext('2d');
+
+    function resizeCanvas(canvas) {
+      canvas.width = canvas.offsetWidth * 2;
+      canvas.height = canvas.offsetHeight * 2;
+    }
+
+    [transCanvas, longCanvas, standCanvas, rippleCanvas].forEach(resizeCanvas);
+    [transCtx, longCtx, standCtx, rippleCtx].forEach(ctx => ctx.scale(2, 2));
+
+    const colors = {
+      accent: '#6ad7ff',
+      accent2: '#f6c76b',
+      accent3: '#a78bfa',
+      success: '#6bff6b',
+      trough: '#ff6b6b',
+      text: '#e9f2ff',
+      muted: '#9fb0c5',
+      glow: 'rgba(106, 215, 255, 0.6)',
+      glow2: 'rgba(246, 199, 107, 0.6)'
+    };
+
+    function getWaveColor(freq) {
+      const wavelengths = [
+        { max: 1, color: '#ff0000' },
+        { max: 2, color: '#ff7f00' },
+        { max: 3, color: '#ffff00' },
+        { max: 4, color: '#00ff00' },
+        { max: 6, color: '#0000ff' },
+        { max: 8, color: '#4b0082' },
+        { max: Infinity, color: '#9400d3' }
+      ];
+      for (const w of wavelengths) {
+        if (freq <= w.max) return w.color;
+      }
+      return '#6ad7ff';
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        currentTab = tab.dataset.tab;
+        
+        document.querySelectorAll('.canvas-container').forEach(c => c.classList.add('hidden'));
+        document.querySelectorAll('.controls').forEach(c => c.classList.add('hidden'));
+        
+        document.getElementById(`${currentTab}-canvas`).classList.remove('hidden');
+        document.getElementById(`${currentTab}-controls`).classList.remove('hidden');
+        
+        resizeCanvas(document.getElementById(`${currentTab}Canvas`) || document.getElementById(`${currentTab.slice(0,5)}Canvas`));
+      });
+    });
+
+    // Transverse Tab
+    const transAmp = document.getElementById('transAmp');
+    const transFreq = document.getElementById('transFreq');
+    const transWaveLen = document.getElementById('transWaveLen');
+    const transShowParticles = document.getElementById('transShowParticles');
+    const transShowMarkers = document.getElementById('transShowMarkers');
+    const transAnimate = document.getElementById('transAnimate');
+
+    function updateTransControls() {
+      document.getElementById('transAmpVal').textContent = transAmp.value;
+      document.getElementById('transFreqVal').textContent = transFreq.value;
+      document.getElementById('transWaveLenVal').textContent = transWaveLen.value;
+      
+      const speed = parseFloat(transFreq.value) * parseFloat(transWaveLen.value);
+      const period = 1 / parseFloat(transFreq.value);
+      
+      document.getElementById('transSpeed').textContent = speed.toFixed(0) + ' px/s';
+      document.getElementById('transPeriod').textContent = period.toFixed(2) + ' s';
+    }
+
+    function drawTransverse() {
+      const ctx = transCtx;
+      const w = transCanvas.offsetWidth;
+      const h = transCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const amp = parseFloat(transAmp.value);
+      const freq = parseFloat(transFreq.value);
+      const wavelength = parseFloat(transWaveLen.value);
+      const k = (2 * Math.PI) / wavelength;
+      const omega = 2 * Math.PI * freq;
+      
+      const centerY = h / 2;
+      const phase = transAnimate.checked ? omega * time * 0.016 : 0;
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      
+      // Equilibrium line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(w, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Wave with glow
+      ctx.save();
+      ctx.shadowColor = colors.glow;
+      ctx.shadowBlur = 15;
+      ctx.strokeStyle = colors.accent;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      
+      for (let x = 0; x < w; x++) {
+        const y = centerY + amp * Math.sin(k * x - phase);
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+      
+      // Wave markers
+      if (transShowMarkers.checked) {
+        const lambda = wavelength;
+        ctx.fillStyle = colors.success;
+        for (let x = 0; x < w; x += lambda) {
+          const y = centerY + amp * Math.sin(k * x - phase);
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        
+        // Crest/trough markers
+        ctx.fillStyle = colors.success;
+        ctx.font = '10px Space Grotesk';
+        for (let x = lambda/4; x < w; x += lambda/2) {
+          const y = centerY + amp * Math.sin(k * x - phase);
+          ctx.fillText(y < centerY ? 'C' : 'T', x - 3, y + (y < centerY ? -8 : 12));
+        }
+        
+        // Wavelength indicator
+        ctx.strokeStyle = colors.accent2;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, centerY + amp + 20);
+        ctx.lineTo(lambda, centerY + amp + 20);
+        ctx.stroke();
+        ctx.fillStyle = colors.accent2;
+        ctx.fillText('λ = ' + wavelength + 'px', 10, centerY + amp + 35);
+      }
+      
+      // Particles
+      if (transShowParticles.checked) {
+        const particleSpacing = 20;
+        for (let x = 30; x < w - 30; x += particleSpacing) {
+          const y = centerY + amp * Math.sin(k * x - phase);
+          
+          ctx.save();
+          ctx.shadowColor = colors.glow2;
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = colors.accent2;
+          ctx.beginPath();
+          ctx.arc(x, y, 5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          
+          // Motion trail
+          ctx.strokeStyle = 'rgba(246, 199, 107, 0.3)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x, centerY + amp * Math.sin(k * x - phase - 0.3));
+          ctx.lineTo(x, centerY + amp * Math.sin(k * x - phase + 0.3));
+          ctx.stroke();
+        }
+      }
+      
+      // Direction arrow
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('→ Propagation', w - 130, 20);
+      
+      updateTransControls();
+    }
+
+    // Longitudinal Tab
+    const longAmp = document.getElementById('longAmp');
+    const longFreq = document.getElementById('longFreq');
+    const longSpacing = document.getElementById('longSpacing');
+    const longShowParticles = document.getElementById('longShowParticles');
+    const longShowCompressions = document.getElementById('longShowCompressions');
+    const longAnimate = document.getElementById('longAnimate');
+    const longEnableSound = document.getElementById('longEnableSound');
+
+    function updateLongControls() {
+      document.getElementById('longAmpVal').textContent = longAmp.value;
+      document.getElementById('longFreqVal').textContent = longFreq.value;
+      document.getElementById('longSpacingVal').textContent = longSpacing.value;
+      
+      const wavelength = 34300 / parseFloat(longFreq.value);
+      document.getElementById('longWaveLen').textContent = wavelength.toFixed(0) + ' px';
+      document.getElementById('longSpeed').textContent = '343 m/s (sound)';
+    }
+
+    function drawLongitudinal() {
+      const ctx = longCtx;
+      const w = longCanvas.offsetWidth;
+      const h = longCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const amp = parseFloat(longAmp.value);
+      const freq = parseFloat(longFreq.value);
+      const spacing = parseFloat(longSpacing.value);
+      const k = 0.02;
+      const omega = 2 * Math.PI * freq;
+      
+      const centerY = h / 2;
+      const phase = longAnimate.checked ? omega * time * 0.016 : 0;
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      
+      // Equilibrium line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(0, centerY);
+      ctx.lineTo(w, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Draw particles
+      const numParticles = Math.floor(w / spacing);
+      const particles = [];
+      
+      for (let i = 0; i < numParticles; i++) {
+        const baseX = 30 + i * spacing;
+        const displacement = amp * Math.sin(k * baseX - phase);
+        const x = baseX + displacement;
+        particles.push({ x, originalX: baseX });
+        
+        if (longShowParticles.checked) {
+          ctx.save();
+          ctx.shadowColor = colors.glow;
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = colors.accent;
+          ctx.beginPath();
+          ctx.arc(x, centerY, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      // Highlight compressions
+      if (longShowCompressions.checked) {
+        for (let i = 1; i < particles.length - 1; i++) {
+          const prev = particles[i - 1];
+          const curr = particles[i];
+          const next = particles[i + 1];
+          
+          const dist = curr.x - prev.x;
+          const avgDist = spacing;
+          
+          if (dist < avgDist * 0.7) {
+            ctx.fillStyle = 'rgba(107, 255, 107, 0.3)';
+            ctx.fillRect((prev.x + curr.x) / 2 - 15, centerY - 40, 30, 80);
+            
+            ctx.fillStyle = colors.success;
+            ctx.font = 'bold 10px Space Grotesk';
+            ctx.fillText('C', curr.x - 4, centerY - 45);
+          }
+          
+          if (dist > avgDist * 1.3) {
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.2)';
+            ctx.fillRect((prev.x + curr.x) / 2 - 15, centerY - 40, 30, 80);
+            
+            ctx.fillStyle = colors.trough;
+            ctx.font = 'bold 10px Space Grotesk';
+            ctx.fillText('R', curr.x - 4, centerY - 45);
+          }
+        }
+      }
+      
+      // Labels
+      ctx.fillStyle = colors.success;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText('Compression', 30, 30);
+      ctx.fillStyle = colors.trough;
+      ctx.fillText('Rarefaction', 150, 30);
+      
+      // Direction
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.fillText('→ Wave direction', w - 140, 20);
+      
+      updateLongControls();
+    }
+
+    // Sound toggle
+    longEnableSound.addEventListener('change', () => {
+      soundEnabled = longEnableSound.checked;
+      
+      if (soundEnabled) {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          gainNode = audioContext.createGain();
+          gainNode.connect(audioContext.destination);
+          gainNode.gain.value = 0.1;
+        }
+        
+        if (oscillator) {
+          oscillator.stop();
+        }
+        
+        oscillator = audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = parseFloat(longFreq.value) * 50;
+        oscillator.connect(gainNode);
+        oscillator.start();
+      } else {
+        if (oscillator) {
+          oscillator.stop();
+          oscillator = null;
+        }
+      }
+    });
+
+    // Standing Waves Tab
+    const standHarmonic = document.getElementById('standHarmonic');
+    const standAmp = document.getElementById('standAmp');
+    const standLength = document.getElementById('standLength');
+    const standShowNodes = document.getElementById('standShowNodes');
+    const standShowAntinodes = document.getElementById('standShowAntinodes');
+    const standAnimate = document.getElementById('standAnimate');
+    let standFixedEnd = true;
+
+    document.getElementById('standFixed').addEventListener('click', () => {
+      standFixedEnd = true;
+      document.getElementById('standFixed').classList.add('active');
+      document.getElementById('standFree').classList.remove('active');
+    });
+
+    document.getElementById('standFree').addEventListener('click', () => {
+      standFixedEnd = false;
+      document.getElementById('standFree').classList.add('active');
+      document.getElementById('standFixed').classList.remove('active');
+    });
+
+    function updateStandControls() {
+      document.getElementById('standHarmonicVal').textContent = standHarmonic.value;
+      document.getElementById('standAmpVal').textContent = standAmp.value;
+      document.getElementById('standLengthVal').textContent = standLength.value;
+      
+      const n = parseInt(standHarmonic.value);
+      document.getElementById('standNodes').textContent = n + 1;
+      document.getElementById('standAntinodes').textContent = n;
+    }
+
+    function drawStanding() {
+      const ctx = standCtx;
+      const w = standCanvas.offsetWidth;
+      const h = standCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const n = parseInt(standHarmonic.value);
+      const amp = parseFloat(standAmp.value);
+      const len = parseFloat(standLength.value);
+      const omega = 2;
+      
+      const startX = 40;
+      const endX = startX + len;
+      const centerY = h / 2;
+      const phase = standAnimate.checked ? omega * time * 0.016 : Math.PI / 2;
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      
+      // String baseline
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(startX, centerY);
+      ctx.lineTo(endX, centerY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Standing wave with glow
+      ctx.save();
+      ctx.shadowColor = colors.glow2;
+      ctx.shadowBlur = 12;
+      ctx.strokeStyle = colors.accent2;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      
+      for (let x = startX; x <= endX; x++) {
+        const xPos = (x - startX) / len;
+        let y;
+        
+        if (standFixedEnd) {
+          y = centerY + amp * Math.sin(n * Math.PI * xPos) * Math.sin(phase);
+        } else {
+          y = centerY + amp * Math.cos(n * Math.PI * xPos / 2) * Math.sin(phase);
+        }
+        
+        if (x === startX) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+      ctx.restore();
+      
+      // Nodes
+      if (standShowNodes.checked) {
+        for (let i = 0; i <= n; i++) {
+          const nodeX = standFixedEnd ? startX + (i / n) * len : startX + (2 * i / n) * len;
+          
+          ctx.save();
+          ctx.shadowColor = colors.success;
+          ctx.shadowBlur = 15;
+          ctx.fillStyle = colors.success;
+          ctx.beginPath();
+          ctx.arc(nodeX, centerY, 8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          
+          ctx.fillStyle = colors.success;
+          ctx.font = '10px Space Grotesk';
+          ctx.fillText('N', nodeX - 5, centerY + 22);
+        }
+      }
+      
+      // Antinodes
+      if (standShowAntinodes.checked) {
+        const antinodeCount = standFixedEnd ? n : Math.floor(n / 2);
+        for (let i = 0; i < antinodeCount; i++) {
+          const antiX = standFixedEnd ? startX + ((i + 0.5) / n) * len : startX + ((2 * i + 1) / n) * len;
+          
+          ctx.save();
+          ctx.shadowColor = colors.trough;
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = colors.trough;
+          ctx.beginPath();
+          ctx.arc(antiX, centerY, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      // Fixed/Free end indicator
+      if (standFixedEnd) {
+        ctx.fillStyle = colors.text;
+        ctx.fillRect(startX - 5, centerY - 50, 10, 100);
+        ctx.fillStyle = colors.muted;
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('FIXED', startX - 18, centerY - 55);
+      } else {
+        ctx.strokeStyle = colors.text;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startX, centerY - 40);
+        ctx.lineTo(startX, centerY + 40);
+        ctx.stroke();
+        ctx.fillStyle = colors.muted;
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('FREE', startX - 16, centerY - 55);
+      }
+      
+      // Labels
+      ctx.fillStyle = colors.text;
+      ctx.font = '11px Space Grotesk';
+      ctx.fillText(`n = ${n}`, endX + 20, centerY - 10);
+      ctx.fillText(`L = ${len}px`, endX + 20, centerY + 10);
+      
+      updateStandControls();
+    }
+
+    // Ripple Tank Tab
+    const rippleFreq = document.getElementById('rippleFreq');
+    const rippleAmp = document.getElementById('rippleAmp');
+    const rippleDamping = document.getElementById('rippleDamping');
+    const rippleShowSources = document.getElementById('rippleShowSources');
+    const rippleShowReflection = document.getElementById('rippleShowReflection');
+    const rippleAnimate = document.getElementById('rippleAnimate');
+    let rippleDoubleSource = false;
+
+    document.getElementById('rippleSingle').addEventListener('click', () => {
+      rippleDoubleSource = false;
+      document.getElementById('rippleSingle').classList.add('active');
+      document.getElementById('rippleDouble').classList.remove('active');
+      document.getElementById('rippleSources').textContent = '1';
+    });
+
+    document.getElementById('rippleDouble').addEventListener('click', () => {
+      rippleDoubleSource = true;
+      document.getElementById('rippleDouble').classList.add('active');
+      document.getElementById('rippleSingle').classList.remove('active');
+      document.getElementById('rippleSources').textContent = '2';
+    });
+
+    function updateRippleControls() {
+      document.getElementById('rippleFreqVal').textContent = rippleFreq.value;
+      document.getElementById('rippleAmpVal').textContent = rippleAmp.value;
+      document.getElementById('rippleDampingVal').textContent = parseFloat(rippleDamping.value).toFixed(3);
+      
+      const wavelength = 400 / parseFloat(rippleFreq.value);
+      document.getElementById('rippleWaveLen').textContent = wavelength.toFixed(0) + ' px';
+    }
+
+    function drawRipple() {
+      const ctx = rippleCtx;
+      const w = rippleCanvas.offsetWidth;
+      const h = rippleCanvas.offsetHeight;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const freq = parseFloat(rippleFreq.value);
+      const amp = parseFloat(rippleAmp.value);
+      const damping = parseFloat(rippleDamping.value);
+      const t = rippleAnimate.checked ? time * 0.05 : 0;
+      
+      // Create wave field
+      const imageData = ctx.createImageData(w, h);
+      const data = imageData.data;
+      
+      const sources = rippleDoubleSource ? [
+        { x: w * 0.3, y: h / 2 },
+        { x: w * 0.7, y: h / 2 }
+      ] : [{ x: w / 2, y: h / 2 }];
+      
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          let z = 0;
+          
+          for (const src of sources) {
+            const dist = Math.sqrt((x - src.x) ** 2 + (y - src.y) ** 2);
+            const wave = Math.sin(dist * 0.05 * freq - t) * Math.exp(-dist * damping * 0.01);
+            z += wave;
+            
+            // Reflection
+            if (rippleShowReflection.checked) {
+              const reflectX = w - x;
+              const dist2 = Math.sqrt((x - reflectX) ** 2 + (y - src.y) ** 2);
+              const wave2 = Math.sin(dist2 * 0.05 * freq - t) * Math.exp(-dist2 * damping * 0.01) * 0.5;
+              z += wave2;
+            }
+          }
+          
+          const intensity = (z / sources.length + 1) / 2;
+          const idx = (y * w + x) * 4;
+          
+          const baseR = 10, baseG = 16, baseB = 26;
+          const waveR = 106, waveG = 215, waveB = 255;
+          
+          data[idx] = baseR + intensity * waveR;
+          data[idx + 1] = baseG + intensity * waveG;
+          data[idx + 2] = baseB + intensity * waveB;
+          data[idx + 3] = 255;
+        }
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Sources
+      if (rippleShowSources.checked) {
+        for (const src of sources) {
+          ctx.save();
+          ctx.shadowColor = colors.accent2;
+          ctx.shadowBlur = 20;
+          ctx.fillStyle = colors.accent2;
+          ctx.beginPath();
+          ctx.arc(src.x, src.y, 10, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      
+      // Wall reflection indicator
+      if (rippleShowReflection.checked) {
+        ctx.strokeStyle = colors.success;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 5]);
+        ctx.beginPath();
+        ctx.moveTo(w - 10, 50);
+        ctx.lineTo(w - 10, h - 50);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = colors.success;
+        ctx.font = '11px Space Grotesk';
+        ctx.fillText('Wall', w - 40, 40);
+      }
+      
+      updateRippleControls();
+    }
+
+    // Main animation loop
+    function animate() {
+      time++;
+      
+      switch (currentTab) {
+        case 'transverse':
+          drawTransverse();
+          break;
+        case 'longitudinal':
+          drawLongitudinal();
+          break;
+        case 'standing':
+          drawStanding();
+          break;
+        case 'ripple':
+          drawRipple();
+          break;
+      }
+      
+      requestAnimationFrame(animate);
+    }
+
+    // Event listeners
+    [transAmp, transFreq, transWaveLen].forEach(el => el.addEventListener('input', updateTransControls));
+    [longAmp, longFreq, longSpacing].forEach(el => el.addEventListener('input', updateLongControls));
+    [standHarmonic, standAmp, standLength].forEach(el => el.addEventListener('input', updateStandControls));
+    [rippleFreq, rippleAmp, rippleDamping].forEach(el => el.addEventListener('input', updateRippleControls));
+
+    // Initialize
+    updateTransControls();
+    updateLongControls();
+    updateStandControls();
+    updateRippleControls();
+    animate();
+  </script>
 </body>
 </html>
