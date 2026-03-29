@@ -572,13 +572,13 @@
           </div>
           
           <div class="control-group">
-            <label>Left Mass Position <span class="value" id="leftMassVal">-150</span></label>
-            <input type="range" id="leftMassPos" min="-200" max="0" value="-150">
+            <label>Left Mass (kg) <span class="value" id="leftMassVal">10</span></label>
+            <input type="range" id="leftMass" min="0" max="50" value="10">
           </div>
           
           <div class="control-group">
-            <label>Right Mass Position <span class="value" id="rightMassVal">150</span></label>
-            <input type="range" id="rightMassPos" min="0" max="200" value="150">
+            <label>Right Mass (kg) <span class="value" id="rightMassVal">10</span></label>
+            <input type="range" id="rightMass" min="0" max="50" value="10">
           </div>
           
           <div class="checkbox-group">
@@ -1176,14 +1176,14 @@
       
       ctx.clearRect(0, 0, w, h);
       
-      const leftMass = 10;
-      const rightMass = 10;
-      const leftPos = parseFloat(document.getElementById('leftMassPos').value);
-      const rightPos = parseFloat(document.getElementById('rightMassPos').value);
+      const leftMass = parseFloat(document.getElementById('leftMass').value);
+      const rightMass = parseFloat(document.getElementById('rightMass').value);
+      const leftPos = -100;
+      const rightPos = 100;
       const fulcrumPos = parseFloat(document.getElementById('seesawFulcrum').value);
       
-      document.getElementById('leftMassVal').textContent = leftPos;
-      document.getElementById('rightMassVal').textContent = rightPos;
+      document.getElementById('leftMassVal').textContent = leftMass;
+      document.getElementById('rightMassVal').textContent = rightMass;
       document.getElementById('seesawFulcrumVal').textContent = fulcrumPos;
       
       const leftTorque = leftMass * Math.abs(leftPos);
@@ -1239,18 +1239,22 @@
       ctx.restore();
       
       // Left mass
-      ctx.fillStyle = colors.accent;
-      ctx.fillRect(leftPos - 20, -35, 40, 27);
-      ctx.fillStyle = '#0a111c';
-      ctx.font = 'bold 11px Space Grotesk';
-      ctx.textAlign = 'center';
-      ctx.fillText('10kg', leftPos, -17);
+      if (leftMass > 0) {
+        ctx.fillStyle = colors.accent;
+        ctx.fillRect(leftPos - 20, -35, 40, 27);
+        ctx.fillStyle = '#0a111c';
+        ctx.font = 'bold 11px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText(leftMass + 'kg', leftPos, -17);
+      }
       
       // Right mass
-      ctx.fillStyle = colors.accent2;
-      ctx.fillRect(rightPos - 20, -35, 40, 27);
-      ctx.fillStyle = '#0a111c';
-      ctx.fillText('10kg', rightPos, -17);
+      if (rightMass > 0) {
+        ctx.fillStyle = colors.accent2;
+        ctx.fillRect(rightPos - 20, -35, 40, 27);
+        ctx.fillStyle = '#0a111c';
+        ctx.fillText(rightMass + 'kg', rightPos, -17);
+      }
       
       ctx.restore();
     }
