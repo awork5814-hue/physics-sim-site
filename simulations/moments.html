@@ -612,24 +612,68 @@
             <button class="btn" id="rotMode3">Complex</button>
           </div>
           
-          <div class="control-group">
-            <label>Force 1 (N) <span class="value" id="rotF1Val">30</span></label>
-            <input type="range" id="rotF1" min="0" max="80" value="30">
+          <div id="rot-2force-controls">
+            <div class="control-group">
+              <label>Force 1 (N) <span class="value" id="rotF1Val">30</span></label>
+              <input type="range" id="rotF1" min="0" max="80" value="30">
+            </div>
+            
+            <div class="control-group">
+              <label>Position 1 (m) <span class="value" id="rotP1Val">-2</span></label>
+              <input type="range" id="rotP1" min="-4" max="4" value="-2">
+            </div>
+            
+            <div class="control-group">
+              <label>Force 2 (N) <span class="value" id="rotF2Val">50</span></label>
+              <input type="range" id="rotF2" min="0" max="80" value="50">
+            </div>
+            
+            <div class="control-group">
+              <label>Position 2 (m) <span class="value" id="rotP2Val">3</span></label>
+              <input type="range" id="rotP2" min="-4" max="4" value="3">
+            </div>
           </div>
           
-          <div class="control-group">
-            <label>Position 1 (m) <span class="value" id="rotP1Val">-2</span></label>
-            <input type="range" id="rotP1" min="-4" max="4" value="-2">
+          <div id="rot-3force-controls" class="hidden">
+            <div class="control-group">
+              <label>Force 1 (N) <span class="value" id="rotF1Val3">20</span></label>
+              <input type="range" id="rotF1_3" min="0" max="80" value="20">
+            </div>
+            
+            <div class="control-group">
+              <label>Position 1 (m) <span class="value" id="rotP1Val3">-3</span></label>
+              <input type="range" id="rotP1_3" min="-4" max="4" value="-3">
+            </div>
+            
+            <div class="control-group">
+              <label>Force 2 (N) <span class="value" id="rotF2Val3">40</span></label>
+              <input type="range" id="rotF2_3" min="0" max="80" value="40">
+            </div>
+            
+            <div class="control-group">
+              <label>Position 2 (m) <span class="value" id="rotP2Val3">1</span></label>
+              <input type="range" id="rotP2_3" min="-4" max="4" value="1">
+            </div>
+            
+            <div class="control-group">
+              <label>Force 3 (N) <span class="value" id="rotF3Val3">30</span></label>
+              <input type="range" id="rotF3_3" min="0" max="80" value="30">
+            </div>
+            
+            <div class="control-group">
+              <label>Position 3 (m) <span class="value" id="rotP3Val3">4</span></label>
+              <input type="range" id="rotP3_3" min="-4" max="4" value="4">
+            </div>
           </div>
           
-          <div class="control-group">
-            <label>Force 2 (N) <span class="value" id="rotF2Val">50</span></label>
-            <input type="range" id="rotF2" min="0" max="80" value="50">
-          </div>
-          
-          <div class="control-group">
-            <label>Position 2 (m) <span class="value" id="rotP2Val">3</span></label>
-            <input type="range" id="rotP2" min="-4" max="4" value="3">
+          <div id="rot-complex-controls" class="hidden">
+            <div class="instructions" style="margin-bottom: 10px;">
+              Pre-configured scenarios - use sliders to adjust
+            </div>
+            <div class="control-group">
+              <label>Scenario <span class="value" id="complexScenarioVal">1</span></label>
+              <input type="range" id="complexScenario" min="1" max="3" value="1">
+            </div>
           </div>
 
           <div class="data-card">
@@ -640,6 +684,10 @@
             <div class="data-row">
               <span class="label">Torque 2</span>
               <span class="val ccw" id="rotT2">150 N·m</span>
+            </div>
+            <div class="data-row hidden" id="rotT3Row">
+              <span class="label">Torque 3</span>
+              <span class="val ccw" id="rotT3">0 N·m</span>
             </div>
             <div class="data-row">
               <span class="label">Net Torque</span>
@@ -1208,6 +1256,57 @@
     }
 
     // Rotational Equilibrium Tab
+    let rotMode = 2;
+    let complexScenarios = [
+      { f1: 30, p1: -2, f2: 20, p2: 2, f3: 20, p3: 4 },
+      { f1: 50, p1: -3, f2: 60, p2: 1, f3: 30, p3: 3 },
+      { f1: 40, p1: -4, f2: 40, p2: 0, f3: 40, p3: 4 }
+    ];
+
+    document.getElementById('rotMode1').addEventListener('click', () => {
+      rotMode = 2;
+      document.getElementById('rotMode1').classList.add('active');
+      document.getElementById('rotMode2').classList.remove('active');
+      document.getElementById('rotMode3').classList.remove('active');
+      document.getElementById('rot-2force-controls').classList.remove('hidden');
+      document.getElementById('rot-3force-controls').classList.add('hidden');
+      document.getElementById('rot-complex-controls').classList.add('hidden');
+      document.getElementById('rotT3Row').classList.add('hidden');
+    });
+
+    document.getElementById('rotMode2').addEventListener('click', () => {
+      rotMode = 3;
+      document.getElementById('rotMode2').classList.add('active');
+      document.getElementById('rotMode1').classList.remove('active');
+      document.getElementById('rotMode3').classList.remove('active');
+      document.getElementById('rot-3force-controls').classList.remove('hidden');
+      document.getElementById('rot-2force-controls').classList.add('hidden');
+      document.getElementById('rot-complex-controls').classList.add('hidden');
+      document.getElementById('rotT3Row').classList.remove('hidden');
+    });
+
+    document.getElementById('rotMode3').addEventListener('click', () => {
+      rotMode = 'complex';
+      document.getElementById('rotMode3').classList.add('active');
+      document.getElementById('rotMode1').classList.remove('active');
+      document.getElementById('rotMode2').classList.remove('active');
+      document.getElementById('rot-complex-controls').classList.remove('hidden');
+      document.getElementById('rot-2force-controls').classList.add('hidden');
+      document.getElementById('rot-3force-controls').classList.add('hidden');
+      document.getElementById('rotT3Row').classList.remove('hidden');
+    });
+
+    document.getElementById('complexScenario').addEventListener('input', (e) => {
+      const idx = parseInt(e.target.value) - 1;
+      const s = complexScenarios[idx];
+      document.getElementById('rotF1').value = s.f1;
+      document.getElementById('rotP1').value = s.p1;
+      document.getElementById('rotF2').value = s.f2;
+      document.getElementById('rotP2').value = s.p2;
+      document.getElementById('rotF3_3').value = s.f3;
+      document.getElementById('rotP3_3').value = s.p3;
+    });
+
     function drawRotational() {
       const ctx = rotCtx;
       const w = rotCanvas.offsetWidth;
@@ -1215,22 +1314,60 @@
       
       ctx.clearRect(0, 0, w, h);
       
-      const f1 = parseFloat(document.getElementById('rotF1').value);
-      const p1 = parseFloat(document.getElementById('rotP1').value);
-      const f2 = parseFloat(document.getElementById('rotF2').value);
-      const p2 = parseFloat(document.getElementById('rotP2').value);
+      let f1, p1, f2, p2, f3, p3, t1, t2, t3, net;
       
-      document.getElementById('rotF1Val').textContent = f1;
-      document.getElementById('rotP1Val').textContent = p1;
-      document.getElementById('rotF2Val').textContent = f2;
-      document.getElementById('rotP2Val').textContent = p2;
-      
-      const t1 = f1 * p1;
-      const t2 = f2 * p2;
-      const net = t1 + t2;
+      if (rotMode === 2) {
+        f1 = parseFloat(document.getElementById('rotF1').value);
+        p1 = parseFloat(document.getElementById('rotP1').value);
+        f2 = parseFloat(document.getElementById('rotF2').value);
+        p2 = parseFloat(document.getElementById('rotP2').value);
+        
+        document.getElementById('rotF1Val').textContent = f1;
+        document.getElementById('rotP1Val').textContent = p1;
+        document.getElementById('rotF2Val').textContent = f2;
+        document.getElementById('rotP2Val').textContent = p2;
+        
+        t1 = f1 * p1;
+        t2 = f2 * p2;
+        t3 = 0;
+        net = t1 + t2;
+      } else if (rotMode === 3) {
+        f1 = parseFloat(document.getElementById('rotF1_3').value);
+        p1 = parseFloat(document.getElementById('rotP1_3').value);
+        f2 = parseFloat(document.getElementById('rotF2_3').value);
+        p2 = parseFloat(document.getElementById('rotP2_3').value);
+        f3 = parseFloat(document.getElementById('rotF3_3').value);
+        p3 = parseFloat(document.getElementById('rotP3_3').value);
+        
+        document.getElementById('rotF1Val3').textContent = f1;
+        document.getElementById('rotP1Val3').textContent = p1;
+        document.getElementById('rotF2Val3').textContent = f2;
+        document.getElementById('rotP2Val3').textContent = p2;
+        document.getElementById('rotF3Val3').textContent = f3;
+        document.getElementById('rotP3Val3').textContent = p3;
+        
+        t1 = f1 * p1;
+        t2 = f2 * p2;
+        t3 = f3 * p3;
+        net = t1 + t2 + t3;
+      } else if (rotMode === 'complex') {
+        const idx = parseInt(document.getElementById('complexScenario').value) - 1;
+        const s = complexScenarios[idx];
+        f1 = s.f1; p1 = s.p1;
+        f2 = s.f2; p2 = s.p2;
+        f3 = s.f3; p3 = s.p3;
+        
+        document.getElementById('complexScenarioVal').textContent = idx + 1;
+        
+        t1 = f1 * p1;
+        t2 = f2 * p2;
+        t3 = f3 * p3;
+        net = t1 + t2 + t3;
+      }
       
       document.getElementById('rotT1').textContent = t1.toFixed(0) + ' N·m';
       document.getElementById('rotT2').textContent = t2.toFixed(0) + ' N·m';
+      document.getElementById('rotT3').textContent = t3.toFixed(0) + ' N·m';
       document.getElementById('rotNet').textContent = net.toFixed(0) + ' N·m';
       
       const statusEl = document.getElementById('rotStatus');
@@ -1260,58 +1397,41 @@
       ctx.lineTo(centerX + 150, centerY);
       ctx.stroke();
       
-      // Force arrows
-      // Force 1
-      const x1 = centerX + p1 * scale;
-      const f1Len = Math.min(f1 * 0.8, 80);
-      ctx.save();
-      ctx.shadowColor = colors.clockwise;
-      ctx.shadowBlur = 12;
-      ctx.strokeStyle = t1 >= 0 ? colors.anticlockwise : colors.clockwise;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x1, centerY);
-      ctx.lineTo(x1, centerY - f1Len);
-      ctx.stroke();
+      function drawForce(f, p, idx) {
+        const x = centerX + p * scale;
+        const fLen = Math.min(f * 0.8, 80);
+        const t = f * p;
+        
+        ctx.save();
+        ctx.shadowColor = t >= 0 ? colors.anticlockwise : colors.clockwise;
+        ctx.shadowBlur = 12;
+        ctx.strokeStyle = t >= 0 ? colors.anticlockwise : colors.clockwise;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(x, centerY);
+        ctx.lineTo(x, centerY - fLen);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(x, centerY - fLen - 10);
+        ctx.lineTo(x - 8, centerY - fLen + 5);
+        ctx.lineTo(x + 8, centerY - fLen + 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        
+        ctx.fillStyle = colors.text;
+        ctx.font = '11px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText(`F${idx}=${f}N`, x, centerY + 20);
+        ctx.fillText(`d${idx}=${p}m`, x, centerY + 35);
+      }
       
-      // Arrow head
-      ctx.beginPath();
-      ctx.moveTo(x1, centerY - f1Len - 10);
-      ctx.lineTo(x1 - 8, centerY - f1Len + 5);
-      ctx.lineTo(x1 + 8, centerY - f1Len + 5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-      
-      ctx.fillStyle = colors.text;
-      ctx.font = '11px Space Grotesk';
-      ctx.textAlign = 'center';
-      ctx.fillText(`F1=${f1}N`, x1, centerY + 20);
-      ctx.fillText(`d1=${p1}m`, x1, centerY + 35);
-      
-      // Force 2
-      const x2 = centerX + p2 * scale;
-      const f2Len = Math.min(f2 * 0.8, 80);
-      ctx.save();
-      ctx.shadowColor = colors.anticlockwise;
-      ctx.shadowBlur = 12;
-      ctx.strokeStyle = t2 >= 0 ? colors.anticlockwise : colors.clockwise;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x2, centerY);
-      ctx.lineTo(x2, centerY - f2Len);
-      ctx.stroke();
-      
-      ctx.beginPath();
-      ctx.moveTo(x2, centerY - f2Len - 10);
-      ctx.lineTo(x2 - 8, centerY - f2Len + 5);
-      ctx.lineTo(x2 + 8, centerY - f2Len + 5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-      
-      ctx.fillText(`F2=${f2}N`, x2, centerY + 20);
-      ctx.fillText(`d2=${p2}m`, x2, centerY + 35);
+      drawForce(f1, p1, 1);
+      drawForce(f2, p2, 2);
+      if (rotMode !== 2) {
+        drawForce(f3, p3, 3);
+      }
       
       // Scale
       ctx.fillStyle = colors.muted;
