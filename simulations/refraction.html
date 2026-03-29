@@ -182,10 +182,11 @@
     canvas {
       width: 100%;
       height: 380px;
-      background: rgba(6, 10, 18, 0.7);
+      background: radial-gradient(ellipse at 50% 30%, rgba(20, 30, 50, 0.9), rgba(6, 10, 18, 0.95));
       border-radius: 14px;
       border: 1px solid var(--sim-border);
       cursor: crosshair;
+      box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(106, 215, 255, 0.05);
     }
 
     .controls {
@@ -215,21 +216,39 @@
 
     input[type="range"] {
       width: 100%;
-      height: 6px;
+      height: 8px;
       -webkit-appearance: none;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
+      background: linear-gradient(90deg, rgba(106, 215, 255, 0.2), rgba(167, 139, 250, 0.2));
+      border-radius: 4px;
       outline: none;
+      border: 1px solid var(--sim-border);
     }
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #4fc3f7);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(106, 215, 255, 0.4);
+      box-shadow: 0 0 15px rgba(106, 215, 255, 0.6), 0 0 5px rgba(106, 215, 255, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+      box-shadow: 0 0 25px rgba(106, 215, 255, 0.8), 0 0 10px rgba(106, 215, 255, 1);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #4fc3f7);
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(106, 215, 255, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
     select {
@@ -253,9 +272,9 @@
     .checkbox-item {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 8px;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 10px;
       background: rgba(12, 18, 28, 0.8);
       border: 1px solid var(--sim-border);
       font-size: 12px;
@@ -265,10 +284,19 @@
 
     .checkbox-item:hover {
       border-color: var(--accent);
+      background: rgba(106, 215, 255, 0.1);
+    }
+
+    .checkbox-item:has(input:checked) {
+      border-color: var(--accent);
+      background: rgba(106, 215, 255, 0.15);
     }
 
     .checkbox-item input {
       accent-color: var(--accent);
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
     }
 
     .data-grid {
@@ -279,25 +307,59 @@
     }
 
     .data-card {
-      background: rgba(12, 18, 28, 0.8);
+      background: linear-gradient(135deg, rgba(12, 18, 28, 0.9), rgba(20, 30, 45, 0.8));
       border: 1px solid var(--sim-border);
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 14px;
+      padding: 14px 12px;
       text-align: center;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .data-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      opacity: 0.7;
+    }
+
+    .data-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 25px rgba(106, 215, 255, 0.15);
     }
 
     .data-label {
       font-size: 10px;
       color: var(--sim-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 6px;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .data-label::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.6;
     }
 
     .data-value {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 700;
       font-family: "JetBrains Mono", monospace;
+      text-shadow: 0 0 20px currentColor;
     }
 
     .data-value.blue { color: var(--accent); }
@@ -823,15 +885,26 @@
     function getColors() {
       return {
         bg: isDark ? '#0b1018' : '#f0f4f8',
-        medium1: isDark ? 'rgba(106, 215, 255, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-        medium2: isDark ? 'rgba(167, 139, 250, 0.15)' : 'rgba(139, 92, 246, 0.15)',
+        medium1: isDark ? 'rgba(106, 215, 255, 0.12)' : 'rgba(59, 130, 246, 0.12)',
+        medium2: isDark ? 'rgba(167, 139, 250, 0.12)' : 'rgba(139, 92, 246, 0.12)',
         border: isDark ? 'rgba(120, 150, 190, 0.3)' : 'rgba(59, 130, 246, 0.3)',
         normal: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
         incident: '#f6c76b',
+        incidentGlow: 'rgba(246, 199, 107, 0.6)',
         reflected: '#ff9a6c',
+        reflectedGlow: 'rgba(255, 154, 108, 0.6)',
         refracted: '#6ad7ff',
+        refractedGlow: 'rgba(106, 215, 255, 0.6)',
+        accent: '#6ad7ff',
+        accentGlow: 'rgba(106, 215, 255, 0.6)',
+        accent2: '#f6c76b',
+        accent2Glow: 'rgba(246, 199, 107, 0.6)',
+        accent3: '#a78bfa',
+        accent3Glow: 'rgba(167, 139, 250, 0.6)',
         text: isDark ? '#e9f2ff' : '#1e293b',
-        muted: isDark ? '#9fb0c5' : '#64748b'
+        muted: isDark ? '#9fb0c5' : '#64748b',
+        success: '#6bff6b',
+        successGlow: 'rgba(107, 255, 107, 0.5)'
       };
     }
 
@@ -905,12 +978,6 @@
         const startX = sourceX;
         const startY = sourceY + offsetY;
         
-        // Incident ray
-        ctx.strokeStyle = colors.incident;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        
         let endX, endY;
         if (rayType === 'single') {
           endX = w / 2 + 80;
@@ -923,15 +990,37 @@
           endY = interfaceY;
         }
         
-        ctx.lineTo(Math.min(endX, w - 50), Math.min(endY, interfaceY));
-        ctx.stroke();
+        const intX = w / 2;
 
-        // Calculate intersection point
-        const intX = rayType === 'single' ? Math.min(endX, w - 50) : w / 2;
+        // Incident ray with glow
+        ctx.save();
+        ctx.shadowColor = colors.incidentGlow;
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = colors.incident;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(intX, interfaceY);
+        ctx.stroke();
+        ctx.restore();
+        
+        // Source point glow
+        ctx.save();
+        ctx.shadowColor = colors.incidentGlow;
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = colors.incident;
+        ctx.beginPath();
+        ctx.arc(startX, startY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
         
         if (!isTIR && n2 > 0) {
-          // Refracted ray
+          // Refracted ray with glow
+          ctx.save();
+          ctx.shadowColor = colors.refractedGlow;
+          ctx.shadowBlur = 15;
           ctx.strokeStyle = colors.refracted;
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.moveTo(intX, interfaceY);
           
@@ -940,6 +1029,7 @@
           const refractedY = interfaceY + Math.cos(theta2Rad) * refractedLength;
           ctx.lineTo(refractedX, refractedY);
           ctx.stroke();
+          ctx.restore();
 
           // Animate waves
           if (animateWaves && rayType === 'single') {
@@ -948,14 +1038,19 @@
           }
         }
 
-        // Reflected ray
+        // Reflected ray with glow
         if (showReflected) {
+          ctx.save();
+          ctx.shadowColor = colors.reflectedGlow;
+          ctx.shadowBlur = 12;
           ctx.strokeStyle = colors.reflected;
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.moveTo(intX, interfaceY);
           const reflectAngle = Math.PI - theta1Rad;
           ctx.lineTo(intX + Math.sin(reflectAngle) * 120, interfaceY - Math.cos(reflectAngle) * 120);
           ctx.stroke();
+          ctx.restore();
         }
 
         // Draw angles
@@ -1092,10 +1187,13 @@
         ctx.fillText(`θc = ${criticalAngle.toFixed(1)}°`, w / 2 + 60, interfaceY - 45);
       }
 
-      // Incident ray
+      // Incident ray with glow
       const sourceX = w * 0.15;
       const sourceY = interfaceY - 80;
       
+      ctx.save();
+      ctx.shadowColor = colors.incidentGlow || colors.incident;
+      ctx.shadowBlur = 15;
       ctx.strokeStyle = colors.incident;
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -1104,29 +1202,48 @@
       const endY = interfaceY - Math.cos(thetaRad) * 150;
       ctx.lineTo(endX, endY);
       ctx.stroke();
+      ctx.restore();
+
+      // Source point glow
+      ctx.save();
+      ctx.shadowColor = colors.incidentGlow || colors.incident;
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = colors.incident;
+      ctx.beginPath();
+      ctx.arc(sourceX, sourceY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
       if (isTIR) {
-        // Total internal reflection
+        // Total internal reflection with glow
+        ctx.save();
+        ctx.shadowColor = colors.reflectedGlow || colors.reflected;
+        ctx.shadowBlur = 15;
         ctx.strokeStyle = colors.reflected;
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(w / 2, interfaceY);
         ctx.lineTo(w / 2 + Math.sin(reflectAngle) * 150, interfaceY - Math.cos(reflectAngle) * 150);
         ctx.stroke();
+        ctx.restore();
 
         document.getElementById('tirStatus').textContent = 'TIR Active';
         document.getElementById('tirStatus').style.color = '#6bff6b';
         document.getElementById('reflectedPct').textContent = '100%';
       } else {
-        // Partial transmission
+        // Partial transmission with glow
         const theta2 = Math.asin(n1 * Math.sin(thetaRad) / n2);
         
+        ctx.save();
+        ctx.shadowColor = colors.refractedGlow || colors.refracted;
+        ctx.shadowBlur = 15;
         ctx.strokeStyle = colors.refracted;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(w / 2, interfaceY);
         ctx.lineTo(w / 2 + Math.sin(theta2) * 120, interfaceY + Math.cos(theta2) * 120);
         ctx.stroke();
+        ctx.restore();
 
         document.getElementById('tirStatus').textContent = 'Partial Transmission';
         document.getElementById('tirStatus').style.color = '#f6c76b';
@@ -1135,24 +1252,32 @@
         document.getElementById('reflectedPct').textContent = (reflectivity * 100).toFixed(0) + '%';
       }
 
-      // Animated pulse
+      // Animated pulse with glow
       if (animate) {
         const pulseProgress = (time % 60) / 60;
         const pulseX = sourceX + (w / 2 - sourceX) * pulseProgress;
         const pulseY = sourceY + (interfaceY - sourceY) * pulseProgress;
         
+        ctx.save();
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 15;
         ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.arc(pulseX, pulseY, 6, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
         
         if (isTIR && pulseProgress > 0.5) {
           const reflectProgress = (pulseProgress - 0.5) * 2;
           const reflX = w / 2 + Math.sin(reflectAngle) * 150 * reflectProgress;
           const reflY = interfaceY - Math.cos(reflectAngle) * 150 * reflectProgress;
+          ctx.save();
+          ctx.shadowColor = colors.reflectedGlow || colors.reflected;
+          ctx.shadowBlur = 15;
           ctx.beginPath();
           ctx.arc(reflX, reflY, 6, 0, Math.PI * 2);
           ctx.fill();
+          ctx.restore();
         }
       }
 
@@ -1237,10 +1362,13 @@
         ctx.stroke();
       }
 
-      // Object
+      // Object with glow
       const objX = lensX - u * 5;
       const objY = h / 2 - hObj * 5;
       
+      ctx.save();
+      ctx.shadowColor = colors.incidentGlow || colors.incident;
+      ctx.shadowBlur = 12;
       ctx.fillStyle = colors.incident;
       ctx.strokeStyle = colors.incident;
       ctx.lineWidth = 2;
@@ -1251,17 +1379,22 @@
       ctx.moveTo(objX, objY);
       ctx.lineTo(objX - 8, objY - 8);
       ctx.stroke();
+      ctx.restore();
       
       ctx.fillStyle = colors.muted;
       ctx.fillText('Object', objX - 15, h / 2 + 15);
 
-      // Image
+      // Image with glow
       const imgX = lensX + v * 5;
       const imgY = h / 2 + hImg * 5;
       
       if (Math.abs(v) < 100) {
-        ctx.fillStyle = isReal ? colors.success : colors.accent2;
-        ctx.strokeStyle = isReal ? colors.success : colors.accent2;
+        const imgColor = isReal ? colors.success : colors.accent2;
+        ctx.save();
+        ctx.shadowColor = isReal ? (colors.successGlow || colors.success) : (colors.accent2Glow || colors.accent2);
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = imgColor;
+        ctx.strokeStyle = imgColor;
         
         if (Math.abs(hImg) < 20) {
           ctx.beginPath();
@@ -1274,13 +1407,17 @@
         }
         
         ctx.fillText(isReal ? 'Real Image' : 'Virtual Image', imgX - 25, imgY + 25);
+        ctx.restore();
       }
 
-      // Ray diagram
+      // Ray diagram with glow
       if (showRays) {
         ctx.globalAlpha = 0.6;
         
         // Ray 1: Parallel to axis, then through F
+        ctx.save();
+        ctx.shadowColor = colors.incidentGlow || colors.incident;
+        ctx.shadowBlur = 10;
         ctx.strokeStyle = 'rgba(106, 215, 255, 0.7)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -1289,19 +1426,28 @@
         const dest1 = isConvex ? fPx : fNx;
         ctx.lineTo(dest1, h / 2);
         ctx.stroke();
+        ctx.restore();
 
         // Ray 2: Through F', then parallel
+        ctx.save();
+        ctx.shadowColor = colors.accent2Glow || '#f6c76b';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.moveTo(objX, objY);
         ctx.lineTo(fNx, h / 2 - (objY - h / 2) * (f / u));
         ctx.lineTo(imgX, h / 2 - (objY - h / 2) * (v / u));
         ctx.stroke();
+        ctx.restore();
 
         // Ray 3: Through center (no deviation)
+        ctx.save();
+        ctx.shadowColor = colors.reflectedGlow || colors.reflected;
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.moveTo(objX, objY);
         ctx.lineTo(imgX, h / 2 + (objY - h / 2) * (v / u));
         ctx.stroke();
+        ctx.restore();
         
         ctx.globalAlpha = 1;
       }
@@ -1372,26 +1518,34 @@
       ctx.fill();
       ctx.stroke();
 
-      // White light ray in
+      // White light ray in with glow
+      ctx.save();
+      ctx.shadowColor = '#ffffff';
+      ctx.shadowBlur = 15;
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(50, prismY - 40);
       ctx.lineTo(px - 20, prismY);
       ctx.stroke();
+      ctx.restore();
 
-      // Rainbow out
+      // Rainbow out with glow
       const colors_rainbow = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
       const angleStep = 0.12;
       let angle = -0.4;
       
       colors_rainbow.forEach((color, i) => {
+        ctx.save();
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 10;
         ctx.strokeStyle = color;
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(px - 20, prismY);
         ctx.lineTo(px + 30 + i * 12, prismY + 60 + angle * 100);
         ctx.stroke();
+        ctx.restore();
         angle += angleStep;
       });
 
@@ -1433,13 +1587,17 @@
       ctx.ellipse(cx + 90, cy, 20, 55, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Light rays
+      // Light rays with glow
+      ctx.save();
+      ctx.shadowColor = colors.incidentGlow || colors.incident;
+      ctx.shadowBlur = 12;
       ctx.strokeStyle = colors.incident;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(20, cy - 30);
       ctx.quadraticCurveTo(cx - 30, cy, cx + 80, cy);
       ctx.stroke();
+      ctx.restore();
 
       ctx.fillStyle = colors.text;
       ctx.font = '11px Space Grotesk';
@@ -1474,11 +1632,18 @@
       ctx.lineTo(w * 0.72, h / 2 - 30);
       ctx.stroke();
 
-      // Object
+      // Object with glow
+      ctx.save();
+      ctx.shadowColor = colors.incidentGlow || colors.incident;
+      ctx.shadowBlur = 10;
       ctx.fillStyle = colors.incident;
       ctx.fillRect(w * 0.2, h / 2 - 8, 20, 16);
+      ctx.restore();
 
-      // Rays
+      // Rays with glow
+      ctx.save();
+      ctx.shadowColor = colors.accentGlow || colors.accent;
+      ctx.shadowBlur = 10;
       ctx.strokeStyle = colors.accent;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -1491,6 +1656,7 @@
       ctx.lineTo(w * 0.35, h / 2);
       ctx.lineTo(w * 0.75, h / 2 + 25);
       ctx.stroke();
+      ctx.restore();
 
       ctx.fillStyle = colors.text;
       ctx.font = '11px Space Grotesk';
@@ -1528,7 +1694,10 @@
       ctx.lineTo(w * 0.72, h / 2 + 30);
       ctx.stroke();
 
-      // Parallel rays in
+      // Parallel rays in with glow
+      ctx.save();
+      ctx.shadowColor = colors.accentGlow || colors.accent;
+      ctx.shadowBlur = 10;
       ctx.strokeStyle = colors.accent;
       ctx.lineWidth = 1.5;
       for (let i = -2; i <= 2; i++) {
@@ -1545,6 +1714,7 @@
       ctx.moveTo(w * 0.28, h / 2 + 10);
       ctx.lineTo(w * 0.75, h / 2 + 20);
       ctx.stroke();
+      ctx.restore();
 
       ctx.fillStyle = colors.text;
       ctx.font = '11px Space Grotesk';
