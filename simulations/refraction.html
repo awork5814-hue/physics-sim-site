@@ -1243,10 +1243,10 @@
       ctx.fillText('Object', objX - 15, h / 2 + 15);
 
       // Image
+      const imgX = lensX + v * 5;
+      const imgY = h / 2 + hImg * 5;
+      
       if (Math.abs(v) < 100) {
-        const imgX = lensX + v * 5;
-        const imgY = h / 2 + hImg * 5;
-        
         ctx.fillStyle = isReal ? colors.success : colors.accent2;
         ctx.strokeStyle = isReal ? colors.success : colors.accent2;
         
