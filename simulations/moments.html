@@ -560,12 +560,6 @@
         <div id="seesaw-controls" class="controls hidden">
           <div class="formula-box">Seesaw Balance</div>
           
-          <div class="mass-palette">
-            <div class="mass-block small" data-mass="5" data-size="small">5kg</div>
-            <div class="mass-block medium" data-mass="10" data-size="medium">10kg</div>
-            <div class="mass-block large" data-mass="15" data-size="large">15kg</div>
-          </div>
-          
           <div class="control-group">
             <label>Fulcrum Distance <span class="value" id="seesawFulcrumVal">0</span></label>
             <input type="range" id="seesawFulcrum" min="-100" max="100" value="0">
@@ -588,11 +582,11 @@
 
           <div class="data-card">
             <div class="data-row">
-              <span class="label">Left Torque</span>
+              <span class="label">Left Torque (CW)</span>
               <span class="val cw" id="leftTorque">0 N·m</span>
             </div>
             <div class="data-row">
-              <span class="label">Right Torque</span>
+              <span class="label">Right Torque (CCW)</span>
               <span class="val ccw" id="rightTorque">0 N·m</span>
             </div>
             <div class="data-row">
@@ -780,8 +774,6 @@
         
         if (currentTab === 'beam') {
           selectedMass = { mass, size };
-        } else if (currentTab === 'seesaw') {
-          // Add to seesaw
         }
       });
     });
@@ -1178,16 +1170,18 @@
       
       const leftMass = parseFloat(document.getElementById('leftMass').value);
       const rightMass = parseFloat(document.getElementById('rightMass').value);
-      const leftPos = -100;
-      const rightPos = 100;
+      const leftPos = -120;
+      const rightPos = 120;
       const fulcrumPos = parseFloat(document.getElementById('seesawFulcrum').value);
       
       document.getElementById('leftMassVal').textContent = leftMass;
       document.getElementById('rightMassVal').textContent = rightMass;
       document.getElementById('seesawFulcrumVal').textContent = fulcrumPos;
       
-      const leftTorque = leftMass * Math.abs(leftPos);
-      const rightTorque = rightMass * Math.abs(rightPos);
+      const leftDist = Math.abs(leftPos - fulcrumPos);
+      const rightDist = Math.abs(rightPos - fulcrumPos);
+      const leftTorque = leftMass * leftDist;
+      const rightTorque = rightMass * rightDist;
       const netTorque = rightTorque - leftTorque;
       
       document.getElementById('leftTorque').textContent = leftTorque.toFixed(0) + ' N·m';
