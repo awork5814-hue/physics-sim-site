@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hooke's Law - Interactive Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/simulation-theme.css">
+  <style>
+    :root {
+      --accent: #00d4ff;
+      --accent-glow: #00ffff;
+      --danger: #ff4757;
+      --warning: #ffa502;
+      --success: #2ed573;
+      --spring-color: #7cffe7;
+      --mass-color: #ff6b6b;
+      --spring2-color: #ffd93d;
+      --mass2-color: #6bcb77;
+      --bg-dark: #0a0f16;
+      --bg-panel: rgba(15, 23, 35, 0.95);
+      --border: rgba(100, 150, 200, 0.15);
+      --text: #e8f4fc;
+      --text-muted: #8ba3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .background {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 800px 600px at 20% 20%, rgba(0, 212, 255, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 600px 400px at 80% 80%, rgba(255, 107, 107, 0.06) 0%, transparent 50%),
+        var(--bg-dark);
+      z-index: -1;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 15, 22, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      color: #000;
+    }
+
+    .logo-text {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      font-size: 18px;
+    }
+
+    .level-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .level-tab {
+      padding: 8px 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .level-tab:hover {
+      border-color: var(--accent);
+    }
+
+    .level-tab.active {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .lang-toggle {
+      position: absolute;
+      top: 60px;
+      right: 32px;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(15, 23, 35, 0.8);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .lang-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 24px;
+      padding: 24px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .simulation-area {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .simulation-canvas {
+      width: 100%;
+      height: 450px;
+      background: rgba(6, 12, 20, 0.6);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .control-btn {
+      padding: 10px 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(20, 30, 45, 0.8);
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .control-btn:hover {
+      border-color: var(--accent);
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .control-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #00a8cc);
+      color: #000;
+      border: none;
+    }
+
+    .control-btn.primary:hover {
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 14px;
+      color: var(--accent);
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .slider-name {
+      color: var(--text-muted);
+    }
+
+    .slider-value {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: 'Space Grotesk', monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(100, 150, 200, 0.2);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .meter-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .meter {
+      background: rgba(10, 15, 22, 0.6);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .meter-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      font-family: 'Space Grotesk', monospace;
+    }
+
+    .meter-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .energy-bar {
+      height: 8px;
+      background: rgba(100, 150, 200, 0.2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .energy-kinetic {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #00ffff);
+      transition: width 0.1s;
+    }
+
+    .energy-potential {
+      height: 100%;
+      background: linear-gradient(90deg, var(--warning), #ffaa00);
+      transition: width 0.1s;
+    }
+
+    .formula-box {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+
+    .preset-btns {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .preset-btn {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .help-panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .help-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .help-tab {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .help-tab.active {
+      background: rgba(0, 212, 255, 0.15);
+      color: var(--accent);
+    }
+
+    .help-content {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    .help-content h4 {
+      color: var(--accent);
+      margin: 12px 0 6px;
+      font-size: 14px;
+    }
+
+    .help-content h4:first-child {
+      margin-top: 0;
+    }
+
+    @media (max-width: 900px) {
+      .main-container {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background"></div>
+  
+  <header class="header">
+    <a href="/index.html" class="logo">
+      <div class="logo-icon">🔬</div>
+      <span class="logo-text">Physics Lab</span>
+    </a>
+    <div class="level-tabs">
+      <button class="level-tab active" data-level="1">📐 Basic</button>
+      <button class="level-tab" data-level="2">🔬 Advanced</button>
+      <button class="level-tab" data-level="3">⚖️ Compare</button>
+    </div>
+  </header>
+  
+  <button class="lang-toggle" id="langToggle">English</button>
+  <button class="lang-toggle" id="helpToggle" style="top:130px;">📖 Help</button>
+
+  <main class="main-container">
+    <div class="simulation-area">
+      <canvas class="simulation-canvas" id="simCanvas"></canvas>
+      <div class="btn-row">
+        <button class="control-btn primary" id="playBtn">▶ Play</button>
+        <button class="control-btn" id="pauseBtn">⏸ Pause</button>
+        <button class="control-btn" id="resetBtn">↺ Reset</button>
+      </div>
+      <div class="help-panel" id="helpPanel" style="display:none; margin-top:12px;">
+        <div class="help-tabs">
+          <button class="help-tab active" data-lang="en">🇬🇧 English</button>
+          <button class="help-tab" data-lang="ar">🇸🇦 العربية</button>
+        </div>
+        <div class="help-content" id="helpContent"></div>
+      </div>
+    </div>
+
+    <div class="control-panel">
+      <div class="panel">
+        <div class="panel-title">🎚️ Parameters</div>
+        
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Spring Constant (k)</span>
+            <span class="slider-value" id="kValue">50 N/m</span>
+          </div>
+          <input type="range" id="kSlider" min="5" max="200" step="1" value="50">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Mass (m)</span>
+            <span class="slider-value" id="massValue">1.0 kg</span>
+          </div>
+          <input type="range" id="massSlider" min="0.1" max="5" step="0.1" value="1">
+        </div>
+
+        <div class="slider-group" id="dampingGroup" style="display:none;">
+          <div class="slider-label">
+            <span class="slider-name">Damping</span>
+            <span class="slider-value" id="dampingValue">0%</span>
+          </div>
+          <input type="range" id="dampingSlider" min="0" max="10" step="0.5" value="0">
+        </div>
+
+        <div class="slider-group" id="gravityGroup" style="display:none;">
+          <div class="slider-label">
+            <span class="slider-name">Gravity (g)</span>
+            <span class="slider-value" id="gravityValue">9.8 m/s²</span>
+          </div>
+          <input type="range" id="gravitySlider" min="1" max="25" step="0.1" value="9.8">
+          <div class="preset-btns">
+            <button class="preset-btn" data-g="1.62">Moon</button>
+            <button class="preset-btn" data-g="3.72">Mars</button>
+            <button class="preset-btn" data-g="9.8">Earth</button>
+            <button class="preset-btn" data-g="24.79">Jupiter</button>
+          </div>
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Displacement (x)</span>
+            <span class="slider-value" id="displacementValue">0.30 m</span>
+          </div>
+          <input type="range" id="displacementSlider" min="-0.5" max="0.5" step="0.01" value="0.3">
+        </div>
+
+        <div class="slider-group" id="zoomGroup">
+          <div class="slider-label">
+            <span class="slider-name">🔍 View Zoom</span>
+            <span class="slider-value" id="zoomValue">1.0x</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="range" id="zoomSlider" min="0.3" max="2" step="0.1" value="1" style="flex:1;">
+            <button class="preset-btn" id="autoZoom" style="padding:4px 10px;flex:0 0 auto;">Auto</button>
+          </div>
+        </div>
+
+        <!-- Second Spring Controls (Compare Mode) -->
+        <div id="compareControls" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border);">
+          <div class="panel-title" style="color:#ffd93d;">⚖️ Spring 2 (Yellow)</div>
+          
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Spring Constant (k₂)</span>
+              <span class="slider-value" id="k2Value" style="color:#ffd93d;">50 N/m</span>
+            </div>
+            <input type="range" id="k2Slider" min="5" max="200" step="1" value="50">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Mass (m₂)</span>
+              <span class="slider-value" id="mass2Value" style="color:#ffd93d;">1.0 kg</span>
+            </div>
+            <input type="range" id="mass2Slider" min="0.1" max="5" step="0.1" value="1">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Damping</span>
+              <span class="slider-value" id="damping2Value" style="color:#ffd93d;">0%</span>
+            </div>
+            <input type="range" id="damping2Slider" min="0" max="10" step="0.5" value="0">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span class="slider-name">Displacement (x₂)</span>
+              <span class="slider-value" id="displacement2Value" style="color:#ffd93d;">0.30 m</span>
+            </div>
+            <input type="range" id="displacement2Slider" min="-0.5" max="0.5" step="0.01" value="0.3">
+          </div>
+
+          <div class="meter-display" style="margin-top:12px;">
+            <div class="meter">
+              <div class="meter-value" id="period2Display" style="color:#ffd93d;">0.89 s</div>
+              <div class="meter-label">Period (T₂)</div>
+            </div>
+            <div class="meter">
+              <div class="meter-value" id="freq2Display">1.12 Hz</div>
+              <div class="meter-label">Frequency (f₂)</div>
+            </div>
+          </div>
+
+          <div class="checkbox-label" style="margin-top:12px;">
+            <input type="checkbox" id="showCompare" checked> Show Spring 2
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">📊 Measurements</div>
+        <div class="meter-display">
+          <div class="meter">
+            <div class="meter-value" id="periodDisplay">0.89 s</div>
+            <div class="meter-label">Period (T)</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="freqDisplay">1.12 Hz</div>
+            <div class="meter-label">Frequency (f)</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="forceDisplay">15.0 N</div>
+            <div class="meter-label">Spring Force</div>
+          </div>
+          <div class="meter">
+            <div class="meter-value" id="energyDisplay">2.25 J</div>
+            <div class="meter-label">Total Energy</div>
+          </div>
+        </div>
+
+        <div class="formula-box" id="formulaBox">
+          F = -kx = -50 × 0.30 = -15.0 N
+        </div>
+
+        <div style="margin-top: 12px;">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Energy Distribution</div>
+          <div class="energy-bar">
+            <div class="energy-kinetic" id="kineticBar" style="width:0%;"></div>
+          </div>
+          <div class="energy-bar" style="margin-top:4px;">
+            <div class="energy-potential" id="potentialBar" style="width:100%;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-top:4px;">
+            <span>KE: <span id="kineticVal">0.00 J</span></span>
+            <span>PE: <span id="potentialVal">2.25 J</span></span>
+          </div>
+        </div>
+
+        <div id="vectorControls" style="display:none; margin-top:12px;">
+          <div class="checkbox-label">
+            <input type="checkbox" id="showVectors" checked> Show Force Vectors
+          </div>
+          <div class="checkbox-label">
+            <input type="checkbox" id="showEquilibrium" checked> Show Equilibrium
+          </div>
+          <div class="checkbox-label">
+            <input type="checkbox" id="showTrail" checked> Show Position Trail
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentLang = 'en';
+    
+    const helpContent = {
+      en: {
+        title: '📖 How to Use',
+        sections: [
+          { title: '🎮 Controls', content: 'Click Play to start oscillation. Drag sliders to adjust spring constant, mass, displacement. In Compare mode, adjust two springs!' },
+          { title: '📐 Basic Mode', content: 'Adjust spring constant (k), mass (m), and displacement. Observe how force changes: F = -kx' },
+          { title: '🔬 Advanced Mode', content: 'Add damping, change gravity (Moon, Mars, Earth, Jupiter), toggle force vectors and equilibrium line.' },
+          { title: '⚖️ Compare Mode', content: 'Compare two springs with different k and mass values. See how period differs: T = 2π√(m/k)' },
+          { title: '📊 Energy', content: 'Watch energy conversion between kinetic (motion) and potential (stored in spring). Total energy is conserved without damping.' },
+          { title: '🔊 Sound', content: 'Boing sound plays based on oscillation. Best with headphones.' }
+        ]
+      },
+      ar: {
+        title: '📖 كيفية الاستخدام',
+        sections: [
+          { title: '🎮 عناصر التحكم', content: 'انقر تشغيل لبدء التذبذب. اسحب المنزلقات لتعديل الثابت.' },
+          { title: '📐 الوضع الأساسي', content: 'اضبط ثابت الزنبرك والكتبة والإزاحة. لاحظ كيف يتغير القانون.' },
+          { title: '🔬 الوضع المتقدم', content: 'أضف التخميد، غير الجاذبية، اعرض متجهات القوة.' },
+          { title: '⚖️ وضع المقارنة', content: 'قارن بين زنبركين بقيم مختلفة.' },
+          { title: '📊 الطاقة', content: 'شاهد تحويل الطاقة بين الحركية والكامنة.' }
+        ]
+      }
+    };
+
+    function renderHelp() {
+      const content = helpContent[currentLang];
+      const html = `<h4>${content.title}</h4>` + content.sections.map(s => 
+        `<h4>${s.title}</h4><p>${s.content}</p>`
+      ).join('');
+      document.getElementById('helpContent').innerHTML = html;
+    }
+
+    const state = {
+      level: 1,
+      k: 50,
+      mass: 1.0,
+      gravity: 9.8,
+      damping: 0,
+      displacement: 0.30,
+      velocity: 0,
+      playing: false,
+      time: 0,
+      trail: [],
+      audioContext: null,
+      oscillators: [],
+      compareK: 50,
+      compareMass: 1.0,
+      compareDamping: 0,
+      compareDisplacement: 0.30,
+      compareVelocity: 0,
+      trail2: [],
+      showCompare: true,
+      zoom: 1.0
+    };
+
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function updateDisplays() {
+      document.getElementById('kValue').textContent = state.k.toFixed(0) + ' N/m';
+      document.getElementById('massValue').textContent = state.mass.toFixed(1) + ' kg';
+      document.getElementById('dampingValue').textContent = state.damping + '%';
+      document.getElementById('gravityValue').textContent = state.gravity.toFixed(1) + ' m/s²';
+      document.getElementById('displacementValue').textContent = state.displacement.toFixed(2) + ' m';
+      
+      document.getElementById('k2Value').textContent = state.compareK.toFixed(0) + ' N/m';
+      document.getElementById('mass2Value').textContent = state.compareMass.toFixed(1) + ' kg';
+      document.getElementById('damping2Value').textContent = state.compareDamping + '%';
+      document.getElementById('displacement2Value').textContent = state.compareDisplacement.toFixed(2) + ' m';
+      
+      const period = 2 * Math.PI * Math.sqrt(state.mass / state.k);
+      const freq = 1 / period;
+      const force = state.k * Math.abs(state.displacement);
+      const pe = 0.5 * state.k * state.displacement * state.displacement;
+      const ke = 0.5 * state.mass * state.velocity * state.velocity;
+      const total = pe + ke;
+      
+      document.getElementById('periodDisplay').textContent = period.toFixed(2) + ' s';
+      document.getElementById('freqDisplay').textContent = freq.toFixed(2) + ' Hz';
+      document.getElementById('forceDisplay').textContent = force.toFixed(1) + ' N';
+      document.getElementById('energyDisplay').textContent = total.toFixed(2) + ' J';
+      
+      const period2 = 2 * Math.PI * Math.sqrt(state.compareMass / state.compareK);
+      const freq2 = 1 / period2;
+      document.getElementById('period2Display').textContent = period2.toFixed(2) + ' s';
+      document.getElementById('freq2Display').textContent = freq2.toFixed(2) + ' Hz';
+      
+      document.getElementById('formulaBox').textContent = 
+        `F = -kx = -${state.k.toFixed(0)} × ${state.displacement.toFixed(2)} = ${(-state.k * state.displacement).toFixed(1)} N`;
+      
+      const maxE = Math.max(total, 0.001);
+      const kePercent = (ke / maxE) * 100;
+      const pePercent = (pe / maxE) * 100;
+      
+      document.getElementById('kineticBar').style.width = kePercent + '%';
+      document.getElementById('potentialBar').style.width = pePercent + '%';
+      document.getElementById('kineticVal').textContent = ke.toFixed(2) + ' J';
+      document.getElementById('potentialVal').textContent = pe.toFixed(2) + ' J';
+    }
+
+    function updateLevel() {
+      const level = state.level;
+      
+      document.getElementById('dampingGroup').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('gravityGroup').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('vectorControls').style.display = level >= 2 ? '' : 'none';
+      document.getElementById('compareControls').style.display = level >= 3 ? '' : 'none';
+      
+      document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.level-tab[data-level="${level}"]`).classList.add('active');
+      
+      updateDisplays();
+    }
+
+    function calculate() {
+      const dt = 0.016 * (state.playing ? 1 : 0);
+      
+      const springForce = -state.k * state.displacement;
+      const gravityForce = state.level >= 2 ? state.mass * state.gravity : 0;
+      const dampingForce = -state.damping / 100 * state.velocity;
+      const netForce = springForce + dampingForce + gravityForce;
+      
+      const acceleration = netForce / state.mass;
+      state.velocity += acceleration * dt;
+      state.displacement += state.velocity * dt;
+      state.time += dt;
+      
+      if (state.playing) {
+        state.trail.push({ x: state.displacement, v: state.velocity });
+        if (state.trail.length > 100) state.trail.shift();
+      }
+      
+      if (state.level >= 3 && state.showCompare) {
+        const springForce2 = -state.compareK * state.compareDisplacement;
+        const gravityForce2 = state.compareMass * state.gravity;
+        const dampingForce2 = -state.compareDamping / 100 * state.compareVelocity;
+        const netForce2 = springForce2 + dampingForce2 + gravityForce2;
+        
+        const acceleration2 = netForce2 / state.compareMass;
+        state.compareVelocity += acceleration2 * dt;
+        state.compareDisplacement += state.compareVelocity * dt;
+        
+        state.trail2.push({ x: state.compareDisplacement });
+        if (state.trail2.length > 100) state.trail2.shift();
+      }
+      
+      const speed = Math.abs(state.velocity);
+      if (speed > 0.3 && Math.random() < 0.2) {
+        playBoing(speed / 2);
+      }
+      
+      updateDisplays();
+    }
+
+    function draw() {
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+      
+      const centerX = w / 2 - 100;
+      const anchorY = 40;
+      const baseScale = 280;
+      const scale = baseScale * state.zoom;
+      const padding = 50 * state.zoom;
+      
+      ctx.fillStyle = 'rgba(233, 242, 255, 0.05)';
+      ctx.fillRect(centerX - 60, anchorY, 40, h - 80);
+      
+      const equilibriumY = h / 2;
+      
+      // Calculate visible bounds
+      const maxDisplacement = (h / 2 - padding - 40) / scale;
+      
+      // Clamp displacement for display
+      const clampedDisplacement = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.displacement));
+      const isAtBoundary = Math.abs(state.displacement) > maxDisplacement * 0.9;
+      
+      if (document.getElementById('showEquilibrium')?.checked !== false) {
+        ctx.strokeStyle = isAtBoundary ? 'rgba(255, 71, 87, 0.6)' : 'rgba(255, 255, 255, 0.2)';
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(20, equilibriumY);
+        ctx.lineTo(w - 20, equilibriumY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        ctx.fillStyle = isAtBoundary ? 'rgba(255, 71, 87, 0.6)' : 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '11px Space Grotesk';
+        ctx.fillText('Equilibrium', w - 90, equilibriumY - 8);
+        
+        // Draw boundary warnings
+        if (isAtBoundary) {
+          ctx.fillStyle = 'rgba(255, 71, 87, 0.5)';
+          ctx.font = 'bold 12px Space Grotesk';
+          const warnY = state.displacement > 0 ? h - 30 : 25;
+          ctx.textAlign = 'center';
+          ctx.fillText('⚠ Zoom out to see full motion', w / 2 - 100, warnY);
+          ctx.textAlign = 'left';
+        }
+      }
+      
+      const massY = equilibriumY + clampedDisplacement * scale;
+      const massSize = (30 + state.mass * 8) * state.zoom;
+      
+      drawSpring(ctx, centerX - 20, anchorY, centerX - 20, massY - massSize / 2, state.displacement < 0);
+      
+      const gradient = ctx.createRadialGradient(
+        centerX - 5, massY - massSize / 3, 0,
+        centerX, massY, massSize
+      );
+      gradient.addColorStop(0, '#ffffff');
+      gradient.addColorStop(0.3, '#ff6b6b');
+      gradient.addColorStop(1, '#aa3333');
+      
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(centerX, massY, massSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.shadowColor = '#ff6b6b';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(centerX, massY, massSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 107, 107, 0.3)';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      if (document.getElementById('showVectors')?.checked !== false && state.level >= 2) {
+        // Use actual displacement for force calculation, not clamped
+        const forceMag = state.k * Math.abs(state.displacement);
+        const forceLen = Math.min(forceMag * 3 * state.zoom, 80 * state.zoom);
+        const dir = clampedDisplacement > 0 ? -1 : 1;
+        
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.9)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(centerX + massSize / 2 + 10, massY);
+        ctx.lineTo(centerX + massSize / 2 + 10 + forceLen * dir, massY);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(centerX + massSize / 2 + 10 + forceLen * dir, massY);
+        ctx.lineTo(centerX + massSize / 2 + 10 + forceLen * dir - 10 * state.zoom * dir, massY - 6 * state.zoom);
+        ctx.lineTo(centerX + massSize / 2 + 10 + forceLen * dir - 10 * state.zoom * dir, massY + 6 * state.zoom);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+        ctx.fill();
+        
+        ctx.fillStyle = '#00d4ff';
+        ctx.font = `bold ${12 * state.zoom}px Space Grotesk`;
+        ctx.fillText('F = ' + forceMag.toFixed(1) + 'N', centerX + massSize / 2 + 20, massY - 15 * state.zoom);
+      }
+      
+      if (document.getElementById('showTrail')?.checked !== false && state.trail.length > 1) {
+        ctx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < state.trail.length; i++) {
+          const t = state.trail[i];
+          const clampedX = Math.max(-maxDisplacement, Math.min(maxDisplacement, t.x));
+          const ty = equilibriumY + clampedX * scale;
+          if (i === 0) ctx.moveTo(centerX + 60 + i, ty);
+          else ctx.lineTo(centerX + 60 + i * 1.5, ty);
+        }
+        ctx.stroke();
+      }
+      
+      if (state.level >= 3 && state.showCompare) {
+        const centerX2 = w / 2 + 120;
+        const clampedDisplacement2 = Math.max(-maxDisplacement, Math.min(maxDisplacement, state.compareDisplacement));
+        const massY2 = equilibriumY + clampedDisplacement2 * scale;
+        const massSize2 = (30 + state.compareMass * 8) * state.zoom;
+        
+        drawSpring(ctx, centerX2 - 20, anchorY, centerX2 - 20, massY2 - massSize2 / 2, state.compareDisplacement < 0, '#ffd93d');
+        
+        const gradient2 = ctx.createRadialGradient(
+          centerX2 - 5, massY2 - massSize2 / 3, 0,
+          centerX2, massY2, massSize2
+        );
+        gradient2.addColorStop(0, '#ffffff');
+        gradient2.addColorStop(0.3, '#ffd93d');
+        gradient2.addColorStop(1, '#aa8833');
+        
+        ctx.fillStyle = gradient2;
+        ctx.beginPath();
+        ctx.arc(centerX2, massY2, massSize2 / 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowColor = '#ffd93d';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(centerX2, massY2, massSize2 / 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 217, 61, 0.3)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.fillStyle = '#ffd93d';
+        ctx.font = 'bold 11px Space Grotesk';
+        ctx.fillText('k₂=' + state.compareK + ' N/m', centerX2 - 35, h - 30);
+        ctx.fillText('m₂=' + state.compareMass.toFixed(1) + 'kg', centerX2 - 30, h - 15);
+      }
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = `${12 * state.zoom}px Space Grotesk`;
+      ctx.textAlign = 'left';
+      ctx.fillText('k=' + state.k + ' N/m', centerX - 50 * state.zoom, h - 30);
+      ctx.fillText('m=' + state.mass.toFixed(1) + ' kg', centerX - 40 * state.zoom, h - 15);
+      
+      // Draw zoom indicator
+      ctx.fillStyle = 'rgba(0, 212, 255, 0.7)';
+      ctx.font = 'bold 11px Space Grotesk';
+      ctx.textAlign = 'right';
+      ctx.fillText('🔍 ' + state.zoom.toFixed(1) + 'x', w - 20, 25);
+      ctx.textAlign = 'left';
+      
+      calculate();
+      requestAnimationFrame(draw);
+    }
+
+    function drawSpring(ctx, x1, y1, y2, y3, compressed = false, color = '#7cffe7') {
+      const coils = 10;
+      const amplitude = 12 * state.zoom;
+      const length = y3 - y1 - 20;
+      const seg = length / coils;
+      
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3 * state.zoom;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      
+      for (let i = 0; i < coils; i++) {
+        const yOffset = i % 2 === 0 ? -amplitude : amplitude;
+        ctx.lineTo(x1 + (i % 2 === 0 ? amplitude : -amplitude), y1 + seg * (i + 0.5));
+        ctx.lineTo(x1, y1 + seg * (i + 1));
+      }
+      ctx.stroke();
+    }
+
+    function playBoing(intensity) {
+      if (!state.audioContext) {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      const osc = state.audioContext.createOscillator();
+      const gain = state.audioContext.createGain();
+      
+      osc.connect(gain);
+      gain.connect(state.audioContext.destination);
+      
+      osc.frequency.setValueAtTime(200 + intensity * 100, state.audioContext.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, state.audioContext.currentTime + 0.15);
+      
+      gain.gain.setValueAtTime(0.05, state.audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, state.audioContext.currentTime + 0.15);
+      
+      osc.start();
+      osc.stop(state.audioContext.currentTime + 0.15);
+    }
+
+    document.getElementById('kSlider').addEventListener('input', (e) => {
+      state.k = parseFloat(e.target.value);
+      state.velocity = 0;
+      state.trail = [];
+      updateDisplays();
+    });
+
+    document.getElementById('massSlider').addEventListener('input', (e) => {
+      state.mass = parseFloat(e.target.value);
+      state.velocity = 0;
+      state.trail = [];
+      updateDisplays();
+    });
+
+    document.getElementById('dampingSlider').addEventListener('input', (e) => {
+      state.damping = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('gravitySlider').addEventListener('input', (e) => {
+      state.gravity = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('displacementSlider').addEventListener('input', (e) => {
+      state.displacement = parseFloat(e.target.value);
+      state.velocity = 0;
+      state.trail = [];
+      updateDisplays();
+    });
+
+    document.getElementById('zoomSlider').addEventListener('input', (e) => {
+      state.zoom = parseFloat(e.target.value);
+      document.getElementById('zoomValue').textContent = state.zoom.toFixed(1) + 'x';
+    });
+
+    document.getElementById('autoZoom').addEventListener('click', () => {
+      const h = canvas.offsetHeight;
+      const padding = 50;
+      const maxMass = Math.max(state.mass, state.compareMass);
+      const massSize = 30 + maxMass * 8;
+      const availableSpace = h / 2 - padding - 40 - massSize / 2;
+      const maxDisplacement = 0.5;
+      const neededZoom = Math.min(1, availableSpace / (maxDisplacement * 280));
+      state.zoom = Math.max(0.3, neededZoom);
+      document.getElementById('zoomSlider').value = state.zoom;
+      document.getElementById('zoomValue').textContent = state.zoom.toFixed(1) + 'x';
+    });
+
+    document.getElementById('k2Slider').addEventListener('input', (e) => {
+      state.compareK = parseFloat(e.target.value);
+      state.compareVelocity = 0;
+      state.trail2 = [];
+      updateDisplays();
+    });
+
+    document.getElementById('mass2Slider').addEventListener('input', (e) => {
+      state.compareMass = parseFloat(e.target.value);
+      state.compareVelocity = 0;
+      state.trail2 = [];
+      updateDisplays();
+    });
+
+    document.getElementById('damping2Slider').addEventListener('input', (e) => {
+      state.compareDamping = parseFloat(e.target.value);
+      updateDisplays();
+    });
+
+    document.getElementById('displacement2Slider').addEventListener('input', (e) => {
+      state.compareDisplacement = parseFloat(e.target.value);
+      state.compareVelocity = 0;
+      state.trail2 = [];
+      updateDisplays();
+    });
+
+    document.getElementById('showCompare').addEventListener('change', (e) => {
+      state.showCompare = e.target.checked;
+    });
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.gravity = parseFloat(btn.dataset.g);
+        document.getElementById('gravitySlider').value = state.gravity;
+        updateDisplays();
+      });
+    });
+
+    document.getElementById('playBtn').addEventListener('click', () => {
+      state.playing = true;
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      state.playing = false;
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.playing = false;
+      state.velocity = 0;
+      state.time = 0;
+      state.trail = [];
+      state.trail2 = [];
+      state.compareVelocity = 0;
+      state.displacement = parseFloat(document.getElementById('displacementSlider').value);
+      state.compareDisplacement = parseFloat(document.getElementById('displacement2Slider').value);
+      updateDisplays();
+    });
+
+    document.querySelectorAll('.level-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        state.level = parseInt(tab.dataset.level);
+        updateLevel();
+      });
+    });
+
+    let dragging = false;
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      const centerX = w / 2 - 100;
+      const equilibriumY = h / 2;
+      const massY = equilibriumY + state.displacement * 280;
+      const massSize = 30 + state.mass * 8;
+      
+      const dist = Math.sqrt((mx - centerX) ** 2 + (my - massY) ** 2);
+      if (dist < massSize) {
+        dragging = true;
+        state.playing = false;
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (dragging) {
+        const rect = canvas.getBoundingClientRect();
+        const my = e.clientY - rect.top;
+        const h = canvas.offsetHeight;
+        const equilibriumY = h / 2;
+        const scale = 280;
+        
+        state.displacement = Math.max(-0.5, Math.min(0.5, (my - equilibriumY) / scale));
+        state.velocity = 0;
+        updateDisplays();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      dragging = false;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      dragging = false;
+    });
+
+    renderHelp();
+    updateLevel();
+    draw();
+
+    document.getElementById('helpToggle').addEventListener('click', () => {
+      const panel = document.getElementById('helpPanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+      currentLang = currentLang === 'en' ? 'ar' : 'en';
+      document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+      renderHelp();
+    });
+
+    document.querySelectorAll('.help-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.help-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentLang = tab.dataset.lang;
+        document.getElementById('langToggle').textContent = currentLang === 'en' ? 'English' : 'العربية';
+        renderHelp();
+      });
+    });
+  </script>
+</body>
+</html>
