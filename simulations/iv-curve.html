@@ -6,15 +6,15 @@
   <title>I-V Characteristics</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/simulation-theme.css" />
   <style>
     :root {
-      color-scheme: dark;
       --bg: #0a111c;
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
+      --accent-3: #a78bfa;
       --sim-text: #e9f2ff;
       --sim-muted: #9fb0c5;
       --glass: rgba(12, 20, 34, 0.75);
@@ -22,6 +22,8 @@
       --glass-border: rgba(106, 215, 255, 0.2);
       --glass-glow: rgba(106, 215, 255, 0.16);
       --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
+      --hot: #ff6b6b;
+      --cold: #6bffea;
     }
 
     * { box-sizing: border-box; }
@@ -35,30 +37,43 @@
       color: var(--sim-text);
       font-family: "IBM Plex Sans", sans-serif;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     .page {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 28px clamp(16px, 4vw, 36px) 40px;
+      padding: 24px clamp(16px, 3vw, 36px) 40px;
     }
 
     .topbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 0 18px;
+      padding: 12px 0 16px;
     }
 
     .topbar a {
       color: var(--sim-text);
       text-decoration: none;
       font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
     }
 
-    .toggle {
+    .topbar a:hover { color: var(--accent); }
+
+    .topbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-mode {
       display: inline-flex;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
       padding: 8px 14px;
       border: 1px solid var(--glass-border);
@@ -66,85 +81,111 @@
       background: rgba(14, 20, 32, 0.8);
       cursor: pointer;
       color: var(--sim-text);
+      font-size: 12px;
+      font-weight: 500;
     }
 
     header.hero {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      gap: 20px;
-      padding: 8px 0 18px;
+      gap: 24px;
+      padding: 12px 0 24px;
+      border-bottom: 1px solid rgba(106, 215, 255, 0.1);
+      margin-bottom: 24px;
     }
 
-    .hero-title {
-      max-width: 720px;
-    }
+    .hero-title { max-width: 680px; }
 
     .hero-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 999px;
       border: 1px solid rgba(106, 215, 255, 0.3);
-      background: rgba(106, 215, 255, 0.12);
+      background: rgba(106, 215, 255, 0.1);
       color: var(--accent);
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.15em;
       font-weight: 600;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     header.hero h1 {
-      letter-spacing: 0.06em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      font-size: clamp(1.7rem, 2.6vw, 2.6rem);
+      font-size: clamp(1.6rem, 2.4vw, 2.4rem);
       margin: 0 0 10px;
       font-family: "Space Grotesk", sans-serif;
+      background: linear-gradient(135deg, var(--sim-text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     header.hero p {
       color: var(--sim-muted);
       margin: 0;
+      font-size: 15px;
+      line-height: 1.5;
     }
 
     .hero-actions {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      justify-content: flex-end;
     }
 
     .btn {
       background: rgba(12, 18, 28, 0.85);
       color: var(--sim-text);
       border: 1px solid var(--glass-border);
-      padding: 10px 14px;
+      padding: 10px 16px;
       border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
-      transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .btn:hover { transform: translateY(-1px); border-color: rgba(106, 215, 255, 0.45); }
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(106, 215, 255, 0.5);
+      box-shadow: 0 8px 20px rgba(106, 215, 255, 0.15);
+    }
 
     .btn.primary {
-      background: linear-gradient(135deg, #6ad7ff, #00d4aa);
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
       color: #0a0f16;
       border: none;
       box-shadow: 0 8px 24px rgba(106, 215, 255, 0.35);
     }
 
+    .btn.primary:hover {
+      box-shadow: 0 12px 32px rgba(106, 215, 255, 0.45);
+    }
+
     .btn.ghost {
-      background: rgba(106, 215, 255, 0.1);
+      background: rgba(106, 215, 255, 0.08);
+      color: var(--accent);
+      border-color: rgba(106, 215, 255, 0.25);
+    }
+
+    .btn.active {
+      background: rgba(106, 215, 255, 0.2);
+      border-color: var(--accent);
       color: var(--accent);
     }
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-      gap: 20px;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
     }
 
     .panel {
@@ -152,7 +193,7 @@
       border: 1px solid var(--glass-border);
       border-radius: 18px;
       box-shadow: var(--shadow);
-      padding: 18px;
+      padding: 20px;
       backdrop-filter: blur(10px);
       position: relative;
       overflow: hidden;
@@ -162,384 +203,698 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle at 10% 10%, var(--glass-glow), transparent 45%);
+      background: radial-gradient(circle at 8% 8%, var(--glass-glow), transparent 50%);
       pointer-events: none;
     }
 
-    .graph-wrap {
-      display: grid;
-      gap: 12px;
+    .graph-container {
+      position: relative;
     }
 
     canvas {
       width: 100%;
-      height: 420px;
-      background: rgba(6, 10, 18, 0.7);
-      border-radius: 16px;
+      height: 480px;
+      background: rgba(6, 10, 18, 0.8);
+      border-radius: 14px;
       border: 1px solid var(--glass-border);
+      display: block;
+    }
+
+    .graph-tooltip {
+      position: absolute;
+      background: rgba(10, 18, 30, 0.95);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .graph-tooltip .tt-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .graph-tooltip .tt-label {
+      color: var(--sim-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .graph-tooltip .tt-value {
+      color: var(--accent);
+      font-weight: 600;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    .graph-tooltip .tt-power {
+      color: var(--hot);
+      font-weight: 600;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255,255,255,0.1);
     }
 
     .legend {
       display: flex;
-      gap: 14px;
+      gap: 16px;
       flex-wrap: wrap;
+      margin-top: 14px;
       color: var(--sim-muted);
-      font-size: 0.85rem;
+      font-size: 13px;
     }
 
-    .legend span {
+    .legend-item {
       display: inline-flex;
       align-items: center;
       gap: 8px;
     }
 
-    .dot {
-      width: 10px;
-      height: 10px;
+    .legend-dot {
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(106, 215, 255, 0.45);
+      box-shadow: 0 0 12px currentColor;
     }
 
-    .controls {
-      display: grid;
-      gap: 14px;
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
     }
 
-    .control-group {
-      display: grid;
-      gap: 8px;
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-section {
       background: var(--glass-strong);
       border: 1px solid var(--glass-border);
       border-radius: 14px;
-      padding: 12px;
+      padding: 16px;
     }
 
-    label {
-      font-size: 0.9rem;
-      color: var(--sim-muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .value-chip {
-      background: rgba(106, 215, 255, 0.12);
-      border: 1px solid rgba(106, 215, 255, 0.25);
-      color: var(--accent);
-      padding: 2px 8px;
-      border-radius: 999px;
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent-2);
+      margin-bottom: 14px;
       font-weight: 600;
-      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    input[type="range"], select {
-      width: 100%;
+    .section-title::before {
+      content: "";
+      width: 3px;
+      height: 12px;
+      background: var(--accent-2);
+      border-radius: 2px;
     }
 
-    .row {
+    .device-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
 
-    .readout {
+    .device-btn {
+      background: rgba(9, 14, 22, 0.8);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+
+    .device-btn:hover {
+      border-color: rgba(106, 215, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .device-btn.active {
+      border-color: var(--accent);
+      background: rgba(106, 215, 255, 0.12);
+    }
+
+    .device-btn .icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .device-btn .label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sim-text);
+    }
+
+    .device-btn.active .label { color: var(--accent); }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-group:last-child { margin-bottom: 0; }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .slider-label {
+      font-size: 12px;
+      color: var(--sim-muted);
+    }
+
+    .slider-value {
+      background: rgba(106, 215, 255, 0.12);
+      border: 1px solid rgba(106, 215, 255, 0.25);
+      color: var(--accent);
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 11px;
+      font-family: "Space Grotesk", sans-serif;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(106, 215, 255, 0.4);
+      transition: transform 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(106, 215, 255, 0.4);
+    }
+
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--sim-muted);
+      cursor: pointer;
+    }
+
+    .checkbox-item input {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+    }
+
+    .checkbox-item:hover { color: var(--sim-text); }
+
+    .readout-grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
 
     .read-card {
-      background: var(--glass-strong);
+      background: rgba(9, 14, 22, 0.8);
       border: 1px solid var(--glass-border);
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.85rem;
+      border-radius: 10px;
+      padding: 12px;
     }
 
-    .read-card span {
+    .read-card.wide { grid-column: span 2; }
+
+    .read-card .label {
       display: block;
-      color: var(--sim-muted);
-      font-size: 0.7rem;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
+      color: var(--sim-muted);
       margin-bottom: 6px;
     }
 
-    .read-card strong {
+    .read-card .value {
       display: block;
-      font-size: 1rem;
+      font-size: 18px;
+      font-weight: 600;
       font-family: "Space Grotesk", sans-serif;
     }
 
-    .device-select {
-      display: grid;
-      gap: 8px;
+    .read-card .value.accent { color: var(--accent); }
+    .read-card .value.hot { color: var(--hot); }
+    .read-card .value.warm { color: var(--accent-2); }
+
+    .formula-card {
+      background: rgba(10, 18, 30, 0.9);
+      border: 1px solid rgba(246, 199, 107, 0.2);
+      border-radius: 12px;
+      padding: 14px;
     }
 
-    .device-select select {
+    .formula-card h4 {
+      margin: 0 0 10px;
+      font-size: 11px;
+      color: var(--accent-2);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .formula {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--sim-text);
+      line-height: 1.7;
+    }
+
+    .formula .var { color: var(--accent); }
+    .formula .num { color: var(--accent-2); }
+    .formula .comment { color: var(--sim-muted); font-size: 11px; }
+
+    .circuit-card {
       background: rgba(9, 14, 22, 0.8);
       border: 1px solid var(--glass-border);
-      color: var(--sim-text);
-      padding: 8px 10px;
-      border-radius: 10px;
-    }
-
-    .toggle-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .hint {
-      background: rgba(8, 14, 22, 0.75);
-      border: 1px solid var(--glass-border);
       border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 0.85rem;
-      color: var(--sim-muted);
+      padding: 14px;
     }
 
-    .hint strong {
+    .circuit-card h4 {
+      margin: 0 0 12px;
+      font-size: 11px;
       color: var(--accent);
-      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
     }
 
-    .circuit-panel {
-      display: grid;
-      gap: 10px;
-    }
-
-    .circuit-panel svg {
+    .circuit-svg {
       width: 100%;
-      height: 160px;
-      background: rgba(6, 10, 18, 0.7);
-      border-radius: 14px;
-      border: 1px solid var(--glass-border);
+      height: 140px;
     }
 
-    .switch {
-      display: inline-flex;
+    .sweep-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .sweep-bar input[type="range"] { flex: 1; }
+
+    .sweep-bar button {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+
+    .temp-display {
+      display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 0.85rem;
-      color: var(--sim-muted);
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
     }
 
-    @media (max-width: 1024px) {
-      header.hero {
-        flex-direction: column;
-        align-items: flex-start;
-      }
+    .temp-display .thermometer {
+      font-size: 18px;
+    }
 
-      .hero-actions {
-        justify-content: flex-start;
-      }
+    .temp-display .temp-value {
+      font-family: "Space Grotesk", sans-serif;
+      font-weight: 600;
+      font-size: 16px;
+    }
 
-      .layout {
-        grid-template-columns: 1fr;
-      }
+    .region-label {
+      position: absolute;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--sim-muted);
+      pointer-events: none;
+    }
 
-      canvas {
-        height: 360px;
-      }
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      header.hero { flex-direction: column; }
+      .hero-actions { justify-content: flex-start; }
+      canvas { height: 380px; }
     }
   </style>
 </head>
 <body>
-  <div class="page" id="iv-curve">
+  <div class="page">
     <div class="topbar">
       <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+      <div class="topbar-actions">
+        <button class="toggle-mode" id="themeToggle">🌙</button>
+      </div>
     </div>
 
     <header class="hero">
       <div class="hero-title">
-        <div class="hero-badge">Precision Lab</div>
+        <div class="hero-badge">⚡ Interactive Lab</div>
         <h1>I-V Characteristics</h1>
-        <p>Explore resistor, diode, LED, and Zener curves with load line and operating point.</p>
+        <p>Explore current-voltage curves for resistors, diodes, LEDs, and Zener diodes. Visualize operating points, load lines, and temperature effects in real-time.</p>
       </div>
       <div class="hero-actions">
-        <button class="btn primary" id="toggleAnim">Pause</button>
-        <button class="btn ghost" id="toggleCompare">Compare Mode</button>
+        <button class="btn" id="resetBtn">↺ Reset</button>
+        <button class="btn" id="sweepBtn">〰️ Sweep Voltage</button>
+        <button class="btn primary" id="compareBtn">Compare Devices</button>
       </div>
     </header>
 
     <section class="layout">
-      <div class="panel graph-wrap">
-        <canvas id="ivCanvas" width="960" height="520" aria-label="Current voltage characteristic graph"></canvas>
+      <div class="panel graph-container">
+        <canvas id="ivCanvas"></canvas>
+        <div class="graph-tooltip" id="tooltip">
+          <div class="tt-row">
+            <span class="tt-label">Voltage</span>
+            <span class="tt-value" id="ttV">0.00 V</span>
+          </div>
+          <div class="tt-row">
+            <span class="tt-label">Current</span>
+            <span class="tt-value" id="ttI">0.00 A</span>
+          </div>
+          <div class="tt-power">
+            Power: <span id="ttP">0.00 W</span>
+          </div>
+        </div>
         <div class="legend" id="legend"></div>
       </div>
 
-      <div class="panel controls" aria-label="Control panel">
-        <div class="control-group">
-          <label>Device A <span class="value-chip" id="deviceALabel">Resistor</span></label>
-          <div class="device-select">
-            <select id="deviceA">
-              <option value="resistor">Resistor</option>
-              <option value="diode">Diode</option>
-              <option value="led">LED</option>
-              <option value="zener">Zener</option>
-            </select>
+      <div class="panel controls-panel">
+        <div class="control-section">
+          <div class="section-title">Device Selection</div>
+          <div class="device-grid">
+            <div class="device-btn active" data-device="resistor">
+              <div class="icon">⚡</div>
+              <div class="label">Resistor</div>
+            </div>
+            <div class="device-btn" data-device="diode">
+              <div class="icon">◉</div>
+              <div class="label">Diode</div>
+            </div>
+            <div class="device-btn" data-device="led">
+              <div class="icon">💡</div>
+              <div class="label">LED</div>
+            </div>
+            <div class="device-btn" data-device="zener">
+              <div class="icon">⚡</div>
+              <div class="label">Zener</div>
+            </div>
           </div>
         </div>
 
-        <div class="control-group" id="deviceBGroup">
-          <label>Device B <span class="value-chip" id="deviceBLabel">Diode</span></label>
-          <div class="device-select">
-            <select id="deviceB">
-              <option value="resistor">Resistor</option>
-              <option value="diode" selected>Diode</option>
-              <option value="led">LED</option>
-              <option value="zener">Zener</option>
-            </select>
+        <div class="control-section" id="compareSection" style="display: none;">
+          <div class="section-title">Device B (Compare)</div>
+          <div class="device-grid" id="deviceBGrid">
+            <div class="device-btn" data-device-b="diode">
+              <div class="icon">◉</div>
+              <div class="label">Diode</div>
+            </div>
+            <div class="device-btn" data-device-b="led">
+              <div class="icon">💡</div>
+              <div class="label">LED</div>
+            </div>
+            <div class="device-btn" data-device-b="zener">
+              <div class="icon">⚡</div>
+              <div class="label">Zener</div>
+            </div>
+            <div class="device-btn" data-device-b="resistor">
+              <div class="icon">⚡</div>
+              <div class="label">Resistor</div>
+            </div>
           </div>
         </div>
 
-        <div class="control-group">
-          <label for="vMax">Voltage Range ±V <span class="value-chip" id="vMaxLabel">5.0 V</span></label>
-          <input type="range" id="vMax" min="1" max="20" step="0.5" value="5" />
-        </div>
-
-        <div class="control-group">
-          <label for="supplyV">Supply Voltage Vs <span class="value-chip" id="supplyLabel">5.0 V</span></label>
-          <input type="range" id="supplyV" min="-10" max="10" step="0.1" value="5" />
-        </div>
-
-        <div class="control-group">
-          <label for="operating">Operating Voltage <span class="value-chip" id="operatingLabel">2.0 V</span></label>
-          <input type="range" id="operating" min="-5" max="5" step="0.1" value="2" />
-        </div>
-
-        <div class="row">
-          <div class="control-group">
-            <label for="seriesR">Series Resistance <span class="value-chip" id="seriesLabel">50 Ω</span></label>
-            <input type="range" id="seriesR" min="0" max="1000" step="10" value="50" />
+        <div class="control-section">
+          <div class="section-title">Voltage Source</div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Supply Voltage (Vs)</span>
+              <span class="slider-value" id="vsVal">5.0 V</span>
+            </div>
+            <input type="range" id="vsSlider" min="0" max="10" step="0.1" value="5">
           </div>
-          <div class="control-group">
-            <label for="temp">Temperature <span class="value-chip" id="tempLabel">25 °C</span></label>
-            <input type="range" id="temp" min="-20" max="120" step="5" value="25" />
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Operating Point (Vop)</span>
+              <span class="slider-value" id="vopVal">2.0 V</span>
+            </div>
+            <input type="range" id="vopSlider" min="0" max="5" step="0.05" value="2">
           </div>
         </div>
 
-        <div class="control-group">
-          <div class="toggle-row">
-            <label class="switch"><input type="checkbox" id="showLoad" checked /> Show load line</label>
-            <label class="switch"><input type="checkbox" id="showTangent" checked /> Show tangent</label>
+        <div class="control-section">
+          <div class="section-title">Circuit Parameters</div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Series Resistance (Rs)</span>
+              <span class="slider-value" id="rsVal">100 Ω</span>
+            </div>
+            <input type="range" id="rsSlider" min="10" max="1000" step="10" value="100">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Voltage Range (±Vmax)</span>
+              <span class="slider-value" id="vmaxVal">5.0 V</span>
+            </div>
+            <input type="range" id="vmaxSlider" min="2" max="15" step="0.5" value="5">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Temperature</span>
+              <span class="slider-value" id="tempVal">25°C</span>
+            </div>
+            <input type="range" id="tempSlider" min="-20" max="100" step="5" value="25">
+          </div>
+          <div class="temp-display">
+            <span class="thermometer">🌡️</span>
+            <span class="temp-value" id="tempDisplay" style="color: var(--cold);">25°C</span>
+            <span style="color: var(--sim-muted); font-size: 11px;">(affects diode behavior)</span>
           </div>
         </div>
 
-        <div class="hint">
-          <strong>Quick start:</strong> Set Device A to Diode, turn on Compare, then sweep Vs to see the operating point move along the curve.
+        <div class="control-section">
+          <div class="section-title">Display Options</div>
+          <div class="checkbox-row">
+            <label class="checkbox-item">
+              <input type="checkbox" id="showLoadLine" checked>
+              Load Line
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="showTangent" checked>
+              Tangent
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="showRegions" checked>
+              Regions
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="showFlow" checked>
+              Current Flow
+            </label>
+          </div>
         </div>
 
-        <div class="readout">
-          <div class="read-card"><span>Device A I</span><strong id="readIA">0.00 A</strong></div>
-          <div class="read-card"><span>Device A P</span><strong id="readPA">0.00 W</strong></div>
-          <div class="read-card"><span>Device B I</span><strong id="readIB">0.00 A</strong></div>
-          <div class="read-card"><span>Device B P</span><strong id="readPB">0.00 W</strong></div>
-          <div class="read-card"><span>R diff (A)</span><strong id="readRA">—</strong></div>
-          <div class="read-card"><span>R diff (B)</span><strong id="readRB">—</strong></div>
+        <div class="control-section">
+          <div class="section-title">Live Measurements</div>
+          <div class="readout-grid">
+            <div class="read-card">
+              <span class="label">Current (I)</span>
+              <span class="value accent" id="readI">0.000 A</span>
+            </div>
+            <div class="read-card">
+              <span class="label">Power (P)</span>
+              <span class="value hot" id="readP">0.000 W</span>
+            </div>
+            <div class="read-card">
+              <span class="label">Device Resistance</span>
+              <span class="value" id="readRd">-- Ω</span>
+            </div>
+            <div class="read-card">
+              <span class="label">Dynamic Res.</span>
+              <span class="value warm" id="readRdyn">-- Ω</span>
+            </div>
+            <div class="read-card wide" id="readCardB" style="display: none;">
+              <span class="label">Device B (I / P)</span>
+              <span class="value" id="readIB">-- A / -- W</span>
+            </div>
+          </div>
         </div>
 
-        <div class="control-group circuit-panel">
-          <label>Load Line Circuit <span class="value-chip" id="circuitLabel">Vs & Rs</span></label>
-          <svg viewBox="0 0 360 160" aria-label="Series resistor with device">
+        <div class="formula-card">
+          <h4>Device Equation</h4>
+          <div class="formula" id="formulaDisplay">
+            <span class="comment">// Ohm's Law</span><br>
+            <span class="var">I</span> = <span class="var">V</span> / <span class="num">R</span>
+          </div>
+        </div>
+
+        <div class="circuit-card">
+          <h4>Circuit Diagram</h4>
+          <svg class="circuit-svg" viewBox="0 0 320 140" id="circuitSvg">
             <defs>
-              <linearGradient id="wireGlow" x1="0" x2="1">
-                <stop offset="0%" stop-color="#6ad7ff" stop-opacity="0.6"/>
-                <stop offset="100%" stop-color="#6ad7ff" stop-opacity="0.1"/>
+              <linearGradient id="wireGrad" x1="0" x2="1">
+                <stop offset="0%" stop-color="#6ad7ff" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#6ad7ff" stop-opacity="0.2"/>
+              </linearGradient>
+              <linearGradient id="resGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f6c76b"/>
+                <stop offset="50%" stop-color="#d4a53b"/>
+                <stop offset="100%" stop-color="#f6c76b"/>
               </linearGradient>
             </defs>
-            <rect x="14" y="16" width="332" height="128" rx="16" fill="rgba(8,12,18,0.6)" stroke="rgba(106,215,255,0.3)" />
-            <line x1="40" y1="80" x2="120" y2="80" stroke="url(#wireGlow)" stroke-width="4" />
-            <polyline points="120,80 135,62 150,98 165,62 180,98 195,62 210,80" fill="none" stroke="#6ad7ff" stroke-width="3" />
-            <line x1="210" y1="80" x2="260" y2="80" stroke="url(#wireGlow)" stroke-width="4" />
-            <circle cx="300" cy="80" r="18" fill="rgba(246,199,107,0.2)" stroke="#f6c76b" stroke-width="2" />
-            <text x="296" y="85" font-size="12" fill="#e9f2ff">D</text>
-            <text x="130" y="48" font-size="12" fill="#9fb0c5">R = <tspan id="circuitR">50Ω</tspan></text>
-            <text x="40" y="48" font-size="12" fill="#9fb0c5">Vs = <tspan id="circuitV">5.0V</tspan></text>
+            <rect x="4" y="4" width="312" height="132" rx="12" fill="rgba(8,12,18,0.6)" stroke="rgba(106,215,255,0.2)" />
+            <path d="M 30 70 L 100 70" stroke="url(#wireGrad)" stroke-width="3" fill="none" />
+            <path d="M 140 70 L 220 70" stroke="url(#wireGrad)" stroke-width="3" fill="none" />
+            <path d="M 260 70 L 290 70" stroke="url(#wireGrad)" stroke-width="3" fill="none" />
+            <path d="M 30 30 L 30 70" stroke="url(#wireGrad)" stroke-width="3" fill="none" />
+            <path d="M 30 70 L 30 110 L 290 110 L 290 70" stroke="url(#wireGrad)" stroke-width="3" fill="none" />
+            <rect x="100" y="45" width="40" height="50" rx="4" fill="url(#resGrad)" />
+            <text x="120" y="105" text-anchor="middle" fill="#9fb0c5" font-size="11">Rs</text>
+            <text x="120" y="60" text-anchor="middle" fill="#f6c76b" font-size="12" font-weight="bold" id="circuitRs">100Ω</text>
+            <circle cx="260" cy="70" r="22" fill="rgba(246,199,107,0.15)" stroke="#f6c76b" stroke-width="2" />
+            <text x="260" cy="75" text-anchor="middle" fill="#e9f2ff" font-size="14" font-weight="bold">D</text>
+            <text x="40" y="25" fill="#6ad7ff" font-size="12" font-weight="bold" id="circuitVs">+5.0V</text>
+            <text x="40" y="125" fill="#ff6b6b" font-size="12">0V</text>
+            <g id="electronFlow" opacity="0.8">
+              <circle r="4" fill="#fff">
+                <animateMotion dur="1s" repeatCount="indefinite">
+                  <mpath href="#flowPath"/>
+                </animateMotion>
+              </circle>
+            </g>
+            <path id="flowPath" d="M 30 30 L 30 70 L 100 70 L 140 70 L 220 70 L 260 70 L 290 70 L 290 110 L 30 110 L 30 70" fill="none" stroke="none"/>
           </svg>
+          <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+            <span style="color: var(--accent); font-size: 12px;">Vd = <span id="circuitVd">2.0V</span></span>
+            <span style="color: var(--hot); font-size: 12px;">P = <span id="circuitP">0.00W</span></span>
+          </div>
         </div>
       </div>
     </section>
   </div>
 
   <script>
+    // ============ STATE ============
+    const state = {
+      deviceA: 'resistor',
+      deviceB: 'diode',
+      compare: false,
+      vs: 5,
+      vop: 2,
+      rs: 100,
+      tempC: 25,
+      vmax: 5,
+      showLoadLine: true,
+      showTangent: true,
+      showRegions: true,
+      showFlow: true,
+      sweeping: false,
+      sweepDir: 1
+    };
+
+    const deviceInfo = {
+      resistor: { 
+        color: '#6ad7ff', 
+        label: 'Resistor',
+        icon: '⚡',
+        formula: '<span class="comment">// Ohm\'s Law</span><br><span class="var">I</span> = <span class="var">V</span> / <span class="num">R</span>',
+        threshold: 0
+      },
+      diode: { 
+        color: '#f6c76b', 
+        label: 'Diode',
+        icon: '◉',
+        formula: '<span class="comment">// Shockley Equation</span><br><span class="var">I</span> = <span class="num">Is</span>(e<sup><span class="var">V</span>/<span class="num">nVt</span></sup> - 1)<br><span class="comment">// Vt = kT/q ≈ 26mV at 25°C</span>',
+        threshold: 0.6
+      },
+      led: { 
+        color: '#ff7fbf', 
+        label: 'LED',
+        icon: '💡',
+        formula: '<span class="comment">// LED (with threshold)</span><br><span class="var">I</span> = <span class="num">Is</span>(e<sup><span class="var">V-Vth</span>/<span class="num">nVt</span></sup> - 1)<br><span class="comment">// Vth ≈ 1.8V (red LED)</span>',
+        threshold: 1.8
+      },
+      zener: { 
+        color: '#7bd1ff', 
+        label: 'Zener',
+        icon: '⚡',
+        formula: '<span class="comment">// Zener (with breakdown)</span><br><span class="var">I</span> ≈ <span class="num">Vz</span>/<span class="var">Rz</span> when <span class="var">V</span> &lt; <span class="num">-Vz</span><br><span class="comment">// Vz ≈ 4.7V (breakdown)</span>',
+        threshold: -4.7
+      }
+    };
+
+    // ============ CANVAS SETUP ============
     const canvas = document.getElementById('ivCanvas');
     const ctx = canvas.getContext('2d');
-
-    const deviceA = document.getElementById('deviceA');
-    const deviceB = document.getElementById('deviceB');
-    const deviceALabel = document.getElementById('deviceALabel');
-    const deviceBLabel = document.getElementById('deviceBLabel');
-    const deviceBGroup = document.getElementById('deviceBGroup');
-    const toggleCompare = document.getElementById('toggleCompare');
-    const toggleAnim = document.getElementById('toggleAnim');
-
-    const vMax = document.getElementById('vMax');
-    const vMaxLabel = document.getElementById('vMaxLabel');
-    const supplyV = document.getElementById('supplyV');
-    const supplyLabel = document.getElementById('supplyLabel');
-    const operating = document.getElementById('operating');
-    const operatingLabel = document.getElementById('operatingLabel');
-    const seriesR = document.getElementById('seriesR');
-    const seriesLabel = document.getElementById('seriesLabel');
-    const temp = document.getElementById('temp');
-    const tempLabel = document.getElementById('tempLabel');
-    const showLoad = document.getElementById('showLoad');
-    const showTangent = document.getElementById('showTangent');
-
-    const readIA = document.getElementById('readIA');
-    const readPA = document.getElementById('readPA');
-    const readIB = document.getElementById('readIB');
-    const readPB = document.getElementById('readPB');
-    const readRA = document.getElementById('readRA');
-    const readRB = document.getElementById('readRB');
-
-    const legend = document.getElementById('legend');
-    const circuitR = document.getElementById('circuitR');
-    const circuitV = document.getElementById('circuitV');
-
-    let state = {
-      compare: false,
-      animating: true,
-      vMax: 5,
-      supplyV: 5,
-      operating: 2,
-      seriesR: 50,
-      tempC: 25,
-      deviceA: 'resistor',
-      deviceB: 'diode'
-    };
-
-    const deviceStyles = {
-      resistor: { color: '#6ad7ff', label: 'Resistor' },
-      diode: { color: '#f6c76b', label: 'Diode' },
-      led: { color: '#ff7fbf', label: 'LED' },
-      zener: { color: '#7bd1ff', label: 'Zener' }
-    };
+    const tooltip = document.getElementById('tooltip');
 
     function resizeCanvas() {
-      const ratio = window.devicePixelRatio || 1;
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = Math.round(width * ratio);
-      canvas.height = Math.round(height * ratio);
-      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ============ PHYSICS FUNCTIONS ============
     function vThermal(tempC) {
       const T = tempC + 273.15;
       return 8.617e-5 * T;
     }
 
     function diodeCurrent(V, tempC, params) {
+      if (V < -5) V = -5;
       const vt = vThermal(tempC);
-      const Is = params.Is;
-      const n = params.n;
-      const Vd = V;
-      const expTerm = Math.exp(Vd / (n * vt));
+      const Is = params.Is || 1e-9;
+      const n = params.n || 1.9;
+      const expTerm = Math.exp(Math.min(V / (n * vt), 50));
       return Is * (expTerm - 1);
     }
 
@@ -548,343 +903,596 @@
         return V / 220;
       }
       if (device === 'diode') {
-        return diodeCurrent(V, tempC, { Is: 1e-9, n: 1.9 });
+        return diodeCurrent(V, tempC, { Is: 1e-9, n: 1.8 });
       }
       if (device === 'led') {
         const thresh = 1.8;
-        if (V < thresh) return diodeCurrent(V - thresh, tempC, { Is: 1e-12, n: 2.2 });
-        return diodeCurrent(V - thresh, tempC, { Is: 2e-12, n: 2.2 });
+        if (V < thresh) return diodeCurrent(V - thresh, tempC, { Is: 1e-14, n: 2.5 }) * 0.001;
+        return diodeCurrent(V - thresh, tempC, { Is: 3e-14, n: 2.2 });
       }
       if (device === 'zener') {
         const forward = diodeCurrent(V, tempC, { Is: 5e-9, n: 2.0 });
         const vz = -4.7;
-        if (V < vz) {
-          return -(Math.abs(V - vz) / 200);
+        if (V < vz - 0.5) {
+          const reverseI = Math.abs(V - vz) / 150;
+          return -reverseI * 5;
         }
+        if (V < 0) return forward * 0.1;
         return forward;
       }
       return 0;
     }
 
-    function currentWithSeries(device, V, tempC, Rs) {
-      if (Rs <= 0) return deviceIV(device, V, tempC);
-      let lo = -5;
-      let hi = 5;
-      if (V >= 0) {
-        lo = 0;
-        hi = Math.max(0.5, V / Math.max(1, Rs)) + 5;
-      } else {
-        hi = 0;
-        lo = -Math.max(0.5, Math.abs(V) / Math.max(1, Rs)) - 5;
+    function solveCircuit(device, Vs, Rs, tempC) {
+      if (Rs <= 0.1) {
+        return { I: deviceIV(device, Vs, tempC), Vd: Vs };
       }
-      for (let i = 0; i < 40; i += 1) {
+      let lo = -0.5, hi = Vs / Math.max(1, Rs) + 0.5;
+      if (Vs < 0) { lo = Vs / Math.max(1, Rs) - 0.5; hi = 0.5; }
+      
+      for (let i = 0; i < 50; i++) {
         const mid = (lo + hi) / 2;
-        const Vd = V - mid * Rs;
+        const Vd = Vs - mid * Rs;
         const f = mid - deviceIV(device, Vd, tempC);
-        if (f === 0) return mid;
+        if (Math.abs(f) < 1e-9) break;
         if (f > 0) hi = mid; else lo = mid;
       }
-      return (lo + hi) / 2;
+      const I = (lo + hi) / 2;
+      const Vd = Vs - I * Rs;
+      return { I, Vd };
     }
 
-    function calcCurve(device) {
+    function calcCurve(device, tempC, Rs, vmax) {
       const points = [];
-      const steps = 220;
-      const vmax = state.vMax;
-      for (let i = 0; i <= steps; i += 1) {
+      const steps = 200;
+      for (let i = 0; i <= steps; i++) {
         const V = -vmax + (2 * vmax * i) / steps;
-        const I = currentWithSeries(device, V, state.tempC, state.seriesR);
+        let I;
+        if (Rs > 0) {
+          const sol = solveCircuit(device, V, Rs, tempC);
+          I = sol.I;
+        } else {
+          I = deviceIV(device, V, tempC);
+        }
         points.push({ V, I });
       }
       return points;
     }
 
-    function drawGrid(w, h, pad) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    function calcOperatingPoint(device, Vop, Rs, tempC) {
+      if (Rs > 0) {
+        return solveCircuit(device, Vop, Rs, tempC);
+      }
+      return { I: deviceIV(device, Vop, tempC), Vd: Vop };
+    }
+
+    // ============ DRAWING FUNCTIONS ============
+    function mapV(V, w, pad, vmax) {
+      return pad + ((V + vmax) / (2 * vmax)) * (w - 2 * pad);
+    }
+
+    function mapI(I, h, pad, iMax) {
+      return h - pad - ((I + iMax) / (2 * iMax)) * (h - 2 * pad);
+    }
+
+    function getTempColor(tempC) {
+      const t = Math.max(0, Math.min(1, (tempC + 20) / 120));
+      const r = Math.round(107 + t * 148);
+      const g = Math.round(215 - t * 100);
+      const b = Math.round(255 - t * 155);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    let animTime = 0;
+    let flowParticles = [];
+
+    function initFlowParticles() {
+      flowParticles = [];
+      for (let i = 0; i < 25; i++) {
+        flowParticles.push({
+          t: Math.random(),
+          speed: 0.3 + Math.random() * 0.4,
+          size: 2 + Math.random() * 3
+        });
+      }
+    }
+    initFlowParticles();
+
+    function draw() {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+      const pad = 55;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background
+      const bgGrad = ctx.createRadialGradient(w * 0.3, h * 0.3, 0, w * 0.5, h * 0.5, w);
+      bgGrad.addColorStop(0, '#0e1520');
+      bgGrad.addColorStop(1, '#080c14');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      animTime += 0.016;
+
+      // Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
-      const gx = 6;
-      const gy = 6;
-      for (let i = 0; i <= gx; i += 1) {
+      const gx = 8, gy = 8;
+      for (let i = 0; i <= gx; i++) {
         const x = pad + (i / gx) * (w - 2 * pad);
         ctx.beginPath();
         ctx.moveTo(x, pad);
         ctx.lineTo(x, h - pad);
         ctx.stroke();
       }
-      for (let i = 0; i <= gy; i += 1) {
+      for (let i = 0; i <= gy; i++) {
         const y = pad + (i / gy) * (h - 2 * pad);
         ctx.beginPath();
         ctx.moveTo(pad, y);
         ctx.lineTo(w - pad, y);
         ctx.stroke();
       }
-    }
 
-    function mapPoint(V, I, w, h, pad, iMax) {
-      const x = pad + ((V + state.vMax) / (2 * state.vMax)) * (w - 2 * pad);
-      const y = h - pad - ((I + iMax) / (2 * iMax)) * (h - 2 * pad);
-      return { x, y };
-    }
+      // Axes
+      const iMax = state.vmax * 0.5;
+      const axisY = mapI(0, h, pad, iMax);
+      const axisX = mapV(0, w, pad, state.vmax);
 
-    function drawCurve(points, color, w, h, pad, iMax) {
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 10;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      points.forEach((p, idx) => {
-        const pt = mapPoint(p.V, p.I, w, h, pad, iMax);
-        if (idx === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+      ctx.moveTo(pad, axisY);
+      ctx.lineTo(w - pad, axisY);
+      ctx.moveTo(axisX, pad);
+      ctx.lineTo(axisX, h - pad);
+      ctx.stroke();
+
+      // Region shading
+      if (state.showRegions) {
+        const dev = deviceInfo[state.deviceA];
+        if (dev.threshold > 0) {
+          const threshX = mapV(dev.threshold, w, pad, state.vmax);
+          ctx.fillStyle = 'rgba(106, 215, 255, 0.05)';
+          ctx.fillRect(threshX, pad, w - pad - threshX, h - 2 * pad);
+          ctx.fillStyle = 'rgba(255, 107, 107, 0.05)';
+          ctx.fillRect(pad, pad, threshX - pad, h - 2 * pad);
+        } else if (dev.threshold < 0) {
+          const zenerX = mapV(dev.threshold, w, pad, state.vmax);
+          ctx.fillStyle = 'rgba(255, 107, 107, 0.08)';
+          ctx.fillRect(pad, pad, zenerX - pad, h - 2 * pad);
+          ctx.fillStyle = 'rgba(106, 215, 255, 0.05)';
+          ctx.fillRect(zenerX, pad, w - pad - zenerX, h - 2 * pad);
+        } else {
+          ctx.fillStyle = 'rgba(106, 215, 255, 0.03)';
+          ctx.fillRect(axisX, pad, w - pad - axisX, h - 2 * pad);
+          ctx.fillStyle = 'rgba(255, 107, 107, 0.03)';
+          ctx.fillRect(pad, pad, axisX - pad, h - 2 * pad);
+        }
+      }
+
+      // Draw curves
+      const curveA = calcCurve(state.deviceA, state.tempC, state.rs, state.vmax);
+      const curveB = state.compare ? calcCurve(state.deviceB, state.tempC, state.rs, state.vmax) : [];
+
+      // Device A curve
+      drawCurve(curveA, deviceInfo[state.deviceA].color, w, h, pad, iMax, true);
+      
+      // Device B curve
+      if (state.compare) {
+        drawCurve(curveB, deviceInfo[state.deviceB].color, w, h, pad, iMax, false);
+      }
+
+      // Load line
+      if (state.showLoadLine && state.rs > 0) {
+        const p1 = { V: 0, I: state.vs / state.rs };
+        const p2 = { V: state.vs, I: 0 };
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.setLineDash([8, 6]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(mapV(p1.V, w, pad, state.vmax), mapI(p1.I, h, pad, iMax));
+        ctx.lineTo(mapV(p2.V, w, pad, state.vmax), mapI(p2.I, h, pad, iMax));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Operating point
+      const op = calcOperatingPoint(state.deviceA, state.vop, state.rs, state.tempC);
+      const opX = mapV(state.vop, w, pad, state.vmax);
+      const opY = mapI(op.I, h, pad, iMax);
+
+      // Operating point glow
+      const glowSize = 15 + Math.sin(animTime * 4) * 5;
+      const glow = ctx.createRadialGradient(opX, opY, 0, opX, opY, glowSize);
+      glow.addColorStop(0, deviceInfo[state.deviceA].color);
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.globalAlpha = 0.4;
+      ctx.beginPath();
+      ctx.arc(opX, opY, glowSize, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // Operating point dot
+      ctx.fillStyle = deviceInfo[state.deviceA].color;
+      ctx.beginPath();
+      ctx.arc(opX, opY, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(opX, opY, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Crosshairs
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(opX, pad);
+      ctx.lineTo(opX, h - pad);
+      ctx.moveTo(pad, opY);
+      ctx.lineTo(w - pad, opY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Operating point label
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px "Space Grotesk", sans-serif';
+      ctx.fillText(`V=${state.vop.toFixed(2)}V`, opX + 12, opY - 15);
+      ctx.fillText(`I=${op.I.toFixed(3)}A`, opX + 12, opY);
+
+      // Device B operating point
+      if (state.compare) {
+        const opB = calcOperatingPoint(state.deviceB, state.vop, state.rs, state.tempC);
+        const opBX = mapV(state.vop, w, pad, state.vmax);
+        const opBY = mapI(opB.I, h, pad, iMax);
+        
+        ctx.fillStyle = deviceInfo[state.deviceB].color;
+        ctx.beginPath();
+        ctx.arc(opBX, opBY, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(opBX, opBY, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Current flow particles
+      if (state.showFlow && op.I > 0.001) {
+        const flowSpeed = Math.min(op.I * 10, 2);
+        flowParticles.forEach(p => {
+          p.t += flowSpeed * 0.02 * p.speed;
+          if (p.t > 1) p.t = 0;
+          
+          const pathT = p.t;
+          const pathLen = curveA.length - 1;
+          const idx = Math.floor(pathT * pathLen);
+          const frac = (pathT * pathLen) - idx;
+          const pt = curveA[Math.min(idx, pathLen)];
+          const ptNext = curveA[Math.min(idx + 1, pathLen)];
+          if (pt) {
+            const px = mapV(pt.V + (ptNext.V - pt.V) * frac, w, pad, state.vmax);
+            const py = mapI(pt.I + (ptNext.I - pt.I) * frac, h, pad, iMax);
+            
+            ctx.fillStyle = `rgba(255, 255, 255, ${0.3 + Math.sin(animTime * 10 + p.t * 20) * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(px, py, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      // Labels
+      ctx.fillStyle = '#9fb0c5';
+      ctx.font = '12px "Space Grotesk", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Voltage (V)', w / 2, h - 15);
+      ctx.fillText(`${state.vmax.toFixed(1)}V`, w - pad + 5, axisY + 4);
+      ctx.fillText(`${(-state.vmax).toFixed(1)}V`, pad - 5, axisY + 4);
+      ctx.fillText('0', axisX - 8, axisY + 4);
+      
+      ctx.save();
+      ctx.translate(18, h / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Current (A)', 0, 0);
+      ctx.restore();
+
+      ctx.textAlign = 'right';
+      ctx.fillText(`${iMax.toFixed(2)}A`, pad - 8, pad + 4);
+      ctx.fillText(`${(-iMax).toFixed(2)}A`, pad - 8, h - pad + 4);
+
+      // Region labels
+      if (state.showRegions) {
+        ctx.font = '10px "Space Grotesk", sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.textAlign = 'center';
+        if (axisX - pad > 50) ctx.fillText('REVERSE', pad + (axisX - pad) / 2, pad + 20);
+        if (w - axisX - pad > 50) ctx.fillText('FORWARD', axisX + (w - pad - axisX) / 2, pad + 20);
+      }
+
+      updateReadouts(op);
+      updateCircuitSvg(op);
+    }
+
+    function drawCurve(points, color, w, h, pad, iMax, isMain) {
+      if (points.length < 2) return;
+
+      // Temperature tint based on current temp
+      const tempTint = (state.tempC - 25) / 75;
+      const r = Math.round(106 + tempTint * 100);
+      const g = Math.round(215 - tempTint * 50);
+      const b = Math.round(255 - tempTint * 50);
+      const curvedColor = `rgb(${r},${g},${b})`;
+
+      // Glow
+      ctx.shadowColor = curvedColor;
+      ctx.shadowBlur = isMain ? 15 : 8;
+      ctx.strokeStyle = curvedColor;
+      ctx.lineWidth = isMain ? 3 : 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      points.forEach((p, i) => {
+        const x = mapV(p.V, w, pad, state.vmax);
+        const y = mapI(p.I, h, pad, iMax);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
       });
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
 
-    function drawLoadLine(w, h, pad, iMax) {
-      if (!showLoad.checked) return;
-      const Rs = Math.max(1, state.seriesR);
-      const Vs = state.supplyV;
-      const p1 = mapPoint(0, Vs / Rs, w, h, pad, iMax);
-      const p2 = mapPoint(Vs, 0, w, h, pad, iMax);
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    function updateReadouts(op) {
+      const power = op.I * op.Vd;
+      document.getElementById('readI').textContent = op.I.toFixed(4) + ' A';
+      document.getElementById('readP').textContent = power.toFixed(4) + ' W';
+      
+      const rd = state.vop > 0 ? state.vop / Math.max(0.0001, op.I) : 0;
+      document.getElementById('readRd').textContent = rd.toFixed(1) + ' Ω';
+      
+      const dV = 0.05;
+      const op1 = calcOperatingPoint(state.deviceA, state.vop - dV, state.rs, state.tempC);
+      const op2 = calcOperatingPoint(state.deviceA, state.vop + dV, state.rs, state.tempC);
+      const rdyn = (2 * dV) / Math.max(0.0001, Math.abs(op2.I - op1.I));
+      document.getElementById('readRdyn').textContent = rdyn.toFixed(1) + ' Ω';
+
+      if (state.compare) {
+        const opB = calcOperatingPoint(state.deviceB, state.vop, state.rs, state.tempC);
+        const powerB = opB.I * opB.Vd;
+        document.getElementById('readIB').textContent = `${opB.I.toFixed(4)} A / ${powerB.toFixed(4)} W`;
+      }
     }
 
-    function drawTangent(device, w, h, pad, iMax) {
-      if (!showTangent.checked) return;
-      const V0 = state.operating;
-      const dV = 0.02;
-      const I1 = currentWithSeries(device, V0 - dV, state.tempC, state.seriesR);
-      const I2 = currentWithSeries(device, V0 + dV, state.tempC, state.seriesR);
-      const slope = (I2 - I1) / (2 * dV);
-      if (!Number.isFinite(slope)) return;
-      const I0 = currentWithSeries(device, V0, state.tempC, state.seriesR);
-      const Vline1 = -state.vMax;
-      const Vline2 = state.vMax;
-      const Iline1 = I0 + slope * (Vline1 - V0);
-      const Iline2 = I0 + slope * (Vline2 - V0);
-      const p1 = mapPoint(Vline1, Iline1, w, h, pad, iMax);
-      const p2 = mapPoint(Vline2, Iline2, w, h, pad, iMax);
-      ctx.strokeStyle = 'rgba(246,199,107,0.6)';
-      ctx.setLineDash([4, 6]);
-      ctx.beginPath();
-      ctx.moveTo(p1.x, p1.y);
-      ctx.lineTo(p2.x, p2.y);
-      ctx.stroke();
-      ctx.setLineDash([]);
+    function updateCircuitSvg(op) {
+      document.getElementById('circuitRs').textContent = state.rs + 'Ω';
+      document.getElementById('circuitVs').textContent = '+' + state.vs.toFixed(1) + 'V';
+      document.getElementById('circuitVd').textContent = op.Vd.toFixed(2) + 'V';
+      document.getElementById('circuitP').textContent = (op.I * op.Vd).toFixed(3) + 'W';
+      
+      const flowAnim = document.getElementById('electronFlow');
+      if (flowAnim) {
+        flowAnim.style.opacity = state.showFlow && op.I > 0.001 ? 0.8 : 0;
+      }
     }
 
-    function drawOperatingPoint(device, color, w, h, pad, iMax) {
-      const V0 = state.operating;
-      const I0 = currentWithSeries(device, V0, state.tempC, state.seriesR);
-      const pt = mapPoint(V0, I0, w, h, pad, iMax);
-      ctx.fillStyle = color;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    function renderLegend() {
+    function updateLegend() {
+      const legend = document.getElementById('legend');
       legend.innerHTML = '';
-      const addItem = (label, color) => {
-        const span = document.createElement('span');
-        const dot = document.createElement('i');
-        dot.className = 'dot';
+      
+      const addItem = (label, color, isLine = false, dash = '') => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        const dot = document.createElement('div');
+        dot.className = isLine ? 'legend-line' : 'legend-dot';
         dot.style.background = color;
-        span.appendChild(dot);
-        span.appendChild(document.createTextNode(label));
-        legend.appendChild(span);
+        if (dash) {
+          dot.style.background = 'transparent';
+          dot.style.borderTop = `2px dashed ${color}`;
+        }
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(label));
+        legend.appendChild(item);
       };
-      addItem(deviceStyles[state.deviceA].label, deviceStyles[state.deviceA].color);
-      if (state.compare) addItem(deviceStyles[state.deviceB].label, deviceStyles[state.deviceB].color);
-      if (showLoad.checked) addItem('Load line', 'rgba(255,255,255,0.6)');
-      if (showTangent.checked) addItem('Tangent', 'rgba(246,199,107,0.7)');
-    }
 
-    function updateReadouts() {
-      const I0A = currentWithSeries(state.deviceA, state.operating, state.tempC, state.seriesR);
-      const I0B = currentWithSeries(state.deviceB, state.operating, state.tempC, state.seriesR);
-      readIA.textContent = `${I0A.toFixed(3)} A`;
-      readPA.textContent = `${(I0A * state.operating).toFixed(3)} W`;
-      readIB.textContent = state.compare ? `${I0B.toFixed(3)} A` : '—';
-      readPB.textContent = state.compare ? `${(I0B * state.operating).toFixed(3)} W` : '—';
-
-      const dV = 0.02;
-      const I1A = currentWithSeries(state.deviceA, state.operating - dV, state.tempC, state.seriesR);
-      const I2A = currentWithSeries(state.deviceA, state.operating + dV, state.tempC, state.seriesR);
-      const rA = (2 * dV) / Math.max(1e-6, (I2A - I1A));
-      readRA.textContent = Number.isFinite(rA) ? `${rA.toFixed(1)} Ω` : '—';
-
+      addItem(deviceInfo[state.deviceA].label, deviceInfo[state.deviceA].color);
       if (state.compare) {
-        const I1B = currentWithSeries(state.deviceB, state.operating - dV, state.tempC, state.seriesR);
-        const I2B = currentWithSeries(state.deviceB, state.operating + dV, state.tempC, state.seriesR);
-        const rB = (2 * dV) / Math.max(1e-6, (I2B - I1B));
-        readRB.textContent = Number.isFinite(rB) ? `${rB.toFixed(1)} Ω` : '—';
-      } else {
-        readRB.textContent = '—';
+        addItem(deviceInfo[state.deviceB].label, deviceInfo[state.deviceB].color);
       }
-    }
-
-    function draw() {
-      const w = canvas.width / (window.devicePixelRatio || 1);
-      const h = canvas.height / (window.devicePixelRatio || 1);
-      const pad = 50;
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = '#0b1118';
-      ctx.fillRect(0, 0, w, h);
-
-      drawGrid(w, h, pad);
-
-      const pointsA = calcCurve(state.deviceA);
-      const pointsB = calcCurve(state.deviceB);
-
-      const iMaxA = Math.max(...pointsA.map(p => Math.abs(p.I)));
-      const iMaxB = Math.max(...pointsB.map(p => Math.abs(p.I)));
-      const iMax = Math.max(0.5, iMaxA, iMaxB);
-
-      drawCurve(pointsA, deviceStyles[state.deviceA].color, w, h, pad, iMax);
-      if (state.compare) drawCurve(pointsB, deviceStyles[state.deviceB].color, w, h, pad, iMax);
-      drawLoadLine(w, h, pad, iMax);
-      drawTangent(state.deviceA, w, h, pad, iMax);
-      drawOperatingPoint(state.deviceA, deviceStyles[state.deviceA].color, w, h, pad, iMax);
-      if (state.compare) {
-        drawOperatingPoint(state.deviceB, deviceStyles[state.deviceB].color, w, h, pad, iMax);
-      }
-
-      ctx.fillStyle = '#dfe8f4';
-      ctx.font = '12px "Space Grotesk", sans-serif';
-      ctx.fillText('Voltage (V)', w - pad - 80, h - 16);
-      ctx.fillText(`${state.vMax.toFixed(1)}V`, w - pad - 24, h - pad + 18);
-      ctx.fillText(`${(-state.vMax).toFixed(1)}V`, pad - 18, h - pad + 18);
-      ctx.fillText('0', w / 2 - 4, h - pad + 18);
-      ctx.fillText(`${iMax.toFixed(2)}A`, pad - 38, pad + 6);
-      ctx.fillText(`${(-iMax).toFixed(2)}A`, pad - 44, h - pad + 6);
-      ctx.fillText('0', pad - 16, h / 2 + 4);
-      ctx.save();
-      ctx.translate(18, 80);
-      ctx.rotate(-Math.PI / 2);
-      ctx.fillText('Current (A)', 0, 0);
-      ctx.restore();
+      if (state.showLoadLine) addItem('Load Line', 'rgba(255,255,255,0.6)', true, 'dash');
     }
 
     function updateUI() {
-      deviceALabel.textContent = deviceStyles[state.deviceA].label;
-      deviceBLabel.textContent = deviceStyles[state.deviceB].label;
-      vMaxLabel.textContent = `${state.vMax.toFixed(1)} V`;
-      supplyLabel.textContent = `${state.supplyV.toFixed(1)} V`;
-      operatingLabel.textContent = `${state.operating.toFixed(1)} V`;
-      seriesLabel.textContent = `${state.seriesR.toFixed(0)} Ω`;
-      tempLabel.textContent = `${state.tempC.toFixed(0)} °C`;
-      circuitR.textContent = `${state.seriesR.toFixed(0)}Ω`;
-      circuitV.textContent = `${state.supplyV.toFixed(1)}V`;
-      deviceBGroup.style.display = state.compare ? 'grid' : 'none';
-      toggleCompare.textContent = state.compare ? 'Compare On' : 'Compare Mode';
-      renderLegend();
-      updateReadouts();
+      document.getElementById('vsVal').textContent = state.vs.toFixed(1) + ' V';
+      document.getElementById('vsSlider').value = state.vs;
+      
+      document.getElementById('vopVal').textContent = state.vop.toFixed(2) + ' V';
+      document.getElementById('vopSlider').value = state.vop;
+      document.getElementById('vopSlider').max = state.vmax;
+      
+      document.getElementById('rsVal').textContent = state.rs + ' Ω';
+      document.getElementById('rsSlider').value = state.rs;
+      
+      document.getElementById('vmaxVal').textContent = state.vmax.toFixed(1) + ' V';
+      document.getElementById('vmaxSlider').value = state.vmax;
+      
+      document.getElementById('tempVal').textContent = state.tempC + '°C';
+      document.getElementById('tempSlider').value = state.tempC;
+      
+      const tempDisplay = document.getElementById('tempDisplay');
+      tempDisplay.textContent = state.tempC + '°C';
+      tempDisplay.style.color = getTempColor(state.tempC);
+
+      document.getElementById('compareSection').style.display = state.compare ? 'block' : 'none';
+      document.getElementById('compareBtn').classList.toggle('active', state.compare);
+      document.getElementById('readCardB').style.display = state.compare ? 'block' : 'none';
+
+      document.getElementById('formulaDisplay').innerHTML = deviceInfo[state.deviceA].formula;
+
+      // Update device buttons
+      document.querySelectorAll('.device-btn[data-device]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.device === state.deviceA);
+      });
+      document.querySelectorAll('.device-btn[data-device-b]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.deviceB === state.deviceB);
+      });
+
+      updateLegend();
     }
 
-    function setOperatingRange() {
-      operating.min = (-state.vMax).toFixed(1);
-      operating.max = state.vMax.toFixed(1);
-      if (state.operating > state.vMax) state.operating = state.vMax;
-      if (state.operating < -state.vMax) state.operating = -state.vMax;
-      operating.value = state.operating.toFixed(1);
-      supplyV.min = (-state.vMax).toFixed(1);
-      supplyV.max = state.vMax.toFixed(1);
-      if (state.supplyV > state.vMax) state.supplyV = state.vMax;
-      if (state.supplyV < -state.vMax) state.supplyV = -state.vMax;
-      supplyV.value = state.supplyV.toFixed(1);
-    }
-
-    function tick() {
-      if (state.animating) {
-        draw();
-      }
-      requestAnimationFrame(tick);
-    }
-
-    deviceA.addEventListener('change', (e) => {
-      state.deviceA = e.target.value;
-      updateUI();
-      draw();
+    // ============ EVENT LISTENERS ============
+    document.querySelectorAll('.device-btn[data-device]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.deviceA = btn.dataset.device;
+        updateUI();
+      });
     });
 
-    deviceB.addEventListener('change', (e) => {
-      state.deviceB = e.target.value;
-      updateUI();
-      draw();
+    document.querySelectorAll('.device-btn[data-device-b]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.deviceB = btn.dataset.deviceB;
+        updateUI();
+      });
     });
 
-    toggleCompare.addEventListener('click', () => {
+    document.getElementById('compareBtn').addEventListener('click', () => {
       state.compare = !state.compare;
       updateUI();
-      draw();
     });
 
-    toggleAnim.addEventListener('click', () => {
-      state.animating = !state.animating;
-      toggleAnim.textContent = state.animating ? 'Pause' : 'Play';
-    });
-
-    vMax.addEventListener('input', (e) => {
-      state.vMax = parseFloat(e.target.value);
-      setOperatingRange();
+    document.getElementById('vsSlider').addEventListener('input', e => {
+      state.vs = parseFloat(e.target.value);
+      if (state.vop > state.vs) { state.vop = state.vs; }
+      document.getElementById('vopSlider').max = state.vs;
       updateUI();
-      draw();
     });
 
-    supplyV.addEventListener('input', (e) => {
-      state.supplyV = parseFloat(e.target.value);
+    document.getElementById('vopSlider').addEventListener('input', e => {
+      state.vop = parseFloat(e.target.value);
       updateUI();
-      draw();
     });
 
-    operating.addEventListener('input', (e) => {
-      state.operating = parseFloat(e.target.value);
+    document.getElementById('rsSlider').addEventListener('input', e => {
+      state.rs = parseFloat(e.target.value);
       updateUI();
-      draw();
     });
 
-    seriesR.addEventListener('input', (e) => {
-      state.seriesR = parseFloat(e.target.value);
+    document.getElementById('vmaxSlider').addEventListener('input', e => {
+      state.vmax = parseFloat(e.target.value);
+      if (state.vop > state.vmax) state.vop = state.vmax;
       updateUI();
-      draw();
     });
 
-    temp.addEventListener('input', (e) => {
-      state.tempC = parseFloat(e.target.value);
+    document.getElementById('tempSlider').addEventListener('input', e => {
+      state.tempC = parseInt(e.target.value);
       updateUI();
-      draw();
     });
 
-    showLoad.addEventListener('change', () => {
-      renderLegend();
-      draw();
+    document.getElementById('showLoadLine').addEventListener('change', e => {
+      state.showLoadLine = e.target.checked;
     });
 
-    showTangent.addEventListener('change', () => {
-      renderLegend();
-      draw();
+    document.getElementById('showTangent').addEventListener('change', e => {
+      state.showTangent = e.target.checked;
     });
 
+    document.getElementById('showRegions').addEventListener('change', e => {
+      state.showRegions = e.target.checked;
+    });
+
+    document.getElementById('showFlow').addEventListener('change', e => {
+      state.showFlow = e.target.checked;
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.vs = 5;
+      state.vop = 2;
+      state.rs = 100;
+      state.tempC = 25;
+      state.vmax = 5;
+      updateUI();
+    });
+
+    // Voltage sweep
+    document.getElementById('sweepBtn').addEventListener('click', () => {
+      state.sweeping = !state.sweeping;
+      document.getElementById('sweepBtn').classList.toggle('active', state.sweeping);
+      if (state.sweeping) {
+        state.vop = 0;
+        state.sweepDir = 1;
+      }
+    });
+
+    // Canvas click to set operating point
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const w = rect.width;
+      const h = rect.height;
+      const pad = 55;
+      
+      if (x > pad && x < w - pad) {
+        const V = -state.vmax + ((x - pad) / (w - 2 * pad)) * 2 * state.vmax;
+        state.vop = Math.max(0, Math.min(state.vmax, V));
+        updateUI();
+      }
+    });
+
+    // Tooltip on hover
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const w = rect.width;
+      const h = rect.height;
+      const pad = 55;
+      
+      if (x > pad && x < w - pad && y > pad && y < h - pad) {
+        const V = -state.vmax + ((x - pad) / (w - 2 * pad)) * 2 * state.vmax;
+        const iMax = state.vmax * 0.5;
+        const I = -iMax + ((h - pad - y) / (h - 2 * pad)) * 2 * iMax;
+        
+        document.getElementById('ttV').textContent = V.toFixed(2) + ' V';
+        document.getElementById('ttI').textContent = I.toFixed(4) + ' A';
+        document.getElementById('ttP').textContent = (V * I).toFixed(4) + ' W';
+        
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX - rect.left + 15) + 'px';
+        tooltip.style.top = (e.clientY - rect.top - 30) + 'px';
+      } else {
+        tooltip.style.display = 'none';
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+
+    // Theme toggle
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('light');
     });
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
+    // Animation loop
+    function tick() {
+      if (state.sweeping) {
+        state.vop += 0.03 * state.sweepDir;
+        if (state.vop >= state.vs) {
+          state.vop = state.vs;
+          state.sweepDir = -1;
+        } else if (state.vop <= 0) {
+          state.vop = 0;
+          state.sweepDir = 1;
+        }
+        updateUI();
+      }
       draw();
-    });
+      requestAnimationFrame(tick);
+    }
 
-    resizeCanvas();
-    setOperatingRange();
+    // Initialize
     updateUI();
-    draw();
     tick();
   </script>
 </body>
