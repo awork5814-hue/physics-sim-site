@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SHM Virtual Lab</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --accent-3: #a78bfa;
+      --success: #4ade80;
+      --danger: #f87171;
+      --sim-text: #e9f2ff;
+      --sim-muted: #94a3b8;
+      --glass: rgba(12, 20, 34, 0.85);
+      --glass-border: rgba(106, 215, 255, 0.2);
+      --bg-dark: #070a12;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse 1000px 600px at 15% 0%, rgba(106, 215, 255, 0.08), transparent),
+        radial-gradient(ellipse 800px 500px at 85% 20%, rgba(167, 139, 250, 0.06), transparent),
+        var(--bg-dark);
+      color: var(--sim-text);
+      font-family: 'Space Grotesk', sans-serif;
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px clamp(16px, 3vw, 32px);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0 20px;
+      border-bottom: 1px solid rgba(106, 215, 255, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .topbar a {
+      color: var(--sim-text);
+      text-decoration: none;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topbar a:hover { color: var(--accent); }
+
+    .lab-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .progress-badge {
+      background: rgba(167, 139, 250, 0.15);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      color: var(--accent-3);
+      font-weight: 500;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .header-title h1 {
+      font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+      margin: 0 0 8px;
+      background: linear-gradient(135deg, var(--sim-text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-title p {
+      color: var(--sim-muted);
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .experiment-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .exp-tab {
+      padding: 10px 18px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--sim-muted);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+    }
+
+    .exp-tab:hover {
+      border-color: var(--accent);
+      color: var(--sim-text);
+    }
+
+    .exp-tab.active {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+    }
+
+    .main-panel {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .canvas-container {
+      position: relative;
+      background: rgba(5, 8, 15, 0.9);
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 400px;
+      display: block;
+    }
+
+    .timer-display {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(10, 16, 26, 0.95);
+      border: 2px solid var(--accent-2);
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--accent-2);
+      box-shadow: 0 4px 20px rgba(246, 199, 107, 0.2);
+    }
+
+    .timer-display.running {
+      border-color: var(--success);
+      color: var(--success);
+      box-shadow: 0 4px 20px rgba(74, 222, 128, 0.2);
+    }
+
+    .timer-label {
+      font-size: 10px;
+      color: var(--sim-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .controls-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      background: rgba(12, 18, 28, 0.8);
+      color: var(--sim-text);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #00d4aa);
+      color: #070a12;
+      border: none;
+    }
+
+    .btn.record {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .btn.record:hover {
+      background: rgba(248, 113, 113, 0.25);
+    }
+
+    .btn.secondary {
+      background: rgba(167, 139, 250, 0.1);
+      border-color: rgba(167, 139, 250, 0.3);
+      color: var(--accent-3);
+    }
+
+    .side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .card-header {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-header::before {
+      content: "";
+      width: 3px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .slider-group {
+      margin-bottom: 14px;
+    }
+
+    .slider-group:last-child { margin-bottom: 0; }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .slider-label {
+      font-size: 12px;
+      color: var(--sim-muted);
+    }
+
+    .slider-value {
+      background: rgba(106, 215, 255, 0.1);
+      border: 1px solid rgba(106, 215, 255, 0.2);
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .data-table {
+      background: rgba(5, 8, 15, 0.8);
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .data-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th {
+      background: rgba(106, 215, 255, 0.1);
+      color: var(--sim-muted);
+      font-weight: 500;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .data-table td {
+      padding: 8px;
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .data-table tr:hover td {
+      background: rgba(106, 215, 255, 0.05);
+    }
+
+    .data-table .avg-row {
+      background: rgba(167, 139, 250, 0.1);
+      font-weight: 600;
+    }
+
+    .data-table .best-row {
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .analysis-result {
+      background: rgba(5, 8, 15, 0.8);
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    .analysis-result .label {
+      color: var(--sim-muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .analysis-result .value {
+      color: var(--accent-2);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .analysis-result .value.success {
+      color: var(--success);
+    }
+
+    .analysis-result .error {
+      color: var(--danger);
+    }
+
+    .formula-box {
+      background: rgba(246, 199, 107, 0.08);
+      border: 1px solid rgba(246, 199, 107, 0.2);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .formula-box .formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      color: var(--accent-2);
+    }
+
+    .formula-box .note {
+      font-size: 10px;
+      color: var(--sim-muted);
+      margin-top: 6px;
+    }
+
+    .experiment-instructions {
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 12px;
+      color: var(--sim-muted);
+      line-height: 1.6;
+    }
+
+    .experiment-instructions strong {
+      color: var(--accent);
+    }
+
+    .measurements-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .measure-card {
+      background: rgba(5, 8, 15, 0.8);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .measure-card .label {
+      font-size: 10px;
+      color: var(--sim-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+
+    .measure-card .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .measure-card .value.secondary {
+      color: var(--accent-2);
+    }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      header { flex-direction: column; }
+      .experiment-tabs { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <div class="lab-info">
+        <div class="progress-badge" id="expProgress">Experiment 1/4</div>
+      </div>
+    </div>
+
+    <header>
+      <div class="header-title">
+        <h1>SHM Virtual Lab</h1>
+        <p>Perform real experiments, collect data, and analyze results like a physicist</p>
+      </div>
+      <div class="experiment-tabs">
+        <button class="exp-tab active" data-exp="pendulum">1️⃣ Pendulum</button>
+        <button class="exp-tab" data-exp="spring">2️⃣ Spring</button>
+        <button class="exp-tab" data-exp="damped">3️⃣ Damped</button>
+        <button class="exp-tab" data-exp="coupled">4️⃣ Coupled</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div class="main-panel">
+        <div class="canvas-container">
+          <canvas id="labCanvas"></canvas>
+          <div class="timer-display" id="timerDisplay">
+            <span class="timer-label">Stopwatch</span>
+            <span id="timerValue">0.000</span>s
+          </div>
+        </div>
+
+        <div class="controls-bar">
+          <button class="btn primary" id="startBtn">▶ Start</button>
+          <button class="btn" id="resetBtn">↺ Reset</button>
+          <button class="btn record" id="recordBtn">📝 Record Measurement</button>
+          <button class="btn secondary" id="clearDataBtn">Clear Data</button>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="card" id="setupCard">
+          <div class="card-header">Experiment Setup</div>
+          <div id="setupControls"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Data Collection</div>
+          <div class="data-table" id="dataTable">
+            <table>
+              <thead>
+                <tr id="tableHeader">
+                  <th>Trial</th>
+                  <th>L (m)</th>
+                  <th>Time (s)</th>
+                  <th>T (s)</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card" id="analysisCard">
+          <div class="card-header">Analysis Results</div>
+          <div class="analysis-result" id="analysisResults">
+            <div class="label">Collect data to see analysis</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">Theory Formula</div>
+          <div class="formula-box">
+            <div class="formula" id="theoryFormula">T = 2π√(L/g)</div>
+            <div class="note" id="theoryNote">Small angle approximation</div>
+          </div>
+        </div>
+
+        <div class="experiment-instructions" id="instructions">
+          <strong>Instructions:</strong> Adjust the pendulum length using the slider, then start the stopwatch. Time multiple oscillations and record your data below.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    const state = {
+      experiment: 'pendulum',
+      running: false,
+      time: 0,
+      data: [],
+      oscillations: 0,
+      lastTime: 0
+    };
+
+    // Physics state for each experiment
+    const physics = {
+      pendulum: {
+        length: 1.0,
+        mass: 0.2,
+        angle: 25,
+        g: 9.8,
+        theta: 0,
+        omega: 0,
+        damping: 0
+      },
+      spring: {
+        mass: 0.5,
+        k: 20,
+        amplitude: 0.3,
+        y: 0,
+        velocity: 0,
+        damping: 0
+      },
+      damped: {
+        length: 1.0,
+        mass: 0.3,
+        damping: 0.15,
+        theta: Math.PI / 4,
+        omega: 0,
+        envelope: []
+      },
+      coupled: {
+        l1: 1.0,
+        l2: 1.0,
+        m: 0.2,
+        theta1: Math.PI / 6,
+        theta2: 0,
+        omega1: 0,
+        omega2: 0,
+        k: 5,
+        g: 9.8
+      }
+    };
+
+    // ============ CANVAS ============
+    const canvas = document.getElementById('labCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // ============ EXPERIMENT CONFIGS ============
+    const experimentInfo = {
+      pendulum: {
+        name: 'Pendulum Lab',
+        formula: 'T = 2π√(L/g)',
+        note: 'Measure period vs length to find g',
+        instructions: 'Adjust pendulum length (L) and initial angle. Time multiple oscillations to find period T. Record at least 3 trials for each length.',
+        sliders: [
+          { id: 'length', label: 'Length (L)', min: 0.2, max: 2.0, step: 0.1, unit: 'm', default: 1.0 },
+          { id: 'angle', label: 'Initial Angle', min: 5, max: 45, step: 5, unit: '°', default: 25 },
+          { id: 'gravity', label: 'Gravity (g)', min: 1, max: 20, step: 0.1, unit: 'm/s²', default: 9.8 }
+        ],
+        columns: ['Trial', 'L (m)', 'Time (s)', 'T (s)']
+      },
+      spring: {
+        name: 'Spring Lab',
+        formula: 'T = 2π√(m/k)',
+        note: 'Measure period vs mass to find k',
+        instructions: 'Attach different masses to the spring. Time oscillations to find period. Plot T² vs m to find spring constant k.',
+        sliders: [
+          { id: 'mass', label: 'Mass (m)', min: 0.1, max: 2.0, step: 0.1, unit: 'kg', default: 0.5 },
+          { id: 'stiffness', label: 'Spring Constant (k)', min: 5, max: 50, step: 1, unit: 'N/m', default: 20 },
+          { id: 'amplitude', label: 'Initial Amplitude', min: 0.1, max: 0.5, step: 0.05, unit: 'm', default: 0.3 }
+        ],
+        columns: ['Trial', 'm (kg)', 'Time (s)', 'T (s)']
+      },
+      damped: {
+        name: 'Damped Oscillations',
+        formula: 'T = 2π/ω₀, γ = b/m',
+        note: 'Measure damping coefficient',
+        instructions: 'Observe how oscillations decay over time. Time successive peaks and use logarithmic decrement to find damping coefficient γ.',
+        sliders: [
+          { id: 'damping', label: 'Damping (b)', min: 0.02, max: 0.5, step: 0.02, unit: 'kg/s', default: 0.1 },
+          { id: 'length', label: 'Pendulum Length', min: 0.5, max: 1.5, step: 0.1, unit: 'm', default: 1.0 },
+          { id: 'mass', label: 'Mass', min: 0.1, max: 0.5, step: 0.05, unit: 'kg', default: 0.2 }
+        ],
+        columns: ['Peak #', 'Time (s)', 'Amplitude', 'ln(Aᵢ/Aᵢ₊₁)']
+      },
+      coupled: {
+        name: 'Coupled Oscillators',
+        formula: 'ω± = ω₀√(1 ± √(k/m))',
+        note: 'Beat frequency visualization',
+        instructions: 'Two pendulums connected by a spring. Observe energy transfer between them. Watch for normal modes and beat patterns.',
+        sliders: [
+          { id: 'l1', label: 'Pendulum 1 L', min: 0.5, max: 1.5, step: 0.1, unit: 'm', default: 1.0 },
+          { id: 'l2', label: 'Pendulum 2 L', min: 0.5, max: 1.5, step: 0.1, unit: 'm', default: 1.0 },
+          { id: 'coupling', label: 'Coupling (k)', min: 0, max: 20, step: 1, unit: 'N/m', default: 5 }
+        ],
+        columns: ['Mode', 'θ₁ (rad)', 'θ₂ (rad)', 'Energy']
+      }
+    };
+
+    // ============ UI SETUP ============
+    function setupControls() {
+      const info = experimentInfo[state.experiment];
+      const container = document.getElementById('setupControls');
+      container.innerHTML = '';
+
+      info.sliders.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'slider-group';
+        
+        const val = getPhysicsValue(s.id);
+        
+        div.innerHTML = `
+          <div class="slider-header">
+            <span class="slider-label">${s.label}</span>
+            <span class="slider-value" id="${s.id}Val">${val.toFixed(s.step < 1 ? 2 : 1)} ${s.unit}</span>
+          </div>
+          <input type="range" id="${s.id}Slider" min="${s.min}" max="${s.max}" step="${s.step}" value="${val}" data-param="${s.id}">
+        `;
+        container.appendChild(div);
+      });
+
+      // Add event listeners
+      info.sliders.forEach(s => {
+        document.getElementById(`${s.id}Slider`).addEventListener('input', e => {
+          const val = parseFloat(e.target.value);
+          setPhysicsValue(s.id, val);
+          document.getElementById(`${s.id}Val`).textContent = `${val.toFixed(s.step < 1 ? 2 : 1)} ${s.unit}`;
+          if (!state.running) resetPhysics();
+        });
+      });
+
+      // Update table header
+      document.getElementById('tableHeader').innerHTML = info.columns.map(c => `<th>${c}</th>`).join('');
+      
+      // Update formula
+      document.getElementById('theoryFormula').textContent = info.formula;
+      document.getElementById('theoryNote').textContent = info.note;
+      document.getElementById('instructions').innerHTML = `<strong>Instructions:</strong> ${info.instructions}`;
+      document.getElementById('expProgress').textContent = `Experiment ${['pendulum','spring','damped','coupled'].indexOf(state.experiment) + 1}/4`;
+    }
+
+    function getPhysicsValue(id) {
+      const p = physics[state.experiment];
+      if (state.experiment === 'pendulum') {
+        if (id === 'length') return p.length;
+        if (id === 'angle') return p.angle;
+        if (id === 'gravity') return p.g;
+      }
+      if (state.experiment === 'spring') {
+        if (id === 'mass') return p.mass;
+        if (id === 'stiffness') return p.k;
+        if (id === 'amplitude') return p.amplitude;
+      }
+      if (state.experiment === 'damped') {
+        if (id === 'damping') return p.damping;
+        if (id === 'length') return p.length;
+        if (id === 'mass') return p.mass;
+      }
+      if (state.experiment === 'coupled') {
+        if (id === 'l1') return p.l1;
+        if (id === 'l2') return p.l2;
+        if (id === 'coupling') return p.k;
+      }
+      return 0;
+    }
+
+    function setPhysicsValue(id, val) {
+      const p = physics[state.experiment];
+      if (state.experiment === 'pendulum') {
+        if (id === 'length') p.length = val;
+        if (id === 'angle') p.angle = val;
+        if (id === 'gravity') p.g = val;
+      }
+      if (state.experiment === 'spring') {
+        if (id === 'mass') p.mass = val;
+        if (id === 'stiffness') p.k = val;
+        if (id === 'amplitude') p.amplitude = val;
+      }
+      if (state.experiment === 'damped') {
+        if (id === 'damping') p.damping = val;
+        if (id === 'length') p.length = val;
+        if (id === 'mass') p.mass = val;
+      }
+      if (state.experiment === 'coupled') {
+        if (id === 'l1') p.l1 = val;
+        if (id === 'l2') p.l2 = val;
+        if (id === 'coupling') p.k = val;
+      }
+    }
+
+    function resetPhysics() {
+      const p = physics[state.experiment];
+      if (state.experiment === 'pendulum') {
+        p.theta = p.angle * Math.PI / 180;
+        p.omega = 0;
+        p.damping = 0;
+      }
+      if (state.experiment === 'spring') {
+        p.y = p.amplitude;
+        p.velocity = 0;
+        p.damping = 0;
+      }
+      if (state.experiment === 'damped') {
+        p.theta = Math.PI / 4;
+        p.omega = 0;
+        p.envelope = [];
+      }
+      if (state.experiment === 'coupled') {
+        p.theta1 = Math.PI / 6;
+        p.theta2 = 0;
+        p.omega1 = 0;
+        p.omega2 = 0;
+      }
+      state.time = 0;
+      state.oscillations = 0;
+      updateTimerDisplay();
+    }
+
+    // ============ TIMER ============
+    let timerInterval = null;
+
+    function updateTimerDisplay() {
+      const display = document.getElementById('timerDisplay');
+      document.getElementById('timerValue').textContent = state.time.toFixed(3);
+      display.classList.toggle('running', state.running);
+    }
+
+    document.getElementById('startBtn').addEventListener('click', () => {
+      state.running = !state.running;
+      document.getElementById('startBtn').textContent = state.running ? '⏸ Pause' : '▶ Start';
+      
+      if (state.running && state.time === 0) {
+        resetPhysics();
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.running = false;
+      state.time = 0;
+      state.oscillations = 0;
+      document.getElementById('startBtn').textContent = '▶ Start';
+      resetPhysics();
+    });
+
+    document.getElementById('clearDataBtn').addEventListener('click', () => {
+      state.data = [];
+      updateDataTable();
+      updateAnalysis();
+    });
+
+    document.getElementById('recordBtn').addEventListener('click', recordMeasurement);
+
+    function recordMeasurement() {
+      const info = experimentInfo[state.experiment];
+      const p = physics[state.experiment];
+      
+      let row = {};
+      
+      if (state.experiment === 'pendulum') {
+        const period = state.oscillations > 0 ? state.time / state.oscillations : 0;
+        row = {
+          trial: state.data.length + 1,
+          L: p.length,
+          time: state.time,
+          T: period
+        };
+      } else if (state.experiment === 'spring') {
+        const period = state.oscillations > 0 ? state.time / state.oscillations : 0;
+        row = {
+          trial: state.data.length + 1,
+          m: p.mass,
+          time: state.time,
+          T: period
+        };
+      } else if (state.experiment === 'damped') {
+        const amplitude = Math.abs(p.theta) * p.length;
+        row = {
+          peak: state.data.length + 1,
+          time: state.time,
+          amplitude: amplitude,
+          logDec: state.data.length > 0 ? Math.log(state.data[state.data.length-1].amplitude / amplitude) : '-'
+        };
+      } else if (state.experiment === 'coupled') {
+        const energy = 0.5 * p.mass * p.l1 * p.omega1**2 * p.length + 0.5 * p.mass * p.l2 * p.omega2**2 * p.length;
+        row = {
+          mode: state.data.length === 0 ? 'In-phase' : (state.data.length === 1 ? 'Anti-phase' : 'Beat'),
+          theta1: p.theta1.toFixed(3),
+          theta2: p.theta2.toFixed(3),
+          energy: energy.toFixed(3)
+        };
+      }
+      
+      state.data.push(row);
+      updateDataTable();
+      updateAnalysis();
+    }
+
+    function updateDataTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      
+      state.data.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        if (state.experiment === 'pendulum' || state.experiment === 'spring') {
+          const period = row.T;
+          const isBest = i > 0 && Math.abs(period - getTheoreticalPeriod()) < Math.abs(state.data[0].T - getTheoreticalPeriod());
+          if (isBest) tr.classList.add('best-row');
+          
+          tr.innerHTML = `
+            <td>${row.trial}</td>
+            <td>${row.L?.toFixed(2) || row.m?.toFixed(2)}</td>
+            <td>${row.time.toFixed(3)}</td>
+            <td>${row.T.toFixed(4)}</td>
+          `;
+        } else if (state.experiment === 'damped') {
+          tr.innerHTML = `
+            <td>${row.peak}</td>
+            <td>${row.time.toFixed(3)}</td>
+            <td>${row.amplitude.toFixed(3)}</td>
+            <td>${row.logDec !== '-' ? row.logDec.toFixed(3) : '-'}</td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td>${row.mode}</td>
+            <td>${row.theta1}</td>
+            <td>${row.theta2}</td>
+            <td>${row.energy}</td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getTheoreticalPeriod() {
+      const p = physics[state.experiment];
+      if (state.experiment === 'pendulum') {
+        return 2 * Math.PI * Math.sqrt(p.length / p.g);
+      }
+      if (state.experiment === 'spring') {
+        return 2 * Math.PI * Math.sqrt(p.mass / p.k);
+      }
+      return 1;
+    }
+
+    function updateAnalysis() {
+      const results = document.getElementById('analysisResults');
+      
+      if (state.data.length === 0) {
+        results.innerHTML = '<div class="label">Collect data to see analysis</div>';
+        return;
+      }
+
+      if (state.experiment === 'pendulum') {
+        // Calculate average period
+        const avgT = state.data.reduce((a, b) => a + b.T, 0) / state.data.length;
+        const theoreticalT = 2 * Math.PI * Math.sqrt(physics.pendulum.length / physics.pendulum.g);
+        const error = Math.abs(avgT - theoreticalT) / theoreticalT * 100;
+        
+        // Calculate g from data
+        const gExp = 4 * Math.PI * Math.PI * physics.pendulum.length / (avgT * avgT);
+        
+        results.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <div class="label">Average Period</div>
+            <div class="value">T = ${avgT.toFixed(4)} s</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Theoretical T</div>
+            <div class="value secondary">T = ${theoreticalT.toFixed(4)} s</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Experimental g</div>
+            <div class="value success">g = ${gExp.toFixed(2)} m/s²</div>
+          </div>
+          <div>
+            <div class="label">Error</div>
+            <div class="value ${error < 5 ? 'success' : 'error'}">${error.toFixed(1)}%</div>
+          </div>
+        `;
+      } else if (state.experiment === 'spring') {
+        const avgT = state.data.reduce((a, b) => a + b.T, 0) / state.data.length;
+        const theoreticalT = 2 * Math.PI * Math.sqrt(physics.spring.mass / physics.spring.k);
+        const error = Math.abs(avgT - theoreticalT) / theoreticalT * 100;
+        
+        // Calculate k from data
+        const kExp = 4 * Math.PI * Math.PI * physics.spring.mass / (avgT * avgT);
+        
+        results.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <div class="label">Average Period</div>
+            <div class="value">T = ${avgT.toFixed(4)} s</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Theoretical T</div>
+            <div class="value secondary">T = ${theoreticalT.toFixed(4)} s</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Experimental k</div>
+            <div class="value success">k = ${kExp.toFixed(2)} N/m</div>
+          </div>
+          <div>
+            <div class="label">Error</div>
+            <div class="value ${error < 5 ? 'success' : 'error'}">${error.toFixed(1)}%</div>
+          </div>
+        `;
+      } else if (state.experiment === 'damped') {
+        // Calculate damping from envelope
+        const logDecs = state.data.filter(d => d.logDec !== '-').map(d => d.logDec);
+        const avgLogDec = logDecs.length > 0 ? logDecs.reduce((a, b) => a + b, 0) / logDecs.length : 0;
+        const gamma = avgLogDec / Math.PI;
+        const omega0 = 2 * Math.PI / getTheoreticalPeriod();
+        const omegaD = Math.sqrt(omega0**2 - gamma**2);
+        
+        results.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <div class="label">Logarithmic Decrement</div>
+            <div class="value">δ = ${avgLogDec.toFixed(3)}</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Damping Ratio</div>
+            <div class="value">γ = ${gamma.toFixed(3)} rad/s</div>
+          </div>
+          <div>
+            <div class="label">Damped Frequency</div>
+            <div class="value secondary">ωd = ${omegaD.toFixed(2)} rad/s</div>
+          </div>
+        `;
+      } else if (state.experiment === 'coupled') {
+        const omega1 = Math.sqrt(physics.coupled.g / physics.coupled.l1);
+        const omega2 = Math.sqrt(physics.coupled.g / physics.coupled.l2);
+        const coupling = physics.coupled.k / physics.coupled.m;
+        
+        results.innerHTML = `
+          <div style="margin-bottom: 12px;">
+            <div class="label">Natural Freq 1</div>
+            <div class="value">ω₁ = ${omega1.toFixed(2)} rad/s</div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="label">Natural Freq 2</div>
+            <div class="value">ω₂ = ${omega2.toFixed(2)} rad/s</div>
+          </div>
+          <div>
+            <div class="label">Beat Frequency</div>
+            <div class="value secondary">fbeat = ${Math.abs(omega1 - omega2) / (2 * Math.PI).toFixed(2)} Hz</div>
+          </div>
+        `;
+      }
+    }
+
+    // ============ PHYSICS UPDATE ============
+    function updatePhysics(dt) {
+      const p = physics[state.experiment];
+      
+      if (state.experiment === 'pendulum') {
+        const g = p.g;
+        const L = p.length;
+        const alpha = -(g / L) * Math.sin(p.theta);
+        p.omega += alpha * dt;
+        p.theta += p.omega * dt;
+        
+        // Count oscillations
+        if (Math.abs(p.theta) < 0.1 && Math.abs(p.omega) > 0.5) {
+          if (p.omega * p.lastOmega < 0) {
+            state.oscillations++;
+            p.lastOmega = p.omega;
+          }
+        }
+        p.lastOmega = p.omega;
+      }
+      
+      if (state.experiment === 'spring') {
+        const k = p.k;
+        const m = p.mass;
+        const alpha = -(k / m) * p.y;
+        p.velocity += alpha * dt;
+        p.y += p.velocity * dt;
+        
+        if (Math.abs(p.y) < p.amplitude * 0.1 && Math.abs(p.velocity) > 0.5) {
+          if (p.velocity * (p.velocity - alpha * dt) < 0) {
+            state.oscillations++;
+          }
+        }
+      }
+      
+      if (state.experiment === 'damped') {
+        const g = p.length;
+        const m = p.mass;
+        const b = p.damping;
+        const alpha = -(g / p.length) * Math.sin(p.theta) - (b / m) * p.omega;
+        p.omega += alpha * dt;
+        p.theta += p.omega * dt;
+        
+        // Record envelope
+        if (Math.abs(p.omega) < 0.05 && Math.sign(p.omega) !== Math.sign(p.omega - alpha * dt)) {
+          p.envelope.push({ t: state.time, amp: Math.abs(p.theta) });
+        }
+      }
+      
+      if (state.experiment === 'coupled') {
+        const g = p.g;
+        const k = p.k;
+        const m = p.mass;
+        
+        const alpha1 = -(g / p.l1) * Math.sin(p.theta1) - (k / m) * (p.theta1 - p.theta2);
+        const alpha2 = -(g / p.l2) * Math.sin(p.theta2) - (k / m) * (p.theta2 - p.theta1);
+        
+        p.omega1 += alpha1 * dt;
+        p.omega2 += alpha2 * dt;
+        p.theta1 += p.omega1 * dt;
+        p.theta2 += p.omega2 * dt;
+      }
+    }
+
+    // ============ DRAWING ============
+    function draw() {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      // Background
+      const bg = ctx.createRadialGradient(w * 0.3, h * 0.3, 0, w * 0.5, h * 0.5, w);
+      bg.addColorStop(0, '#0d1220');
+      bg.addColorStop(1, '#050810');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 20; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * w / 20, 0);
+        ctx.lineTo(i * w / 20, h);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i * h / 20);
+        ctx.lineTo(w, i * h / 20);
+        ctx.stroke();
+      }
+      
+      if (state.experiment === 'pendulum') {
+        drawPendulum(w, h);
+      } else if (state.experiment === 'spring') {
+        drawSpring(w, h);
+      } else if (state.experiment === 'damped') {
+        drawDamped(w, h);
+      } else if (state.experiment === 'coupled') {
+        drawCoupled(w, h);
+      }
+    }
+
+    function drawPendulum(w, h) {
+      const p = physics.pendulum;
+      const cx = w / 2;
+      const pivotY = 80;
+      const scale = 120;
+      
+      // Pivot
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(cx, pivotY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // String
+      const bobX = cx + Math.sin(p.theta) * p.length * scale;
+      const bobY = pivotY + Math.cos(p.theta) * p.length * scale;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, pivotY);
+      ctx.lineTo(bobX, bobY);
+      ctx.stroke();
+      
+      // Bob
+      const bobGrad = ctx.createRadialGradient(bobX - 10, bobY - 10, 0, bobX, bobY, 30);
+      bobGrad.addColorStop(0, '#5aa7ff');
+      bobGrad.addColorStop(1, '#2a5a9f');
+      ctx.fillStyle = bobGrad;
+      ctx.beginPath();
+      ctx.arc(bobX, bobY, 25, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Angle arc
+      ctx.strokeStyle = 'rgba(246, 199, 107, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(cx, pivotY, 40, 0, -p.theta, p.theta > 0);
+      ctx.stroke();
+      
+      // Labels
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Space Grotesk"';
+      ctx.fillText(`L = ${p.length.toFixed(1)}m`, cx + 20, pivotY + 30);
+      ctx.fillText(`θ = ${(p.angle).toFixed(0)}°`, bobX + 30, bobY);
+    }
+
+    function drawSpring(w, h) {
+      const p = physics.spring;
+      const cx = w / 2;
+      const topY = 60;
+      const restY = h / 2;
+      const scale = 400;
+      
+      // Ceiling
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.fillRect(cx - 60, topY - 10, 120, 10);
+      
+      // Spring coils
+      const y = restY - p.y * scale;
+      const coils = 12;
+      const coilH = (y - topY) / coils;
+      
+      ctx.strokeStyle = '#c7f5ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx - 30, topY);
+      for (let i = 0; i < coils; i++) {
+        ctx.lineTo(cx + 30, topY + coilH * (i + 0.25));
+        ctx.lineTo(cx - 30, topY + coilH * (i + 0.75));
+      }
+      ctx.lineTo(cx, y);
+      ctx.stroke();
+      
+      // Mass
+      const massW = 60;
+      const massH = 40;
+      const massGrad = ctx.createLinearGradient(cx - massW/2, y, cx + massW/2, y);
+      massGrad.addColorStop(0, '#4a6fa5');
+      massGrad.addColorStop(1, '#2a4a7f');
+      ctx.fillStyle = massGrad;
+      ctx.beginPath();
+      ctx.roundRect(cx - massW/2, y, massW, massH, 8);
+      ctx.fill();
+      
+      // Equilibrium line
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(cx - 80, restY);
+      ctx.lineTo(cx + 80, restY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Space Grotesk"';
+      ctx.fillText('Equilibrium', cx + 50, restY + 5);
+      ctx.fillText(`m = ${p.mass.toFixed(1)}kg`, cx - 50, y + 30);
+    }
+
+    function drawDamped(w, h) {
+      const p = physics.damped;
+      const cx = w / 2;
+      const pivotY = 80;
+      const scale = 120;
+      
+      // Pivot
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(cx, pivotY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // String
+      const bobX = cx + Math.sin(p.theta) * p.length * scale;
+      const bobY = pivotY + Math.cos(p.theta) * p.length * scale;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx, pivotY);
+      ctx.lineTo(bobX, bobY);
+      ctx.stroke();
+      
+      // Bob with fade based on amplitude
+      const alpha = Math.min(1, Math.abs(p.theta) * 2);
+      ctx.globalAlpha = 0.5 + alpha * 0.5;
+      const bobGrad = ctx.createRadialGradient(bobX - 10, bobY - 10, 0, bobX, bobY, 25);
+      bobGrad.addColorStop(0, '#a78bfa');
+      bobGrad.addColorStop(1, '#6d5acd');
+      ctx.fillStyle = bobGrad;
+      ctx.beginPath();
+      ctx.arc(bobX, bobY, 25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      
+      // Envelope trails
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      p.envelope.forEach((env, i) => {
+        const ex = cx + Math.sin(env.t * 2) * env.amp * scale * 10;
+        const ey = pivotY + Math.cos(env.t * 2) * env.amp * scale * 10 + 120;
+        if (i === 0) ctx.moveTo(ex, ey);
+        else ctx.lineTo(ex, ey);
+      });
+      ctx.stroke();
+      
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Space Grotesk"';
+      ctx.fillText(`b = ${p.damping.toFixed(2)} kg/s`, cx + 30, pivotY + 30);
+    }
+
+    function drawCoupled(w, h) {
+      const p = physics.coupled;
+      const cx1 = w / 3;
+      const cx2 = w * 2 / 3;
+      const pivotY = 80;
+      const scale = 120;
+      
+      // Pivots
+      ctx.fillStyle = '#6ad7ff';
+      ctx.beginPath();
+      ctx.arc(cx1, pivotY, 8, 0, Math.PI * 2);
+      ctx.arc(cx2, pivotY, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      // Strings
+      const b1x = cx1 + Math.sin(p.theta1) * p.l1 * scale;
+      const b1y = pivotY + Math.cos(p.theta1) * p.l1 * scale;
+      const b2x = cx2 + Math.sin(p.theta2) * p.l2 * scale;
+      const b2y = pivotY + Math.cos(p.theta2) * p.l2 * scale;
+      
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(cx1, pivotY);
+      ctx.lineTo(b1x, b1y);
+      ctx.moveTo(cx2, pivotY);
+      ctx.lineTo(b2x, b2y);
+      ctx.stroke();
+      
+      // Coupling spring
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(b1x + 25, b1y);
+      ctx.lineTo(b2x - 25, b2y);
+      ctx.stroke();
+      
+      // Bobs
+      [ {x: b1x, y: b1y, c: '#5aa7ff'}, {x: b2x, y: b2y, c: '#4ade80'} ].forEach(b => {
+        const grad = ctx.createRadialGradient(b.x - 10, b.y - 10, 0, b.x, b.y, 25);
+        grad.addColorStop(0, b.c);
+        grad.addColorStop(1, '#2a5a7f');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, 25, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '12px "Space Grotesk"';
+      ctx.fillText(`L₁=${p.l1.toFixed(1)}m`, b1x + 30, b1y);
+      ctx.fillText(`L₂=${p.l2.toFixed(1)}m`, b2x - 80, b2y);
+    }
+
+    // ============ ANIMATION LOOP ============
+    let lastTime = 0;
+    function tick(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+      lastTime = timestamp;
+      
+      if (state.running) {
+        state.time += dt;
+        updatePhysics(dt);
+        updateTimerDisplay();
+      }
+      
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    // ============ TAB SWITCHING ============
+    document.querySelectorAll('.exp-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.exp-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        state.experiment = tab.dataset.exp;
+        state.data = [];
+        state.time = 0;
+        state.oscillations = 0;
+        resetPhysics();
+        setupControls();
+        updateDataTable();
+        updateAnalysis();
+      });
+    });
+
+    // ============ INIT ============
+    setupControls();
+    resetPhysics();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
