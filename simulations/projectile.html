@@ -1155,7 +1155,7 @@ function drawExplore() {
   // Launcher stick figure
   ctx.save();
   ctx.translate(exp.launcherX, exp.groundY - (exp.launchH > 0 ? exp.launchH * exp.scaleY : 0));
-  ctx.rotate(-exp.angle * Math.PI / 180);
+  ctx.rotate(exp.angle * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
@@ -1670,7 +1670,7 @@ function drawCompare() {
   function drawLauncher(x, angle, color) {
     ctx.save();
     ctx.translate(x, cmp.groundY);
-    ctx.rotate(-angle * Math.PI / 180);
+    ctx.rotate(angle * Math.PI / 180);
     ctx.strokeStyle = color;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
@@ -1961,7 +1961,7 @@ function drawEnergy() {
 
   ctx.save();
   ctx.translate(nrg.launcherX, nrg.groundY - (nrg.launchH > 0 ? nrg.launchH * nrg.scaleY : 0));
-  ctx.rotate(-45 * Math.PI / 180);
+  ctx.rotate(45 * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
@@ -2184,7 +2184,7 @@ function drawChallenge() {
 
   ctx.save();
   ctx.translate(ch.launcherX, ch.groundY);
-  ctx.rotate(-ch.angle * Math.PI / 180);
+  ctx.rotate(ch.angle * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
