@@ -119,7 +119,8 @@ async function initTables() {
     const createUsers = libsqlClient.execute('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, name TEXT DEFAULT \'\', created_at TEXT, last_login TEXT, plan TEXT DEFAULT \'free\', plan_expiry TEXT, subscription_txn_id TEXT, reset_token TEXT, reset_token_expiry TEXT, avatar TEXT, email_verified INTEGER DEFAULT 0, verify_token TEXT, verify_token_expiry TEXT)');
     const createUserData = libsqlClient.execute('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')');
     const createSubscriptions = libsqlClient.execute('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)');
-    await Promise.all([createUsers, createUserData, createSubscriptions]);
+    const createPaymentEvents = libsqlClient.execute('CREATE TABLE IF NOT EXISTS payment_events (id INTEGER PRIMARY KEY AUTOINCREMENT, provider TEXT NOT NULL, event_type TEXT NOT NULL, status TEXT NOT NULL, order_id TEXT, amount INTEGER, currency TEXT, user_id TEXT, txn_id TEXT, payload TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
+    await Promise.all([createUsers, createUserData, createSubscriptions, createPaymentEvents]);
     console.log('All tables created');
   } catch (e) {
     console.log('Table error:', e.message);
@@ -1008,6 +1009,13 @@ async function getPaymentKey(token, amountCents, orderId, userData, userEmail) {
 
 app.post('/api/paymob/create-order', async (req, res) => {
   try {
+    if (!PAYMOB_API_KEY || !PAYMOB_INTEGRATION_ID || !PAYMOB_IFRAME_ID) {
+      return res.status(500).json({
+        success: false,
+        error: 'Paymob is not configured. Set PAYMOB_API_KEY, PAYMOB_INTEGRATION_ID, and PAYMOB_IFRAME_ID.'
+      });
+    }
+
     const { plan, currency, user, token } = req.body;
 
     if (!PLANS[plan]) {

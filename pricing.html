@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="api-base" content="" />
   <title>Physics Experiments Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -263,11 +264,11 @@
         <div class="currency-selector">
           <span class="currency-label">Currency:</span>
           <label class="currency-option">
-            <input type="radio" name="currency" value="USD" checked />
+            <input type="radio" name="currency" value="USD" />
             <span>USD ($)</span>
           </label>
           <label class="currency-option">
-            <input type="radio" name="currency" value="EGP" />
+            <input type="radio" name="currency" value="EGP" checked />
             <span>EGP (ج.م)</span>
           </label>
         </div>
@@ -1278,6 +1279,8 @@
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const supportEmail = 'awork5814@gmail.com';
+      const apiBaseMeta = document.querySelector('meta[name="api-base"]');
+      const API_BASE = (apiBaseMeta?.content || '').trim().replace(/\/$/, '');
       const currencyRadios = document.querySelectorAll('input[name="currency"]');
       const usdPricing = document.querySelector('.pricing-page-main .pricing-grid');
       const egpPricing = document.querySelector('.pricing-page-main .egp-pricing');
@@ -1331,6 +1334,9 @@
       const savedCurrency = localStorage.getItem('preferredCurrency');
       if (savedCurrency) {
         const radio = document.querySelector(`input[name="currency"][value="${savedCurrency}"]`);
+        if (radio) radio.checked = true;
+      } else {
+        const radio = document.querySelector('input[name="currency"][value="EGP"]');
         if (radio) radio.checked = true;
       }
       updateCurrency();
@@ -1407,11 +1413,14 @@
         if (token) payload.token = token;
         
         try {
-          const response = await fetch('/api/paymob/create-order', {
+          const response = await fetch(`${API_BASE}/api/paymob/create-order`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+          if (!response.ok) {
+            throw new Error(`Paymob request failed (${response.status})`);
+          }
           const data = await response.json();
           
           if (data.success && data.iframeToken) {
@@ -1473,7 +1482,7 @@
         }
         
         try {
-          const response = await fetch('/api/paymob/complete-subscription', {
+          const response = await fetch(`${API_BASE}/api/paymob/complete-subscription`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -1485,6 +1494,9 @@
               paymobOrderId: paymobOrderId
             })
           });
+          if (!response.ok) {
+            throw new Error(`Subscription activation failed (${response.status})`);
+          }
           
           const data = await response.json();
           if (data.success) {
@@ -1561,11 +1573,14 @@
         if (token) payload.token = token;
 
         try {
-          const response = await fetch('/api/paytabs/create-payment', {
+          const response = await fetch(`${API_BASE}/api/paytabs/create-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+          if (!response.ok) {
+            throw new Error(`PayTabs request failed (${response.status})`);
+          }
 
           const data = await response.json();
           if (data.success && data.redirect_url) {
