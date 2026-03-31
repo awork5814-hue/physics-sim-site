@@ -1029,8 +1029,13 @@ function updateExploreStats() {
 
 function resetExplore() {
   exp.state = 'ready';
-  exp.px = exp.launcherX;
-  exp.py = exp.groundY - exp.launchH * exp.scaleY;
+  const rad = exp.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  const cannonOffsetX = aimX * 22;
+  const cannonOffsetY = aimY * 22 - 20 - exp.launchH * exp.scaleY;
+  exp.px = exp.launcherX + cannonOffsetX;
+  exp.py = exp.groundY + cannonOffsetY;
   exp.vx = 0; exp.vy = 0;
   exp.trail = [];
   exp.simTime = 0;
@@ -1042,9 +1047,13 @@ function resetExplore() {
 function launchExplore() {
   if (exp.state === 'flying') return;
   exp.state = 'flying';
-  exp.px = exp.launcherX;
-  exp.py = exp.groundY - exp.launchH * exp.scaleY;
   const rad = exp.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  const cannonOffsetX = aimX * 22;
+  const cannonOffsetY = aimY * 22 - 20 - exp.launchH * exp.scaleY;
+  exp.px = exp.launcherX + cannonOffsetX;
+  exp.py = exp.groundY + cannonOffsetY;
   exp.vx = (exp.speed * Math.cos(rad)) * exp.scaleX / 5;
   exp.vy = -(exp.speed * Math.sin(rad)) * exp.scaleY / 5;
   exp.trail = [{ x: exp.px, y: exp.py }];
@@ -1127,11 +1136,13 @@ function drawExplore() {
     ctx.strokeStyle = 'rgba(246, 199, 107, 0.5)';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    let px = exp.launcherX, py = exp.groundY - exp.launchH * exp.scaleY;
+    const startX = exp.launcherX + aimX * 22;
+    const startY = exp.groundY + aimY * 22 - 20 - exp.launchH * exp.scaleY;
+    let px = startX, py = startY;
     ctx.moveTo(px, py);
     for (let t = 0; t < 3; t += 0.02) {
-      px = exp.launcherX + vx0 * t * 60;
-      py = (exp.groundY - exp.launchH * exp.scaleY) + vy0 * t * 60 + 0.5 * gDisplay * t * t * 60 * 60;
+      px = startX + vx0 * t * 60;
+      py = startY + vy0 * t * 60 + 0.5 * gDisplay * t * t * 60 * 60;
       if (py >= exp.groundY || px > w) break;
       ctx.lineTo(px, py);
     }
@@ -1325,8 +1336,11 @@ function initDataCanvas() {
 
 function resetData() {
   dat.state = 'ready';
-  dat.px = dat.launcherX;
-  dat.py = dat.groundY;
+  const rad = 45 * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  dat.px = dat.launcherX + aimX * 22;
+  dat.py = dat.groundY + aimY * 22 - 20;
   dat.vx = 0; dat.vy = 0;
   dat.trail = [];
   dat.tool = null;
@@ -1341,9 +1355,11 @@ function resetData() {
 function launchData() {
   if (dat.state === 'flying') return;
   dat.state = 'flying';
-  dat.px = dat.launcherX;
-  dat.py = dat.groundY;
   const rad = 45 * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  dat.px = dat.launcherX + aimX * 22;
+  dat.py = dat.groundY + aimY * 22 - 20;
   dat.vx = (dat.speed * Math.cos(rad)) * dat.scaleX / 5;
   dat.vy = -(dat.speed * Math.sin(rad)) * dat.scaleY / 5;
   dat.trail = [{ x: dat.px, y: dat.py }];
@@ -1603,8 +1619,12 @@ function initCompareCanvas() {
 
 function resetCompare() {
   cmp.state = 'ready';
-  cmp.pA = { x: cmp.launcherX, y: cmp.groundY, vx: 0, vy: 0 };
-  cmp.pB = { x: cmp.launcherX, y: cmp.groundY, vx: 0, vy: 0 };
+  const radA = cmp.angleA * Math.PI / 180;
+  const radB = cmp.angleB * Math.PI / 180;
+  const aA = { x: Math.cos(radA), y: -Math.sin(radA) };
+  const aB = { x: Math.cos(radB), y: -Math.sin(radB) };
+  cmp.pA = { x: cmp.launcherX + aA.x * 22, y: cmp.groundY + aA.y * 22 - 20, vx: 0, vy: 0 };
+  cmp.pB = { x: cmp.launcherX + aB.x * 22, y: cmp.groundY + aB.y * 22 - 20, vx: 0, vy: 0 };
   cmp.trailA = []; cmp.trailB = [];
   if (cmp.animId) cancelAnimationFrame(cmp.animId);
   drawCompare();
@@ -1616,17 +1636,20 @@ function launchBoth() {
   cmp.state = 'flying';
 
   // Projectile A
-  cmp.pA = { x: cmp.launcherX, y: cmp.groundY, vx: 0, vy: 0 };
   const radA = cmp.angleA * Math.PI / 180;
+  const aA = { x: Math.cos(radA), y: -Math.sin(radA) };
+  cmp.pA = { x: cmp.launcherX + aA.x * 22, y: cmp.groundY + aA.y * 22 - 20, vx: 0, vy: 0 };
   cmp.pA.vx = (cmp.speedA * Math.cos(radA)) * cmp.scaleX / 5;
   cmp.pA.vy = -(cmp.speedA * Math.sin(radA)) * cmp.scaleY / 5;
   cmp.trailA = [{ x: cmp.pA.x, y: cmp.pA.y }];
 
   // Projectile B
-  cmp.pB = { x: cmp.launcherX, y: cmp.groundY, vx: 0, vy: 0 };
   const radB = cmp.angleB * Math.PI / 180;
+  const aB = { x: Math.cos(radB), y: -Math.sin(radB) };
+  cmp.pB = { x: cmp.launcherX + aB.x * 22, y: cmp.groundY + aB.y * 22 - 20, vx: 0, vy: 0 };
   cmp.pB.vx = (cmp.speedB * Math.cos(radB)) * cmp.scaleX / 5;
   cmp.pB.vy = -(cmp.speedB * Math.sin(radB)) * cmp.scaleY / 5;
+  cmp.pB.trailB = [{ x: cmp.pB.x, y: cmp.pB.y }];
   cmp.trailB = [{ x: cmp.pB.x, y: cmp.pB.y }];
 
   animateCompare();
@@ -1866,8 +1889,11 @@ function calcEnergyAt(px, py, vx, vy) {
 
 function resetEnergy() {
   nrg.state = 'ready';
-  nrg.px = nrg.launcherX;
-  nrg.py = nrg.groundY - nrg.launchH * nrg.scaleY;
+  const rad = 45 * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  nrg.px = nrg.launcherX + aimX * 22;
+  nrg.py = nrg.groundY + aimY * 22 - 20 - nrg.launchH * nrg.scaleY;
   nrg.vx = 0; nrg.vy = 0;
   nrg.trail = [];
   nrg.eHistory = [];
@@ -1881,9 +1907,11 @@ function resetEnergy() {
 function launchEnergy() {
   if (nrg.state === 'flying') return;
   nrg.state = 'flying';
-  nrg.px = nrg.launcherX;
-  nrg.py = nrg.groundY - nrg.launchH * nrg.scaleY;
   const rad = 45 * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  nrg.px = nrg.launcherX + aimX * 22;
+  nrg.py = nrg.groundY + aimY * 22 - 20 - nrg.launchH * nrg.scaleY;
   nrg.vx = (nrg.speed * Math.cos(rad)) * nrg.scaleX / 5;
   nrg.vy = -(nrg.speed * Math.sin(rad)) * nrg.scaleY / 5;
   nrg.trail = [{ x: nrg.px, y: nrg.py }];
@@ -2102,8 +2130,11 @@ function spawnTarget() {
 
 function resetChallenge() {
   ch.state = 'ready';
-  ch.px = ch.launcherX;
-  ch.py = ch.groundY;
+  const rad = ch.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  ch.px = ch.launcherX + aimX * 22;
+  ch.py = ch.groundY + aimY * 22 - 20;
   ch.vx = 0; ch.vy = 0;
   ch.trail = [];
   if (ch.animId) cancelAnimationFrame(ch.animId);
@@ -2113,9 +2144,11 @@ function resetChallenge() {
 function fireChallenge() {
   if (ch.state === 'flying') return;
   ch.state = 'flying';
-  ch.px = ch.launcherX;
-  ch.py = ch.groundY;
   const rad = ch.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  ch.px = ch.launcherX + aimX * 22;
+  ch.py = ch.groundY + aimY * 22 - 20;
   ch.vx = (ch.speed * Math.cos(rad)) * ch.scaleX / 5;
   ch.vy = -(ch.speed * Math.sin(rad)) * ch.scaleY / 5;
   ch.trail = [{ x: ch.px, y: ch.py }];
