@@ -1111,7 +1111,7 @@ function drawExplore() {
   }
 
   // Scenario-specific center object
-  drawScenarioCenter(ctx, cx, cy, exp.scenario, r);
+  drawScenarioCenter(ctx, cx, cy, h, exp.scenario, r);
 
   // Orbit circle
   ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
@@ -1242,7 +1242,7 @@ function drawExplore() {
   ctx.fillText(`F = ${calcForce(exp.mass, exp.omega, exp.radius).toFixed(1)} N`, 16, h - 20);
 }
 
-function drawScenarioCenter(ctx, cx, cy, scenario, r) {
+function drawScenarioCenter(ctx, cx, cy, h, scenario, r) {
   if (scenario === 'orbit') {
     const grad = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, 50);
     grad.addColorStop(0, '#3b82f6');
