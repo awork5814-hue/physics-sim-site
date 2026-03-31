@@ -1155,19 +1155,33 @@ function drawExplore() {
   // Launcher stick figure
   ctx.save();
   ctx.translate(exp.launcherX, exp.groundY - (exp.launchH > 0 ? exp.launchH * exp.scaleY : 0));
-  ctx.rotate(exp.angle * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
+  ctx.fillStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
-  // body
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(30, 0); ctx.stroke();
-  // arms
-  ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(15, -10); ctx.stroke();
+  const rad = exp.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  const perpX = Math.sin(rad);
+  const perpY = Math.cos(rad);
+  // body (vertical)
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
   // legs
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-8, 10); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(8, 10); ctx.stroke();
+  // aiming arm (points in launch direction)
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 + aimX * 22, -20 + aimY * 22); ctx.stroke();
+  // other arm (down)
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 - perpX * 10, -20 + perpY * 10); ctx.stroke();
   // head
-  ctx.beginPath(); ctx.arc(35, 0, 6, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, -38, 7, 0, Math.PI * 2); ctx.stroke();
+  // cannon base
+  ctx.beginPath();
+  ctx.arc(0 + aimX * 22, -20 + aimY * 22, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(106, 215, 255, 0.4)';
+  ctx.fill();
+  ctx.strokeStyle = '#6ad7ff';
+  ctx.stroke();
   ctx.restore();
 
   // Projectile
@@ -1670,13 +1684,27 @@ function drawCompare() {
   function drawLauncher(x, angle, color) {
     ctx.save();
     ctx.translate(x, cmp.groundY);
-    ctx.rotate(angle * Math.PI / 180);
     ctx.strokeStyle = color;
+    ctx.fillStyle = color;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
-    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(30, 0); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(15, -10); ctx.stroke();
-    ctx.beginPath(); ctx.arc(35, 0, 6, 0, Math.PI * 2); ctx.stroke();
+    const rad = angle * Math.PI / 180;
+    const aimX = Math.cos(rad);
+    const aimY = -Math.sin(rad);
+    const perpX = Math.sin(rad);
+    const perpY = Math.cos(rad);
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-8, 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(8, 10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 + aimX * 22, -20 + aimY * 22); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 - perpX * 10, -20 + perpY * 10); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, -38, 7, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0 + aimX * 22, -20 + aimY * 22, 5, 0, Math.PI * 2);
+    ctx.fillStyle = color.replace(')', ', 0.4)').replace('rgb', 'rgba').replace('#6ad7ff', 'rgba(106,215,255,0.4)').replace('#f6c76b', 'rgba(246,199,107,0.4)');
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -1961,13 +1989,27 @@ function drawEnergy() {
 
   ctx.save();
   ctx.translate(nrg.launcherX, nrg.groundY - (nrg.launchH > 0 ? nrg.launchH * nrg.scaleY : 0));
-  ctx.rotate(45 * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
+  ctx.fillStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(30, 0); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(15, -10); ctx.stroke();
-  ctx.beginPath(); ctx.arc(35, 0, 6, 0, Math.PI * 2); ctx.stroke();
+  const rad = 45 * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  const perpX = Math.sin(rad);
+  const perpY = Math.cos(rad);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-8, 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(8, 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 + aimX * 22, -20 + aimY * 22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 - perpX * 10, -20 + perpY * 10); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, -38, 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0 + aimX * 22, -20 + aimY * 22, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(106, 215, 255, 0.4)';
+  ctx.fill();
+  ctx.strokeStyle = '#6ad7ff';
+  ctx.stroke();
   ctx.restore();
 
   if (nrg.state !== 'ready') {
@@ -2184,13 +2226,27 @@ function drawChallenge() {
 
   ctx.save();
   ctx.translate(ch.launcherX, ch.groundY);
-  ctx.rotate(ch.angle * Math.PI / 180);
   ctx.strokeStyle = '#6ad7ff';
+  ctx.fillStyle = '#6ad7ff';
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(30, 0); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(15, -10); ctx.stroke();
-  ctx.beginPath(); ctx.arc(35, 0, 6, 0, Math.PI * 2); ctx.stroke();
+  const rad = ch.angle * Math.PI / 180;
+  const aimX = Math.cos(rad);
+  const aimY = -Math.sin(rad);
+  const perpX = Math.sin(rad);
+  const perpY = Math.cos(rad);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -30); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-8, 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(8, 10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 + aimX * 22, -20 + aimY * 22); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(0 - perpX * 10, -20 + perpY * 10); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, -38, 7, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0 + aimX * 22, -20 + aimY * 22, 5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(106, 215, 255, 0.4)';
+  ctx.fill();
+  ctx.strokeStyle = '#6ad7ff';
+  ctx.stroke();
   ctx.restore();
 
   if (ch.state !== 'ready') {
