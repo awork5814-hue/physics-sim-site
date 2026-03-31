@@ -1129,7 +1129,9 @@ function drawExplore() {
   // Prediction line
   if (exp.showPred && exp.state === 'ready') {
     const rad = exp.angle * Math.PI / 180;
-    const vx0 = (exp.speed * Math.cos(rad)) * exp.scaleX / 5;
+    const aimX = Math.cos(rad);
+    const aimY = -Math.sin(rad);
+    const vx0 = (exp.speed * aimX) * exp.scaleX / 5;
     const vy0 = -(exp.speed * Math.sin(rad)) * exp.scaleY / 5;
     const gDisplay = exp.gravity * exp.scaleY / 5;
     ctx.setLineDash([8, 6]);
