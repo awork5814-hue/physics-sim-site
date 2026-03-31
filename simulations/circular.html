@@ -1,373 +1,2164 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Uniform Circular Motion</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uniform Circular Motion Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/simulation-theme.css">
   <style>
     :root {
-      --bg: #0b1020;
-      --panel: rgba(12, 18, 30, 0.82);
-      --ink: #f8fafc;
-      --muted: #94a3b8;
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --accent-3: #22c55e;
-      --line: rgba(255,255,255,0.08);
-      --mono: "JetBrains Mono", monospace;
+      --accent-3: #a78bfa;
+      --accent-4: #22c55e;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+      --glass: rgba(12, 20, 34, 0.75);
+      --glass-strong: rgba(10, 18, 30, 0.88);
+      --glass-border: rgba(106, 215, 255, 0.2);
+      --glass-glow: rgba(106, 215, 255, 0.16);
+      --shadow: 0 28px 65px rgba(5, 12, 22, 0.5);
+      --hot: #ff6b6b;
+      --ke-color: #6bff6b;
+      --pe-color: #ff9a6c;
+      --total-color: #6ad7ff;
     }
-    body.light {
-      --bg: #f5f7fa;
-      --ink: #0f172a;
-      --muted: #475569;
-      --line: rgba(15, 23, 42, 0.12);
-      --panel: rgba(255,255,255,0.9);
-    }
-    * { box-sizing: border-box; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "Inter", sans-serif;
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: #0a111c;
+      color: var(--sim-text);
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .topbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 20px; border-bottom: 1px solid var(--line);
-      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
-      position: sticky; top: 0; z-index: 10;
-    }
-    .topbar a { color: var(--ink); text-decoration: none; font-weight: 600; }
-    .toggle {
-      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
-      border: 1px solid var(--line); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
-      cursor: pointer; color: var(--ink);
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .toggle:hover { transform: translateY(-1px); border-color: rgba(106,215,255,0.5); box-shadow: 0 0 12px rgba(106,215,255,0.25); }
 
-    header { padding: 24px 20px 8px; display: flex; gap: 12px; align-items: center; }
-    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
-    header .subtitle { color: var(--muted); font-size: 13px; }
-
-    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      backdrop-filter: blur(12px);
+    .back-bar {
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      background: rgba(15, 22, 35, 0.9);
+      border-bottom: 1px solid var(--glass-border);
     }
-    .canvas-wrap { position: relative; }
-    canvas { width: 100%; height: clamp(360px, 56vh, 560px); background: #0b0f14; border-radius: 14px; border: 1px solid var(--line); }
 
-    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .control {
-      background: #0f151c;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
+    .back-bar a {
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .back-bar a:hover { text-decoration: underline; }
+
+    .theme-toggle {
+      margin-left: auto;
+      background: none;
+      border: 1px solid var(--glass-border);
+      color: var(--sim-text);
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
       font-size: 13px;
-      color: var(--muted);
+      font-family: inherit;
     }
-    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
-    .control input[type="range"] { width: 100%; }
-    .control .row { display: flex; justify-content: space-between; }
-    .control .value { font-weight: 600; color: var(--ink); }
 
-    .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn {
-      border: 1px solid var(--line); background: rgba(14, 20, 32, 0.9); color: var(--ink);
-      padding: 8px 14px; border-radius: 10px; cursor: pointer; font-weight: 600;
-      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    .theme-toggle:hover {
+      background: rgba(106, 215, 255, 0.1);
+      border-color: var(--accent);
     }
-    .btn:hover { transform: translateY(-1px); border-color: rgba(246,199,107,0.7); box-shadow: 0 0 12px rgba(246,199,107,0.2); }
 
-    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
 
-    .data-panel { padding: 0; background: transparent; border: none; }
-    .data-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
-    .data-card { background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
-    .data-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-    .data-label::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
-    .data-value { font-size: 1rem; font-weight: 700; font-family: var(--mono); }
-    .data-value.blue { color: var(--accent); }
-    .data-value.orange { color: var(--accent-2); }
-    .data-value.green { color: var(--accent-3); }
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
 
-    .formula {
-      background: linear-gradient(135deg, rgba(106,215,255,0.18), rgba(106,215,255,0.05));
-      border: 1px solid rgba(106,215,255,0.5);
+    .header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 36px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: var(--sim-muted);
+      font-size: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(15, 22, 35, 0.8);
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      border: none;
+      background: transparent;
+      color: var(--sim-muted);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
       border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: var(--ink);
-      line-height: 1.5;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
     }
 
-    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+    .tab-btn:hover {
+      color: var(--sim-text);
+      background: rgba(106, 215, 255, 0.06);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.2), rgba(246, 199, 107, 0.1));
+      color: var(--accent);
+      box-shadow: 0 0 20px rgba(106, 215, 255, 0.15);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .lab-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+    }
+
+    .canvas-card {
+      background: var(--glass-strong);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+
+    .canvas-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 200px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(106, 215, 255, 0.08), transparent);
+      pointer-events: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+    }
+
+    .controls-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .control-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .control-card h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .control-group {
+      margin-bottom: 14px;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--sim-muted);
+      margin-bottom: 6px;
+    }
+
+    .control-group .value-display {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--accent-2);
+      margin-bottom: 8px;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      background: rgba(106, 215, 255, 0.15);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #4ab8e8);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(106, 215, 255, 0.4);
+    }
+
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(10, 16, 26, 0.8);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--sim-text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #4ab8e8);
+      color: #0a111c;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(106, 215, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: rgba(106, 215, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      color: var(--accent);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(106, 215, 255, 0.15);
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sim-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-card .value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .preset-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .preset-btn {
+      padding: 6px 14px;
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.15);
+      border-radius: 20px;
+      color: var(--accent);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .check-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .check-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: rgba(106, 215, 255, 0.08);
+      color: var(--accent);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .data-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(120, 150, 190, 0.08);
+    }
+
+    .data-table tr:hover td {
+      background: rgba(106, 215, 255, 0.03);
+    }
+
+    .data-table .check-ok { color: var(--accent-4); }
+    .data-table .check-bad { color: var(--hot); }
+
+    .tool-btn {
+      padding: 8px 16px;
+      background: rgba(106, 215, 255, 0.1);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--accent);
+      font-size: 13px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .tool-btn:hover, .tool-btn.active {
+      background: rgba(106, 215, 255, 0.2);
+      border-color: var(--accent);
+    }
+
+    .compare-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .compare-box {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .compare-box.proj-a { border-top: 3px solid var(--accent); }
+    .compare-box.proj-b { border-top: 3px solid var(--accent-2); }
+
+    .compare-box h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .compare-box.proj-a h4 { color: var(--accent); }
+    .compare-box.proj-b h4 { color: var(--accent-2); }
+
+    .challenge-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .challenge-stat {
+      background: rgba(10, 16, 26, 0.85);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .challenge-stat .lbl {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--sim-muted);
+    }
+
+    .challenge-stat .val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent-2);
+    }
+
+    .challenge-stat.level .val { color: var(--accent); }
+    .challenge-stat.score .val { color: var(--accent-4); }
+
+    .theory-panel {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .theory-panel h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .theory-panel p {
+      font-size: 13px;
+      color: var(--sim-muted);
+      line-height: 1.7;
+      margin-bottom: 12px;
+    }
+
+    .formula-box {
+      background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(106, 215, 255, 0.05));
+      border: 1px solid rgba(106, 215, 255, 0.4);
+      border-radius: 10px;
+      padding: 14px;
+      margin: 12px 0;
+    }
+
+    .formula-box .formula {
+      font-family: 'Space Grotesk', monospace;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
+    .formula-box .desc {
+      font-size: 12px;
+      color: var(--sim-muted);
+    }
+
+    .scenario-card {
+      background: rgba(106, 215, 255, 0.06);
+      border: 1px solid rgba(106, 215, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .scenario-card:hover {
+      background: rgba(106, 215, 255, 0.1);
+      border-color: var(--accent);
+    }
+
+    .scenario-card.active {
+      background: rgba(106, 215, 255, 0.12);
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(106, 215, 255, 0.15);
+    }
+
+    .scenario-card h4 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .scenario-card p {
+      font-size: 11px;
+      color: var(--sim-muted);
+    }
+
+    @media (max-width: 900px) {
+      .lab-layout {
+        grid-template-columns: 1fr;
+      }
+      .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .compare-controls {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <a href="/index.html">← Back to Library</a>
-    <button class="toggle" id="themeToggle">Light/Dark</button>
-  </div>
-  <header>
-    <h1>Uniform Circular Motion</h1>
-    <div class="subtitle">Centripetal acceleration and constant speed</div>
-  </header>
 
-  <div class="wrap">
-    <div class="card">
-      <div class="canvas-wrap">
-        <canvas id="scene" width="960" height="460"></canvas>
-      </div>
-      <div class="data-panel" id="readout"></div>
-    </div>
+<div class="back-bar">
+  <a href="/">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    Back to Library
+  </a>
+  <button class="theme-toggle" onclick="document.documentElement.dataset.theme = document.documentElement.dataset.theme === 'light' ? '' : 'light'">
+    Light/Dark
+  </button>
+</div>
 
-    <div class="card">
-      <div class="controls">
-        <div class="control">
-          <label>Simulation</label>
-          <div class="button-row">
-            <button class="btn" id="playPause">Pause</button>
-            <button class="btn" id="reset">Reset</button>
-          </div>
-        </div>
-        <div class="control">
-          <label>Animation Speed</label>
-          <input id="speed" type="range" min="0.2" max="2" step="0.05" value="1" />
-          <div class="row"><span>0.2x</span><span id="speedVal" class="value">1.00x</span><span>2.0x</span></div>
-        </div>
-        <div class="control">
-          <label>Radius (m)</label>
-          <input id="radius" type="range" min="20" max="150" step="1" value="80" />
-          <div class="row"><span>20</span><span id="radiusVal" class="value">80 m</span><span>150</span></div>
-        </div>
-        <div class="control">
-          <label>Angular Velocity (rad/s)</label>
-          <input id="omega" type="range" min="1" max="20" step="0.5" value="5" />
-          <div class="row"><span>1</span><span id="omegaVal" class="value">5.0</span><span>20</span></div>
-        </div>
-        <div class="control">
-          <label>Mass (kg)</label>
-          <input id="mass" type="range" min="1" max="10" step="0.5" value="3" />
-          <div class="row"><span>1</span><span id="massVal" class="value">3.0 kg</span><span>10</span></div>
-        </div>
-        <div class="control">
-          <label>Display Options</label>
-          <div class="checks">
-            <label><input id="showGrid" type="checkbox" checked /> Grid</label>
-            <label><input id="showTrail" type="checkbox" checked /> Trail</label>
-            <label><input id="showRadius" type="checkbox" checked /> Radius line</label>
-            <label><input id="showVectors" type="checkbox" checked /> Vectors</label>
-          </div>
-        </div>
-        <div class="control">
-          <div class="formula">
-            <div><strong>Speed:</strong> <span style="font-family: var(--mono);">v = ωr</span></div>
-            <div><strong>Accel:</strong> <span style="font-family: var(--mono);">a = v²/r = ω²r</span></div>
-            <div><strong>Force:</strong> <span style="font-family: var(--mono);">F = mω²r</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="container">
+  <div class="header">
+    <h1>Uniform Circular Motion Lab</h1>
+    <p>Explore centripetal force, acceleration, and real-world rotational motion.</p>
   </div>
 
-  <footer>
-    Uniform circular motion has constant speed but changing velocity direction.
-  </footer>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="explore">Explore</button>
+    <button class="tab-btn" data-tab="data">Data Collection</button>
+    <button class="tab-btn" data-tab="compare">Compare</button>
+    <button class="tab-btn" data-tab="theory">Theory</button>
+    <button class="tab-btn" data-tab="challenge">Challenge</button>
+  </div>
 
-  <script>
-    const canvas = document.getElementById('scene');
-    const ctx = canvas.getContext('2d');
+  <!-- EXPLORE TAB -->
+  <div id="explore" class="tab-content active">
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="label">Speed (v)</div>
+        <div class="value" id="stat-speed">0.0 m/s</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Centripetal Accel (a)</div>
+        <div class="value" id="stat-accel">0.0 m/s²</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Centripetal Force (F)</div>
+        <div class="value" id="stat-force">0.0 N</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Period (T)</div>
+        <div class="value" id="stat-period">0.00 s</div>
+      </div>
+    </div>
 
-    const state = {
-      radius: 80,
-      omega: 5,
-      mass: 3,
-      speed: 1,
-      running: true,
-      showGrid: true,
-      showTrail: true,
-      showRadius: true,
-      showVectors: true,
-      angle: 0,
-      trail: []
-    };
-
-    function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    function drawBackground() {
-      const isLight = document.body.classList.contains('light');
-      const grad = ctx.createLinearGradient(0, 0, canvas.clientWidth, canvas.clientHeight);
-      if (isLight) {
-        grad.addColorStop(0, '#f8fafc');
-        grad.addColorStop(0.55, '#e2e8f0');
-        grad.addColorStop(1, '#f1f5f9');
-      } else {
-        grad.addColorStop(0, '#05070e');
-        grad.addColorStop(0.6, '#0a0f1f');
-        grad.addColorStop(1, '#0b1224');
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
-
-      if (!state.showGrid) return;
-      ctx.strokeStyle = isLight ? 'rgba(15,23,42,0.08)' : 'rgba(148,163,184,0.08)';
-      ctx.lineWidth = 1;
-      for (let x = 0; x < canvas.clientWidth; x += 40) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.clientHeight); ctx.stroke();
-      }
-      for (let y = 0; y < canvas.clientHeight; y += 40) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.clientWidth, y); ctx.stroke();
-      }
-    }
-
-    function drawArrow(x1, y1, x2, y2, color) {
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-      const angle = Math.atan2(y2 - y1, x2 - x1);
-      ctx.beginPath();
-      ctx.moveTo(x2, y2);
-      ctx.lineTo(x2 - 8 * Math.cos(angle - Math.PI/6), y2 - 8 * Math.sin(angle - Math.PI/6));
-      ctx.lineTo(x2 - 8 * Math.cos(angle + Math.PI/6), y2 - 8 * Math.sin(angle + Math.PI/6));
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    function draw() {
-      drawBackground();
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      const cx = w / 2;
-      const cy = h / 2;
-      const r = state.radius;
-
-      ctx.strokeStyle = 'rgba(106,215,255,0.6)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([6, 6]);
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-
-      const x = cx + Math.cos(state.angle) * r;
-      const y = cy + Math.sin(state.angle) * r;
-
-      if (state.showTrail) {
-        state.trail.push({ x, y });
-        if (state.trail.length > 120) state.trail.shift();
-        ctx.strokeStyle = 'rgba(106,215,255,0.2)';
-        ctx.beginPath();
-        state.trail.forEach((p, i) => { if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-        ctx.stroke();
-      }
-
-      if (state.showRadius) {
-        ctx.strokeStyle = 'rgba(248,113,113,0.8)';
-        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
-      }
-
-      const grad = ctx.createRadialGradient(x - 6, y - 6, 2, x, y, 18);
-      grad.addColorStop(0, '#fef3c7');
-      grad.addColorStop(1, '#f59e0b');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(x, y, 12 + state.mass * 0.8, 0, Math.PI * 2); ctx.fill();
-
-      if (state.showVectors) {
-        const vDir = state.angle + Math.PI / 2;
-        drawArrow(x, y, x + 40 * Math.cos(vDir), y + 40 * Math.sin(vDir), '#22c55e');
-        drawArrow(x, y, x - 40 * Math.cos(state.angle), y - 40 * Math.sin(state.angle), '#f87171');
-      }
-    }
-
-    function updateReadout() {
-      const v = state.omega * state.radius;
-      const a = state.omega * state.omega * state.radius;
-      const F = state.mass * a;
-      document.getElementById('readout').innerHTML = `
-        <div class="data-grid">
-          <div class="data-card"><span class="data-label">Speed</span><span class="data-value green">${v.toFixed(1)} m/s</span></div>
-          <div class="data-card"><span class="data-label">Accel</span><span class="data-value orange">${a.toFixed(1)} m/s²</span></div>
-          <div class="data-card"><span class="data-label">Force</span><span class="data-value blue">${F.toFixed(1)} N</span></div>
-          <div class="data-card"><span class="data-label">Radius</span><span class="data-value blue">${state.radius.toFixed(0)} m</span></div>
-          <div class="data-card"><span class="data-label">ω</span><span class="data-value green">${state.omega.toFixed(2)} rad/s</span></div>
+    <div class="lab-layout">
+      <div class="canvas-card">
+        <canvas id="explore-canvas" height="500"></canvas>
+        <div class="btn-row" style="padding: 12px 16px; background: rgba(10,16,26,0.5);">
+          <button class="btn btn-primary" id="btn-play">Pause</button>
+          <button class="btn btn-secondary" id="btn-reset">Reset</button>
         </div>
-      `;
+      </div>
+
+      <div class="controls-panel">
+        <div class="control-card">
+          <h3>Parameters</h3>
+          <div class="control-group">
+            <label>Radius</label>
+            <div class="value-display" id="val-radius">80 m</div>
+            <input type="range" id="slider-radius" min="30" max="150" value="80" step="1" />
+          </div>
+          <div class="control-group">
+            <label>Angular Velocity (ω)</label>
+            <div class="value-display" id="val-omega">5.0 rad/s</div>
+            <input type="range" id="slider-omega" min="1" max="15" value="5" step="0.1" />
+          </div>
+          <div class="control-group">
+            <label>Mass</label>
+            <div class="value-display" id="val-mass">3.0 kg</div>
+            <input type="range" id="slider-mass" min="1" max="10" value="3" step="0.5" />
+          </div>
+        </div>
+
+        <div class="control-card">
+          <h3>Scenario</h3>
+          <div class="scenario-card active" data-scenario="orbit">
+            <h4>Satellite Orbit</h4>
+            <p>Object in circular orbit around a planet</p>
+          </div>
+          <div class="scenario-card" data-scenario="carousel">
+            <h4>Carousel</h4>
+            <p>Amusement park ride in uniform rotation</p>
+          </div>
+          <div class="scenario-card" data-scenario="atom">
+            <h4>Electron Orbital</h4>
+            <p>Simplified atomic electron model</p>
+          </div>
+          <div class="scenario-card" data-scenario="car">
+            <h4>Car Turning</h4>
+            <p>Vehicle navigating a circular curve</p>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <h3>Display</h3>
+          <div class="check-group">
+            <label class="check-item">
+              <input type="checkbox" id="show-vectors" checked />
+              Velocity & acceleration vectors
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="show-force" checked />
+              Centripetal force vector
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="show-trail" checked />
+              Trail path
+            </label>
+            <label class="check-item">
+              <input type="checkbox" id="show-radius" checked />
+              Radius line
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATA COLLECTION TAB -->
+  <div id="data" class="tab-content">
+    <div class="lab-layout">
+      <div class="canvas-card">
+        <canvas id="data-canvas" height="500"></canvas>
+        <div class="btn-row" style="padding: 12px 16px; background: rgba(10,16,26,0.5);">
+          <button class="btn btn-primary" id="btn-play-data">Pause</button>
+          <button class="btn btn-secondary" id="btn-reset-data">Reset</button>
+        </div>
+      </div>
+      <div class="controls-panel">
+        <div class="control-card">
+          <h3>Measurement Tools</h3>
+          <div>
+            <button class="tool-btn" id="tool-stopwatch">Stopwatch</button>
+            <button class="tool-btn" id="tool-ruler">Ruler</button>
+          </div>
+          <div id="tool-instructions" style="margin-top: 12px; font-size: 13px; color: var(--sim-muted);">
+            Measure the period to calculate angular velocity.
+          </div>
+          <div id="stopwatch-display" style="margin-top: 12px; display: none;">
+            <div style="font-family: 'Space Grotesk'; font-size: 32px; font-weight: 700; color: var(--accent-2); text-align: center;" id="sw-value">0.00 s</div>
+            <div class="btn-row">
+              <button class="btn btn-primary" id="sw-start">Start / Stop</button>
+              <button class="btn btn-secondary" id="sw-reset">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <h3>Parameters</h3>
+          <div class="control-group">
+            <label>Radius: <span id="val-radius-data">80</span> m</label>
+            <input type="range" id="slider-radius-data" min="30" max="150" value="80" step="1" />
+          </div>
+          <div class="control-group">
+            <label>Mass: <span id="val-mass-data">3.0</span> kg</label>
+            <input type="range" id="slider-mass-data" min="1" max="10" value="3" step="0.5" />
+          </div>
+        </div>
+
+        <div class="control-card">
+          <h3>Data Table</h3>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>R (m)</th>
+                <th>T (s)</th>
+                <th>ω (rad/s)</th>
+                <th>F (N)</th>
+                <th>OK</th>
+              </tr>
+            </thead>
+            <tbody id="data-table-body">
+            </tbody>
+          </table>
+          <div class="btn-row" style="margin-top: 12px;">
+            <button class="btn btn-secondary" id="btn-clear-data">Clear Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPARE TAB -->
+  <div id="compare" class="tab-content">
+    <div class="lab-layout">
+      <div class="canvas-card">
+        <canvas id="compare-canvas" height="500"></canvas>
+        <div class="btn-row" style="padding: 12px 16px; background: rgba(10,16,26,0.5);">
+          <button class="btn btn-primary" id="btn-play-compare">Pause</button>
+          <button class="btn btn-secondary" id="btn-reset-compare">Reset</button>
+        </div>
+      </div>
+      <div class="controls-panel">
+        <div class="compare-controls">
+          <div class="compare-box proj-a">
+            <h4>System A</h4>
+            <div class="control-group">
+              <label>Radius</label>
+              <div class="value-display" id="val-radius-a">60 m</div>
+              <input type="range" id="slider-radius-a" min="30" max="150" value="60" step="1" />
+            </div>
+            <div class="control-group">
+              <label>Angular Velocity</label>
+              <div class="value-display" id="val-omega-a">5.0 rad/s</div>
+              <input type="range" id="slider-omega-a" min="1" max="15" value="5" step="0.1" />
+            </div>
+            <div class="control-group">
+              <label>Mass</label>
+              <div class="value-display" id="val-mass-a">3.0 kg</div>
+              <input type="range" id="slider-mass-a" min="1" max="10" value="3" step="0.5" />
+            </div>
+          </div>
+          <div class="compare-box proj-b">
+            <h4>System B</h4>
+            <div class="control-group">
+              <label>Radius</label>
+              <div class="value-display" id="val-radius-b">100 m</div>
+              <input type="range" id="slider-radius-b" min="30" max="150" value="100" step="1" />
+            </div>
+            <div class="control-group">
+              <label>Angular Velocity</label>
+              <div class="value-display" id="val-omega-b">3.0 rad/s</div>
+              <input type="range" id="slider-omega-b" min="1" max="15" value="3" step="0.1" />
+            </div>
+            <div class="control-group">
+              <label>Mass</label>
+              <div class="value-display" id="val-mass-b">3.0 kg</div>
+              <input type="range" id="slider-mass-b" min="1" max="10" value="3" step="0.5" />
+            </div>
+          </div>
+        </div>
+        <div class="control-card">
+          <h3>Comparison Results</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: rgba(106,215,255,0.06); border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--sim-muted); text-transform: uppercase; letter-spacing: 0.06em;">Force A</div>
+              <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; color: var(--accent);" id="cmp-force-a">0.0 N</div>
+            </div>
+            <div style="background: rgba(246,199,107,0.06); border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--sim-muted); text-transform: uppercase; letter-spacing: 0.06em;">Force B</div>
+              <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; color: var(--accent-2);" id="cmp-force-b">0.0 N</div>
+            </div>
+            <div style="background: rgba(106,215,255,0.06); border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--sim-muted); text-transform: uppercase; letter-spacing: 0.06em;">Speed A</div>
+              <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; color: var(--accent);" id="cmp-speed-a">0.0 m/s</div>
+            </div>
+            <div style="background: rgba(246,199,107,0.06); border-radius: 8px; padding: 12px; text-align: center;">
+              <div style="font-size: 11px; color: var(--sim-muted); text-transform: uppercase; letter-spacing: 0.06em;">Speed B</div>
+              <div style="font-family: 'Space Grotesk'; font-size: 20px; font-weight: 700; color: var(--accent-2);" id="cmp-speed-b">0.0 m/s</div>
+            </div>
+          </div>
+        </div>
+        <div class="preset-row">
+          <button class="preset-btn" id="preset-compare-1">Same Speed</button>
+          <button class="preset-btn" id="preset-compare-2">Same Force</button>
+          <button class="preset-btn" id="preset-compare-3">Double Radius</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEORY TAB -->
+  <div id="theory" class="tab-content">
+    <div class="lab-layout">
+      <div class="canvas-card">
+        <canvas id="theory-canvas" height="500"></canvas>
+        <div class="btn-row" style="padding: 12px 16px; background: rgba(10,16,26,0.5);">
+          <button class="btn btn-primary" id="btn-play-theory">Pause</button>
+          <button class="btn btn-secondary" id="btn-reset-theory">Reset</button>
+        </div>
+      </div>
+      <div class="controls-panel">
+        <div class="theory-panel">
+          <h3>What is Uniform Circular Motion?</h3>
+          <p>An object moving in a circle at constant speed. Although speed is constant, velocity changes because direction changes continuously.</p>
+          <p>This means there is always an acceleration directed toward the center of the circle, called <strong>centripetal acceleration</strong>.</p>
+        </div>
+
+        <div class="theory-panel">
+          <h3>Key Formulas</h3>
+          <div class="formula-box">
+            <div class="formula">v = ωr</div>
+            <div class="desc">Speed equals angular velocity times radius</div>
+          </div>
+          <div class="formula-box">
+            <div class="formula">a = v²/r = ω²r</div>
+            <div class="desc">Centripetal acceleration</div>
+          </div>
+          <div class="formula-box">
+            <div class="formula">F = mω²r = mv²/r</div>
+            <div class="desc">Centripetal force (net inward force)</div>
+          </div>
+          <div class="formula-box">
+            <div class="formula">T = 2π/ω</div>
+            <div class="desc">Period (time for one complete revolution)</div>
+          </div>
+        </div>
+
+        <div class="theory-panel">
+          <h3>Vector Diagram</h3>
+          <div style="font-size: 13px; color: var(--sim-muted); line-height: 1.7;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="display: inline-block; width: 20px; height: 3px; background: #22c55e; border-radius: 2px;"></span>
+              <span>Velocity (v): tangent to the circle</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span style="display: inline-block; width: 20px; height: 3px; background: #f6c76b; border-radius: 2px;"></span>
+              <span>Acceleration (a): points to center</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 20px; height: 3px; background: #a78bfa; border-radius: 2px;"></span>
+              <span>Force (F): same direction as acceleration</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="theory-panel">
+          <h3>Interactive Demo</h3>
+          <div class="control-group">
+            <label>Radius: <span id="val-radius-theory">80</span> m</label>
+            <input type="range" id="slider-radius-theory" min="30" max="150" value="80" step="1" />
+          </div>
+          <div class="control-group">
+            <label>Angular Velocity: <span id="val-omega-theory">5.0</span> rad/s</label>
+            <input type="range" id="slider-omega-theory" min="1" max="15" value="5" step="0.1" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHALLENGE TAB -->
+  <div id="challenge" class="tab-content">
+    <div class="canvas-card" style="position: relative;">
+      <div class="challenge-overlay">
+        <div class="challenge-stat level">
+          <div class="lbl">Level</div>
+          <div class="val" id="ch-level">1</div>
+        </div>
+        <div class="challenge-stat">
+          <div class="lbl">Hits</div>
+          <div class="val" id="ch-hits">0 / 3</div>
+        </div>
+        <div class="challenge-stat score">
+          <div class="lbl">Score</div>
+          <div class="val" id="ch-score">0</div>
+        </div>
+        <div class="challenge-stat" style="pointer-events: auto;">
+          <button class="btn btn-secondary" id="btn-restart-challenge" style="padding: 6px 12px; font-size: 12px;">Restart</button>
+        </div>
+      </div>
+      <canvas id="challenge-canvas" height="500"></canvas>
+      <div style="padding: 12px 16px; background: rgba(10,16,26,0.5); display: flex; gap: 10px;">
+        <button class="btn btn-primary" id="btn-fire">Launch!</button>
+        <button class="btn btn-secondary" id="btn-reset-challenge">Reset</button>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px;">
+      <div class="control-card">
+        <h3>Target Force</h3>
+        <div style="text-align: center; padding: 10px 0;">
+          <div style="font-family: 'Space Grotesk'; font-size: 28px; font-weight: 700; color: var(--accent);" id="ch-target-force">-- N</div>
+          <div style="font-size: 12px; color: var(--sim-muted);">Set the sliders to match this force</div>
+        </div>
+      </div>
+      <div class="control-card">
+        <h3>Your Settings</h3>
+        <div class="control-group">
+          <label>Radius</label>
+          <div class="value-display" id="val-radius-ch">80 m</div>
+          <input type="range" id="slider-radius-ch" min="30" max="150" value="80" step="1" />
+        </div>
+        <div class="control-group">
+          <label>Angular Velocity</label>
+          <div class="value-display" id="val-omega-ch">5.0 rad/s</div>
+          <input type="range" id="slider-omega-ch" min="1" max="15" value="5" step="0.1" />
+        </div>
+        <div class="control-group">
+          <label>Mass</label>
+          <div class="value-display" id="val-mass-ch">3.0 kg</div>
+          <input type="range" id="slider-mass-ch" min="1" max="10" value="3" step="0.5" />
+        </div>
+      </div>
+      <div class="control-card">
+        <h3>Best Score</h3>
+        <div style="text-align: center; padding: 20px 0;">
+          <div style="font-family: 'Space Grotesk'; font-size: 48px; font-weight: 700; color: var(--accent);" id="ch-best">0</div>
+          <div style="font-size: 12px; color: var(--sim-muted); text-transform: uppercase; letter-spacing: 0.08em;">Points</div>
+        </div>
+      </div>
+      <div class="control-card">
+        <h3>How to Play</h3>
+        <div style="font-size: 13px; color: var(--sim-muted); line-height: 1.8;">
+          <div>Match the target centripetal force using radius, angular velocity, and mass.</div>
+          <div style="margin-top: 8px;">Closer match = more points.</div>
+          <div style="margin-top: 8px;">Level up every 3 successful matches!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    resizeCanvas();
+  });
+});
+
+// ============================================================
+// CANVAS SETUP
+// ============================================================
+function resizeCanvas() {
+  ['explore-canvas', 'data-canvas', 'compare-canvas', 'theory-canvas', 'challenge-canvas'].forEach(id => {
+    const c = document.getElementById(id);
+    if (!c) return;
+    const rect = c.parentElement.getBoundingClientRect();
+    const w = rect.width > 0 ? rect.width : c.offsetWidth;
+    if (w > 0 && c.width !== Math.floor(w)) {
+      c.width = Math.floor(w);
+    }
+  });
+  drawAll();
+}
+
+window.addEventListener('resize', resizeCanvas);
+setTimeout(resizeCanvas, 100);
+
+// ============================================================
+// SHARED PHYSICS
+// ============================================================
+function calcSpeed(omega, radius) {
+  return omega * radius;
+}
+
+function calcAccel(omega, radius) {
+  return omega * omega * radius;
+}
+
+function calcForce(mass, omega, radius) {
+  return mass * omega * omega * radius;
+}
+
+function calcPeriod(omega) {
+  return (2 * Math.PI) / omega;
+}
+
+// ============================================================
+// EXPLORE TAB
+// ============================================================
+let exp = {
+  radius: 80,
+  omega: 5,
+  mass: 3,
+  angle: 0,
+  running: true,
+  showVectors: true,
+  showForce: true,
+  showTrail: true,
+  showRadius: true,
+  trail: [],
+  scenario: 'orbit',
+  animId: null,
+  cx: 0,
+  cy: 0
+};
+
+function initExploreCanvas() {
+  const c = document.getElementById('explore-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = Math.floor(rect.width);
+  c.height = 500;
+  exp.cx = c.width / 2;
+  exp.cy = c.height / 2;
+}
+
+function resetExplore() {
+  exp.angle = 0;
+  exp.trail = [];
+  exp.running = true;
+  document.getElementById('btn-play').textContent = 'Pause';
+  if (exp.animId) cancelAnimationFrame(exp.animId);
+  drawExplore();
+  updateExploreStats();
+}
+
+function updateExploreStats() {
+  const v = calcSpeed(exp.omega, exp.radius);
+  const a = calcAccel(exp.omega, exp.radius);
+  const F = calcForce(exp.mass, exp.omega, exp.radius);
+  const T = calcPeriod(exp.omega);
+  document.getElementById('stat-speed').textContent = v.toFixed(1) + ' m/s';
+  document.getElementById('stat-accel').textContent = a.toFixed(1) + ' m/s²';
+  document.getElementById('stat-force').textContent = F.toFixed(1) + ' N';
+  document.getElementById('stat-period').textContent = T.toFixed(2) + ' s';
+}
+
+function drawExplore() {
+  const c = document.getElementById('explore-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) * 0.3 * (exp.radius / 150);
+
+  // Background
+  const sky = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.7);
+  sky.addColorStop(0, '#0d1a28');
+  sky.addColorStop(1, '#0a111c');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y < h; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+
+  // Scenario-specific center object
+  drawScenarioCenter(ctx, cx, cy, exp.scenario, r);
+
+  // Orbit circle
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Trail
+  if (exp.showTrail) {
+    const x = cx + Math.cos(exp.angle) * r;
+    const y = cy + Math.sin(exp.angle) * r;
+    exp.trail.push({ x, y });
+    if (exp.trail.length > 200) exp.trail.shift();
+    if (exp.trail.length > 1) {
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.25)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      exp.trail.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.stroke();
+    }
+  }
+
+  const x = cx + Math.cos(exp.angle) * r;
+  const y = cy + Math.sin(exp.angle) * r;
+
+  // Radius line
+  if (exp.showRadius) {
+    ctx.strokeStyle = 'rgba(248, 113, 113, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.stroke();
+  }
+
+  // Object
+  const scale = 1 + exp.mass * 0.05;
+  const objGrad = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 16 * scale);
+  const colors = {
+    orbit: ['#fef3c7', '#f59e0b'],
+    carousel: ['#dbeafe', '#3b82f6'],
+    atom: ['#dcfce7', '#22c55e'],
+    car: ['#fce7f3', '#ec4899']
+  };
+  objGrad.addColorStop(0, colors[exp.scenario][0]);
+  objGrad.addColorStop(1, colors[exp.scenario][1]);
+  ctx.beginPath();
+  ctx.arc(x, y, 12 * scale, 0, Math.PI * 2);
+  ctx.fillStyle = objGrad;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Velocity vector (tangent, perpendicular to radius)
+  if (exp.showVectors) {
+    const tangentAngle = exp.angle + Math.PI / 2;
+    const vMag = calcSpeed(exp.omega, exp.radius);
+    const vLen = Math.min(vMag * 3, 60);
+    ctx.strokeStyle = '#22c55e';
+    ctx.fillStyle = '#22c55e';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + Math.cos(tangentAngle) * vLen, y + Math.sin(tangentAngle) * vLen);
+    ctx.stroke();
+    // Arrowhead
+    const ax = x + Math.cos(tangentAngle) * vLen;
+    const ay = y + Math.sin(tangentAngle) * vLen;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - 10 * Math.cos(tangentAngle - 0.4), ay - 10 * Math.sin(tangentAngle - 0.4));
+    ctx.lineTo(ax - 10 * Math.cos(tangentAngle + 0.4), ay - 10 * Math.sin(tangentAngle + 0.4));
+    ctx.closePath();
+    ctx.fill();
+
+    // Acceleration vector (toward center)
+    const aMag = calcAccel(exp.omega, exp.radius);
+    const aLen = Math.min(aMag * 2, 50);
+    ctx.strokeStyle = '#f6c76b';
+    ctx.fillStyle = '#f6c76b';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - Math.cos(exp.angle) * aLen, y - Math.sin(exp.angle) * aLen);
+    ctx.stroke();
+    // Arrowhead
+    const aa = exp.angle;
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(aa) * aLen, y - Math.sin(aa) * aLen);
+    ctx.lineTo(x - Math.cos(aa) * aLen + 10 * Math.cos(aa - 0.4), y - Math.sin(aa) * aLen + 10 * Math.sin(aa - 0.4));
+    ctx.lineTo(x - Math.cos(aa) * aLen + 10 * Math.cos(aa + 0.4), y - Math.sin(aa) * aLen + 10 * Math.sin(aa + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Force vector (toward center)
+  if (exp.showForce) {
+    const fMag = calcForce(exp.mass, exp.omega, exp.radius);
+    const fLen = Math.min(fMag * 1.5, 50);
+    ctx.strokeStyle = '#a78bfa';
+    ctx.fillStyle = '#a78bfa';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x - Math.cos(exp.angle) * fLen, y - Math.sin(exp.angle) * fLen);
+    ctx.stroke();
+    const fa = exp.angle;
+    ctx.beginPath();
+    ctx.moveTo(x - Math.cos(fa) * fLen, y - Math.sin(fa) * fLen);
+    ctx.lineTo(x - Math.cos(fa) * fLen + 10 * Math.cos(fa - 0.4), y - Math.sin(fa) * fLen + 10 * Math.sin(fa - 0.4));
+    ctx.lineTo(x - Math.cos(fa) * fLen + 10 * Math.cos(fa + 0.4), y - Math.sin(fa) * fLen + 10 * Math.sin(fa + 0.4));
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Legend
+  ctx.fillStyle = 'rgba(159, 176, 197, 0.5)';
+  ctx.font = '11px IBM Plex Sans';
+  ctx.fillText(`v = ${calcSpeed(exp.omega, exp.radius).toFixed(1)} m/s`, 16, h - 50);
+  ctx.fillText(`a = ${calcAccel(exp.omega, exp.radius).toFixed(1)} m/s²`, 16, h - 35);
+  ctx.fillText(`F = ${calcForce(exp.mass, exp.omega, exp.radius).toFixed(1)} N`, 16, h - 20);
+}
+
+function drawScenarioCenter(ctx, cx, cy, scenario, r) {
+  if (scenario === 'orbit') {
+    const grad = ctx.createRadialGradient(cx - 10, cy - 10, 5, cx, cy, 50);
+    grad.addColorStop(0, '#3b82f6');
+    grad.addColorStop(0.5, '#1e40af');
+    grad.addColorStop(1, '#1e3a5f');
+    ctx.beginPath();
+    ctx.arc(cx, cy, 40, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Atmosphere
+    ctx.beginPath();
+    ctx.arc(cx, cy, 45, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  } else if (scenario === 'carousel') {
+    // Pole
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(cx - 4, cy, 8, h - cy);
+    // Platform
+    ctx.fillStyle = '#64748b';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 50, 15, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else if (scenario === 'atom') {
+    ctx.beginPath();
+    ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+    ctx.strokeStyle = '#fca5a5';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Orbit ring
+    ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * 0.3, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r, r * 0.3, Math.PI / 3, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (scenario === 'car') {
+    // Road
+    ctx.fillStyle = '#1f2937';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 120, 40, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([15, 10]);
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 120, 40, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Grass
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(0, 0, w, cy - 50);
+    ctx.fillRect(0, cy + 50, w, h - cy - 50);
+  }
+}
+
+function animateExplore() {
+  if (exp.running) {
+    exp.angle += exp.omega * 0.016;
+  }
+  drawExplore();
+  updateExploreStats();
+  exp.animId = requestAnimationFrame(animateExplore);
+}
+
+// Sliders
+document.getElementById('slider-radius').addEventListener('input', e => {
+  exp.radius = +e.target.value;
+  document.getElementById('val-radius').textContent = exp.radius + ' m';
+  updateExploreStats();
+  drawExplore();
+});
+
+document.getElementById('slider-omega').addEventListener('input', e => {
+  exp.omega = +e.target.value;
+  document.getElementById('val-omega').textContent = exp.omega.toFixed(1) + ' rad/s';
+  updateExploreStats();
+  drawExplore();
+});
+
+document.getElementById('slider-mass').addEventListener('input', e => {
+  exp.mass = +e.target.value;
+  document.getElementById('val-mass').textContent = exp.mass.toFixed(1) + ' kg';
+  updateExploreStats();
+  drawExplore();
+});
+
+document.getElementById('show-vectors').addEventListener('change', e => { exp.showVectors = e.target.checked; drawExplore(); });
+document.getElementById('show-force').addEventListener('change', e => { exp.showForce = e.target.checked; drawExplore(); });
+document.getElementById('show-trail').addEventListener('change', e => { exp.showTrail = e.target.checked; if (!e.target.checked) exp.trail = []; drawExplore(); });
+document.getElementById('show-radius').addEventListener('change', e => { exp.showRadius = e.target.checked; drawExplore(); });
+
+document.querySelectorAll('.scenario-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    exp.scenario = card.dataset.scenario;
+    drawExplore();
+  });
+});
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  exp.running = !exp.running;
+  document.getElementById('btn-play').textContent = exp.running ? 'Pause' : 'Play';
+});
+
+document.getElementById('btn-reset').addEventListener('click', resetExplore);
+
+// ============================================================
+// DATA COLLECTION TAB
+// ============================================================
+let dat = {
+  radius: 80,
+  mass: 3,
+  angle: 0,
+  running: true,
+  trail: [],
+  animId: null,
+  tool: null,
+  swRunning: false,
+  swTime: 0,
+  swStartTime: 0,
+  dataRows: [],
+  revolutionCount: 0,
+  lastAngle: 0
+};
+
+function initDataCanvas() {
+  const c = document.getElementById('data-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = Math.floor(rect.width);
+  c.height = 500;
+}
+
+function resetData() {
+  dat.angle = 0;
+  dat.trail = [];
+  dat.revolutionCount = 0;
+  dat.lastAngle = 0;
+  dat.tool = null;
+  dat.running = true;
+  document.getElementById('btn-play-data').textContent = 'Pause';
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-instructions').textContent = 'Measure the period to calculate angular velocity.';
+  document.getElementById('stopwatch-display').style.display = 'none';
+  if (dat.animId) cancelAnimationFrame(dat.animId);
+  drawData();
+}
+
+function drawData() {
+  const c = document.getElementById('data-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) * 0.3 * (dat.radius / 150);
+
+  ctx.fillStyle = '#0a111c';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const x = cx + Math.cos(dat.angle) * r;
+  const y = cy + Math.sin(dat.angle) * r;
+
+  ctx.strokeStyle = 'rgba(248, 113, 113, 0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#6ad7ff';
+  ctx.fill();
+
+  const objGrad = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 16);
+  objGrad.addColorStop(0, '#fef3c7');
+  objGrad.addColorStop(1, '#f59e0b');
+  ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2);
+  ctx.fillStyle = objGrad;
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(159, 176, 197, 0.5)';
+  ctx.font = '11px IBM Plex Sans';
+  ctx.fillText(`Revolutions: ${dat.revolutionCount}`, 16, h - 40);
+  ctx.fillText(`Angle: ${(dat.angle % (2 * Math.PI)).toFixed(2)} rad`, 16, h - 25);
+}
+
+function animateData() {
+  if (dat.running) {
+    const prevAngle = dat.angle;
+    dat.angle += 0.08;
+    if (dat.angle - prevAngle > Math.PI) {
+      dat.revolutionCount++;
+    }
+  }
+  drawData();
+  dat.animId = requestAnimationFrame(animateData);
+}
+
+document.getElementById('slider-radius-data').addEventListener('input', e => {
+  dat.radius = +e.target.value;
+  document.getElementById('val-radius-data').textContent = dat.radius;
+  drawData();
+});
+
+document.getElementById('slider-mass-data').addEventListener('input', e => {
+  dat.mass = +e.target.value;
+  document.getElementById('val-mass-data').textContent = dat.mass.toFixed(1);
+  drawData();
+});
+
+document.getElementById('tool-stopwatch').addEventListener('click', () => {
+  dat.tool = 'stopwatch';
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-stopwatch').classList.add('active');
+  document.getElementById('tool-instructions').textContent = 'Time one complete revolution using the stopwatch.';
+  document.getElementById('stopwatch-display').style.display = 'block';
+  dat.swRunning = false;
+  dat.swTime = 0;
+});
+
+document.getElementById('tool-ruler').addEventListener('click', () => {
+  dat.tool = 'ruler';
+  document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tool-ruler').classList.add('active');
+  document.getElementById('tool-instructions').textContent = 'Ruler tool to measure the radius on screen.';
+  document.getElementById('stopwatch-display').style.display = 'none';
+});
+
+let swInterval;
+document.getElementById('sw-start').addEventListener('click', () => {
+  if (!dat.swRunning) {
+    dat.swRunning = true;
+    dat.swStartTime = performance.now() - dat.swTime * 1000;
+    swInterval = setInterval(() => {
+      dat.swTime = (performance.now() - dat.swStartTime) / 1000;
+      document.getElementById('sw-value').textContent = dat.swTime.toFixed(2) + ' s';
+    }, 30);
+  } else {
+    dat.swRunning = false;
+    clearInterval(swInterval);
+    if (dat.swTime > 0.5) {
+      const omega = (2 * Math.PI) / dat.swTime;
+      const F = calcForce(dat.mass, omega, dat.radius);
+      dat.dataRows.push({
+        radius: dat.radius,
+        period: dat.swTime,
+        omega: omega,
+        force: F
+      });
+      updateDataTable();
+    }
+  }
+});
+
+document.getElementById('sw-reset').addEventListener('click', () => {
+  dat.swRunning = false;
+  dat.swTime = 0;
+  clearInterval(swInterval);
+  document.getElementById('sw-value').textContent = '0.00 s';
+});
+
+function updateDataTable() {
+  const tbody = document.getElementById('data-table-body');
+  tbody.innerHTML = '';
+  dat.dataRows.forEach((row, i) => {
+    const ok = row.omega > 0 && row.force > 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${row.radius.toFixed(0)}</td>
+      <td>${row.period.toFixed(2)}</td>
+      <td>${row.omega.toFixed(2)}</td>
+      <td>${row.force.toFixed(1)}</td>
+      <td class="${ok ? 'check-ok' : 'check-bad'}">${ok ? '✓' : '✗'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('btn-clear-data').addEventListener('click', () => {
+  dat.dataRows = [];
+  updateDataTable();
+});
+
+document.getElementById('btn-play-data').addEventListener('click', () => {
+  dat.running = !dat.running;
+  document.getElementById('btn-play-data').textContent = dat.running ? 'Pause' : 'Play';
+});
+
+document.getElementById('btn-reset-data').addEventListener('click', resetData);
+
+// ============================================================
+// COMPARE TAB
+// ============================================================
+let cmp = {
+  radiusA: 60, omegaA: 5, massA: 3,
+  radiusB: 100, omegaB: 3, massB: 3,
+  angleA: 0, angleB: Math.PI,
+  running: true,
+  animId: null
+};
+
+function initCompareCanvas() {
+  const c = document.getElementById('compare-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = Math.floor(rect.width);
+  c.height = 500;
+}
+
+function resetCompare() {
+  cmp.angleA = 0;
+  cmp.angleB = Math.PI;
+  cmp.running = true;
+  document.getElementById('btn-play-compare').textContent = 'Pause';
+  drawCompare();
+  updateCompareStats();
+}
+
+function updateCompareStats() {
+  const vA = calcSpeed(cmp.omegaA, cmp.radiusA);
+  const vB = calcSpeed(cmp.omegaB, cmp.radiusB);
+  const FA = calcForce(cmp.massA, cmp.omegaA, cmp.radiusA);
+  const FB = calcForce(cmp.massB, cmp.omegaB, cmp.radiusB);
+  document.getElementById('cmp-force-a').textContent = FA.toFixed(1) + ' N';
+  document.getElementById('cmp-force-b').textContent = FB.toFixed(1) + ' N';
+  document.getElementById('cmp-speed-a').textContent = vA.toFixed(1) + ' m/s';
+  document.getElementById('cmp-speed-b').textContent = vB.toFixed(1) + ' m/s';
+}
+
+function drawCompare() {
+  const c = document.getElementById('compare-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+
+  ctx.fillStyle = '#0a111c';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+  const rA = Math.min(w, h) * 0.22 * (cmp.radiusA / 150);
+  const rB = Math.min(w, h) * 0.22 * (cmp.radiusB / 150);
+
+  // Circle A
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.arc(cx - 120, cy, rA, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Circle B
+  ctx.strokeStyle = 'rgba(246, 199, 107, 0.3)';
+  ctx.beginPath(); ctx.arc(cx + 120, cy, rB, 0, Math.PI * 2); ctx.stroke();
+
+  const xA = cx - 120 + Math.cos(cmp.angleA) * rA;
+  const yA = cy + Math.sin(cmp.angleA) * rA;
+  const xB = cx + 120 + Math.cos(cmp.angleB) * rB;
+  const yB = cy + Math.sin(cmp.angleB) * rB;
+
+  // Label A
+  ctx.fillStyle = '#6ad7ff';
+  ctx.font = '12px Space Grotesk';
+  ctx.fillText('System A', cx - 150, cy - rA - 20);
+
+  // Label B
+  ctx.fillStyle = '#f6c76b';
+  ctx.fillText('System B', cx + 90, cy - rB - 20);
+
+  // Object A
+  const gradA = ctx.createRadialGradient(xA - 3, yA - 3, 2, xA, yA, 14);
+  gradA.addColorStop(0, '#fef3c7');
+  gradA.addColorStop(1, '#6ad7ff');
+  ctx.beginPath(); ctx.arc(xA, yA, 12, 0, Math.PI * 2);
+  ctx.fillStyle = gradA; ctx.fill();
+
+  // Object B
+  const gradB = ctx.createRadialGradient(xB - 3, yB - 3, 2, xB, yB, 14);
+  gradB.addColorStop(0, '#fef3c7');
+  gradB.addColorStop(1, '#f6c76b');
+  ctx.beginPath(); ctx.arc(xB, yB, 12, 0, Math.PI * 2);
+  ctx.fillStyle = gradB; ctx.fill();
+
+  // Stats at bottom
+  const vA = calcSpeed(cmp.omegaA, cmp.radiusA);
+  const vB = calcSpeed(cmp.omegaB, cmp.radiusB);
+  const FA = calcForce(cmp.massA, cmp.omegaA, cmp.radiusA);
+  const FB = calcForce(cmp.massB, cmp.omegaB, cmp.radiusB);
+
+  ctx.fillStyle = 'rgba(159, 176, 197, 0.5)';
+  ctx.font = '11px IBM Plex Sans';
+  ctx.fillText(`A: v=${vA.toFixed(1)} m/s, F=${FA.toFixed(1)} N`, 16, h - 25);
+  ctx.fillText(`B: v=${vB.toFixed(1)} m/s, F=${FB.toFixed(1)} N`, 16, h - 10);
+}
+
+function animateCompare() {
+  if (cmp.running) {
+    cmp.angleA += cmp.omegaA * 0.016;
+    cmp.angleB += cmp.omegaB * 0.016;
+  }
+  drawCompare();
+  updateCompareStats();
+  cmp.animId = requestAnimationFrame(animateCompare);
+}
+
+// Compare sliders A
+document.getElementById('slider-radius-a').addEventListener('input', e => {
+  cmp.radiusA = +e.target.value;
+  document.getElementById('val-radius-a').textContent = cmp.radiusA + ' m';
+  drawCompare();
+  updateCompareStats();
+});
+document.getElementById('slider-omega-a').addEventListener('input', e => {
+  cmp.omegaA = +e.target.value;
+  document.getElementById('val-omega-a').textContent = cmp.omegaA.toFixed(1) + ' rad/s';
+  drawCompare();
+  updateCompareStats();
+});
+document.getElementById('slider-mass-a').addEventListener('input', e => {
+  cmp.massA = +e.target.value;
+  document.getElementById('val-mass-a').textContent = cmp.massA.toFixed(1) + ' kg';
+  drawCompare();
+  updateCompareStats();
+});
+
+// Compare sliders B
+document.getElementById('slider-radius-b').addEventListener('input', e => {
+  cmp.radiusB = +e.target.value;
+  document.getElementById('val-radius-b').textContent = cmp.radiusB + ' m';
+  drawCompare();
+  updateCompareStats();
+});
+document.getElementById('slider-omega-b').addEventListener('input', e => {
+  cmp.omegaB = +e.target.value;
+  document.getElementById('val-omega-b').textContent = cmp.omegaB.toFixed(1) + ' rad/s';
+  drawCompare();
+  updateCompareStats();
+});
+document.getElementById('slider-mass-b').addEventListener('input', e => {
+  cmp.massB = +e.target.value;
+  document.getElementById('val-mass-b').textContent = cmp.massB.toFixed(1) + ' kg';
+  drawCompare();
+  updateCompareStats();
+});
+
+// Presets
+document.getElementById('preset-compare-1').addEventListener('click', () => {
+  cmp.radiusA = 80; cmp.omegaA = 5; cmp.massA = 3;
+  cmp.radiusB = 80; cmp.omegaB = 5; cmp.massB = 5;
+  updateCompareUI();
+});
+document.getElementById('preset-compare-2').addEventListener('click', () => {
+  cmp.radiusA = 60; cmp.omegaA = 5; cmp.massA = 3;
+  cmp.radiusB = 100; cmp.omegaB = 3; cmp.massB = 5;
+  updateCompareUI();
+});
+document.getElementById('preset-compare-3').addEventListener('click', () => {
+  cmp.radiusA = 50; cmp.omegaA = 5; cmp.massA = 3;
+  cmp.radiusB = 100; cmp.omegaB = 5; cmp.massA = 3;
+  updateCompareUI();
+});
+
+function updateCompareUI() {
+  document.getElementById('slider-radius-a').value = cmp.radiusA;
+  document.getElementById('slider-omega-a').value = cmp.omegaA;
+  document.getElementById('slider-mass-a').value = cmp.massA;
+  document.getElementById('slider-radius-b').value = cmp.radiusB;
+  document.getElementById('slider-omega-b').value = cmp.omegaB;
+  document.getElementById('slider-mass-b').value = cmp.massB;
+  document.getElementById('val-radius-a').textContent = cmp.radiusA + ' m';
+  document.getElementById('val-omega-a').textContent = cmp.omegaA.toFixed(1) + ' rad/s';
+  document.getElementById('val-mass-a').textContent = cmp.massA.toFixed(1) + ' kg';
+  document.getElementById('val-radius-b').textContent = cmp.radiusB + ' m';
+  document.getElementById('val-omega-b').textContent = cmp.omegaB.toFixed(1) + ' rad/s';
+  document.getElementById('val-mass-b').textContent = cmp.massB.toFixed(1) + ' kg';
+  drawCompare();
+  updateCompareStats();
+}
+
+document.getElementById('btn-play-compare').addEventListener('click', () => {
+  cmp.running = !cmp.running;
+  document.getElementById('btn-play-compare').textContent = cmp.running ? 'Pause' : 'Play';
+});
+document.getElementById('btn-reset-compare').addEventListener('click', resetCompare);
+
+// ============================================================
+// THEORY TAB
+// ============================================================
+let th = {
+  radius: 80,
+  omega: 5,
+  angle: 0,
+  running: true,
+  animId: null
+};
+
+function initTheoryCanvas() {
+  const c = document.getElementById('theory-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = Math.floor(rect.width);
+  c.height = 500;
+}
+
+function resetTheory() {
+  th.angle = 0;
+  th.running = true;
+  document.getElementById('btn-play-theory').textContent = 'Pause';
+  drawTheory();
+}
+
+function drawTheory() {
+  const c = document.getElementById('theory-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) * 0.35 * (th.radius / 150);
+
+  ctx.fillStyle = '#0a111c';
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - r - 30, cy); ctx.lineTo(cx + r + 30, cy); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy - r - 30); ctx.lineTo(cx, cy + r + 30); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = 'rgba(159, 176, 197, 0.5)';
+  ctx.font = '11px IBM Plex Sans';
+  ctx.fillText('+x', cx + r + 10, cy + 15);
+  ctx.fillText('+y', cx + 5, cy - r - 10);
+
+  const x = cx + Math.cos(th.angle) * r;
+  const y = cy + Math.sin(th.angle) * r;
+
+  // Radius vector
+  ctx.strokeStyle = '#f87171';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y); ctx.stroke();
+
+  // Velocity vector
+  const vAngle = th.angle + Math.PI / 2;
+  const vLen = 50;
+  ctx.strokeStyle = '#22c55e';
+  ctx.fillStyle = '#22c55e';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(vAngle) * vLen, y + Math.sin(vAngle) * vLen); ctx.stroke();
+  const ax = x + Math.cos(vAngle) * vLen, ay = y + Math.sin(vAngle) * vLen;
+  ctx.beginPath(); ctx.moveTo(ax, ay);
+  ctx.lineTo(ax - 10 * Math.cos(vAngle - 0.4), ay - 10 * Math.sin(vAngle - 0.4));
+  ctx.lineTo(ax - 10 * Math.cos(vAngle + 0.4), ay - 10 * Math.sin(vAngle + 0.4));
+  ctx.closePath(); ctx.fill();
+
+  // Acceleration vector (toward center)
+  const aLen = 50;
+  ctx.strokeStyle = '#f6c76b';
+  ctx.fillStyle = '#f6c76b';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - Math.cos(th.angle) * aLen, y - Math.sin(th.angle) * aLen); ctx.stroke();
+  const aa = x - Math.cos(th.angle) * aLen, ba = y - Math.sin(th.angle) * aLen;
+  ctx.beginPath(); ctx.moveTo(aa, ba);
+  ctx.lineTo(aa + 10 * Math.cos(th.angle - 0.4), ba + 10 * Math.sin(th.angle - 0.4));
+  ctx.lineTo(aa + 10 * Math.cos(th.angle + 0.4), ba + 10 * Math.sin(th.angle + 0.4));
+  ctx.closePath(); ctx.fill();
+
+  // Object
+  const objGrad = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 16);
+  objGrad.addColorStop(0, '#fef3c7');
+  objGrad.addColorStop(1, '#f59e0b');
+  ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2);
+  ctx.fillStyle = objGrad; ctx.fill();
+
+  // Angle arc
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 25, 0, th.angle);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#f87171';
+  ctx.font = '12px Space Grotesk';
+  ctx.fillText('r', (cx + x) / 2 - 10, (cy + y) / 2 + 5);
+
+  ctx.fillStyle = '#22c55e';
+  ctx.fillText('v', x + Math.cos(vAngle) * 55, y + Math.sin(vAngle) * 55);
+
+  ctx.fillStyle = '#f6c76b';
+  ctx.fillText('a', x - Math.cos(th.angle) * 55, y - Math.sin(th.angle) * 55);
+
+  // Center dot
+  ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#6ad7ff'; ctx.fill();
+}
+
+function animateTheory() {
+  if (th.running) {
+    th.angle += th.omega * 0.01;
+  }
+  drawTheory();
+  th.animId = requestAnimationFrame(animateTheory);
+}
+
+document.getElementById('slider-radius-theory').addEventListener('input', e => {
+  th.radius = +e.target.value;
+  document.getElementById('val-radius-theory').textContent = th.radius;
+  drawTheory();
+});
+document.getElementById('slider-omega-theory').addEventListener('input', e => {
+  th.omega = +e.target.value;
+  document.getElementById('val-omega-theory').textContent = th.omega.toFixed(1);
+  drawTheory();
+});
+document.getElementById('btn-play-theory').addEventListener('click', () => {
+  th.running = !th.running;
+  document.getElementById('btn-play-theory').textContent = th.running ? 'Pause' : 'Play';
+});
+document.getElementById('btn-reset-theory').addEventListener('click', resetTheory);
+
+// ============================================================
+// CHALLENGE TAB
+// ============================================================
+let ch = {
+  radius: 80,
+  omega: 5,
+  mass: 3,
+  targetForce: 0,
+  level: 1,
+  hits: 0,
+  score: 0,
+  bestScore: 0,
+  running: true,
+  animId: null,
+  fired: false
+};
+
+function generateTarget() {
+  const baseForce = 50 + ch.level * 30;
+  ch.targetForce = baseForce + Math.random() * 50;
+  ch.targetForce = Math.round(ch.targetForce);
+  document.getElementById('ch-target-force').textContent = ch.targetForce + ' N';
+}
+
+function checkMatch() {
+  const F = calcForce(ch.mass, ch.omega, ch.radius);
+  const diff = Math.abs(F - ch.targetForce);
+  const tolerance = ch.targetForce * 0.15;
+
+  if (diff <= tolerance) {
+    const points = Math.max(10, 100 - Math.round(diff / ch.targetForce * 100));
+    ch.score += points;
+    ch.hits++;
+    ch.fired = true;
+
+    // Visual feedback
+    showHitIndicator('+' + points);
+    document.getElementById('ch-score').textContent = ch.score;
+    document.getElementById('ch-hits').textContent = ch.hits + ' / 3';
+
+    if (ch.hits >= 3) {
+      ch.level++;
+      ch.hits = 0;
+      document.getElementById('ch-level').textContent = ch.level;
+      document.getElementById('ch-hits').textContent = '0 / 3';
+      generateTarget();
     }
 
-    function tick() {
-      if (state.running) {
-        state.angle += state.omega * 0.02 * state.speed;
-      }
-      draw();
-      updateReadout();
-      requestAnimationFrame(tick);
+    if (ch.score > ch.bestScore) {
+      ch.bestScore = ch.score;
+      document.getElementById('ch-best').textContent = ch.bestScore;
     }
+  }
+}
 
-    document.getElementById('radius').addEventListener('input', e => {
-      state.radius = parseFloat(e.target.value);
-      document.getElementById('radiusVal').textContent = `${state.radius.toFixed(0)} m`;
-    });
-    document.getElementById('omega').addEventListener('input', e => {
-      state.omega = parseFloat(e.target.value);
-      document.getElementById('omegaVal').textContent = state.omega.toFixed(1);
-    });
-    document.getElementById('mass').addEventListener('input', e => {
-      state.mass = parseFloat(e.target.value);
-      document.getElementById('massVal').textContent = `${state.mass.toFixed(1)} kg`;
-    });
+function showHitIndicator(text) {
+  const canvas = document.getElementById('challenge-canvas');
+  const indicator = document.createElement('div');
+  indicator.className = 'hit-indicator';
+  indicator.textContent = text;
+  indicator.style.left = (canvas.offsetWidth / 2 - 30) + 'px';
+  indicator.style.top = (canvas.offsetHeight / 2) + 'px';
+  indicator.style.color = '#22c55e';
+  canvas.parentElement.appendChild(indicator);
+  setTimeout(() => indicator.remove(), 600);
+}
 
-    document.getElementById('showGrid').addEventListener('change', e => state.showGrid = e.target.checked);
-    document.getElementById('showTrail').addEventListener('change', e => state.showTrail = e.target.checked);
-    document.getElementById('showRadius').addEventListener('change', e => state.showRadius = e.target.checked);
-    document.getElementById('showVectors').addEventListener('change', e => state.showVectors = e.target.checked);
+function initChallengeCanvas() {
+  const c = document.getElementById('challenge-canvas');
+  const rect = c.parentElement.getBoundingClientRect();
+  c.width = Math.floor(rect.width);
+  c.height = 500;
+}
 
-    document.getElementById('speed').addEventListener('input', e => {
-      state.speed = parseFloat(e.target.value);
-      document.getElementById('speedVal').textContent = `${state.speed.toFixed(2)}x`;
-    });
+function resetChallenge() {
+  ch.fired = false;
+  ch.running = true;
+  document.getElementById('btn-fire').textContent = 'Launch!';
+  drawChallenge();
+}
 
-    document.getElementById('playPause').addEventListener('click', e => {
-      state.running = !state.running;
-      e.target.textContent = state.running ? 'Pause' : 'Play';
-    });
+function drawChallenge() {
+  const c = document.getElementById('challenge-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
 
-    document.getElementById('reset').addEventListener('click', () => {
-      state.radius = 80;
-      state.omega = 5;
-      state.mass = 3;
-      state.angle = 0;
-      state.trail = [];
-      state.running = true;
-      document.getElementById('radius').value = 80;
-      document.getElementById('omega').value = 5;
-      document.getElementById('mass').value = 3;
-      document.getElementById('radiusVal').textContent = '80 m';
-      document.getElementById('omegaVal').textContent = '5.0';
-      document.getElementById('massVal').textContent = '3.0 kg';
-      document.getElementById('playPause').textContent = 'Pause';
-    });
+  const cx = w / 2;
+  const cy = h / 2;
+  const r = Math.min(w, h) * 0.25 * (ch.radius / 150);
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
-    });
+  ctx.fillStyle = '#0a111c';
+  ctx.fillRect(0, 0, w, h);
 
-    window.addEventListener('resize', resize);
-    resize();
-    tick();
-  </script>
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+  for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 6]);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+  ctx.setLineDash([]);
+
+  const F = calcForce(ch.mass, ch.omega, ch.radius);
+  const diff = F - ch.targetForce;
+  const tolerance = ch.targetForce * 0.15;
+  const match = Math.abs(diff) <= tolerance;
+
+  if (ch.running || ch.fired) {
+    const angle = ch.running ? performance.now() / 500 : 0;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+
+    const objGrad = ctx.createRadialGradient(x - 4, y - 4, 2, x, y, 16);
+    if (match) {
+      objGrad.addColorStop(0, '#bbf7d0');
+      objGrad.addColorStop(1, '#22c55e');
+    } else {
+      objGrad.addColorStop(0, '#fef3c7');
+      objGrad.addColorStop(1, '#f59e0b');
+    }
+    ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2);
+    ctx.fillStyle = objGrad; ctx.fill();
+
+    if (match) {
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(x, y, 20, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  // Force meter
+  const meterX = w - 80;
+  const meterY = 60;
+  const meterH = h - 120;
+  const meterW = 30;
+
+  ctx.fillStyle = 'rgba(15, 22, 35, 0.8)';
+  ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(meterX - meterW / 2, meterY, meterW, meterH, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  const maxF = 300;
+  const normF = Math.min(F / maxF, 1);
+  const fillH = meterH * normF;
+
+  const meterGrad = ctx.createLinearGradient(0, meterY + meterH, 0, meterY);
+  meterGrad.addColorStop(0, '#22c55e');
+  meterGrad.addColorStop(0.5, '#f6c76b');
+  meterGrad.addColorStop(1, '#ef4444');
+  ctx.fillStyle = meterGrad;
+  ctx.beginPath();
+  ctx.roundRect(meterX - meterW / 2 + 3, meterY + meterH - fillH + 3, meterW - 6, fillH - 6, 5);
+  ctx.fill();
+
+  // Target marker
+  const targetNorm = Math.min(ch.targetForce / maxF, 1);
+  const targetY = meterY + meterH - targetNorm * meterH;
+  ctx.strokeStyle = '#6ad7ff';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(meterX - meterW / 2 - 10, targetY);
+  ctx.lineTo(meterX + meterW / 2 + 10, targetY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels
+  ctx.fillStyle = 'rgba(159, 176, 197, 0.5)';
+  ctx.font = '11px IBM Plex Sans';
+  ctx.fillText(`Your: ${F.toFixed(0)} N`, meterX - 35, targetY - 10);
+  ctx.fillText(`Target: ${ch.targetForce} N`, meterX - 38, targetY + 15);
+}
+
+function animateChallenge() {
+  drawChallenge();
+  ch.animId = requestAnimationFrame(animateChallenge);
+}
+
+document.getElementById('slider-radius-ch').addEventListener('input', e => {
+  ch.radius = +e.target.value;
+  document.getElementById('val-radius-ch').textContent = ch.radius + ' m';
+});
+document.getElementById('slider-omega-ch').addEventListener('input', e => {
+  ch.omega = +e.target.value;
+  document.getElementById('val-omega-ch').textContent = ch.omega.toFixed(1) + ' rad/s';
+});
+document.getElementById('slider-mass-ch').addEventListener('input', e => {
+  ch.mass = +e.target.value;
+  document.getElementById('val-mass-ch').textContent = ch.mass.toFixed(1) + ' kg';
+});
+
+document.getElementById('btn-fire').addEventListener('click', () => {
+  if (!ch.fired) {
+    checkMatch();
+    ch.fired = true;
+  }
+});
+document.getElementById('btn-reset-challenge').addEventListener('click', () => {
+  ch.fired = false;
+  drawChallenge();
+});
+document.getElementById('btn-restart-challenge').addEventListener('click', () => {
+  ch.level = 1;
+  ch.hits = 0;
+  ch.score = 0;
+  ch.fired = false;
+  document.getElementById('ch-level').textContent = ch.level;
+  document.getElementById('ch-hits').textContent = '0 / 3';
+  document.getElementById('ch-score').textContent = ch.score;
+  generateTarget();
+  drawChallenge();
+});
+
+// ============================================================
+// DRAW ALL (called on resize)
+// ============================================================
+function drawAll() {
+  drawExplore();
+  drawData();
+  drawCompare();
+  drawTheory();
+  drawChallenge();
+  updateExploreStats();
+  updateCompareStats();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+setTimeout(() => {
+  initExploreCanvas();
+  initDataCanvas();
+  initCompareCanvas();
+  initTheoryCanvas();
+  initChallengeCanvas();
+  resetExplore();
+  resetData();
+  resetCompare();
+  resetTheory();
+  generateTarget();
+  animateExplore();
+  animateData();
+  animateCompare();
+  animateTheory();
+  animateChallenge();
+}, 150);
+</script>
 </body>
 </html>
