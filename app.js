@@ -32035,9 +32035,10 @@ const decorateThemeLinks = () => {
   const theme = getCurrentTheme();
   document.querySelectorAll('a[href]').forEach((link) => {
     const href = link.getAttribute('href');
-    if (!href || href.startsWith('http') || href.startsWith('mailto') || href.startsWith('tel')) return;
+    if (!href || href.startsWith('http') || href.startsWith('mailto') || href.startsWith('tel') || href.startsWith('blob:') || href.startsWith('data:')) return;
     try {
       const url = new URL(href, window.location.href);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
       if (!url.searchParams.get('theme')) {
         url.searchParams.set('theme', theme);
         link.setAttribute('href', url.pathname + url.search + url.hash);
@@ -32052,10 +32053,11 @@ const handleThemeNavigation = (e) => {
   const link = e.target.closest('a[href]');
   if (!link) return;
   const href = link.getAttribute('href');
-  if (!href || href.startsWith('http') || href.startsWith('mailto') || href.startsWith('tel')) return;
+  if (!href || href.startsWith('http') || href.startsWith('mailto') || href.startsWith('tel') || href.startsWith('blob:') || href.startsWith('data:')) return;
   if (href.startsWith('#')) return;
   try {
     const url = new URL(href, window.location.href);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
     if (!url.searchParams.get('theme')) {
       url.searchParams.set('theme', getCurrentTheme());
       e.preventDefault();
@@ -32718,11 +32720,95 @@ window.initQuestionBank = async () => {
   const paginationEl = document.getElementById('questionPagination');
   if (!listEl || !countEl || !searchInput || !viewToggle || !pagesEl || !paginationEl) return;
 
-  if (!Array.isArray(window.QUESTION_BANK)) {
-    listEl.innerHTML = '<div class="question-bank-empty"><h3>No questions loaded</h3><p>Unable to load question data.</p></div>';
-    return;
-  }
-  const questions = window.QUESTION_BANK;
+  const STORAGE_KEY = 'physicsExamQuestionsV1';
+  const loadStoredQuestions = () => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+      return [];
+    }
+  };
+  const saveStoredQuestions = (items) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch (err) {
+      // Ignore storage errors
+    }
+  };
+
+  let questions = loadStoredQuestions();
+
+  const setSyncStatus = (message, tone = '') => {
+    if (!syncStatusEl) return;
+    syncStatusEl.textContent = message;
+    syncStatusEl.classList.remove('success', 'error');
+    if (tone) syncStatusEl.classList.add(tone);
+  };
+
+  const canSync = () => typeof Auth !== 'undefined' && Auth.isLoggedIn && Auth.isLoggedIn();
+
+  const loadQuestionsFromServer = async () => {
+    if (!canSync()) return null;
+    try {
+      const token = Auth.getToken();
+      const response = await fetch('/api/exam-questions', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (!data || !Array.isArray(data.questions)) return null;
+      return data.questions;
+    } catch (err) {
+      return null;
+    }
+  };
+
+  const saveQuestionsToServer = async (items) => {
+    if (!canSync()) return false;
+    try {
+      const token = Auth.getToken();
+      const response = await fetch('/api/exam-questions', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ examQuestions: items })
+      });
+      return response.ok;
+    } catch (err) {
+      return false;
+    }
+  };
+
+  const scheduleServerSave = () => {
+    if (!canSync()) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    setSyncStatus('Saving to cloud...');
+    syncTimer = setTimeout(async () => {
+      const ok = await saveQuestionsToServer(questions);
+      setSyncStatus(ok ? 'Synced to cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
+    }, 600);
+  };
+
+  const form = document.getElementById('examQuestionForm');
+  const helperEl = document.getElementById('examFormHelper');
+  const typeSelect = document.getElementById('examQuestionType');
+  const choicesField = document.getElementById('examChoices');
+  const tfField = document.getElementById('examTrueFalseField');
+  const openField = document.getElementById('examOpenAnswerField');
+  const addBtn = document.getElementById('examAddBtn');
+  const resetBtn = document.getElementById('examResetBtn');
+  const importPdfBtn = document.getElementById('examImportPdfBtn');
+  const importPdfInput = document.getElementById('examImportPdfInput');
+  const importDrop = document.getElementById('examImportDrop');
+  const syncStatusEl = document.getElementById('examSyncStatus');
+  const summaryEl = document.getElementById('examSummary');
+  let editingId = null;
+  let syncTimer = null;
 
   let currentPage = 1;
   const perPage = 6;
@@ -32742,23 +32828,185 @@ window.initQuestionBank = async () => {
     resultsShown: false
   };
   
+  const updateExamSummary = () => {
+    if (!summaryEl) return;
+    const total = questions.length;
+    const counts = {
+      mc: questions.filter((q) => q.type === 'Multiple Choice').length,
+      tf: questions.filter((q) => q.type === 'True/False').length,
+      oe: questions.filter((q) => q.type === 'Open Ended').length,
+    };
+    summaryEl.innerHTML = `
+      <div><strong>${total}</strong> total questions <span>(Your custom pool)</span></div>
+      <div><strong>${counts.mc}</strong> multiple choice</div>
+      <div><strong>${counts.tf}</strong> true/false</div>
+      <div><strong>${counts.oe}</strong> open ended <span>(ungraded)</span></div>
+    `;
+  };
+
+  const updateQuestionCountOptions = () => {
+    const select = document.getElementById('quizQuestionCount');
+    if (!select) return;
+    const total = questions.length;
+    const baseOptions = [5, 10, 15, 20, 25, 30, 50].filter((n) => n <= total);
+    const options = baseOptions.length ? baseOptions : (total > 0 ? [total] : [5, 10]);
+    if (total > 0 && !options.includes(total)) {
+      options.push(total);
+    }
+    select.innerHTML = options.map((n) => {
+      const label = total > 0 && n === total ? `${n} Questions (All)` : `${n} Questions`;
+      return `<option value="${n}">${label}</option>`;
+    }).join('');
+  };
+
+  const ensurePdfWorker = () => {
+    if (typeof window === 'undefined') return false;
+    if (!window.pdfjsLib) {
+      const module = window.pdfjsLibModule;
+      if (module && module.pdfjsLib) {
+        window.pdfjsLib = module.pdfjsLib;
+      }
+    }
+    if (!window.pdfjsLib) return false;
+    if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/vendor/pdf.worker.min.mjs';
+    }
+    return true;
+  };
+
+  const extractQuestionsFromText = (text) => {
+    if (!text) return [];
+    const cleaned = text.replace(/\r/g, '\n').replace(/\n{2,}/g, '\n');
+    const numberedSplit = cleaned.split(/\n?\s*(?:Question\s*)?\d+\s*[.)]\s+/i).map((part) => part.trim()).filter(Boolean);
+    let candidates = numberedSplit.length >= 2 ? numberedSplit : [];
+    if (candidates.length === 0) {
+      const questionMatches = cleaned.match(/[^?\n]{8,}\?/g);
+      candidates = questionMatches ? questionMatches.map((q) => q.trim()) : [];
+    }
+    return candidates
+      .map((q) => q.replace(/\s+/g, ' ').trim())
+      .filter((q) => q.length >= 8);
+  };
+
+  const buildImportedQuestion = (text) => ({
+    id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    question: text,
+    type: 'Multiple Choice',
+    difficulty: 'Medium',
+    category: 'Custom',
+    topic: 'Imported',
+    explanation: '',
+    choices: ['Option A', 'Option B', 'Option C', 'Option D'],
+    answerIndex: 0,
+    answer: 'Option A',
+  });
+
+  const importPdfFile = async (file) => {
+    if (!file) return;
+    if (!ensurePdfWorker()) {
+      showFormMessage('PDF import unavailable: PDF engine failed to load.', 'error');
+      return;
+    }
+    showFormMessage('Reading PDF...', 'success');
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;
+      let fullText = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const pageText = content.items.map((item) => item.str).join(' ');
+        fullText += `${pageText}\n`;
+      }
+      const extracted = extractQuestionsFromText(fullText);
+      if (extracted.length === 0) {
+        showFormMessage('No questions found in this PDF. Use numbered questions (1., 2., 3.).', 'error');
+        return;
+      }
+      const imported = extracted.map(buildImportedQuestion);
+      const replace = window.confirm(`Found ${imported.length} questions. Replace current list? Click Cancel to merge.`);
+      questions = ensureUniqueIds(replace ? imported : [...imported, ...questions]);
+      saveStoredQuestions(questions);
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      showFormMessage(`Imported ${imported.length} questions. Edit choices/answers as needed.`, 'success');
+      scheduleServerSave();
+    } catch (err) {
+      showFormMessage('PDF import failed. Please try a different PDF.', 'error');
+    }
+  };
+
+  const normalizeQuestion = (item) => {
+    if (!item || typeof item !== 'object') return null;
+    const question = String(item.question || '').trim();
+    if (!question) return null;
+    const type = ['Multiple Choice', 'True/False', 'Open Ended'].includes(item.type) ? item.type : 'Multiple Choice';
+    const difficulty = ['Easy', 'Medium', 'Hard'].includes(item.difficulty) ? item.difficulty : 'Medium';
+    const topic = item.topic && typeof item.topic === 'string' ? item.topic : 'Custom';
+    const base = {
+      id: item.id || `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      question,
+      type,
+      difficulty,
+      category: 'Custom',
+      topic,
+      explanation: typeof item.explanation === 'string' ? item.explanation : '',
+    };
+
+    if (type === 'Multiple Choice') {
+      const rawChoices = Array.isArray(item.choices) ? item.choices : [];
+      const choices = rawChoices.map((c) => String(c || '').trim()).filter((c) => c);
+      if (choices.length < 2) return null;
+      while (choices.length < 4) {
+        choices.push(`Option ${String.fromCharCode(65 + choices.length)}`);
+      }
+      const answerIndex = Number.isInteger(item.answerIndex) ? item.answerIndex : 0;
+      const safeIndex = Math.max(0, Math.min(answerIndex, choices.length - 1));
+      return {
+        ...base,
+        choices,
+        answerIndex: safeIndex,
+        answer: choices[safeIndex],
+      };
+    }
+
+    if (type === 'True/False') {
+      const answer = item.answer === 'False' ? 'False' : 'True';
+      return {
+        ...base,
+        answer,
+      };
+    }
+
+    const modelAnswer = typeof item.modelAnswer === 'string' && item.modelAnswer.trim()
+      ? item.modelAnswer.trim()
+      : typeof item.answer === 'string'
+      ? item.answer.trim()
+      : '';
+    return {
+      ...base,
+      answer: modelAnswer,
+      modelAnswer,
+    };
+  };
+
+  const ensureUniqueIds = (items) => {
+    const seen = new Set();
+    return items.map((q) => {
+      let id = q.id || `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      while (seen.has(id)) {
+        id = `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      }
+      seen.add(id);
+      return { ...q, id };
+    });
+  };
+
   // Initialize quiz setup
   const initQuizSetup = () => {
-    const quizTopicsGrid = document.getElementById('quizTopicsGrid');
-    if (!quizTopicsGrid) return;
-    
-    // Get unique categories
-    const categories = [...new Set(questions.map(q => q.category))].sort();
-    
-    quizTopicsGrid.innerHTML = categories.map(cat => `
-      <label class="quiz-topic-item">
-        <input type="checkbox" value="${cat}" checked class="quiz-topic-checkbox" />
-        <span>${cat}</span>
-        <span class="quiz-topic-count">${questions.filter(q => q.category === cat).length}</span>
-      </label>
-    `).join('');
-    
-    // Start quiz button
+    updateExamSummary();
+    updateQuestionCountOptions();
     const startBtn = document.getElementById('quizStartBtn');
     if (startBtn) {
       startBtn.onclick = startQuiz;
@@ -32776,7 +33024,6 @@ window.initQuestionBank = async () => {
 
   // Start quiz
   const startQuiz = () => {
-    const selectedTopics = Array.from(document.querySelectorAll('.quiz-topic-checkbox:checked')).map(el => el.value);
     const questionCount = parseInt(document.getElementById('quizQuestionCount').value);
     const timerSeconds = parseInt(document.getElementById('quizTimer').value);
     const includeMC = document.getElementById('quizTypeMC').checked;
@@ -32784,14 +33031,8 @@ window.initQuestionBank = async () => {
     const includeOE = document.getElementById('quizTypeOE').checked;
     const difficulty = document.getElementById('quizDifficulty').value;
     
-    if (selectedTopics.length === 0) {
-      alert('Please select at least one topic');
-      return;
-    }
-    
     // Filter questions
     let filtered = questions.filter(q => {
-      if (!selectedTopics.includes(q.category)) return false;
       if (difficulty !== 'all' && q.difficulty !== difficulty) return false;
       if (q.type === 'Multiple Choice' && !includeMC) return false;
       if (q.type === 'True/False' && !includeTF) return false;
@@ -32805,7 +33046,8 @@ window.initQuestionBank = async () => {
     }
     
     // Shuffle and limit
-    filtered = shuffleArray(filtered).slice(0, questionCount);
+    const desiredCount = Math.min(questionCount, filtered.length);
+    filtered = shuffleArray(filtered).slice(0, desiredCount);
     
     // Setup quiz state
     quizState = {
@@ -32816,7 +33058,7 @@ window.initQuestionBank = async () => {
       startTime: Date.now(),
       timerSeconds: timerSeconds,
       timerInterval: null,
-      selectedTopics: selectedTopics,
+      selectedTopics: [],
       resultsShown: false
     };
     
@@ -32917,19 +33159,19 @@ window.initQuestionBank = async () => {
       `).join('')
       : q.type === 'True/False'
       ? `
-        <div class="${getOptionClass('true', correctIndex === 'true')}">
+        <div class="${getOptionClass('true', correctIndex === 'true')}" data-value="true">
           <span class="quiz-option-marker">T</span><span>True</span>
           ${isReviewMode && correctIndex === 'true' ? '<span class="correct-badge">✓ Correct</span>' : ''}
           ${isReviewMode && selectedAnswer === 'true' && correctIndex !== 'true' ? '<span class="incorrect-badge">✗ Your answer</span>' : ''}
         </div>
-        <div class="${getOptionClass('false', correctIndex === 'false')}">
+        <div class="${getOptionClass('false', correctIndex === 'false')}" data-value="false">
           <span class="quiz-option-marker">F</span><span>False</span>
           ${isReviewMode && correctIndex === 'false' ? '<span class="correct-badge">✓ Correct</span>' : ''}
           ${isReviewMode && selectedAnswer === 'false' && correctIndex !== 'false' ? '<span class="incorrect-badge">✗ Your answer</span>' : ''}
         </div>
       `
       : `<div class="quiz-open-ended">
-          <textarea id="quizAnswerInput" placeholder="Type your answer here..." disabled>${selectedAnswer || ''}</textarea>
+          <textarea id="quizAnswerInput" placeholder="Type your answer here..." ${isReviewMode ? 'disabled' : ''}>${selectedAnswer || ''}</textarea>
           ${isReviewMode && q.modelAnswer ? `
             <div class="model-answer-review">
               <h4>Model Answer:</h4>
@@ -32940,8 +33182,10 @@ window.initQuestionBank = async () => {
     
     // Review status badge
     let statusBadge = '';
-    if (isReviewMode && q.type !== 'Open Ended') {
-      if (isSkipped) {
+    if (isReviewMode) {
+      if (q.type === 'Open Ended') {
+        statusBadge = '<span class="quiz-status-badge skipped">📝 Ungraded</span>';
+      } else if (isSkipped) {
         statusBadge = '<span class="quiz-status-badge skipped">⏭ Skipped</span>';
       } else if (isCorrect) {
         statusBadge = '<span class="quiz-status-badge correct">✓ Correct</span>';
@@ -32954,7 +33198,7 @@ window.initQuestionBank = async () => {
       <div class="quiz-question-card">
         <div class="quiz-question-meta">
           ${statusBadge}
-          <span class="question-tag">${q.category}</span>
+          <span class="question-tag">${q.category || 'Custom'}</span>
           <span class="question-tag ${diffClass}">${q.difficulty}</span>
           <span class="question-tag ${tagType}">${q.type}</span>
         </div>
@@ -33183,15 +33427,19 @@ window.initQuestionBank = async () => {
     // Calculate results
     let correct = 0;
     let incorrect = 0;
+    let ungraded = 0;
     skipped = 0; // Reset for recount
     
     quizState.questions.forEach((q, i) => {
       const answer = quizState.answers[i];
       if (answer === undefined || answer === '') {
         skipped++;
+        if (q.type === 'Open Ended') {
+          ungraded++;
+        }
       } else if (q.type === 'Open Ended') {
         // Open ended - can't auto-grade
-        skipped++;
+        ungraded++;
       } else if (answer === q.answerIndex || answer === q.answer.toLowerCase() || answer === q.answer) {
         correct++;
       } else {
@@ -33200,25 +33448,36 @@ window.initQuestionBank = async () => {
     });
     
     const total = quizState.questions.length;
-    const percent = Math.round((correct / total) * 100);
+    const gradedTotal = Math.max(0, total - ungraded);
+    const percent = gradedTotal > 0 ? Math.round((correct / gradedTotal) * 100) : 0;
     
     // Show results
     document.getElementById('quizActive').style.display = 'none';
     document.getElementById('quizResults').style.display = 'block';
     
-    document.getElementById('quizScorePercent').textContent = `${percent}%`;
+    document.getElementById('quizScorePercent').textContent = gradedTotal > 0 ? `${percent}%` : 'N/A';
     document.getElementById('quizScoreCorrect').textContent = correct;
     document.getElementById('quizScoreWrong').textContent = incorrect;
     document.getElementById('quizScoreSkipped').textContent = skipped;
+    document.getElementById('quizScoreUngraded').textContent = ungraded;
     
     const elapsed = Math.floor((Date.now() - quizState.startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
     document.getElementById('quizTimeUsed').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const gradedNote = document.getElementById('quizGradedNote');
+    if (gradedNote) {
+      gradedNote.textContent = gradedTotal > 0
+        ? `Score based on ${gradedTotal} auto-graded question${gradedTotal === 1 ? '' : 's'}.`
+        : 'No auto-graded questions in this exam.';
+    }
     
     // Score circle color
     const circle = document.getElementById('quizScoreCircle');
-    if (percent >= 80) {
+    if (gradedTotal === 0) {
+      circle.style.borderColor = 'rgba(148, 163, 184, 0.7)';
+      circle.style.color = 'rgba(148, 163, 184, 0.7)';
+    } else if (percent >= 80) {
       circle.style.borderColor = '#4ade80';
       circle.style.color = '#4ade80';
     } else if (percent >= 50) {
@@ -33232,7 +33491,7 @@ window.initQuestionBank = async () => {
     // Track achievements
     if (typeof AchievementTracker !== 'undefined') {
       AchievementTracker.onQuizComplete({
-        questionsAnswered: total,
+        questionsAnswered: gradedTotal,
         correctAnswers: correct,
         timeSeconds: elapsed,
         difficulty: quizState.difficulty,
@@ -33407,7 +33666,7 @@ window.initQuestionBank = async () => {
     if (filters.difficulties.length && !filters.difficulties.includes(q.difficulty)) return false;
     if (filters.types.length && !filters.types.includes(q.type)) return false;
     if (filters.query) {
-      const hay = `${q.question} ${q.topic} ${q.category}`.toLowerCase();
+      const hay = `${q.question || ''} ${q.topic || ''} ${q.category || ''}`.toLowerCase();
       if (!hay.includes(filters.query)) return false;
     }
     return true;
@@ -33416,6 +33675,7 @@ window.initQuestionBank = async () => {
   const renderQuestionCard = (q, index) => {
     const tagType = q.type === 'Multiple Choice' ? 'type-multiple' : q.type === 'True/False' ? 'type-boolean' : 'type-open';
     const diffClass = q.difficulty === 'Easy' ? 'difficulty-easy' : q.difficulty === 'Hard' ? 'difficulty-hard' : 'difficulty-medium';
+    const originTag = q.topic === 'Imported' ? '<span class="question-tag origin-imported">Imported</span>' : '';
     const options = q.type === 'Multiple Choice'
       ? q.choices.map((c, i) => `
         <div class="question-option" data-index="${i}">
@@ -33429,13 +33689,18 @@ window.initQuestionBank = async () => {
         <div class="question-option" data-index="false"><span class="question-option-marker">F</span><span>False</span></div>
       `
       : '';
-    const sourceLine = q.source ? `<span class="question-source">Source: ${q.source}</span>` : '';
+    const topicText = q.topic || 'Custom';
 
-    const answerBlock = q.type === 'Open Ended' && q.modelAnswer
-      ? `<div class="question-answer model-answer" style="display:none;">
-          <p><strong>Model Answer:</strong></p>
-          <div class="model-answer-content">${q.modelAnswer.replace(/\n/g, '<br>')}</div>
-        </div>`
+    const answerBlock = q.type === 'Open Ended'
+      ? q.modelAnswer
+        ? `<div class="question-answer model-answer" style="display:none;">
+            <p><strong>Model Answer:</strong></p>
+            <div class="model-answer-content">${q.modelAnswer.replace(/\n/g, '<br>')}</div>
+          </div>`
+        : `<div class="question-answer model-answer" style="display:none;">
+            <p><strong>Model Answer:</strong></p>
+            <div class="model-answer-content">No model answer provided.</div>
+          </div>`
       : q.explanation
       ? `<div class="question-answer" style="display:none;"><p><strong>Answer:</strong> ${q.answer}</p><p>${q.explanation}</p></div>`
       : `<div class="question-answer" style="display:none;"><p><strong>Answer:</strong> ${q.answer}</p></div>`;
@@ -33444,7 +33709,9 @@ window.initQuestionBank = async () => {
       <div class="question-card" data-id="${q.id}">
         <div class="question-card-header">
           <div class="question-card-meta">
-            <span class="question-tag">${q.category}</span>
+            <span class="question-index">${index + 1}</span>
+            <span class="question-tag">${q.category || 'Custom'}</span>
+            ${originTag}
             <span class="question-tag ${diffClass}">${q.difficulty}</span>
             <span class="question-tag ${tagType}">${q.type}</span>
           </div>
@@ -33454,8 +33721,11 @@ window.initQuestionBank = async () => {
         <div class="question-card-actions">
           <button class="question-answer-toggle">${q.type === 'Open Ended' ? 'Show Model Answer' : 'Show Answer'}</button>
           <div class="question-stats">
-            <span class="question-stat">${q.topic}</span>
-            ${sourceLine}
+            <span class="question-stat">${topicText}</span>
+          </div>
+          <div class="question-card-actions-right">
+            <button class="question-action-btn" data-action="edit">Edit</button>
+            <button class="question-action-btn danger" data-action="delete">Delete</button>
           </div>
         </div>
         ${answerBlock}
@@ -33482,7 +33752,7 @@ window.initQuestionBank = async () => {
     countEl.textContent = `Showing ${pageItems.length} of ${total} questions`;
 
     if (pageItems.length === 0) {
-      listEl.innerHTML = '<div class="question-bank-empty"><h3>No questions found</h3><p>Try adjusting filters or search.</p></div>';
+      listEl.innerHTML = '<div class="question-bank-empty"><h3>No questions yet</h3><p>Add questions using the Exam Builder to get started.</p></div>';
     } else {
       listEl.innerHTML = pageItems.map(renderQuestionCard).join('');
     }
@@ -33566,6 +33836,204 @@ window.initQuestionBank = async () => {
     render();
   });
 
+  const syncTypeFields = () => {
+    if (!typeSelect || !choicesField || !tfField || !openField) return;
+    const type = typeSelect.value;
+    choicesField.style.display = type === 'Multiple Choice' ? 'block' : 'none';
+    tfField.style.display = type === 'True/False' ? 'block' : 'none';
+    openField.style.display = type === 'Open Ended' ? 'block' : 'none';
+    const choiceInputs = choicesField.querySelectorAll('input');
+    choiceInputs.forEach((input) => {
+      input.required = type === 'Multiple Choice';
+      input.disabled = type !== 'Multiple Choice';
+    });
+    const correctChoice = document.getElementById('examCorrectChoice');
+    if (correctChoice) correctChoice.disabled = type !== 'Multiple Choice';
+    const tfAnswer = document.getElementById('examTrueFalseAnswer');
+    if (tfAnswer) tfAnswer.disabled = type !== 'True/False';
+    const openAnswer = document.getElementById('examOpenAnswer');
+    if (openAnswer) openAnswer.disabled = type !== 'Open Ended';
+  };
+
+  const showFormMessage = (message, tone) => {
+    if (!helperEl) return;
+    helperEl.textContent = message;
+    helperEl.classList.remove('success', 'error');
+    if (tone) helperEl.classList.add(tone);
+  };
+
+  const resetForm = () => {
+    if (!form) return;
+    form.reset();
+    editingId = null;
+    if (addBtn) addBtn.textContent = 'Add Question';
+    syncTypeFields();
+  };
+
+  const buildQuestionFromForm = () => {
+    const questionText = document.getElementById('examQuestionText')?.value.trim();
+    const type = typeSelect?.value || 'Multiple Choice';
+    const difficulty = document.getElementById('examDifficulty')?.value || 'Medium';
+    const topic = document.getElementById('examTopic')?.value.trim();
+    const explanation = document.getElementById('examExplanation')?.value.trim();
+
+    if (!questionText) {
+      showFormMessage('Please enter a question.', 'error');
+      return null;
+    }
+
+    const base = {
+      id: editingId || `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      question: questionText,
+      type,
+      difficulty,
+      category: 'Custom',
+      topic: topic || 'Custom',
+      explanation: explanation || '',
+    };
+
+    if (type === 'Multiple Choice') {
+      const choices = [
+        document.getElementById('examChoiceA')?.value.trim(),
+        document.getElementById('examChoiceB')?.value.trim(),
+        document.getElementById('examChoiceC')?.value.trim(),
+        document.getElementById('examChoiceD')?.value.trim(),
+      ];
+      if (choices.some((c) => !c)) {
+        showFormMessage('Please fill in all four choices.', 'error');
+        return null;
+      }
+      const answerIndex = parseInt(document.getElementById('examCorrectChoice')?.value || '0');
+      return {
+        ...base,
+        choices,
+        answerIndex,
+        answer: choices[answerIndex],
+      };
+    }
+
+    if (type === 'True/False') {
+      const answer = document.getElementById('examTrueFalseAnswer')?.value || 'True';
+      return {
+        ...base,
+        answer,
+      };
+    }
+
+    const modelAnswer = document.getElementById('examOpenAnswer')?.value.trim();
+    return {
+      ...base,
+      answer: modelAnswer || '',
+      modelAnswer: modelAnswer || '',
+    };
+  };
+
+  if (typeSelect) {
+    safeAddEventListener(typeSelect, 'change', syncTypeFields);
+  }
+
+  if (form) {
+    safeAddEventListener(form, 'submit', (e) => {
+      e.preventDefault();
+      const newQuestion = buildQuestionFromForm();
+      if (!newQuestion) return;
+      const isEditing = Boolean(editingId);
+      if (isEditing) {
+        questions = questions.map((q) => (q.id === editingId ? newQuestion : q));
+      } else {
+        questions = [newQuestion, ...questions];
+      }
+      saveStoredQuestions(questions);
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      resetForm();
+      showFormMessage(isEditing ? 'Question updated.' : 'Question added.', 'success');
+      scheduleServerSave();
+    });
+  }
+
+  if (resetBtn) {
+    safeAddEventListener(resetBtn, 'click', () => {
+      resetForm();
+      showFormMessage('', '');
+    });
+  }
+
+  if (importPdfBtn && importPdfInput) {
+    safeAddEventListener(importPdfBtn, 'click', () => importPdfInput.click());
+    safeAddEventListener(importPdfInput, 'change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      await importPdfFile(file);
+      importPdfInput.value = '';
+    });
+  }
+
+  if (importDrop) {
+    safeAddEventListener(importDrop, 'click', () => importPdfInput?.click());
+    safeAddEventListener(importDrop, 'dragover', (e) => {
+      e.preventDefault();
+      importDrop.classList.add('dragover');
+    });
+    safeAddEventListener(importDrop, 'dragleave', () => {
+      importDrop.classList.remove('dragover');
+    });
+    safeAddEventListener(importDrop, 'drop', async (e) => {
+      e.preventDefault();
+      importDrop.classList.remove('dragover');
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      await importPdfFile(file);
+    });
+  }
+
+  safeAddEventListener(listEl, 'click', (e) => {
+    const button = e.target.closest('.question-action-btn');
+    if (!button) return;
+    const card = button.closest('.question-card');
+    if (!card) return;
+    const id = card.dataset.id;
+    if (!id) return;
+
+    if (button.dataset.action === 'delete') {
+      const confirmed = window.confirm('Delete this question?');
+      if (!confirmed) return;
+      questions = questions.filter((q) => q.id !== id);
+      saveStoredQuestions(questions);
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      scheduleServerSave();
+      return;
+    }
+
+    if (button.dataset.action === 'edit') {
+      const existing = questions.find((q) => q.id === id);
+      if (!existing) return;
+      editingId = id;
+      if (addBtn) addBtn.textContent = 'Update Question';
+      document.getElementById('examQuestionText').value = existing.question || '';
+      if (typeSelect) typeSelect.value = existing.type || 'Multiple Choice';
+      document.getElementById('examDifficulty').value = existing.difficulty || 'Medium';
+      document.getElementById('examTopic').value = existing.topic && existing.topic !== 'Custom' ? existing.topic : '';
+      document.getElementById('examExplanation').value = existing.explanation || '';
+      if (existing.type === 'Multiple Choice') {
+        document.getElementById('examChoiceA').value = existing.choices?.[0] || '';
+        document.getElementById('examChoiceB').value = existing.choices?.[1] || '';
+        document.getElementById('examChoiceC').value = existing.choices?.[2] || '';
+        document.getElementById('examChoiceD').value = existing.choices?.[3] || '';
+        document.getElementById('examCorrectChoice').value = `${existing.answerIndex ?? 0}`;
+      } else if (existing.type === 'True/False') {
+        document.getElementById('examTrueFalseAnswer').value = existing.answer || 'True';
+      } else {
+        document.getElementById('examOpenAnswer').value = existing.modelAnswer || '';
+      }
+      syncTypeFields();
+      showFormMessage('Editing question. Update and save.', 'success');
+    }
+  });
+
   // View toggle
   viewToggle.querySelectorAll('.view-btn').forEach((btn) => {
     safeAddEventListener(btn, 'click', () => {
@@ -33586,6 +34054,17 @@ window.initQuestionBank = async () => {
           document.getElementById('questionList').style.display = 'none';
           document.getElementById('questionPagination').style.display = 'none';
           document.getElementById('questionCount').style.display = 'none';
+          if (questions.length === 0) {
+            alert('Add at least one question to start an exam.');
+            currentView = 'bank';
+            viewToggle.querySelectorAll('.view-btn').forEach((b) => b.classList.remove('active'));
+            viewToggle.querySelector('[data-view="bank"]')?.classList.add('active');
+            quizSetup.style.display = 'none';
+            document.getElementById('questionList').style.display = 'block';
+            document.getElementById('questionPagination').style.display = 'flex';
+            document.getElementById('questionCount').style.display = 'block';
+            return;
+          }
           initQuizSetup();
           setupQuizListeners();
         }
@@ -33601,7 +34080,39 @@ window.initQuestionBank = async () => {
     });
   });
 
+  updateExamSummary();
+  updateQuestionCountOptions();
+  syncTypeFields();
   render();
+
+  if (canSync()) {
+    setSyncStatus('Checking cloud data...');
+    loadQuestionsFromServer().then((serverQuestions) => {
+      if (Array.isArray(serverQuestions) && serverQuestions.length > 0) {
+        const normalized = serverQuestions.map(normalizeQuestion).filter(Boolean);
+        if (questions.length > 0) {
+          questions = ensureUniqueIds([...normalized, ...questions]);
+        } else {
+          questions = ensureUniqueIds(normalized);
+        }
+        saveStoredQuestions(questions);
+        updateExamSummary();
+        updateQuestionCountOptions();
+        render();
+        saveQuestionsToServer(questions).then((ok) => {
+          setSyncStatus(ok ? 'Merged with cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
+        });
+      } else if (questions.length > 0) {
+        saveQuestionsToServer(questions).then((ok) => {
+          setSyncStatus(ok ? 'Synced to cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
+        });
+      } else {
+        setSyncStatus('No cloud data yet. Using local only.');
+      }
+    });
+  } else {
+    setSyncStatus('Sign in to sync across devices.');
+  }
 };
 
 const renderFavorites = () => {
