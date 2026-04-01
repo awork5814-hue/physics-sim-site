@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Light Dispersion</title>
+  <title>Double-Slit Experiment</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -113,9 +113,9 @@
 
     .color-preview {
       width: 100%;
-      height: 40px;
-      border-radius: 8px;
-      margin-top: 10px;
+      height: 30px;
+      border-radius: 6px;
+      margin-top: 8px;
       border: 1px solid var(--border);
     }
 
@@ -133,41 +133,48 @@
   </style>
 </head>
 <body>
-  <h1>Light Dispersion</h1>
-  <p class="subtitle">Separate light into its spectral colors</p>
+  <h1>Double-Slit Experiment</h1>
+  <p class="subtitle">Light interference creates bright and dark fringes</p>
 
   <div class="lab">
     <canvas id="canvas" width="800" height="400"></canvas>
 
     <div class="controls">
       <div class="card">
-        <div class="card-title">Light Source</div>
+        <div class="card-title">Light</div>
         <div class="control">
           <div class="control-label">
             <span>Wavelength</span>
-            <span id="val-lambda">550 nm</span>
+            <span id="val-lambda">650 nm</span>
           </div>
-          <input type="range" id="lambda" min="380" max="750" value="550" step="5">
+          <input type="range" id="lambda" min="400" max="750" value="650" step="10">
           <div id="color-preview" class="color-preview"></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Prism</div>
+        <div class="card-title">Slits</div>
         <div class="control">
           <div class="control-label">
-            <span>Dispersion</span>
-            <span id="val-disp">1.5</span>
+            <span>Slit Separation</span>
+            <span id="val-sep">0.3 mm</span>
           </div>
-          <input type="range" id="disp" min="1.2" max="2.4" value="1.5" step="0.1">
+          <input type="range" id="sep" min="0.1" max="1" value="0.3" step="0.05">
+        </div>
+        <div class="control">
+          <div class="control-label">
+            <span>Slit Width</span>
+            <span id="val-width">0.1 mm</span>
+          </div>
+          <input type="range" id="width" min="0.05" max="0.5" value="0.1" step="0.05">
         </div>
       </div>
 
       <div class="card">
         <div class="card-title">Results</div>
         <div class="info">
-          <p>Wavelength: <strong id="res-lambda">550 nm</strong></p>
-          <p>Color: <strong id="res-color">Green</strong></p>
+          <p>Fringe spacing: <strong id="res-spacing">4.3 mm</strong></p>
+          <p>Color: <strong id="res-color">Red</strong></p>
         </div>
       </div>
     </div>
@@ -178,83 +185,82 @@
     const ctx = canvas.getContext('2d');
 
     const params = {
-      lambda: 550,
-      dispersion: 1.5
+      lambda: 650,
+      sep: 0.3,
+      width: 0.1,
+      L: 1
     };
 
     function wavelengthToColor(lambda) {
-      let r, g, b, alpha = 1;
+      let r, g, b, factor;
       
       if (lambda < 380) {
-        return { r: 0, g: 0, b: 0, alpha: 0 };
+        return { r: 0, g: 0, b: 0 };
       } else if (lambda < 440) {
-        r = -(lambda - 440) / (440 - 380);
+        r = -(lambda - 440) / 60;
         g = 0;
         b = 1;
+        factor = 0.3 + 0.7 * (lambda - 380) / 40;
       } else if (lambda < 490) {
         r = 0;
-        g = (lambda - 440) / (490 - 440);
+        g = (lambda - 440) / 50;
         b = 1;
+        factor = 1;
       } else if (lambda < 510) {
         r = 0;
         g = 1;
-        b = -(lambda - 510) / (510 - 490);
+        b = -(lambda - 510) / 20;
+        factor = 1;
       } else if (lambda < 580) {
-        r = (lambda - 510) / (580 - 510);
+        r = (lambda - 510) / 70;
         g = 1;
         b = 0;
+        factor = 1;
       } else if (lambda < 645) {
         r = 1;
-        g = -(lambda - 645) / (645 - 580);
+        g = -(lambda - 645) / 65;
         b = 0;
+        factor = 1;
       } else if (lambda <= 750) {
         r = 1;
         g = 0;
         b = 0;
+        factor = 0.3 + 0.7 * (750 - lambda) / 105;
       } else {
-        return { r: 0, g: 0, b: 0, alpha: 0 };
-      }
-
-      let factor;
-      if (lambda < 380 || lambda > 750) {
-        factor = 0;
-      } else if (lambda < 420) {
-        factor = 0.3 + 0.7 * (lambda - 380) / (420 - 380);
-      } else if (lambda > 700) {
-        factor = 0.3 + 0.7 * (750 - lambda) / (750 - 700);
-      } else {
-        factor = 1;
+        return { r: 0, g: 0, b: 0 };
       }
 
       return {
         r: Math.round(r * factor * 255),
         g: Math.round(g * factor * 255),
-        b: Math.round(b * factor * 255),
-        alpha: 1
+        b: Math.round(b * factor * 255)
       };
     }
 
     function getColorName(lambda) {
-      if (lambda < 380) return 'Ultraviolet';
       if (lambda < 450) return 'Violet';
       if (lambda < 495) return 'Blue';
       if (lambda < 520) return 'Cyan';
       if (lambda < 565) return 'Green';
       if (lambda < 590) return 'Yellow';
       if (lambda < 625) return 'Orange';
-      if (lambda < 750) return 'Red';
-      return 'Infrared';
+      return 'Red';
     }
 
     function updateResults() {
       document.getElementById('val-lambda').textContent = params.lambda + ' nm';
-      document.getElementById('val-disp').textContent = params.dispersion.toFixed(1);
-      document.getElementById('res-lambda').textContent = params.lambda + ' nm';
+      document.getElementById('val-sep').textContent = params.sep.toFixed(2) + ' mm';
+      document.getElementById('val-width').textContent = params.width.toFixed(2) + ' mm';
+      
+      const d = params.sep * 1e-3;
+      const lambda = params.lambda * 1e-9;
+      const fringeSpacing = (lambda * params.L) / d * 1000;
+      
+      document.getElementById('res-spacing').textContent = fringeSpacing.toFixed(2) + ' mm';
       document.getElementById('res-color').textContent = getColorName(params.lambda);
 
       const color = wavelengthToColor(params.lambda);
-      const preview = document.getElementById('color-preview');
-      preview.style.background = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.alpha})`;
+      document.getElementById('color-preview').style.background = `rgb(${color.r}, ${color.g}, ${color.b})`;
     }
 
     function draw() {
@@ -264,129 +270,69 @@
       ctx.fillStyle = '#050608';
       ctx.fillRect(0, 0, w, h);
 
+      const midY = h / 2;
+      const slitX = 80;
+      const screenX = w - 100;
+      const L = params.L;
+
+      ctx.fillStyle = '#1a1d23';
+      ctx.fillRect(slitX - 20, 40, 40, h - 80);
+
+      const d = params.sep * 1e-3;
+      const a = params.width * 1e-3;
+      const lambda = params.lambda * 1e-9;
       const color = wavelengthToColor(params.lambda);
-      const dispersion = params.dispersion;
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < w; i++) {
+      const slitOffset = d / 2;
+      const slitPositions = [-slitOffset, slitOffset];
+
+      ctx.fillStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
+      slitPositions.forEach(offset => {
         ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, h);
-        ctx.stroke();
-      }
-
-      const sourceX = 100;
-      const sourceY = h / 2;
-      
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(sourceX, sourceY, 15, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.9)`;
-      ctx.beginPath();
-      ctx.arc(sourceX, sourceY, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      const beamStartX = sourceX + 20;
-      const beamEndX = 300;
-
-      const gradient = ctx.createLinearGradient(beamStartX, sourceY - 30, beamStartX, sourceY + 30);
-      gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
-      gradient.addColorStop(0.5, `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`);
-      gradient.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
-      
-      ctx.fillStyle = gradient;
-      ctx.fillRect(beamStartX, sourceY - 30, beamEndX - beamStartX, 60);
-
-      const prismX = 320;
-      const prismY = h / 2;
-      const prismSize = 100;
-
-      ctx.fillStyle = '#1e293b';
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(prismX, prismY - prismSize);
-      ctx.lineTo(prismX + prismSize * 0.866, prismY + prismSize * 0.5);
-      ctx.lineTo(prismX - prismSize * 0.866, prismY + prismSize * 0.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      const refractIndex = dispersion - (params.lambda - 550) * 0.001;
-      const beamHeight = 25 + (dispersion - 1.2) * 10;
-
-      const wavelengths = [];
-      const numRays = 15;
-      for (let i = 0; i < numRays; i++) {
-        wavelengths.push(380 + (750 - 380) * i / (numRays - 1));
-      }
-
-      ctx.lineWidth = 2;
-      
-      wavelengths.forEach((wl, idx) => {
-        const rayColor = wavelengthToColor(wl);
-        const alpha = idx === Math.floor(numRays / 2) ? 1 : 0.6;
-        
-        ctx.strokeStyle = `rgba(${rayColor.r}, ${rayColor.g}, ${rayColor.b}, ${alpha})`;
-        
-        const angle = (idx - (numRays - 1) / 2) * 0.04 * (dispersion - 1);
-        const rayLength = 350;
-        
-        ctx.beginPath();
-        ctx.moveTo(prismX + 30, prismY + (idx - (numRays - 1) / 2) * 3);
-        ctx.lineTo(prismX + 30 + rayLength * Math.cos(angle), prismY + (idx - (numRays - 1) / 2) * 3 + rayLength * Math.sin(angle));
-        ctx.stroke();
+        ctx.arc(slitX, midY + offset * 200, 4, 0, Math.PI * 2);
+        ctx.fill();
       });
 
-      const rainbowY = 80;
-      const rainbowH = h - 160;
-      const rainbowX = 400;
-      const rainbowW = 300;
+      for (let px = 0; px < (screenX - slitX) * 2; px++) {
+        const screenY = midY - (h - 100) / 2 + (px / ((screenX - slitX) * 2)) * (h - 100);
+        const dy = screenY - midY;
+        const theta = Math.atan2(dy * 0.001, L);
 
-      const rainbowGradient = ctx.createLinearGradient(rainbowX, 0, rainbowX + rainbowW, 0);
-      rainbowGradient.addColorStop(0, '#8b00ff');
-      rainbowGradient.addColorStop(0.17, '#0000ff');
-      rainbowGradient.addColorStop(0.33, '#00ff00');
-      rainbowGradient.addColorStop(0.5, '#ffff00');
-      rainbowGradient.addColorStop(0.67, '#ff7f00');
-      rainbowGradient.addColorStop(0.83, '#ff0000');
-      rainbowGradient.addColorStop(1, '#ff0000');
+        let amplitude = 0;
+        slitPositions.forEach(offset => {
+          const pathDiff = offset * Math.sin(theta);
+          amplitude += Math.cos(2 * Math.PI * pathDiff / lambda);
+        });
 
-      ctx.fillStyle = rainbowGradient;
-      ctx.fillRect(rainbowX, rainbowY, rainbowW, rainbowH);
+        const singleSlit = a > 0 ? Math.sin(Math.PI * a * Math.sin(theta) / lambda) / (Math.PI * a * Math.sin(theta) / lambda) : 1;
+        const intensity = Math.pow(amplitude / 2, 2) * Math.pow(singleSlit, 2);
+
+        const brightness = intensity * 0.9;
+        ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${brightness})`;
+        ctx.fillRect(screenX + px / 2 - 1, screenY, 2, 1.5);
+      }
+
+      const fringeSpacing = (lambda * L) / d;
+      const centralMaxWidth = (2 * lambda * L) / a;
 
       ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-      ctx.setLineDash([5, 5]);
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.moveTo(rainbowX, rainbowY);
-      ctx.lineTo(rainbowX, rainbowY + rainbowH);
+      ctx.moveTo(screenX, 50);
+      ctx.lineTo(screenX, h - 50);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.fillStyle = '#6ad7ff';
       ctx.font = '11px IBM Plex Sans';
-      ctx.textAlign = 'center';
-
-      const labels = ['Violet', 'Blue', 'Green', 'Yellow', 'Orange', 'Red'];
-      const positions = [0.08, 0.25, 0.42, 0.58, 0.75, 0.92];
-      positions.forEach((pos, i) => {
-        ctx.fillText(labels[i], rainbowX + rainbowW * pos, rainbowY - 8);
-      });
+      ctx.fillText('Equal spacing: ' + (fringeSpacing * 1000).toFixed(2) + ' mm', 20, h - 35);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText('Envelope: ' + (centralMaxWidth * 1000).toFixed(1) + ' mm wide', 20, h - 18);
 
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.font = '10px IBM Plex Sans';
-      ctx.textAlign = 'left';
-      ctx.fillText('380 nm', rainbowX + 5, rainbowY + rainbowH + 15);
-      ctx.textAlign = 'right';
-      ctx.fillText('750 nm', rainbowX + rainbowW - 5, rainbowY + rainbowH + 15);
-
-      ctx.fillStyle = '#6ad7ff';
-      ctx.font = '12px IBM Plex Sans';
       ctx.textAlign = 'center';
-      ctx.fillText('Spectral colors from dispersion', rainbowX + rainbowW / 2, h - 20);
+      ctx.fillText('Double-slit fringes within single-slit envelope', w / 2, 25);
     }
 
     document.getElementById('lambda').addEventListener('input', (e) => {
@@ -395,16 +341,20 @@
       draw();
     });
 
-    document.getElementById('disp').addEventListener('input', (e) => {
-      params.dispersion = parseFloat(e.target.value);
-      document.getElementById('val-disp').textContent = params.dispersion.toFixed(1);
+    document.getElementById('sep').addEventListener('input', (e) => {
+      params.sep = parseFloat(e.target.value);
+      updateResults();
+      draw();
+    });
+
+    document.getElementById('width').addEventListener('input', (e) => {
+      params.width = parseFloat(e.target.value);
+      updateResults();
       draw();
     });
 
     updateResults();
     draw();
-
-    window.addEventListener('resize', draw);
   </script>
 </body>
 </html>
