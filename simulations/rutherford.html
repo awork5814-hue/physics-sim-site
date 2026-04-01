@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -10,13 +10,10 @@
     :root {
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --gold-foil: rgba(255, 215, 0, 0.3);
-      --nucleus-color: #f6c76b;
-      --electron-color: #6ad7ff;
-      --flash-color: #ffffff;
-      --trail-color: rgba(106, 215, 255, 0.5);
-      --positive-charge: #ff6b6b;
-      --negative-charge: #6ad7ff;
+      --gold: #ffd700;
+      --alpha: #ff6b6b;
+      --nucleus: #f6c76b;
+      --electron: #6ad7ff;
       --sim-bg: rgba(10, 16, 26, 0.95);
       --sim-text: #e9f2ff;
       --sim-muted: #9fb0c5;
@@ -104,6 +101,7 @@
       background: rgba(12, 18, 28, 0.8);
       color: var(--sim-text);
       font-weight: 600;
+      font-size: 0.9rem;
     }
 
     .tab.active {
@@ -113,7 +111,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      grid-template-columns: 1fr 320px;
       gap: 24px;
       padding: 12px 28px 18px;
     }
@@ -126,14 +124,9 @@
       padding: 18px;
     }
 
-    .canvas-wrap {
-      display: grid;
-      gap: 16px;
-    }
-
     canvas {
       width: 100%;
-      height: 420px;
+      height: 450px;
       background: rgba(6, 10, 18, 0.7);
       border-radius: 16px;
       border: 1px solid var(--sim-border);
@@ -150,15 +143,24 @@
     }
 
     label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--sim-muted);
       display: flex;
       justify-content: space-between;
       gap: 10px;
     }
 
-    input[type="range"], select {
+    input[type="range"] {
       width: 100%;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--sim-border);
+      background: #0b1420;
+      color: var(--sim-text);
     }
 
     .btn-row {
@@ -175,18 +177,69 @@
       border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
+      font-size: 0.85rem;
+      flex: 1;
     }
 
-    .data-panel {
+    button:hover {
+      border-color: var(--accent);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), #4ab8e8);
+      color: #0a111c;
+      border: none;
+    }
+
+    .stats-grid {
       display: grid;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: var(--sim-muted);
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
     }
 
-    .data-panel strong {
+    .stat-card {
+      background: rgba(11, 20, 32, 0.8);
+      border: 1px solid var(--sim-border);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
       color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--sim-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-card.highlight {
+      border-color: var(--accent-2);
+    }
+
+    .stat-card.highlight .stat-value {
+      color: var(--accent-2);
+    }
+
+    .discovery-banner {
+      background: linear-gradient(135deg, rgba(246, 199, 107, 0.2), rgba(106, 215, 255, 0.2));
+      border: 1px solid var(--accent-2);
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
       font-weight: 600;
+      color: var(--accent-2);
+      animation: pulse 1s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.8; }
+      to { opacity: 1; }
     }
 
     .accordion {
@@ -231,87 +284,110 @@
   <div class="page" id="rutherford">
     <div class="topbar">
       <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle" aria-label="Toggle light and dark mode">Light/Dark</button>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
     </div>
 
     <header class="hero">
       <h1>Rutherford Gold Foil Experiment</h1>
-      <p>Discovery of the atomic nucleus</p>
+      <p>Discovery of the atomic nucleus (1909-1911)</p>
     </header>
 
     <div class="tabs">
       <button class="tab active" data-mode="plum">Plum Pudding</button>
-      <button class="tab" data-mode="nuclear">Rutherford Model</button>
+      <button class="tab" data-mode="nuclear">Rutherford</button>
       <button class="tab" data-mode="compare">Compare</button>
     </div>
 
     <section class="layout">
-      <div class="panel canvas-wrap">
+      <div class="panel">
         <canvas id="rfCanvas" width="900" height="520" aria-label="Rutherford experiment"></canvas>
-        <div class="btn-row">
-          <button id="fire">Fire Single</button>
+        <div class="btn-row" style="margin-top: 16px;">
+          <button id="fire" class="primary">Fire α-Particle</button>
           <button id="auto">Auto-Fire</button>
           <button id="reset">Reset</button>
+          <button id="clearData">Clear Data</button>
         </div>
       </div>
 
-      <div class="panel controls" aria-label="Controls">
+      <div class="controls">
         <div class="control-group">
           <label for="energy">Alpha Energy <strong id="energyLabel">5 MeV</strong></label>
           <input type="range" id="energy" min="1" max="10" step="0.5" value="5" />
         </div>
 
         <div class="control-group">
-          <label for="atoms">Number of Atoms <strong id="atomsLabel">5</strong></label>
-          <input type="range" id="atoms" min="1" max="20" step="1" value="5" />
+          <label for="atoms">Nuclei in Foil <strong id="atomsLabel">8</strong></label>
+          <input type="range" id="atoms" min="1" max="20" step="1" value="8" />
         </div>
 
         <div class="control-group">
           <label for="material">Target Material</label>
           <select id="material">
             <option value="79" selected>Gold (Z=79)</option>
+            <option value="47">Silver (Z=47)</option>
+            <option value="29">Copper (Z=29)</option>
             <option value="13">Aluminum (Z=13)</option>
-            <option value="82">Lead (Z=82)</option>
           </select>
         </div>
 
         <div class="control-group">
           <label>Display Options</label>
-          <label><input type="checkbox" id="showAtoms" checked /> Show atom interior</label>
-          <label><input type="checkbox" id="showFields" /> Show electric fields</label>
-          <label><input type="checkbox" id="showTrails" checked /> Show particle trails</label>
-          <label><input type="checkbox" id="showFlashes" checked /> Show detection flashes</label>
-          <label><input type="checkbox" id="showShells" checked /> Show electron shells</label>
+          <label style="font-size: 0.8rem;"><input type="checkbox" id="showAtoms" checked /> Show Nuclei</label>
+          <label style="font-size: 0.8rem;"><input type="checkbox" id="showTrails" checked /> Particle Trails</label>
+          <label style="font-size: 0.8rem;"><input type="checkbox" id="showFields" /> Electric Field</label>
+          <label style="font-size: 0.8rem;"><input type="checkbox" id="showPrediction" checked /> Path Prediction</label>
+        </div>
+
+        <div id="discoveryBanner" class="discovery-banner" style="display: none;">
+          Discovery! Backscatter Detected!
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="statFired">0</div>
+            <div class="stat-label">Fired</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statStraight">0</div>
+            <div class="stat-label">Straight</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statDeflected">0</div>
+            <div class="stat-label">Deflected</div>
+          </div>
+          <div class="stat-card highlight">
+            <div class="stat-value" id="statBack">0</div>
+            <div class="stat-label">Backscatter</div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Max Deflection: <strong id="maxAngle">0</strong>°</label>
         </div>
       </div>
-    </section>
-
-    <section class="panel" style="margin: 0 28px 18px;">
-      <div class="data-panel" aria-live="polite" id="dataPanel"></div>
     </section>
 
     <section class="accordion">
       <details open>
         <summary>📚 Theory</summary>
-        <p>Most alpha particles passed through the foil, but a few deflected at large angles. This showed that atoms have a tiny, dense, positively charged nucleus.</p>
+        <p>In 1909, Geiger and Marsden, under Rutherford's direction, fired alpha particles at thin gold foil. According to the prevailing "Plum Pudding" model, positive charge was spread throughout the atom, so alpha particles should pass through with only slight deflection.</p>
+        <p style="margin-top: 10px;"><strong>The Surprise:</strong> A few particles deflected at large angles—and some bounced straight back! This led Rutherford to conclude that atoms have a tiny, dense, positively charged nucleus.</p>
       </details>
 
       <details>
-        <summary>🔬 Investigation Questions</summary>
-        <ol>
-          <li>Why do most particles pass straight through?</li>
-          <li>What causes rare large-angle deflections?</li>
-          <li>How does Z affect scattering?</li>
-        </ol>
-      </details>
-
-      <details>
-        <summary>💡 Key Takeaways</summary>
+        <summary>🔬 Key Observations</summary>
         <ul>
-          <li>Atoms are mostly empty space.</li>
-          <li>Positive charge is concentrated in the nucleus.</li>
-          <li>Large Z yields stronger deflection.</li>
+          <li>Most α-particles pass straight through (atom is mostly empty space)</li>
+          <li>Some deflect at small angles (near misses)</li>
+          <li>Rare large-angle deflections (direct hits on nucleus)</li>
+          <li>Very rare backscatters (head-on collision with nucleus)</li>
         </ul>
+      </details>
+
+      <details>
+        <summary>💡 Rutherford's Conclusion</summary>
+        <p>"It was almost as incredible as if you fired a 15-inch shell at a piece of tissue paper and it came back and hit you."</p>
+        <p style="margin-top: 10px;">The nucleus is incredibly small (< 1/10,000 of atomic radius) but contains nearly all the mass and all the positive charge.</p>
       </details>
     </section>
   </div>
@@ -320,126 +396,258 @@
     const canvas = document.getElementById('rfCanvas');
     const ctx = canvas.getContext('2d');
 
-    const energyInput = document.getElementById('energy');
-    const atomsInput = document.getElementById('atoms');
-    const materialSelect = document.getElementById('material');
-
-    const energyLabel = document.getElementById('energyLabel');
-    const atomsLabel = document.getElementById('atomsLabel');
-
-    const showAtoms = document.getElementById('showAtoms');
-    const showFields = document.getElementById('showFields');
-    const showTrails = document.getElementById('showTrails');
-    const showFlashes = document.getElementById('showFlashes');
-    const showShells = document.getElementById('showShells');
-
-    const fireBtn = document.getElementById('fire');
-    const autoBtn = document.getElementById('auto');
-    const resetBtn = document.getElementById('reset');
-
-    const dataPanel = document.getElementById('dataPanel');
-    const tabs = document.querySelectorAll('.tab');
-
     const state = {
       mode: 'plum',
       energy: 5,
-      atoms: 5,
+      atoms: 8,
       Z: 79,
       auto: false,
       fired: 0,
       straight: 0,
       deflected: 0,
       back: 0,
+      maxAngle: 0,
       particles: [],
       nuclei: [],
-      flashes: []
+      flashes: [],
+      prediction: null
     };
 
-    function updateLabels() {
-      energyLabel.textContent = `${state.energy.toFixed(1)} MeV`;
-      atomsLabel.textContent = state.atoms.toFixed(0);
-    }
-
-    function initAtoms() {
+    function initNuclei() {
       state.nuclei = [];
-      const midX = canvas.width * 0.5;
-      const midY = canvas.height / 2;
+      const foilStart = canvas.width * 0.4;
+      const foilEnd = canvas.width * 0.55;
+      const centerY = canvas.height / 2;
+      
       for (let i = 0; i < state.atoms; i++) {
         state.nuclei.push({
-          x: midX + (Math.random() - 0.5) * 80,
-          y: midY + (Math.random() - 0.5) * 180
+          x: foilStart + Math.random() * (foilEnd - foilStart),
+          y: centerY + (Math.random() - 0.5) * 250,
+          Z: state.Z,
+          pulse: Math.random() * Math.PI * 2
         });
       }
     }
 
+    function getPredictionPath(startY) {
+      if (state.mode === 'plum') {
+        return { points: [{ x: 80, y: startY }, { x: canvas.width - 60, y: startY }], deflected: false };
+      }
+      
+      const foilX = canvas.width * 0.45;
+      let currentY = startY;
+      let currentX = 80;
+      const points = [{ x: currentX, y: currentY }];
+      
+      while (currentX < foilX) {
+        currentX += 5;
+        points.push({ x: currentX, y: currentY });
+      }
+      
+      let totalDeflection = 0;
+      state.nuclei.forEach(n => {
+        const dy = currentY - n.y;
+        if (Math.abs(dy) < 60) {
+          totalDeflection += (60 - Math.abs(dy)) * 0.3 * n.Z / 79;
+        }
+      });
+      
+      const deflectUp = startY > canvas.height / 2;
+      const remainingX = canvas.width - foilX;
+      
+      for (let i = 0; i < remainingX / 5; i++) {
+        currentX += 5;
+        const progress = i / (remainingX / 5);
+        currentY += (deflectUp ? 1 : -1) * totalDeflection * 0.15 * (1 - progress);
+        points.push({ x: currentX, y: currentY });
+      }
+      
+      return { points, deflected: Math.abs(totalDeflection) > 5 };
+    }
+
     function fireParticle() {
-      const y = canvas.height / 2 + (Math.random() - 0.5) * 60;
-      state.particles.push({ x: 80, y, vx: 200, vy: 0, trail: [] });
-      state.fired += 1;
+      const startY = canvas.height / 2 + (Math.random() - 0.5) * 80;
+      const speed = 150 + state.energy * 30;
+      state.particles.push({
+        x: 80,
+        y: startY,
+        startY: startY,
+        vx: speed,
+        vy: 0,
+        trail: [],
+        deflected: false,
+        backscatter: false
+      });
+      state.fired++;
+      state.prediction = getPredictionPath(startY);
     }
 
     function updateParticles(dt) {
-      state.particles.forEach((p) => {
-        let ax = 0;
-        let ay = 0;
-        if (state.mode !== 'plum') {
-          state.nuclei.forEach((n) => {
+      state.particles.forEach(p => {
+        let ax = 0, ay = 0;
+        
+        if (state.mode === 'nuclear') {
+          state.nuclei.forEach(n => {
             const dx = p.x - n.x;
             const dy = p.y - n.y;
-            const r2 = dx * dx + dy * dy + 200;
-            const force = (state.Z * 1000) / r2;
-            ax += (dx / Math.sqrt(r2)) * force;
-            ay += (dy / Math.sqrt(r2)) * force;
+            const r2 = dx * dx + dy * dy + 100;
+            const force = (n.Z * 800) / r2;
+            ax += (dx / Math.sqrt(r2)) * force * dt;
+            ay += (dy / Math.sqrt(r2)) * force * dt;
           });
         }
-        p.vx += ax * dt;
-        p.vy += ay * dt;
+        
+        p.vx += ax;
+        p.vy += ay;
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        if (showTrails.checked) {
+        
+        if (p.x > canvas.width * 0.4 && p.x < canvas.width * 0.55) {
+          p.inFoil = true;
+        }
+        
+        if (p.trail.length < 50) {
           p.trail.push({ x: p.x, y: p.y });
-          if (p.trail.length > 40) p.trail.shift();
+        } else {
+          p.trail.shift();
+          p.trail.push({ x: p.x, y: p.y });
+        }
+        
+        if (p.vy > 5 || p.vy < -5) {
+          p.deflected = true;
+        }
+        if (p.vx < -10) {
+          p.backscatter = true;
+          p.deflected = true;
         }
       });
-      state.particles = state.particles.filter((p) => p.x < canvas.width - 60 && p.y > 0 && p.y < canvas.height);
+      
+      const detected = state.particles.filter(p => 
+        p.x > canvas.width - 80 && p.y > 0 && p.y < canvas.height
+      );
+      
+      detected.forEach(p => {
+        if (p.backscatter) {
+          state.back++;
+          document.getElementById('discoveryBanner').style.display = 'block';
+          state.flashes.push({ x: p.x, y: p.y, life: 1 });
+        } else if (p.deflected) {
+          state.deflected++;
+        } else {
+          state.straight++;
+        }
+        
+        const angle = Math.abs(Math.atan2(p.vy, Math.abs(p.vx)) * 180 / Math.PI);
+        if (angle > state.maxAngle) {
+          state.maxAngle = Math.round(angle);
+        }
+      });
+      
+      state.particles = state.particles.filter(p => 
+        p.x > 0 && p.x < canvas.width + 20 && p.y > -20 && p.y < canvas.height + 20
+      );
+      
+      state.flashes = state.flashes.filter(f => {
+        f.life -= 0.02;
+        return f.life > 0;
+      });
     }
 
     function draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+      
+      ctx.fillStyle = '#0a1520';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.1)';
+      ctx.fillRect(60, 40, 20, canvas.height - 80);
+      
       ctx.fillStyle = '#f6c76b';
-      ctx.fillRect(40, canvas.height / 2 - 30, 30, 60);
-      ctx.fillStyle = '#e9f2ff';
-      ctx.fillText('α', 50, canvas.height / 2 + 4);
-
-      ctx.fillStyle = 'rgba(255,215,0,0.2)';
-      ctx.fillRect(canvas.width * 0.45, 60, 30, canvas.height - 120);
-
-      ctx.fillStyle = '#0c131d';
-      ctx.fillRect(canvas.width - 40, 60, 20, canvas.height - 120);
-
-      if (showAtoms.checked) {
-        state.nuclei.forEach((n) => {
-          ctx.fillStyle = '#f6c76b';
+      ctx.font = 'bold 14px Space Grotesk';
+      ctx.fillText('α', 65, canvas.height / 2 + 5);
+      
+      const foilX = canvas.width * 0.4;
+      const foilEnd = canvas.width * 0.55;
+      
+      const gradient = ctx.createLinearGradient(foilX, 0, foilEnd, 0);
+      gradient.addColorStop(0, 'rgba(255, 215, 0, 0.4)');
+      gradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.6)');
+      gradient.addColorStop(1, 'rgba(255, 215, 0, 0.4)');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(foilX, 50, foilEnd - foilX, canvas.height - 100);
+      
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(foilX, 50);
+      ctx.lineTo(foilX, canvas.height - 50);
+      ctx.moveTo(foilEnd, 50);
+      ctx.lineTo(foilEnd, canvas.height - 50);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.font = '10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('GOLD FOIL', (foilX + foilEnd) / 2, 42);
+      
+      if (state.showFields && state.mode === 'nuclear') {
+        state.nuclei.forEach(n => {
+          const gradient = ctx.createRadialGradient(n.x, n.y, 5, n.x, n.y, 80);
+          gradient.addColorStop(0, 'rgba(246, 199, 107, 0.3)');
+          gradient.addColorStop(1, 'rgba(246, 199, 107, 0)');
+          ctx.fillStyle = gradient;
           ctx.beginPath();
-          ctx.arc(n.x, n.y, 6, 0, Math.PI * 2);
+          ctx.arc(n.x, n.y, 80, 0, Math.PI * 2);
           ctx.fill();
-          if (showShells.checked) {
-            ctx.strokeStyle = 'rgba(106,215,255,0.4)';
-            ctx.beginPath();
-            ctx.arc(n.x, n.y, 18, 0, Math.PI * 2);
-            ctx.stroke();
-          }
         });
       }
-
-      state.particles.forEach((p) => {
-        ctx.fillStyle = '#6ad7ff';
+      
+      if (state.showAtoms.checked || state.showAtoms) {
+        state.nuclei.forEach((n, i) => {
+          n.pulse += 0.05;
+          const pulseSize = 6 + Math.sin(n.pulse) * 2;
+          
+          const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, pulseSize * 2);
+          glow.addColorStop(0, 'rgba(246, 199, 107, 0.8)');
+          glow.addColorStop(0.5, 'rgba(246, 199, 107, 0.3)');
+          glow.addColorStop(1, 'rgba(246, 199, 107, 0)');
+          ctx.fillStyle = glow;
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, pulseSize * 2, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#f6c76b';
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, pulseSize, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#0a1520';
+          ctx.font = 'bold 8px Space Grotesk';
+          ctx.textAlign = 'center';
+          ctx.fillText('+', n.x, n.y + 3);
+        });
+      }
+      
+      if (state.showPrediction.checked && state.prediction && !state.auto) {
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fill();
-        if (showTrails.checked) {
-          ctx.strokeStyle = 'rgba(106,215,255,0.5)';
+        state.prediction.points.forEach((pt, i) => {
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      
+      state.particles.forEach(p => {
+        if (p.trail.length > 1) {
+          ctx.strokeStyle = p.backscatter ? 'rgba(255, 107, 107, 0.6)' : 
+                           p.deflected ? 'rgba(255, 200, 100, 0.5)' : 
+                           'rgba(106, 215, 255, 0.4)';
+          ctx.lineWidth = 2;
           ctx.beginPath();
           p.trail.forEach((t, i) => {
             if (i === 0) ctx.moveTo(t.x, t.y);
@@ -447,71 +655,148 @@
           });
           ctx.stroke();
         }
+        
+        const glow = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 12);
+        glow.addColorStop(0, 'rgba(255, 107, 107, 0.8)');
+        glow.addColorStop(0.5, 'rgba(255, 107, 107, 0.3)');
+        glow.addColorStop(1, 'rgba(255, 107, 107, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+        ctx.fill();
       });
+      
+      state.flashes.forEach(f => {
+        const size = (1 - f.life) * 30 + 10;
+        ctx.strokeStyle = `rgba(255, 107, 107, ${f.life})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, size, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        ctx.fillStyle = `rgba(255, 200, 200, ${f.life * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, size * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      
+      ctx.fillStyle = 'rgba(20, 30, 45, 0.9)';
+      ctx.fillRect(canvas.width - 60, 40, 50, canvas.height - 80);
+      
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const y = 60 + i * ((canvas.height - 120) / 7);
+        ctx.beginPath();
+        ctx.moveTo(canvas.width - 55, y);
+        ctx.lineTo(canvas.width - 15, y);
+        ctx.stroke();
+      }
+      
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '10px Space Grotesk';
+      ctx.textAlign = 'center';
+      ctx.fillText('Detector', canvas.width - 35, 35);
+      
+      if (state.mode === 'plum') {
+        ctx.fillStyle = 'rgba(246, 199, 107, 0.8)';
+        ctx.font = '12px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText('Plum Pudding Model', canvas.width / 2, canvas.height - 20);
+        ctx.fillStyle = 'rgba(159, 176, 197, 0.7)';
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('Positive charge spread uniformly', canvas.width / 2, canvas.height - 8);
+      } else if (state.mode === 'nuclear') {
+        ctx.fillStyle = 'rgba(106, 215, 255, 0.8)';
+        ctx.font = '12px Space Grotesk';
+        ctx.textAlign = 'center';
+        ctx.fillText('Rutherford Model', canvas.width / 2, canvas.height - 20);
+        ctx.fillStyle = 'rgba(159, 176, 197, 0.7)';
+        ctx.font = '10px Space Grotesk';
+        ctx.fillText('Dense positive nucleus at center', canvas.width / 2, canvas.height - 8);
+      }
     }
 
-    function updateDataPanel() {
-      dataPanel.innerHTML = `
-        <div><strong>Particles Fired:</strong> ${state.fired}</div>
-        <div><strong>Atomic Model:</strong> ${state.mode === 'plum' ? 'Plum Pudding' : 'Rutherford'}</div>
-        <div><strong>Target Z:</strong> ${state.Z}</div>
-      `;
+    function updateStats() {
+      document.getElementById('statFired').textContent = state.fired;
+      document.getElementById('statStraight').textContent = state.straight;
+      document.getElementById('statDeflected').textContent = state.deflected;
+      document.getElementById('statBack').textContent = state.back;
+      document.getElementById('maxAngle').textContent = state.maxAngle;
+      document.getElementById('energyLabel').textContent = state.energy.toFixed(1) + ' MeV';
+      document.getElementById('atomsLabel').textContent = state.atoms;
     }
 
     function loop() {
       if (state.auto) fireParticle();
       updateParticles(0.016);
       draw();
-      updateDataPanel();
+      updateStats();
       requestAnimationFrame(loop);
     }
 
-    document.querySelectorAll('.tab').forEach((tab) => {
+    document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         state.mode = tab.dataset.mode;
+        state.particles = [];
       });
     });
 
-    energyInput.addEventListener('input', (e) => {
+    document.getElementById('energy').addEventListener('input', e => {
       state.energy = parseFloat(e.target.value);
-      updateLabels();
     });
 
-    atomsInput.addEventListener('input', (e) => {
-      state.atoms = parseInt(e.target.value, 10);
-      initAtoms();
-      updateLabels();
+    document.getElementById('atoms').addEventListener('input', e => {
+      state.atoms = parseInt(e.target.value);
+      initNuclei();
     });
 
-    materialSelect.addEventListener('change', (e) => {
-      state.Z = parseInt(e.target.value, 10);
+    document.getElementById('material').addEventListener('change', e => {
+      state.Z = parseInt(e.target.value);
+      initNuclei();
     });
 
-    fireBtn.addEventListener('click', () => {
+    document.getElementById('fire').addEventListener('click', () => {
       fireParticle();
     });
 
-    autoBtn.addEventListener('click', () => {
+    document.getElementById('auto').addEventListener('click', () => {
       state.auto = !state.auto;
-      autoBtn.textContent = state.auto ? 'Pause' : 'Auto-Fire';
+      document.getElementById('auto').textContent = state.auto ? 'Pause' : 'Auto-Fire';
     });
 
-    resetBtn.addEventListener('click', () => {
+    document.getElementById('reset').addEventListener('click', () => {
       state.particles = [];
-      state.fired = 0;
+      state.flashes = [];
+      state.prediction = null;
       state.auto = false;
-      autoBtn.textContent = 'Auto-Fire';
+      document.getElementById('auto').textContent = 'Auto-Fire';
+    });
+
+    document.getElementById('clearData').addEventListener('click', () => {
+      state.fired = 0;
+      state.straight = 0;
+      state.deflected = 0;
+      state.back = 0;
+      state.maxAngle = 0;
+      state.particles = [];
+      state.flashes = [];
+      document.getElementById('discoveryBanner').style.display = 'none';
     });
 
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('light');
     });
 
-    updateLabels();
-    initAtoms();
-    requestAnimationFrame(loop);
+    initNuclei();
+    loop();
   </script>
 </body>
 </html>
