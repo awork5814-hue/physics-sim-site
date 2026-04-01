@@ -4,9 +4,567 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bohr Model</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --electron: #6ad7ff;
+      --proton: #ff6b6b;
+      --neutron: #9fb0c5;
+      --photon: #a78bfa;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(167, 139, 250, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center; padding: 20px 20px 10px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin: 0 0 8px; color: var(--accent);
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.9rem; }
+
+    .layout {
+      display: grid; grid-template-columns: 1.2fr 300px; gap: 20px;
+      padding: 10px 28px 20px;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--sim-border);
+      border-radius: 18px; padding: 16px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    canvas {
+      width: 100%; height: 420px; background: #050810;
+      border-radius: 14px; border: 1px solid var(--sim-border);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 14px; }
+
+    .control-group {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px;
+    }
+
+    .control-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.8rem; color: var(--sim-muted); margin-bottom: 10px;
+    }
+
+    .control-label strong { color: var(--accent); font-weight: 500; }
+
+    input[type="range"] { width: 100%; }
+
+    select {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--sim-border); background: #0b1420;
+      color: var(--sim-text); font-size: 0.9rem;
+    }
+
+    .stats-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 10px; padding: 10px 14px; text-align: center; flex: 1; min-width: 70px;
+    }
+
+    .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.65rem; color: var(--sim-muted); text-transform: uppercase; margin-top: 2px; }
+    .stat-card.protons .stat-value { color: var(--proton); }
+    .stat-card.electrons .stat-value { color: var(--electron); }
+    .stat-card.energy .stat-value { color: var(--photon); font-size: 0.95rem; }
+
+    .energy-levels {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 12px;
+    }
+
+    .level-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--sim-muted); margin-bottom: 10px;
+    }
+
+    .level-bar {
+      display: flex; align-items: center; gap: 8px; margin: 6px 0;
+      font-size: 0.8rem;
+    }
+
+    .level-n { color: var(--accent-2); font-weight: 600; width: 20px; }
+    .level-line {
+      flex: 1; height: 2px; background: var(--sim-border);
+      position: relative;
+    }
+
+    .level-electron {
+      position: absolute; top: -4px; width: 10px; height: 10px;
+      background: var(--electron); border-radius: 50%; transform: translateX(-50%);
+    }
+
+    .level-e { color: var(--sim-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+
+    .photon-panel {
+      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 12px; padding: 12px;
+    }
+
+    .photon-title { font-size: 0.75rem; color: var(--photon); text-transform: uppercase; margin-bottom: 8px; }
+    .photon-wavelength { font-size: 0.85rem; color: var(--sim-text); }
+    .photon-series { font-size: 0.75rem; color: var(--sim-muted); margin-top: 4px; }
+
+    .formula-box {
+      background: rgba(106, 215, 255, 0.08); border: 1px solid rgba(106, 215, 255, 0.2);
+      border-radius: 10px; padding: 12px; text-align: center;
+    }
+
+    .formula { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--accent); }
+    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); margin-top: 4px; }
+
+    .btn-row { display: flex; gap: 8px; }
+
+    button {
+      flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(12, 18, 28, 0.8); color: var(--sim-text); cursor: pointer;
+      font-weight: 600; font-size: 0.85rem;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button.primary { background: linear-gradient(135deg, var(--accent), #4ab8e8); border: none; color: #0a111c; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 320px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Coming Soon</h1>
-  <p>This simulation is under development.</p>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Bohr Model of the Atom</h1>
+      <p>Quantized energy levels and electron orbits</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="bohrCanvas" width="800" height="480"></canvas>
+        <div class="btn-row" style="margin-top: 12px;">
+          <button id="exciteBtn" class="primary">Excite Electron</button>
+          <button id="decayBtn">Photon Emission</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <div class="control-label">Element</div>
+          <select id="element">
+            <option value="1,0">Hydrogen (1 proton)</option>
+            <option value="2,1">Helium (2 protons)</option>
+            <option value="3,2">Lithium (3 protons)</option>
+            <option value="6,6">Carbon (6 protons)</option>
+            <option value="11,12">Sodium (11 protons)</option>
+          </select>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat-card protons">
+            <div class="stat-value" id="statProtons">1</div>
+            <div class="stat-label">Protons</div>
+          </div>
+          <div class="stat-card electrons">
+            <div class="stat-value" id="statElectrons">1</div>
+            <div class="stat-label">Electrons</div>
+          </div>
+          <div class="stat-card energy">
+            <div class="stat-value" id="statEnergy">-13.6</div>
+            <div class="stat-label">E (eV)</div>
+          </div>
+        </div>
+
+        <div class="energy-levels" id="energyLevels">
+          <div class="level-title">Energy Levels</div>
+          <div class="level-bar"><span class="level-n">n=6</span><div class="level-line" id="level6"></div><span class="level-e">-0.38 eV</span></div>
+          <div class="level-bar"><span class="level-n">n=5</span><div class="level-line" id="level5"></div><span class="level-e">-0.54 eV</span></div>
+          <div class="level-bar"><span class="level-n">n=4</span><div class="level-line" id="level4"></div><span class="level-e">-0.85 eV</span></div>
+          <div class="level-bar"><span class="level-n">n=3</span><div class="level-line" id="level3"></div><span class="level-e">-1.51 eV</span></div>
+          <div class="level-bar"><span class="level-n">n=2</span><div class="level-line" id="level2"></div><span class="level-e">-3.40 eV</span></div>
+          <div class="level-bar"><span class="level-n">n=1</span><div class="level-line" id="level1"><div class="level-electron" style="left: 50%;"></div></div><span class="level-e">-13.6 eV</span></div>
+        </div>
+
+        <div class="photon-panel" id="photonPanel" style="display: none;">
+          <div class="photon-title">Last Photon Emitted</div>
+          <div class="photon-wavelength" id="photonWavelength">λ = 121.6 nm (Lyman-α)</div>
+          <div class="photon-series" id="photonSeries">Series: Lyman (UV)</div>
+        </div>
+
+        <div class="control-group" style="font-size: 0.8rem; color: var(--sim-muted); line-height: 1.5;">
+          <strong style="color: var(--accent-2);">Bohr's Insight:</strong> Electrons orbit at specific distances (quantized). When they jump between levels, they absorb or emit photons with energy equal to the difference.
+        </div>
+
+        <div class="formula-box">
+          <div class="formula">E_n = -13.6 / n² eV</div>
+          <div class="formula-desc">Energy of level n for hydrogen</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('bohrCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      protons: 1,
+      neutrons: 0,
+      electrons: [],
+      currentLevel: 1,
+      targetLevel: 1,
+      photons: [],
+      animating: false,
+      time: 0
+    };
+
+    const energyLevels = [1, 2, 3, 4, 5, 6].map(n => ({
+      n,
+      energy: -13.6 / (n * n)
+    }));
+
+    function parseElement(str) {
+      const [p, n] = str.split(',').map(Number);
+      return { protons: p, neutrons: n || p - 1 };
+    }
+
+    function calculateEnergy(fromN, toN) {
+      return Math.abs(energyLevels[fromN - 1].energy - energyLevels[toN - 1].energy);
+    }
+
+    function energyToWavelength(eV) {
+      const h = 6.626e-34, c = 3e8;
+      const lambda = (h * c) / (eV * 1.602e-19) * 1e9;
+      return lambda;
+    }
+
+    function getSeries(fromN, toN) {
+      if (toN === 1) return { name: 'Lyman', type: 'UV' };
+      if (toN === 2) return { name: 'Balmer', type: 'Visible' };
+      if (toN === 3) return { name: 'Paschen', type: 'IR' };
+      return { name: 'Brackett', type: 'IR' };
+    }
+
+    function wavelengthToColor(lambda) {
+      if (lambda < 380) return { r: 138, g: 43, b: 255 };
+      if (lambda < 440) return { r: 75, g: 0, b: 130 };
+      if (lambda < 490) return { r: 0, g: 0, b: 255 };
+      if (lambda < 510) return { r: 0, g: 255, b: 255 };
+      if (lambda < 580) return { r: 0, g: 255, b: 0 };
+      if (lambda < 645) return { r: 255, g: 165, b: 0 };
+      return { r: 255, g: 0, b: 0 };
+    }
+
+    function initElectrons() {
+      state.electrons = [];
+      for (let i = 0; i < state.protons; i++) {
+        state.electrons.push({
+          level: i < 2 ? 1 : i < 10 ? 2 : i < 28 ? 3 : 4,
+          angle: Math.random() * Math.PI * 2,
+          speed: 0.02 / (i < 2 ? 1 : i < 10 ? 2 : 3)
+        });
+      }
+      state.currentLevel = state.electrons[0]?.level || 1;
+    }
+
+    function getOrbitRadius(level) {
+      return 30 + level * 35;
+    }
+
+    function draw() {
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+
+      for (let level = 1; level <= 6; level++) {
+        const r = getOrbitRadius(level);
+        
+        if (state.currentLevel === level || state.electrons.some(e => e.level === level)) {
+          ctx.strokeStyle = 'rgba(106, 215, 255, 0.25)';
+        } else {
+          ctx.strokeStyle = 'rgba(106, 215, 255, 0.08)';
+        }
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      for (let i = 0; i < state.protons; i++) {
+        const angle = (i / state.protons) * Math.PI * 2 + state.time * 0.001;
+        const r = 18 + (i % 3) * 3;
+        const px = cx + Math.cos(angle) * r;
+        const py = cy + Math.sin(angle) * r;
+
+        const pGrad = ctx.createRadialGradient(px, py, 0, px, py, 8);
+        pGrad.addColorStop(0, 'rgba(255, 107, 107, 0.9)');
+        pGrad.addColorStop(1, 'rgba(255, 107, 107, 0)');
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.arc(px, py, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath();
+        ctx.arc(px, py, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0a1020';
+        ctx.font = 'bold 7px IBM Plex Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText('+', px, py + 2);
+      }
+
+      for (let i = 0; i < state.neutrons; i++) {
+        const angle = (i / state.neutrons) * Math.PI * 2 - state.time * 0.001 + Math.PI / state.protons;
+        const r = 18 + (i % 3) * 3;
+        const nx = cx + Math.cos(angle) * r;
+        const ny = cy + Math.sin(angle) * r;
+
+        ctx.fillStyle = '#9fb0c5';
+        ctx.beginPath();
+        ctx.arc(nx, ny, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      state.electrons.forEach((e, idx) => {
+        const r = getOrbitRadius(e.level);
+        e.angle += e.speed;
+        
+        if (state.animating && state.targetLevel === e.level) {
+          e.angle += 0.05;
+        }
+
+        const ex = cx + Math.cos(e.angle) * r;
+        const ey = cy + Math.sin(e.angle) * r;
+
+        const eGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 14);
+        eGrad.addColorStop(0, 'rgba(106, 215, 255, 0.9)');
+        eGrad.addColorStop(0.5, 'rgba(106, 215, 255, 0.3)');
+        eGrad.addColorStop(1, 'rgba(106, 215, 255, 0)');
+        ctx.fillStyle = eGrad;
+        ctx.beginPath();
+        ctx.arc(ex, ey, 14, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#6ad7ff';
+        ctx.beginPath();
+        ctx.arc(ex, ey, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(ex, ey, 8, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      state.photons.forEach((p, idx) => {
+        p.x += p.vx * 3;
+        p.y += p.vy * 3;
+        p.life -= 0.015;
+
+        if (p.life > 0) {
+          const color = wavelengthToColor(p.wavelength);
+          const photonGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 15 * p.life);
+          photonGrad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${p.life})`);
+          photonGrad.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+          ctx.fillStyle = photonGrad;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 15 * p.life, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${p.life})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      state.photons = state.photons.filter(p => p.life > 0 && p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height);
+
+      ctx.fillStyle = '#0a1020';
+      ctx.fillRect(20, canvas.height - 60, 220, 45);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.strokeRect(20, canvas.height - 60, 220, 45);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 10px IBM Plex Sans';
+      ctx.fillText('ELECTRON CONFIGURATION', 30, canvas.height - 42);
+
+      const shellCapacities = [2, 8, 18, 32];
+      let configStr = state.electrons.map(e => e.level).sort((a, b) => a - b)
+        .map((l, i, arr) => {
+          const count = arr.filter(x => x === l).length;
+          return i === 0 || arr[i - 1] !== l ? `${count}n${l}` : '';
+        }).filter(Boolean).join(' + ');
+
+      ctx.font = '9px JetBrains Mono';
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText(configStr || 'Empty', 30, canvas.height - 25);
+      ctx.fillStyle = '#9fb0c5';
+      ctx.fillText(`Valence: ${state.electrons.filter(e => e.level === Math.max(...state.electrons.map(x => x.level))).length} electrons`, 30, canvas.height - 8);
+    }
+
+    function updateEnergyDisplay() {
+      const e = energyLevels[state.currentLevel - 1].energy;
+      document.getElementById('statEnergy').textContent = e.toFixed(1);
+      
+      for (let n = 1; n <= 6; n++) {
+        const levelEl = document.getElementById(`level${n}`);
+        const electrons = state.electrons.filter(e => e.level === n).length;
+        levelEl.innerHTML = '';
+        for (let i = 0; i < electrons; i++) {
+          const dot = document.createElement('div');
+          dot.className = 'level-electron';
+          dot.style.left = `${(i + 1) / (electrons + 1) * 100}%`;
+          levelEl.appendChild(dot);
+        }
+      }
+    }
+
+    function emitPhoton(fromLevel, toLevel) {
+      const deltaE = calculateEnergy(fromLevel, toLevel);
+      const lambda = energyToWavelength(deltaE);
+      const series = getSeries(fromLevel, toLevel);
+
+      document.getElementById('photonPanel').style.display = 'block';
+      document.getElementById('photonWavelength').textContent = `λ = ${lambda.toFixed(1)} nm (${series.name}-α)`;
+      document.getElementById('photonSeries').textContent = `Series: ${series.name} (${series.type})`;
+
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const angle = Math.random() * Math.PI * 2;
+
+      state.photons.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle),
+        vy: Math.sin(angle),
+        wavelength: lambda,
+        life: 1
+      });
+    }
+
+    function exciteElectron() {
+      if (state.animating) return;
+      
+      const currentE = state.electrons[0];
+      if (!currentE || state.currentLevel >= 6) return;
+
+      const fromLevel = state.currentLevel;
+      state.targetLevel = state.currentLevel + 1;
+      state.animating = true;
+
+      setTimeout(() => {
+        currentE.level = state.targetLevel;
+        state.currentLevel = state.targetLevel;
+        state.animating = false;
+        updateEnergyDisplay();
+      }, 500);
+    }
+
+    function photonEmission() {
+      if (state.animating) return;
+      
+      const currentE = state.electrons[0];
+      if (!currentE || state.currentLevel <= 1) return;
+
+      const fromLevel = state.currentLevel;
+      emitPhoton(fromLevel, fromLevel - 1);
+      
+      state.animating = true;
+      setTimeout(() => {
+        currentE.level = fromLevel - 1;
+        state.currentLevel = fromLevel - 1;
+        state.animating = false;
+        updateEnergyDisplay();
+      }, 300);
+    }
+
+    function loop() {
+      state.time++;
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('element').addEventListener('change', e => {
+      const elem = parseElement(e.target.value);
+      state.protons = elem.protons;
+      state.neutrons = elem.neutrons;
+      document.getElementById('statProtons').textContent = state.protons;
+      initElectrons();
+      updateEnergyDisplay();
+    });
+
+    document.getElementById('exciteBtn').addEventListener('click', exciteElectron);
+    document.getElementById('decayBtn').addEventListener('click', photonEmission);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      state.currentLevel = 1;
+      initElectrons();
+      updateEnergyDisplay();
+      document.getElementById('photonPanel').style.display = 'none';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    initElectrons();
+    updateEnergyDisplay();
+    loop();
+  </script>
 </body>
 </html>
