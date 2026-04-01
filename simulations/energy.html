@@ -4,9 +4,807 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conservation of Energy</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --ke-color: #6ad7ff;
+      --pe-color: #f6c76b;
+      --thermal-color: #ff6b6b;
+      --total-color: #22c55e;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center; padding: 24px 20px 12px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin: 0 0 8px; color: var(--accent);
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.95rem; }
+
+    .layout {
+      display: grid; grid-template-columns: 1fr 340px; gap: 24px;
+      padding: 12px 28px 24px;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--sim-border);
+      border-radius: 18px; padding: 18px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    .panel-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--sim-muted); margin-bottom: 14px;
+    }
+
+    canvas {
+      width: 100%; height: 400px; background: #050810;
+      border-radius: 14px; border: 1px solid var(--sim-border);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 16px; }
+
+    .control-group {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px;
+    }
+
+    .control-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; color: var(--sim-muted); margin-bottom: 10px;
+    }
+
+    .control-label strong { color: var(--accent); font-weight: 500; }
+
+    input[type="range"] { width: 100%; }
+
+    select {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--sim-border); background: #0b1420;
+      color: var(--sim-text); font-size: 0.9rem;
+    }
+
+    .energy-bars {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .energy-bar {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .bar-label {
+      width: 70px; font-size: 0.8rem; font-weight: 500;
+    }
+
+    .bar-track {
+      flex: 1; height: 22px; background: rgba(11, 20, 32, 0.8);
+      border-radius: 6px; overflow: hidden; position: relative;
+    }
+
+    .bar-fill {
+      height: 100%; border-radius: 6px; transition: width 0.05s;
+    }
+
+    .bar-fill.ke { background: linear-gradient(90deg, var(--ke-color), #4ec3f7); }
+    .bar-fill.pe { background: linear-gradient(90deg, var(--pe-color), #e5a83d); }
+    .bar-fill.thermal { background: linear-gradient(90deg, var(--thermal-color), #ff5252); }
+    .bar-fill.total { background: linear-gradient(90deg, var(--total-color), #2ecc71); }
+
+    .bar-value {
+      width: 55px; text-align: right; font-size: 0.8rem;
+      font-family: 'JetBrains Mono', monospace; color: var(--sim-muted);
+    }
+
+    .scenario-buttons {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+
+    .scenario-btn {
+      padding: 10px 12px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(11, 20, 32, 0.8); color: var(--sim-text);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+
+    .scenario-btn:hover {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .scenario-btn.active {
+      background: rgba(106, 215, 255, 0.25);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .conservation-indicator {
+      padding: 12px; border-radius: 10px; text-align: center;
+      font-weight: 600; font-size: 0.9rem;
+    }
+
+    .conservation-indicator.conserved {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: var(--total-color);
+    }
+
+    .conservation-indicator.lost {
+      background: rgba(255, 107, 107, 0.15);
+      border: 1px solid rgba(255, 107, 107, 0.4);
+      color: var(--thermal-color);
+    }
+
+    .formula-box {
+      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 10px; padding: 14px; text-align: center;
+    }
+
+    .formula {
+      font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+      color: var(--photon); margin-bottom: 6px;
+    }
+
+    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); }
+
+    .playback-controls {
+      display: flex; gap: 8px; justify-content: center;
+    }
+
+    .playback-btn {
+      padding: 10px 20px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(11, 20, 32, 0.8); color: var(--sim-text);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+
+    .playback-btn:hover {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .playback-btn.primary {
+      background: rgba(106, 215, 255, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Coming Soon</h1>
-  <p>This simulation is under development.</p>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Conservation of Energy</h1>
+      <p>Explore kinetic, potential, and thermal energy transformations</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="energyCanvas" width="800" height="450"></canvas>
+        <div class="playback-controls" style="margin-top: 14px;">
+          <button class="playback-btn" id="resetBtn">Reset</button>
+          <button class="playback-btn primary" id="playPauseBtn">Pause</button>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <div class="panel-title">Scenarios</div>
+          <div class="scenario-buttons">
+            <button class="scenario-btn active" data-scenario="skatepark">Skate Park</button>
+            <button class="scenario-btn" data-scenario="pendulum">Pendulum</button>
+            <button class="scenario-btn" data-scenario="spring">Spring</button>
+            <button class="scenario-btn" data-scenario="coaster">Roller Coaster</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="panel-title">Energy Distribution</div>
+          <div class="energy-bars">
+            <div class="energy-bar">
+              <span class="bar-label" style="color: var(--ke-color);">Kinetic</span>
+              <div class="bar-track">
+                <div class="bar-fill ke" id="keBar" style="width: 0%;"></div>
+              </div>
+              <span class="bar-value" id="keValue">0 J</span>
+            </div>
+            <div class="energy-bar">
+              <span class="bar-label" style="color: var(--pe-color);">Potential</span>
+              <div class="bar-track">
+                <div class="bar-fill pe" id="peBar" style="width: 0%;"></div>
+              </div>
+              <span class="bar-value" id="peValue">0 J</span>
+            </div>
+            <div class="energy-bar">
+              <span class="bar-label" style="color: var(--thermal-color);">Thermal</span>
+              <div class="bar-track">
+                <div class="bar-fill thermal" id="thermalBar" style="width: 0%;"></div>
+              </div>
+              <span class="bar-value" id="thermalValue">0 J</span>
+            </div>
+            <div class="energy-bar">
+              <span class="bar-label" style="color: var(--total-color);">Total</span>
+              <div class="bar-track">
+                <div class="bar-fill total" id="totalBar" style="width: 0%;"></div>
+              </div>
+              <span class="bar-value" id="totalValue">0 J</span>
+            </div>
+          </div>
+          <div class="conservation-indicator conserved" id="conservationIndicator" style="margin-top: 12px;">
+            Energy Conserved
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Friction</span>
+            <strong id="valFriction">10%</strong>
+          </div>
+          <input type="range" id="friction" min="0" max="50" value="10" />
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Gravity</span>
+          </div>
+          <select id="gravity">
+            <option value="9.8">Earth (9.8 m/s²)</option>
+            <option value="1.6">Moon (1.6 m/s²)</option>
+            <option value="3.7">Mars (3.7 m/s²)</option>
+            <option value="24.8">Jupiter (24.8 m/s²)</option>
+          </select>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula">E_total = KE + PE + Q</div>
+          <div class="formula-desc">KE = ½mv² &nbsp;|&nbsp; PE = mgh &nbsp;|&nbsp; Q = Friction work</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('energyCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const scenarioButtons = document.querySelectorAll('.scenario-btn');
+    const frictionSlider = document.getElementById('friction');
+    const gravitySelect = document.getElementById('gravity');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let currentScenario = 'skatepark';
+    let isPlaying = true;
+    let friction = 0.1;
+    let gravity = 9.8;
+
+    const skater = {
+      x: 100,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      mass: 60,
+      radius: 18
+    };
+
+    const pendulum = {
+      angle: Math.PI / 3,
+      angularVel: 0,
+      length: 180,
+      mass: 10,
+      bobRadius: 20,
+      pivotX: 0,
+      pivotY: 0
+    };
+
+    const spring = {
+      x: 0,
+      vx: 0,
+      displacement: 100,
+      amplitude: 100,
+      mass: 5,
+      k: 0.5,
+      radius: 15,
+      anchorX: 0
+    };
+
+    let thermalEnergy = 0;
+    let initialPE = 0;
+    let initialKE = 0;
+
+    function getTrackPoints(scenario) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const points = [];
+
+      switch(scenario) {
+        case 'skatepark':
+          points.push({ x: 0, y: h - 80 });
+          points.push({ x: w * 0.15, y: h - 80 });
+          points.push({ x: w * 0.25, y: h - 180 });
+          points.push({ x: w * 0.35, y: h - 80 });
+          points.push({ x: w * 0.5, y: h - 80 });
+          points.push({ x: w * 0.65, y: h - 280 });
+          points.push({ x: w * 0.8, y: h - 80 });
+          points.push({ x: w, y: h - 80 });
+          break;
+        case 'pendulum':
+          points.push({ x: w / 2, y: 60 });
+          points.push({ x: w / 2, y: h + 50 });
+          break;
+        case 'spring':
+          points.push({ x: 50, y: h / 2 - 50 });
+          points.push({ x: 50, y: h / 2 + 100 });
+          points.push({ x: w - 50, y: h / 2 + 100 });
+          points.push({ x: w - 50, y: h / 2 - 50 });
+          break;
+        case 'coaster':
+          points.push({ x: 0, y: h - 120 });
+          points.push({ x: 80, y: h - 120 });
+          points.push({ x: 150, y: h - 300 });
+          points.push({ x: 250, y: h - 100 });
+          points.push({ x: 350, y: h - 250 });
+          points.push({ x: 450, y: h - 50 });
+          points.push({ x: 550, y: h - 200 });
+          points.push({ x: 650, y: h - 100 });
+          points.push({ x: 750, y: h - 180 });
+          points.push({ x: w, y: h - 120 });
+          break;
+      }
+      return points;
+    }
+
+    function getHeightAtX(points, x) {
+      for (let i = 0; i < points.length - 1; i++) {
+        if (x >= points[i].x && x <= points[i + 1].x) {
+          const t = (x - points[i].x) / (points[i + 1].x - points[i].x);
+          return points[i].y + t * (points[i + 1].y - points[i].y);
+        }
+      }
+      return points[points.length - 1].y;
+    }
+
+    function getSlopeAtX(points, x) {
+      for (let i = 0; i < points.length - 1; i++) {
+        if (x >= points[i].x && x <= points[i + 1].x) {
+          const dx = points[i + 1].x - points[i].x;
+          const dy = points[i + 1].y - points[i].y;
+          return Math.atan2(dy, dx);
+        }
+      }
+      return 0;
+    }
+
+    function resetSimulation() {
+      thermalEnergy = 0;
+      const h = canvas.height;
+      const w = canvas.width;
+      const points = getTrackPoints(currentScenario);
+
+      switch(currentScenario) {
+        case 'skatepark':
+          skater.x = 100;
+          skater.y = getHeightAtX(points, 100) - skater.radius;
+          skater.vx = 0;
+          skater.vy = 0;
+          initialPE = skater.mass * gravity * (h - 80 - skater.y);
+          initialKE = 0;
+          break;
+        case 'pendulum':
+          pendulum.angle = Math.PI / 3;
+          pendulum.angularVel = 0;
+          pendulum.pivotX = w / 2;
+          pendulum.pivotY = 80;
+          initialPE = pendulum.mass * gravity * pendulum.length * (1 - Math.cos(pendulum.angle));
+          initialKE = 0;
+          thermalEnergy = 0;
+          break;
+        case 'spring':
+          spring.x = 150;
+          spring.vx = 0;
+          spring.amplitude = 100;
+          spring.anchorX = 150;
+          initialPE = 0.5 * spring.k * spring.amplitude * spring.amplitude;
+          initialKE = 0;
+          thermalEnergy = 0;
+          break;
+        case 'coaster':
+          skater.x = 80;
+          skater.y = getHeightAtX(points, 80) - skater.radius;
+          skater.vx = 0;
+          skater.vy = 0;
+          initialPE = skater.mass * gravity * (h - 120 - skater.y);
+          initialKE = 0;
+          break;
+      }
+    }
+
+    function update() {
+      if (!isPlaying) return;
+
+      const points = getTrackPoints(currentScenario);
+      const h = canvas.height;
+      const dt = 0.016;
+
+      switch(currentScenario) {
+        case 'skatepark':
+        case 'coaster':
+          const height = getHeightAtX(points, skater.x);
+          const slope = getSlopeAtX(points, skater.x);
+          const groundY = height - skater.radius;
+
+          if (skater.y < groundY - 2) {
+            skater.vy += gravity * dt * 60;
+            skater.y += skater.vy * dt * 60;
+            skater.x += skater.vx * dt * 60;
+          } else {
+            skater.y = groundY;
+            
+            const speed = Math.sqrt(skater.vx * skater.vx + skater.vy * skater.vy);
+            const acceleration = gravity * Math.sin(slope);
+            
+            skater.vx += acceleration * Math.cos(slope) * dt * 60;
+            skater.vy += acceleration * Math.sin(slope) * dt * 60;
+            
+            const frictionForce = friction * skater.mass * gravity * Math.cos(slope);
+            const frictionDecel = frictionForce / skater.mass;
+            skater.vx -= frictionDecel * Math.cos(slope) * dt * 60;
+            skater.vy -= frictionDecel * Math.sin(slope) * dt * 60;
+            
+            thermalEnergy += frictionForce * speed * dt * 60;
+            
+            skater.x += skater.vx * dt * 60;
+            skater.y = getHeightAtX(points, skater.x) - skater.radius;
+          }
+
+          if (skater.x < skater.radius || skater.x > canvas.width - skater.radius) {
+            skater.vx = -skater.vx * 0.5;
+            skater.x = Math.max(skater.radius, Math.min(canvas.width - skater.radius, skater.x));
+          }
+          break;
+
+        case 'pendulum':
+          const damping = 1 - friction * 0.5;
+          const angularAccel = -(gravity / pendulum.length) * Math.sin(pendulum.angle);
+          pendulum.angularVel += angularAccel * dt;
+          pendulum.angularVel *= damping;
+          pendulum.angle += pendulum.angularVel * dt;
+          
+          thermalEnergy += Math.abs(pendulum.angularVel) * friction * pendulum.mass * pendulum.length * dt;
+          break;
+
+        case 'spring':
+          const dampingSpring = 1 - friction * 0.3;
+          const springAccel = -(spring.k / spring.mass) * spring.amplitude;
+          spring.vx += springAccel * dt;
+          spring.vx *= dampingSpring;
+          spring.amplitude += spring.vx * dt * 10;
+          
+          thermalEnergy += Math.abs(spring.vx) * friction * 0.5 * dt;
+          break;
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawGrid();
+      
+      const points = getTrackPoints(currentScenario);
+      
+      switch(currentScenario) {
+        case 'skatepark':
+        case 'coaster':
+          drawTrack(points);
+          drawSkater();
+          break;
+        case 'pendulum':
+          drawPendulum();
+          break;
+        case 'spring':
+          drawSpringSystem();
+          break;
+      }
+
+      updateEnergyDisplay();
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.05)';
+      ctx.lineWidth = 1;
+      
+      const gridSize = 50;
+      for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    function drawTrack(points) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.1)';
+      ctx.lineTo(points[points.length - 1].x, canvas.height);
+      ctx.lineTo(points[0].x, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+      for (let i = 0; i < points.length; i++) {
+        ctx.beginPath();
+        ctx.arc(points[i].x, points[i].y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function drawSkater() {
+      ctx.save();
+      ctx.translate(skater.x, skater.y);
+
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, skater.radius);
+      gradient.addColorStop(0, '#6ad7ff');
+      gradient.addColorStop(1, '#3a9fd4');
+      
+      ctx.beginPath();
+      ctx.arc(0, 0, skater.radius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      ctx.strokeStyle = '#9ee5ff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(-5, -5, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      const speed = Math.sqrt(skater.vx * skater.vx + skater.vy * skater.vy);
+      if (speed > 2) {
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(skater.x, skater.y);
+        ctx.lineTo(skater.x - skater.vx * 2, skater.y - skater.vy * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawPendulum() {
+      const bobX = pendulum.pivotX + Math.sin(pendulum.angle) * pendulum.length;
+      const bobY = pendulum.pivotY + Math.cos(pendulum.angle) * pendulum.length;
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(pendulum.pivotX, pendulum.pivotY);
+      ctx.lineTo(bobX, bobY);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pendulum.pivotX, pendulum.pivotY, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fill();
+
+      const gradient = ctx.createRadialGradient(bobX, bobY, 0, bobX, bobY, pendulum.bobRadius);
+      gradient.addColorStop(0, '#ff6b6b');
+      gradient.addColorStop(1, '#cc4444');
+      
+      ctx.beginPath();
+      ctx.arc(bobX, bobY, pendulum.bobRadius, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      
+      ctx.strokeStyle = '#ff8888';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(bobX - 5, bobY - 5, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(bobX, bobY, pendulum.length, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(246, 199, 107, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawSpringSystem() {
+      const anchorX = 100;
+      const anchorY = canvas.height / 2 - 50;
+      const blockX = anchorX + 50 + spring.amplitude;
+      const blockY = anchorY;
+
+      for (let i = 0; i < 12; i++) {
+        const x1 = anchorX + 50 + (i * spring.amplitude / 10);
+        const y1 = anchorY + (i % 2 === 0 ? -15 : 15);
+        const x2 = anchorX + 50 + ((i + 1) * spring.amplitude / 10);
+        const y2 = anchorY + (i % 2 === 1 ? -15 : 15);
+        
+        ctx.strokeStyle = '#f6c76b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(i === 0 ? anchorX + 50 : x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(anchorX + 50, anchorY - 15);
+      ctx.lineTo(anchorX + 50, anchorY + 15);
+      ctx.stroke();
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillRect(anchorX + 40, anchorY - 20, 10, 40);
+
+      const gradient = ctx.createRadialGradient(blockX, blockY, 0, blockX, blockY, spring.radius);
+      gradient.addColorStop(0, '#22c55e');
+      gradient.addColorStop(1, '#16a34a');
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(blockX - spring.radius, blockY - spring.radius, spring.radius * 2, spring.radius * 2);
+      
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(blockX - spring.radius, blockY - spring.radius, spring.radius * 2, spring.radius * 2);
+
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(blockX - 5, blockY - 5, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function updateEnergyDisplay() {
+      const h = canvas.height;
+      const points = getTrackPoints(currentScenario);
+      let ke = 0, pe = 0;
+
+      switch(currentScenario) {
+        case 'skatepark':
+        case 'coaster':
+          ke = 0.5 * skater.mass * (skater.vx * skater.vx + skater.vy * skater.vy);
+          pe = skater.mass * gravity * (h - 80 - skater.y - skater.radius);
+          break;
+        case 'pendulum':
+          const bobY = pendulum.pivotY + Math.cos(pendulum.angle) * pendulum.length;
+          ke = 0.5 * pendulum.mass * pendulum.length * pendulum.length * pendulum.angularVel * pendulum.angularVel;
+          pe = pendulum.mass * gravity * (pendulum.length - bobY + pendulum.pivotY);
+          break;
+        case 'spring':
+          ke = 0.5 * spring.mass * spring.vx * spring.vx;
+          pe = 0.5 * spring.k * spring.amplitude * spring.amplitude;
+          break;
+      }
+
+      const total = ke + pe + thermalEnergy;
+      const maxEnergy = Math.max(initialPE + initialKE, 1);
+
+      document.getElementById('keBar').style.width = `${(ke / maxEnergy) * 100}%`;
+      document.getElementById('peBar').style.width = `${(pe / maxEnergy) * 100}%`;
+      document.getElementById('thermalBar').style.width = `${(thermalEnergy / maxEnergy) * 100}%`;
+      document.getElementById('totalBar').style.width = `${(total / maxEnergy) * 100}%`;
+
+      document.getElementById('keValue').textContent = `${ke.toFixed(1)} J`;
+      document.getElementById('peValue').textContent = `${pe.toFixed(1)} J`;
+      document.getElementById('thermalValue').textContent = `${thermalEnergy.toFixed(1)} J`;
+      document.getElementById('totalValue').textContent = `${total.toFixed(1)} J`;
+
+      const indicator = document.getElementById('conservationIndicator');
+      if (thermalEnergy < maxEnergy * 0.05) {
+        indicator.className = 'conservation-indicator conserved';
+        indicator.textContent = 'Energy Conserved';
+      } else {
+        indicator.className = 'conservation-indicator lost';
+        indicator.textContent = `${((thermalEnergy / maxEnergy) * 100).toFixed(1)}% Lost to Friction`;
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    scenarioButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scenarioButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentScenario = btn.dataset.scenario;
+        resetSimulation();
+      });
+    });
+
+    frictionSlider.addEventListener('input', (e) => {
+      friction = e.target.value / 100;
+      document.getElementById('valFriction').textContent = `${e.target.value}%`;
+    });
+
+    gravitySelect.addEventListener('change', (e) => {
+      gravity = parseFloat(e.target.value);
+      resetSimulation();
+    });
+
+    playPauseBtn.addEventListener('click', () => {
+      isPlaying = !isPlaying;
+      playPauseBtn.textContent = isPlaying ? 'Pause' : 'Play';
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetSimulation();
+    });
+
+    resetSimulation();
+    gameLoop();
+  </script>
 </body>
 </html>
