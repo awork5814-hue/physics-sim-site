@@ -4,9 +4,534 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Photoelectric Effect</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #6ad7ff;
+      --accent-2: #f6c76b;
+      --electron: #ff6b6b;
+      --photon: #a78bfa;
+      --metal: #94a3b8;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
+    }
+
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
+    }
+
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
+
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center; padding: 24px 20px 12px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin: 0 0 8px; color: var(--accent);
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.95rem; }
+
+    .layout {
+      display: grid; grid-template-columns: 1.2fr 320px; gap: 24px;
+      padding: 12px 28px 24px;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--sim-border);
+      border-radius: 18px; padding: 18px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    .panel-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--sim-muted); margin-bottom: 14px;
+    }
+
+    canvas {
+      width: 100%; height: 400px; background: #050810;
+      border-radius: 14px; border: 1px solid var(--sim-border);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 16px; }
+
+    .control-group {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px;
+    }
+
+    .control-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; color: var(--sim-muted); margin-bottom: 10px;
+    }
+
+    .control-label strong { color: var(--accent); font-weight: 500; }
+
+    input[type="range"] { width: 100%; }
+
+    select {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--sim-border); background: #0b1420;
+      color: var(--sim-text); font-size: 0.9rem;
+    }
+
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px; text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.4rem; font-weight: 700; color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.7rem; color: var(--sim-muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 4px;
+    }
+
+    .stat-card.energy .stat-value { color: var(--electron); }
+    .stat-card.frequency .stat-value { color: var(--photon); }
+
+    .formula-box {
+      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 10px; padding: 14px; text-align: center;
+    }
+
+    .formula {
+      font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
+      color: var(--photon); margin-bottom: 8px;
+    }
+
+    .formula-desc { font-size: 0.8rem; color: var(--sim-muted); }
+
+    .threshold-warning {
+      background: rgba(255, 107, 107, 0.15); border: 1px solid rgba(255, 107, 107, 0.4);
+      border-radius: 10px; padding: 12px; text-align: center;
+      color: var(--electron); font-weight: 600; display: none;
+    }
+
+    .threshold-warning.show { display: block; }
+
+    .threshold-success {
+      background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4);
+      border-radius: 10px; padding: 12px; text-align: center;
+      color: #22c55e; font-weight: 600; display: none;
+    }
+
+    .threshold-success.show { display: block; }
+
+    .color-preview {
+      width: 100%; height: 30px; border-radius: 6px; margin-top: 8px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .value-display {
+      display: flex; justify-content: space-between; margin-top: 8px;
+      font-size: 0.85rem;
+    }
+
+    .value-display span { color: var(--sim-muted); }
+    .value-display strong { color: var(--accent); }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+    }
+  </style>
 </head>
 <body>
-  <h1>Coming Soon</h1>
-  <p>This simulation is under development.</p>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
+    </div>
+
+    <header class="hero">
+      <h1>Photoelectric Effect</h1>
+      <p>Einstein's Nobel Prize-winning explanation of light as photons</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="photoCanvas" width="800" height="450"></canvas>
+      </div>
+
+      <div class="controls">
+        <div class="control-group">
+          <div class="control-label">
+            <span>Light Wavelength</span>
+            <strong id="valLambda">550 nm</strong>
+          </div>
+          <input type="range" id="wavelength" min="200" max="800" value="550" step="10" />
+          <div class="color-preview" id="colorPreview"></div>
+          <div class="value-display">
+            <span>Frequency:</span>
+            <strong id="valFreq">5.45 × 10¹⁴ Hz</strong>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Light Intensity</span>
+            <strong id="valIntensity">50%</strong>
+          </div>
+          <input type="range" id="intensity" min="10" max="100" value="50" step="5" />
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Metal Target</span>
+          </div>
+          <select id="metal">
+            <option value="2.28">Sodium (φ = 2.28 eV)</option>
+            <option value="2.46" selected>Gold (φ = 2.46 eV)</option>
+            <option value="2.14">Potassium (φ = 2.14 eV)</option>
+            <option value="1.87">Cesium (φ = 1.87 eV)</option>
+            <option value="4.28">Platinum (φ = 4.28 eV)</option>
+          </select>
+        </div>
+
+        <div class="threshold-warning" id="warningNoElectron">
+          Below threshold! No electrons emitted.
+        </div>
+
+        <div class="threshold-success" id="successElectron">
+          Electrons emitted! KE = hf - φ
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card energy">
+            <div class="stat-value" id="statKE">0.00</div>
+            <div class="stat-label">KE (eV)</div>
+          </div>
+          <div class="stat-card frequency">
+            <div class="stat-value" id="statFreq">5.45</div>
+            <div class="stat-label">f (10¹⁴ Hz)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statElectrons">0</div>
+            <div class="stat-label">e⁻/sec</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="statThreshold">3.40</div>
+            <div class="stat-label">λ threshold</div>
+          </div>
+        </div>
+
+        <div class="formula-box">
+          <div class="formula">KE = hf - φ</div>
+          <div class="formula-desc">Kinetic Energy = Photon Energy - Work Function</div>
+        </div>
+
+        <div class="control-group" style="font-size: 0.85rem; color: var(--sim-muted); line-height: 1.6;">
+          <strong style="color: var(--accent);">Key Insight:</strong> Below a certain frequency (threshold), no electrons are emitted regardless of light intensity. Above threshold, higher intensity = more electrons, but KE depends only on frequency.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('photoCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const state = {
+      wavelength: 550,
+      intensity: 50,
+      workFunction: 2.46,
+      photons: [],
+      electrons: [],
+      time: 0
+    };
+
+    const constants = {
+      h: 6.626e-34,
+      c: 3e8,
+      eV: 1.602e-19
+    };
+
+    function wavelengthToColor(lambda) {
+      let r, g, b;
+      if (lambda < 380) return { r: 100, g: 0, b: 150 };
+      if (lambda < 440) { r = -(lambda - 440) / 60; g = 0; b = 1; }
+      else if (lambda < 490) { r = 0; g = (lambda - 440) / 50; b = 1; }
+      else if (lambda < 510) { r = 0; g = 1; b = -(lambda - 510) / 20; }
+      else if (lambda < 580) { r = (lambda - 510) / 70; g = 1; b = 0; }
+      else if (lambda < 645) { r = 1; g = -(lambda - 645) / 65; b = 0; }
+      else { r = 1; g = 0; b = 0; }
+      let factor = lambda < 420 ? 0.3 + 0.7 * (lambda - 380) / 40 : 
+                   lambda > 700 ? 0.3 + 0.7 * (800 - lambda) / 100 : 1;
+      return { r: Math.round(r * factor * 255), g: Math.round(g * factor * 255), b: Math.round(b * factor * 255) };
+    }
+
+    function calculate() {
+      const lambda = state.wavelength * 1e-9;
+      const f = constants.c / lambda;
+      const photonEnergy = constants.h * f / constants.eV;
+      const KE = Math.max(0, photonEnergy - state.workFunction);
+      const thresholdLambda = (constants.h * constants.c) / (state.workFunction * constants.eV) * 1e9;
+      const aboveThreshold = photonEnergy > state.workFunction;
+      const electronsPerSec = aboveThreshold ? Math.round(state.intensity * 0.3) : 0;
+
+      return { f: f / 1e14, photonEnergy, KE, thresholdLambda, aboveThreshold, electronsPerSec };
+    }
+
+    function updateUI() {
+      const calc = calculate();
+      
+      document.getElementById('valLambda').textContent = state.wavelength + ' nm';
+      document.getElementById('valFreq').textContent = calc.f.toFixed(2) + ' × 10¹⁴ Hz';
+      document.getElementById('valIntensity').textContent = state.intensity + '%';
+      
+      const color = wavelengthToColor(state.wavelength);
+      document.getElementById('colorPreview').style.background = `rgb(${color.r}, ${color.g}, ${color.b})`;
+      
+      document.getElementById('statKE').textContent = calc.KE.toFixed(2);
+      document.getElementById('statFreq').textContent = calc.f.toFixed(2);
+      document.getElementById('statElectrons').textContent = calc.electronsPerSec;
+      document.getElementById('statThreshold').textContent = calc.thresholdLambda.toFixed(0);
+      
+      document.getElementById('warningNoElectron').classList.toggle('show', !calc.aboveThreshold);
+      document.getElementById('successElectron').classList.toggle('show', calc.aboveThreshold);
+    }
+
+    function spawnPhoton() {
+      const color = wavelengthToColor(state.wavelength);
+      state.photons.push({
+        x: 50,
+        y: canvas.height / 2 + (Math.random() - 0.5) * 100,
+        speed: 4 + (800 - state.wavelength) * 0.01,
+        color: color
+      });
+    }
+
+    function spawnElectron(x, y) {
+      const angle = (Math.random() - 0.5) * Math.PI * 0.8;
+      const calc = calculate();
+      const speed = 2 + Math.sqrt(calc.KE) * 0.8;
+      state.electrons.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        life: 1
+      });
+    }
+
+    function draw() {
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const metalX = canvas.width * 0.65;
+      const metalY = canvas.height / 2 - 60;
+      const metalW = 100;
+      const metalH = 140;
+
+      const grad = ctx.createLinearGradient(metalX, metalY, metalX + metalW, metalY + metalH);
+      grad.addColorStop(0, '#d4a574');
+      grad.addColorStop(0.5, '#c9a067');
+      grad.addColorStop(1, '#a67c4a');
+      ctx.fillStyle = grad;
+      ctx.fillRect(metalX, metalY, metalW, metalH);
+
+      ctx.strokeStyle = '#8b6914';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 12; j++) {
+          ctx.strokeRect(metalX + i * 12.5, metalY + j * 11.5, 12, 11);
+        }
+      }
+
+      const lightSourceX = 60;
+      const lightSourceY = canvas.height / 2;
+      const color = wavelengthToColor(state.wavelength);
+
+      ctx.fillStyle = '#333';
+      ctx.beginPath();
+      ctx.arc(lightSourceX, lightSourceY, 25, 0, Math.PI * 2);
+      ctx.fill();
+
+      const glow = ctx.createRadialGradient(lightSourceX, lightSourceY, 0, lightSourceX, lightSourceY, 30);
+      glow.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`);
+      glow.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(lightSourceX, lightSourceY, 30, 0, Math.PI * 2);
+      ctx.fill();
+
+      const beamWidth = 30 + state.intensity * 0.2;
+      const beamGrad = ctx.createLinearGradient(lightSourceX + 30, 0, metalX - 20, 0);
+      beamGrad.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, ${state.intensity / 100})`);
+      beamGrad.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, ${state.intensity / 100 * 0.5})`);
+      
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(lightSourceX + 25, lightSourceY - beamWidth / 2);
+      ctx.lineTo(metalX - 10, lightSourceY - beamWidth / 2 - 20);
+      ctx.lineTo(metalX - 10, lightSourceY + beamWidth / 2 + 20);
+      ctx.lineTo(lightSourceX + 25, lightSourceY + beamWidth / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      state.photons.forEach(p => {
+        const photonGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 8);
+        photonGrad.addColorStop(0, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, 0.9)`);
+        photonGrad.addColorStop(0.5, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, 0.4)`);
+        photonGrad.addColorStop(1, `rgba(${p.color.r}, ${p.color.g}, ${p.color.b}, 0)`);
+        ctx.fillStyle = photonGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgb(${p.color.r}, ${p.color.g}, ${p.color.b})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      state.electrons.forEach(e => {
+        const eGrad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 12);
+        eGrad.addColorStop(0, `rgba(255, 107, 107, ${e.life})`);
+        eGrad.addColorStop(0.5, `rgba(255, 107, 107, ${e.life * 0.4})`);
+        eGrad.addColorStop(1, `rgba(255, 107, 107, 0)`);
+        ctx.fillStyle = eGrad;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `rgba(255, 150, 150, ${e.life})`;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = `rgba(255, 107, 107, ${e.life * 0.3})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const trailX = e.x - e.vx * i * 3;
+          const trailY = e.y - e.vy * i * 3;
+          ctx.moveTo(trailX, trailY);
+          ctx.arc(trailX, trailY, 2 - i * 0.3, 0, Math.PI * 2);
+        }
+        ctx.stroke();
+      });
+
+      const calc = calculate();
+      ctx.fillStyle = '#0a1020';
+      ctx.fillRect(20, canvas.height - 70, 200, 55);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.strokeRect(20, canvas.height - 70, 200, 55);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 11px IBM Plex Sans';
+      ctx.fillText('EQUATIONS', 30, canvas.height - 52);
+
+      ctx.font = '10px JetBrains Mono';
+      ctx.fillStyle = '#e9f2ff';
+      ctx.fillText(`E = hf = ${calc.photonEnergy.toFixed(2)} eV`, 30, canvas.height - 35);
+      ctx.fillText(`KE = ${calc.KE.toFixed(2)} eV`, 30, canvas.height - 20);
+      ctx.fillStyle = '#f6c76b';
+      ctx.fillText(`φ = ${state.workFunction} eV`, 30, canvas.height - 5);
+
+      ctx.fillStyle = '#0a1020';
+      ctx.fillRect(canvas.width - 180, canvas.height - 50, 160, 35);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
+      ctx.strokeRect(canvas.width - 180, canvas.height - 50, 160, 35);
+
+      ctx.font = '10px IBM Plex Sans';
+      ctx.fillStyle = '#9fb0c5';
+      ctx.fillText('Threshold:', canvas.width - 170, canvas.height - 30);
+      ctx.fillStyle = calc.aboveThreshold ? '#22c55e' : '#ff6b6b';
+      ctx.font = 'bold 11px IBM Plex Sans';
+      ctx.fillText(calc.thresholdLambda.toFixed(0) + ' nm', canvas.width - 100, canvas.height - 30);
+    }
+
+    function update() {
+      state.time++;
+
+      if (state.time % Math.max(1, Math.round(10 - state.intensity / 15)) === 0) {
+        spawnPhoton();
+      }
+
+      state.photons.forEach(p => {
+        p.x += p.speed;
+      });
+
+      state.photons = state.photons.filter(p => {
+        if (p.x > canvas.width * 0.65 - 20) {
+          const calc = calculate();
+          if (calc.aboveThreshold && state.electrons.length < 30) {
+            spawnElectron(canvas.width * 0.65 + Math.random() * 30, canvas.height / 2 + (Math.random() - 0.5) * 80);
+          }
+          return false;
+        }
+        return p.x < canvas.width;
+      });
+
+      state.electrons.forEach(e => {
+        e.x += e.vx;
+        e.y += e.vy;
+        e.vy += 0.05;
+        e.life -= 0.008;
+      });
+
+      state.electrons = state.electrons.filter(e => e.life > 0 && e.x < canvas.width + 50 && e.y < canvas.height + 50);
+    }
+
+    function loop() {
+      update();
+      draw();
+      updateUI();
+      requestAnimationFrame(loop);
+    }
+
+    document.getElementById('wavelength').addEventListener('input', e => {
+      state.wavelength = parseInt(e.target.value);
+    });
+
+    document.getElementById('intensity').addEventListener('input', e => {
+      state.intensity = parseInt(e.target.value);
+    });
+
+    document.getElementById('metal').addEventListener('change', e => {
+      state.workFunction = parseFloat(e.target.value);
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+    });
+
+    loop();
+  </script>
 </body>
 </html>
