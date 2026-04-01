@@ -1,1992 +1,378 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Double Slit Experiment</title>
-  <link rel="stylesheet" href="/styles.css" />
-  <link rel="stylesheet" href="/simulation-theme.css" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Double-Slit Experiment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
+      --bg: #0a0e14;
+      --card: #111820;
+      --border: rgba(255,255,255,0.08);
+      --text: #e8edf4;
+      --muted: #6b7a8f;
       --accent: #6ad7ff;
-      --accent-2: #f6c76b;
-      --accent-3: #a78bfa;
-      --accent-4: #22c55e;
-      --constructive: #6ad7ff;
-      --destructive: #1a1a2e;
-      --wavefront: rgba(106, 215, 255, 0.25);
-      --barrier: #2d3748;
-      --screen-bg: #0a111b;
-      --photon-color: #fbbf24;
-      --electron-color: #60a5fa;
-      --neutron-color: #a78bfa;
-      --laser-color: #ef4444;
-      --bright-fringe: #ffffff;
-      --sim-bg: rgba(10, 16, 26, 0.95);
-      --sim-text: #e9f2ff;
-      --sim-muted: #9fb0c5;
-      --sim-border: rgba(120, 150, 190, 0.18);
-      --panel: rgba(15, 22, 35, 0.92);
-      --shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+      --red: #ff6b4a;
+      --orange: #ffa94d;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.08), transparent),
-                  radial-gradient(900px 700px at 90% 15%, rgba(167, 139, 250, 0.08), transparent),
-                  #0a111c;
-      color: var(--sim-text);
-      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
+      padding: 20px;
     }
 
-    .page { max-width: 1400px; margin: 0 auto; padding: 0 24px 40px; }
-
-    .header { text-align: center; padding: 32px 0 24px; }
-    .header h1 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      background: linear-gradient(135deg, var(--accent), var(--accent-3));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .header p { color: var(--sim-muted); margin-top: 8px; font-size: 1.05rem; }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 24px;
-    }
-
-    .tab-btn {
-      padding: 10px 20px;
-      border: 1px solid var(--sim-border);
-      border-radius: 999px;
-      background: rgba(12, 18, 28, 0.8);
-      color: var(--sim-text);
-      font-family: 'Space Grotesk', sans-serif;
+    h1 {
+      font-size: 1.5rem;
       font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      color: var(--muted);
       font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    .tab-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent-3));
-      border-color: transparent;
-      color: #0a111c;
-    }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
       margin-bottom: 20px;
     }
 
-    .stat-card {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 14px;
-      padding: 14px 18px;
-      text-align: center;
-    }
-
-    .stat-card .label {
-      font-size: 0.75rem;
-      color: var(--sim-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
-
-    .stat-card .value {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .lab-layout {
+    .lab {
       display: grid;
-      grid-template-columns: 1fr 340px;
+      grid-template-columns: 1fr 260px;
       gap: 20px;
+      max-width: 1100px;
     }
 
-    @media (max-width: 1024px) {
-      .lab-layout { grid-template-columns: 1fr; }
-    }
-
-    .canvas-card {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 18px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-
-    .canvas-wrap { position: relative; }
-    
-    .canvas-wrap canvas {
-      width: 100%;
-      height: 480px;
-      background: #060a12;
+    canvas {
+      background: #050608;
       border-radius: 12px;
-      border: 1px solid var(--sim-border);
+      border: 1px solid var(--border);
+      width: 100%;
+      display: block;
     }
 
-    .view-tabs {
-      display: flex;
-      gap: 6px;
-      margin-top: 12px;
-    }
-
-    .view-tab {
-      padding: 6px 14px;
-      border: 1px solid var(--sim-border);
-      border-radius: 8px;
-      background: rgba(12, 18, 28, 0.6);
-      color: var(--sim-muted);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 200ms;
-    }
-
-    .view-tab.active { background: var(--accent); color: #0a111c; border-color: var(--accent); }
-    .view-tab:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
-
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-
-    .btn-primary {
-      padding: 10px 24px;
-      background: linear-gradient(135deg, var(--accent), var(--accent-3));
-      border: none;
-      border-radius: 10px;
-      color: #0a111c;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 200ms, box-shadow 200ms;
-    }
-
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(106, 215, 255, 0.3); }
-
-    .btn-secondary {
-      padding: 10px 18px;
-      background: rgba(12, 18, 28, 0.8);
-      border: 1px solid var(--sim-border);
-      border-radius: 10px;
-      color: var(--sim-text);
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 200ms;
-    }
-
-    .btn-secondary:hover { border-color: var(--accent); }
-
-    .controls-panel {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 18px;
-      padding: 18px;
-      box-shadow: var(--shadow);
+    .controls {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      max-height: 620px;
-      overflow-y: auto;
     }
 
-    .control-card {
-      background: rgba(10, 15, 24, 0.6);
-      border: 1px solid var(--sim-border);
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 14px;
+      padding: 16px;
     }
 
-    .control-card h4 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.85rem;
-      color: var(--accent-2);
-      margin-bottom: 12px;
+    .card-title {
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 14px;
     }
 
-    .control-group { margin-bottom: 14px; }
-    .control-group:last-child { margin-bottom: 0; }
+    .control {
+      margin-bottom: 14px;
+    }
 
-    .control-group label {
+    .control:last-child { margin-bottom: 0; }
+
+    .control-label {
       display: flex;
       justify-content: space-between;
       font-size: 0.85rem;
-      color: var(--sim-muted);
       margin-bottom: 6px;
     }
 
-    .control-group label .val {
-      font-family: 'Space Grotesk', sans-serif;
+    .control-label span:last-child {
       color: var(--accent);
-      font-weight: 600;
+      font-weight: 500;
     }
 
-    .control-group input[type="range"] {
+    input[type="range"] {
       width: 100%;
       height: 6px;
       -webkit-appearance: none;
-      background: rgba(106, 215, 255, 0.15);
+      background: rgba(255,255,255,0.1);
       border-radius: 3px;
       outline: none;
     }
 
-    .control-group input[type="range"]::-webkit-slider-thumb {
+    input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
       width: 16px;
       height: 16px;
       background: var(--accent);
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(106, 215, 255, 0.4);
-    }
-
-    .control-group select {
-      width: 100%;
-      padding: 8px 12px;
-      background: rgba(12, 18, 28, 0.8);
-      border: 1px solid var(--sim-border);
-      border-radius: 8px;
-      color: var(--sim-text);
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .check-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--sim-muted);
-      padding: 4px 0;
-      cursor: pointer;
-    }
-
-    .check-item input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    .particle-selector {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .particle-btn {
-      padding: 10px 8px;
-      border: 1px solid var(--sim-border);
-      border-radius: 10px;
-      background: rgba(12, 18, 28, 0.6);
-      color: var(--sim-muted);
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 200ms;
-    }
-
-    .particle-btn:hover { border-color: var(--accent); color: var(--accent); }
-    .particle-btn.active[data-particle="photon"] { background: rgba(251, 191, 36, 0.2); border-color: #fbbf24; color: #fbbf24; }
-    .particle-btn.active[data-particle="electron"] { background: rgba(96, 165, 250, 0.2); border-color: #60a5fa; color: #60a5fa; }
-    .particle-btn.active[data-particle="neutron"] { background: rgba(167, 139, 250, 0.2); border-color: #a78bfa; color: #a78bfa; }
-
-    .particle-icon { font-size: 1.2rem; margin-bottom: 2px; }
-
-    .wavelength-preview {
-      height: 24px;
-      border-radius: 6px;
-      margin-top: 8px;
-      background: linear-gradient(90deg, 
-        #8b0000 0%, #ff0000 15%, #ff4500 25%, 
-        #ffa500 35%, #ffff00 45%, 
-        #90ee90 55%, #00ff00 60%,
-        #00ffff 70%, #1e90ff 80%, #0000ff 90%, #4b0082 100%);
-      opacity: 0.7;
-      position: relative;
-    }
-
-    .wavelength-marker {
-      position: absolute;
-      top: -4px;
-      width: 4px;
-      height: 32px;
-      background: white;
-      border-radius: 2px;
-      box-shadow: 0 0 8px rgba(255,255,255,0.8);
-      transform: translateX(-50%);
-    }
-
-    .detector-toggle {
-      background: rgba(167, 139, 250, 0.1);
-      border: 1px solid var(--accent-3);
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 8px;
-    }
-
-    .detector-toggle h5 {
-      font-size: 0.85rem;
-      color: var(--accent-3);
-      margin-bottom: 8px;
-    }
-
-    .detector-toggle .warning {
-      font-size: 0.75rem;
-      color: #f87171;
-      margin-top: 8px;
-      padding: 6px 8px;
-      background: rgba(248, 113, 113, 0.1);
-      border-radius: 6px;
-    }
-
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    .data-table th {
-      background: rgba(106, 215, 255, 0.1);
-      padding: 10px 12px;
-      text-align: left;
-      color: var(--accent);
-      font-weight: 600;
-      border-bottom: 1px solid var(--sim-border);
-    }
-
-    .data-table td {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--sim-border);
-      color: var(--sim-muted);
-    }
-
-    .data-table tr:hover td { background: rgba(106, 215, 255, 0.05); }
-
-    .compare-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 900px) {
-      .compare-layout { grid-template-columns: 1fr; }
-    }
-
-    .compare-panel {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 16px;
-      padding: 16px;
-    }
-
-    .compare-panel h3 {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1rem;
-      color: var(--accent-2);
-      margin-bottom: 12px;
-    }
-
-    .compare-panel canvas {
-      width: 100%;
-      height: 320px;
-      background: #060a12;
-      border-radius: 10px;
-      border: 1px solid var(--sim-border);
-      margin-bottom: 12px;
-    }
-
-    .preset-row {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .preset-btn {
-      padding: 8px 12px;
-      border: 1px solid var(--sim-border);
-      border-radius: 8px;
-      background: rgba(12, 18, 28, 0.6);
-      color: var(--sim-text);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 200ms;
-    }
-
-    .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    .theory-section {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 16px;
-    }
-
-    .theory-section h3 {
-      font-family: 'Space Grotesk', sans-serif;
-      color: var(--accent);
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .formula-box {
-      background: rgba(10, 15, 24, 0.8);
-      border: 1px solid var(--sim-border);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 16px 0;
-      text-align: center;
     }
 
     .formula {
-      font-family: 'Space Grotesk', monospace;
-      font-size: 1.4rem;
-      color: var(--accent-2);
-      margin: 8px 0;
-    }
-
-    .formula-label {
-      font-size: 0.85rem;
-      color: var(--sim-muted);
-    }
-
-    .diagram-container {
-      background: rgba(6, 10, 18, 0.6);
-      border-radius: 12px;
-      padding: 20px;
-      margin: 16px 0;
-    }
-
-    .challenge-overlay {
-      display: flex;
-      gap: 24px;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .challenge-stat {
-      background: var(--panel);
-      border: 1px solid var(--sim-border);
-      border-radius: 14px;
-      padding: 16px 28px;
-      text-align: center;
-    }
-
-    .challenge-stat .lbl {
-      font-size: 0.75rem;
-      color: var(--sim-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .challenge-stat .val {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--accent-2);
-    }
-
-    .challenge-stat.level .val { color: var(--accent); }
-    .challenge-stat.score .val { color: var(--accent-4); }
-
-    .challenge-target {
-      background: var(--panel);
-      border: 1px solid var(--accent-3);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 16px;
-    }
-
-    .challenge-target h4 {
-      color: var(--accent-3);
-      margin-bottom: 12px;
-    }
-
-    .target-display {
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.5rem;
-      color: var(--accent-2);
-    }
-
-    .feedback {
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      font-weight: 600;
-      margin-top: 16px;
-      opacity: 0;
-      transition: opacity 300ms;
-    }
-
-    .feedback.show { opacity: 1; }
-    .feedback.success { background: rgba(34, 197, 94, 0.2); color: var(--accent-4); }
-    .feedback.fail { background: rgba(248, 113, 113, 0.2); color: #f87171; }
-
-    .tools-bar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .tool-btn {
-      padding: 8px 16px;
-      border: 1px solid var(--sim-border);
+      background: rgba(106, 215, 255, 0.08);
+      border: 1px solid rgba(106, 215, 255, 0.2);
       border-radius: 8px;
-      background: rgba(12, 18, 28, 0.6);
-      color: var(--sim-muted);
+      padding: 12px;
+      margin-top: 10px;
       font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 200ms;
+      text-align: center;
     }
 
-    .tool-btn:hover, .tool-btn.active { border-color: var(--accent); color: var(--accent); }
-    .tool-btn.active { background: rgba(106, 215, 255, 0.15); }
+    .formula-var { color: var(--orange); }
+    .formula-val { color: var(--accent); }
 
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--sim-border);
-      margin-bottom: 0;
+    .result {
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--muted);
     }
 
-    .topbar a {
-      color: var(--sim-text);
-      text-decoration: none;
-      font-weight: 600;
-    }
+    .result strong { color: var(--text); }
 
-    .topbar a:hover { color: var(--accent); }
+    @media (max-width: 768px) {
+      .lab { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <div class="topbar">
-    <a href="/index.html">← Back to Library</a>
-    <button class="btn-secondary" id="themeToggle">Light/Dark</button>
-  </div>
+  <h1>Double-Slit Experiment</h1>
+  <p class="subtitle">Wave interference creates alternating bright and dark fringes</p>
 
-  <div class="page">
-    <header class="header">
-      <h1>Double Slit Experiment</h1>
-      <p>Wave Interference, Diffraction & Quantum Duality</p>
-    </header>
+  <div class="lab">
+    <canvas id="canvas" width="800" height="400"></canvas>
 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="explore">Explore</button>
-      <button class="tab-btn" data-tab="data">Data Collection</button>
-      <button class="tab-btn" data-tab="compare">Compare</button>
-      <button class="tab-btn" data-tab="theory">Theory</button>
-      <button class="tab-btn" data-tab="challenge">Challenge</button>
-    </div>
-
-    <div id="explore" class="tab-content active">
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="label">Wavelength (λ)</div>
-          <div class="value" id="stat-lambda">600 nm</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Slit Separation (d)</div>
-          <div class="value" id="stat-sep">0.5 mm</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Fringe Spacing (Δy)</div>
-          <div class="value" id="stat-fringe">1.2 mm</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Particles Detected</div>
-          <div class="value" id="stat-particles">0</div>
+    <div class="controls">
+      <div class="card">
+        <div class="card-title">Light Color</div>
+        <div class="control">
+          <div class="control-label">
+            <span>Wavelength</span>
+            <span id="val-lambda">650 nm</span>
+          </div>
+          <input type="range" id="lambda" min="400" max="700" value="650" step="10">
         </div>
       </div>
 
-      <div class="lab-layout">
-        <div class="canvas-card">
-          <div class="canvas-wrap">
-            <canvas id="explore-canvas" width="900" height="480"></canvas>
+      <div class="card">
+        <div class="card-title">Slit Setup</div>
+        <div class="control">
+          <div class="control-label">
+            <span>Slit Separation</span>
+            <span id="val-sep">0.3 mm</span>
           </div>
-          <div class="view-tabs">
-            <button class="view-tab active" data-view="wave">Wave View</button>
-            <button class="view-tab" data-view="particle">Particle Build-up</button>
-            <button class="view-tab" data-view="both">Both</button>
-          </div>
-          <div class="btn-row">
-            <button class="btn-primary" id="exp-run">▶ Play</button>
-            <button class="btn-secondary" id="exp-reset">↺ Reset</button>
-            <select id="exp-speed" style="padding: 8px 12px; background: rgba(12,18,28,0.8); border: 1px solid var(--sim-border); border-radius: 8px; color: var(--sim-text);">
-              <option value="0.25">0.25x</option>
-              <option value="0.5">0.5x</option>
-              <option value="1" selected>1x</option>
-              <option value="2">2x</option>
-              <option value="4">4x</option>
-            </select>
-          </div>
+          <input type="range" id="sep" min="0.1" max="1" value="0.3" step="0.05">
         </div>
-
-        <div class="controls-panel">
-          <div class="control-card">
-            <h4>Particle Source</h4>
-            <div class="particle-selector">
-              <button class="particle-btn active" data-particle="photon">
-                <div class="particle-icon">⚡</div>
-                Photon
-              </button>
-              <button class="particle-btn" data-particle="electron">
-                <div class="particle-icon">⚛</div>
-                Electron
-              </button>
-              <button class="particle-btn" data-particle="neutron">
-                <div class="particle-icon">◉</div>
-                Neutron
-              </button>
-            </div>
+        <div class="control">
+          <div class="control-label">
+            <span>Slit Width</span>
+            <span id="val-width">0.1 mm</span>
           </div>
-
-          <div class="control-card">
-            <h4>Wave Parameters</h4>
-            <div class="control-group">
-              <label>Slit Separation (d) <span class="val" id="val-sep">0.5 mm</span></label>
-              <input type="range" id="slit-sep" min="0.1" max="2.0" step="0.05" value="0.5" />
-            </div>
-            <div class="control-group">
-              <label>Slit Width (a) <span class="val" id="val-width">0.1 mm</span></label>
-              <input type="range" id="slit-width" min="0.01" max="0.5" step="0.01" value="0.1" />
-            </div>
-            <div class="control-group">
-              <label>Number of Slits <span class="val" id="val-slits">2</span></label>
-              <select id="num-slits">
-                <option value="1">1 Slit</option>
-                <option value="2" selected>2 Slits</option>
-                <option value="3">3 Slits</option>
-                <option value="4">4 Slits</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Wavelength (λ)</h4>
-            <div class="control-group">
-              <label><span class="val" id="val-lambda">600 nm</span></label>
-              <input type="range" id="wavelength" min="400" max="800" step="5" value="600" />
-              <div class="wavelength-preview">
-                <div class="wavelength-marker" id="lambda-marker" style="left: 40%;"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Display Options</h4>
-            <label class="check-item">
-              <input type="checkbox" id="show-waves" checked />
-              Show wavefronts
-            </label>
-            <label class="check-item">
-              <input type="checkbox" id="show-labels" checked />
-              Show maxima/minima labels
-            </label>
-            <label class="check-item">
-              <input type="checkbox" id="show-scale" checked />
-              Show measurement scale
-            </label>
-            <label class="check-item">
-              <input type="checkbox" id="show-intensity" checked />
-              Show intensity curve
-            </label>
-          </div>
-
-          <div class="detector-toggle">
-            <h5>🔬 Which-Path Detector</h5>
-            <label class="check-item">
-              <input type="checkbox" id="which-path" />
-              Enable detection
-            </label>
-            <div class="warning" id="detector-warning" style="display: none;">
-              ⚠ Detection collapses superposition - interference pattern disappears!
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="data" class="tab-content">
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="label">Measurements</div>
-          <div class="value" id="dat-count">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Avg. Fringe Spacing</div>
-          <div class="value" id="dat-avg">-- mm</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">Expected (Theory)</div>
-          <div class="value" id="dat-expected">-- mm</div>
-        </div>
-        <div class="stat-card">
-          <div class="label">% Error</div>
-          <div class="value" id="dat-error">-- %</div>
+          <input type="range" id="width" min="0.05" max="0.5" value="0.1" step="0.05">
         </div>
       </div>
 
-      <div class="lab-layout">
-        <div class="canvas-card">
-          <div class="canvas-wrap">
-            <canvas id="data-canvas" width="900" height="480"></canvas>
-          </div>
-          <div class="tools-bar">
-            <button class="tool-btn active" id="tool-ruler">📏 Ruler</button>
-            <button class="tool-btn" id="tool-stopwatch">⏱ Stopwatch</button>
-            <button class="tool-btn" id="tool-calc">🔢 Calculator</button>
-          </div>
-          <div class="btn-row">
-            <button class="btn-primary" id="dat-run">▶ Play</button>
-            <button class="btn-secondary" id="dat-reset">↺ Reset</button>
-            <button class="btn-secondary" id="dat-record">📝 Record Measurement</button>
-          </div>
-        </div>
-
-        <div class="controls-panel">
-          <div class="control-card">
-            <h4>Experiment Presets</h4>
-            <div class="preset-row">
-              <button class="preset-btn" data-preset="youngs">Young's Original</button>
-              <button class="preset-btn" data-preset="laser">Laser Lab</button>
-              <button class="preset-btn" data-preset="electron">Electron Diffraction</button>
-              <button class="preset-btn" data-preset="hologram">Holography</button>
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Current Parameters</h4>
-            <div class="control-group">
-              <label>λ (nm) <span class="val" id="dat-lambda">600</span></label>
-              <input type="range" id="dat-wavelength" min="400" max="800" step="5" value="600" />
-            </div>
-            <div class="control-group">
-              <label>d (mm) <span class="val" id="dat-sep">0.5</span></label>
-              <input type="range" id="dat-slit-sep" min="0.1" max="2.0" step="0.05" value="0.5" />
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Measurement Tools</h4>
-            <div id="ruler-info" style="color: var(--sim-muted); font-size: 0.85rem; line-height: 1.5;">
-              <p><strong>📏 Ruler Tool:</strong></p>
-              <p>Drag on the screen to measure fringe spacing. The ruler shows the distance in mm.</p>
-            </div>
-            <div id="stopwatch-info" style="display: none; color: var(--sim-muted); font-size: 0.85rem;">
-              <p><strong>⏱ Stopwatch:</strong></p>
-              <p>Click Start to begin timing. Click Stop to record the period.</p>
-              <div id="sw-display" style="font-family: 'Space Grotesk'; font-size: 2rem; color: var(--accent); text-align: center; margin: 12px 0;">0.00 s</div>
-              <button class="btn-primary" id="sw-toggle" style="width: 100%;">Start</button>
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Recorded Data</h4>
-            <table class="data-table" id="data-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>λ (nm)</th>
-                  <th>d (mm)</th>
-                  <th>Δy meas (mm)</th>
-                  <th>Δy calc (mm)</th>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody id="data-table-body"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div id="compare" class="tab-content">
-      <div class="compare-layout">
-        <div class="compare-panel">
-          <h3>Panel A</h3>
-          <canvas id="compare-canvas-a" width="400" height="320"></canvas>
-          <div class="control-group">
-            <label>Slit Separation <span class="val" id="cmp-sep-a">0.5</span> mm</label>
-            <input type="range" id="cmp-slit-a" min="0.1" max="2.0" step="0.05" value="0.5" />
-          </div>
-          <div class="control-group">
-            <label>Wavelength <span class="val" id="cmp-lambda-a">600</span> nm</label>
-            <input type="range" id="cmp-lambda-a-slider" min="400" max="800" step="5" value="600" />
-          </div>
-          <div class="preset-row">
-            <button class="preset-btn" data-cmp="single">Single Slit</button>
-            <button class="preset-btn" data-cmp="double">Double Slit</button>
-          </div>
-        </div>
-
-        <div class="compare-panel">
-          <h3>Panel B</h3>
-          <canvas id="compare-canvas-b" width="400" height="320"></canvas>
-          <div class="control-group">
-            <label>Slit Separation <span class="val" id="cmp-sep-b">1.0</span> mm</label>
-            <input type="range" id="cmp-slit-b" min="0.1" max="2.0" step="0.05" value="1.0" />
-          </div>
-          <div class="control-group">
-            <label>Wavelength <span class="val" id="cmp-lambda-b">500</span> nm</label>
-            <input type="range" id="cmp-lambda-b-slider" min="400" max="800" step="5" value="500" />
-          </div>
-          <div class="preset-row">
-            <button class="preset-btn" data-cmp2="single">Single Slit</button>
-            <button class="preset-btn" data-cmp2="double">Double Slit</button>
-          </div>
+      <div class="card">
+        <div class="card-title">Results</div>
+        <div class="result">
+          <p>Fringe spacing: <strong id="fringe-spacing">4.3 mm</strong></p>
+          <p>Fringes in central max: <strong id="fringe-count">11</strong></p>
         </div>
       </div>
 
-      <div class="theory-section" style="margin-top: 16px;">
-        <h3>📊 Quick Comparison</h3>
-        <div id="comparison-stats" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: center;">
-          <div>
-            <div style="color: var(--sim-muted); font-size: 0.85rem;">Fringe Spacing A</div>
-            <div style="font-family: 'Space Grotesk'; font-size: 1.3rem; color: var(--accent);" id="cmp-fringe-a">1.2 mm</div>
-          </div>
-          <div>
-            <div style="color: var(--sim-muted); font-size: 0.85rem;">Fringe Spacing B</div>
-            <div style="font-family: 'Space Grotesk'; font-size: 1.3rem; color: var(--accent-2);" id="cmp-fringe-b">0.6 mm</div>
-          </div>
-          <div>
-            <div style="color: var(--sim-muted); font-size: 0.85rem;">Ratio</div>
-            <div style="font-family: 'Space Grotesk'; font-size: 1.3rem; color: var(--accent-3);" id="cmp-ratio">2.0x</div>
-          </div>
+      <div class="card">
+        <div class="card-title">Key Formula</div>
+        <div class="formula">
+          <span class="formula-var">y</span> = <span class="formula-var">mλL</span> / <span class="formula-var">d</span>
         </div>
-      </div>
-    </div>
-
-    <div id="theory" class="tab-content">
-      <div class="theory-section">
-        <h3>🔬 The Double Slit Experiment</h3>
-        <p style="color: var(--sim-muted); line-height: 1.7; margin-bottom: 16px;">
-          The double-slit experiment is one of the most famous demonstrations of wave-particle duality. When particles (photons, electrons, or atoms) are fired one at a time through two narrow slits, they create an interference pattern - something only waves should do. This suggests that each particle passes through <em>both slits simultaneously</em> as a wave, then interferes with itself before being detected at a single point.
-        </p>
-        <p style="color: var(--sim-muted); line-height: 1.7;">
-          If you add a detector to determine which slit a particle goes through, the interference pattern disappears! This is the essence of quantum measurement - observation affects the system.
-        </p>
-      </div>
-
-      <div class="theory-section">
-        <h3>📐 Key Formulas</h3>
-        <div class="formula-box">
-          <div class="formula-label">Fringe Spacing (Young's Equation)</div>
-          <div class="formula">Δy = λL / d</div>
-        </div>
-        <div class="formula-box">
-          <div class="formula-label">Path Difference for Maxima</div>
-          <div class="formula">d sin(θ) = mλ</div>
-        </div>
-        <div class="formula-box">
-          <div class="formula-label">Path Difference for Minima</div>
-          <div class="formula">d sin(θ) = (m + ½)λ</div>
-        </div>
-        <div class="formula-box">
-          <div class="formula-label">Double-Slit Intensity</div>
-          <div class="formula">I(θ) = I₀ cos²(πd sinθ/λ)</div>
-        </div>
-      </div>
-
-      <div class="theory-section">
-        <h3>🔣 Variable Definitions</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; color: var(--sim-muted);">
-          <div><strong style="color: var(--accent);">λ</strong> = Wavelength of light/particle</div>
-          <div><strong style="color: var(--accent);">d</strong> = Distance between slits</div>
-          <div><strong style="color: var(--accent);">L</strong> = Distance from slits to screen</div>
-          <div><strong style="color: var(--accent);">θ</strong> = Angle from center to fringe</div>
-          <div><strong style="color: var(--accent);">m</strong> = Order number (0, 1, 2, ...)</div>
-          <div><strong style="color: var(--accent);">Δy</strong> = Distance between adjacent fringes</div>
-        </div>
-      </div>
-
-      <div class="theory-section">
-        <h3>📊 Interference Diagram</h3>
-        <div class="diagram-container">
-          <canvas id="diagram-canvas" width="800" height="300" style="width: 100%; border-radius: 8px;"></canvas>
-        </div>
-        <p style="color: var(--sim-muted); font-size: 0.9rem; text-align: center; margin-top: 12px;">
-          Wavefronts from both slits interfere constructively (bright fringes) where path difference = mλ, and destructively (dark fringes) where path difference = (m+½)λ.
-        </p>
-      </div>
-
-      <div class="theory-section">
-        <h3>💡 Key Insights</h3>
-        <ul style="color: var(--sim-muted); line-height: 2; padding-left: 24px;">
-          <li><strong style="color: var(--accent-2);">Fringe spacing increases</strong> with longer wavelength and decreases with larger slit separation</li>
-          <li><strong style="color: var(--accent-2);">Single-slit diffraction</strong> creates an envelope that dims outer fringes</li>
-          <li><strong style="color: var(--accent-2);">Which-path detection</strong> destroys interference - the act of measurement matters</li>
-          <li><strong style="color: var(--accent-2);">de Broglie wavelength</strong>: λ = h/p applies to electrons and neutrons</li>
-          <li><strong style="color: var(--accent-2);">The same physics</strong> explains both optical diffraction and quantum particle behavior</li>
-        </ul>
-      </div>
-    </div>
-
-    <div id="challenge" class="tab-content">
-      <div class="challenge-overlay">
-        <div class="challenge-stat level">
-          <div class="lbl">Level</div>
-          <div class="val" id="ch-level">1</div>
-        </div>
-        <div class="challenge-stat">
-          <div class="lbl">Hits</div>
-          <div class="val" id="ch-hits">0 / 3</div>
-        </div>
-        <div class="challenge-stat score">
-          <div class="lbl">Score</div>
-          <div class="val" id="ch-score">0</div>
-        </div>
-        <div class="challenge-stat">
-          <div class="lbl">Best</div>
-          <div class="val" id="ch-best">0</div>
-        </div>
-      </div>
-
-      <div class="challenge-target">
-        <h4>🎯 Target Fringe Spacing</h4>
-        <div class="target-display" id="ch-target">Δy = 1.50 mm</div>
-        <p style="color: var(--sim-muted); font-size: 0.85rem; margin-top: 8px;">
-          Adjust wavelength and slit separation to match the target
-        </p>
-      </div>
-
-      <div class="lab-layout">
-        <div class="canvas-card">
-          <div class="canvas-wrap">
-            <canvas id="challenge-canvas" width="900" height="400"></canvas>
-          </div>
-          <div class="btn-row">
-            <button class="btn-primary" id="ch-run">▶ Play</button>
-            <button class="btn-secondary" id="ch-reset">↺ Reset</button>
-            <button class="btn-primary" id="ch-check" style="background: linear-gradient(135deg, var(--accent-4), var(--accent));">✓ Check Match</button>
-          </div>
-          <div class="feedback" id="ch-feedback"></div>
-        </div>
-
-        <div class="controls-panel">
-          <div class="control-card">
-            <h4>Your Parameters</h4>
-            <div class="control-group">
-              <label>Wavelength <span class="val" id="ch-lambda-val">600</span> nm</label>
-              <input type="range" id="ch-lambda" min="400" max="800" step="5" value="600" />
-            </div>
-            <div class="control-group">
-              <label>Slit Separation <span class="val" id="ch-sep-val">0.5</span> mm</label>
-              <input type="range" id="ch-sep" min="0.1" max="2.0" step="0.05" value="0.5" />
-            </div>
-          </div>
-
-          <div class="control-card">
-            <h4>Challenge Info</h4>
-            <p style="color: var(--sim-muted); font-size: 0.85rem; line-height: 1.6;">
-              Get within <strong id="ch-tolerance">20%</strong> of the target fringe spacing to score a hit. 
-              <strong>3 hits</strong> = advance to next level with tighter tolerance!
-            </p>
-          </div>
-
-          <div class="control-card" style="background: rgba(34, 197, 94, 0.1); border-color: var(--accent-4);">
-            <h4 style="color: var(--accent-4);">Your Result</h4>
-            <div style="text-align: center;">
-              <div style="font-size: 0.85rem; color: var(--sim-muted);">Your Fringe Spacing</div>
-              <div style="font-family: 'Space Grotesk'; font-size: 2rem; color: var(--accent-4);" id="ch-result">-- mm</div>
-            </div>
-          </div>
+        <div class="formula">
+          <span class="formula-var">m</span> = order &nbsp;|&nbsp; <span class="formula-var">λ</span> = wavelength<br>
+          <span class="formula-var">L</span> = 1 m &nbsp;|&nbsp; <span class="formula-var">d</span> = slit separation
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    const state = {
-      wavelength: 600,
-      slitSep: 0.5,
-      slitWidth: 0.1,
-      numSlits: 2,
-      particle: 'photon',
-      whichPath: false,
-      running: false,
-      speed: 1,
-      view: 'wave',
-      particles: [],
-      time: 0,
-      screen: null
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    const params = {
+      lambda: 650,
+      sep: 0.3,
+      width: 0.1,
+      L: 1
     };
 
-    const constants = {
-      h: 6.626e-34,
-      c: 3e8,
-      m_e: 9.11e-31,
-      m_n: 1.675e-27,
-      L: 1.0
-    };
+    function updateResults() {
+      const d = params.sep * 1e-3;
+      const lambda = params.lambda * 1e-9;
+      const L = params.L;
 
-    function getWavelength() {
-      if (state.particle === 'electron') {
-        const E = 100 * 1.6e-19;
-        return (6.626e-34 / Math.sqrt(2 * constants.m_e * E)) * 1e9;
-      } else if (state.particle === 'neutron') {
-        const E = 100 * 1.6e-21;
-        return (6.626e-34 / Math.sqrt(2 * constants.m_n * E)) * 1e9;
-      }
-      return state.wavelength;
+      const fringeSpacing = (lambda * L) / d * 1000;
+      const centralMaxWidth = (2 * lambda * L) / (params.width * 1e-3) * 1000;
+      const fringesInCentral = Math.floor(centralMaxWidth / fringeSpacing) | 1;
+
+      document.getElementById('fringe-spacing').textContent = fringeSpacing.toFixed(2) + ' mm';
+      document.getElementById('fringe-count').textContent = fringesInCentral;
+
+      return { fringeSpacing, centralMaxWidth };
     }
 
-    function calcFringeSpacing() {
-      const lambda = getWavelength() * 1e-9;
-      const d = state.slitSep * 1e-3;
-      return (lambda * constants.L / d) * 1000;
-    }
-
-    function calcIntensity(y, numSlits) {
-      const lambda = getWavelength() * 1e-9;
-      const d = state.slitSep * 1e-3;
-      const a = state.slitWidth * 1e-3;
-      const L = constants.L;
-      const theta = Math.atan2(y * 0.001, L);
-      
-      if (state.whichPath) {
-        const single = a === 0 ? 1 : (Math.sin(Math.PI * a * Math.sin(theta) / lambda) / (Math.PI * a * Math.sin(theta) / lambda));
-        return single * single;
-      }
-
-      if (numSlits === 1) {
-        const alpha = Math.PI * a * Math.sin(theta) / lambda;
-        return a === 0 ? 1 : Math.pow(Math.sin(alpha) / alpha, 2);
-      }
-
-      const beta = Math.PI * d * Math.sin(theta) / lambda;
-      const interference = Math.pow(Math.cos(beta), 2);
-      const alpha = Math.PI * a * Math.sin(theta) / lambda;
-      const diffraction = a === 0 ? 1 : Math.pow(Math.sin(alpha) / alpha, 2);
-      
-      return interference * diffraction;
-    }
-
-    function wavelengthToColor(nm) {
+    function wavelengthToColor(lambda) {
       let r, g, b;
-      if (nm < 450) { r = 75; g = 0; b = 130 + (nm - 380) * 2; }
-      else if (nm < 520) { r = 0; g = (nm - 450) * 3.5; b = 255; }
-      else if (nm < 600) { r = (nm - 520) * 6.25; g = 255; b = (600 - nm) * 4.25; }
-      else if (nm < 650) { r = 255; g = 255 - (nm - 600) * 5; b = 0; }
-      else { r = 255 - (nm - 650) * 5; g = 0; b = 0; }
-      return `rgb(${Math.min(255, r)}, ${Math.min(255, g)}, ${Math.min(255, b)})`;
+      if (lambda < 450) {
+        r = 138; g = 43; b = 255;
+      } else if (lambda < 500) {
+        r = 0; g = 191; b = 255;
+      } else if (lambda < 570) {
+        r = 0; g = 255; b = 0;
+      } else if (lambda < 590) {
+        r = 255; g = 165; b = 0;
+      } else {
+        r = 255; g = 107; b = 74;
+      }
+      return { r, g, b };
     }
 
-    function resizeCanvas(id) {
-      const c = document.getElementById(id);
-      if (!c) return;
-      const rect = c.parentElement.getBoundingClientRect();
-      const oldData = c.getContext('2d').getImageData(0, 0, c.width, c.height);
-      c.width = Math.floor(rect.width);
-      c.height = Math.floor(rect.height);
-      return oldData;
-    }
-
-    function drawExplore() {
-      const canvas = document.getElementById('explore-canvas');
-      const ctx = canvas.getContext('2d');
+    function draw() {
       const w = canvas.width;
       const h = canvas.height;
-      
-      ctx.fillStyle = '#060a12';
+
+      ctx.fillStyle = '#050608';
       ctx.fillRect(0, 0, w, h);
 
-      const sourceX = 60;
-      const barrierX = w * 0.4;
-      const screenX = w * 0.85;
       const midY = h / 2;
+      const slitX = 60;
+      const screenX = w - 80;
 
-      const color = wavelengthToColor(getWavelength());
+      ctx.fillStyle = '#1a1d23';
+      ctx.fillRect(slitX - 15, 30, 30, h - 60);
 
-      if (state.view === 'wave' || state.view === 'both') {
-        ctx.strokeStyle = `${color}40`;
-        ctx.lineWidth = 1.5;
-        
-        const maxR = h * 0.8;
-        for (let r = 30; r < maxR; r += 25) {
-          const phaseOffset = (state.time * 30) % 25;
-          for (let s = 0; s < state.numSlits; s++) {
-            const slitY = midY + (s - (state.numSlits - 1) / 2) * (state.slitSep * 80);
-            ctx.beginPath();
-            ctx.arc(barrierX, slitY, r + phaseOffset, -Math.PI / 2.5, Math.PI / 2.5);
-            ctx.stroke();
-          }
-        }
+      const numSlits = 2;
+      const d = params.sep * 1e-3;
+      const lambda = params.lambda * 1e-9;
+      const a = params.width * 1e-3;
+      const L = params.L;
 
-        ctx.strokeStyle = `${color}20`;
-        for (let s = 0; s < state.numSlits; s++) {
-          const slitY = midY + (s - (state.numSlits - 1) / 2) * (state.slitSep * 80);
-          ctx.beginPath();
-          ctx.moveTo(sourceX + 15, midY);
-          ctx.lineTo(barrierX, slitY);
-          ctx.stroke();
-        }
-      }
+      const slitOffset = d / 2;
+      const slitPositions = [-slitOffset, slitOffset];
 
-      ctx.fillStyle = '#1a2332';
-      ctx.fillRect(barrierX - 8, 40, 16, h - 80);
-      
-      const slitSpacing = state.slitSep * 80;
-      const slitWidth = state.slitWidth * 60;
-      for (let s = 0; s < state.numSlits; s++) {
-        const slitY = midY + (s - (state.numSlits - 1) / 2) * slitSpacing;
-        ctx.clearRect(barrierX - 10, slitY - slitWidth / 2, 20, slitWidth);
-      }
-
-      if (state.whichPath) {
-        for (let s = 0; s < state.numSlits; s++) {
-          const slitY = midY + (s - (state.numSlits - 1) / 2) * slitSpacing;
-          ctx.fillStyle = '#a78bfa';
-          ctx.font = '10px IBM Plex Sans';
-          ctx.fillText('📷', barrierX - 25, slitY + 4);
-        }
-      }
-
-      if (!state.screen) {
-        state.screen = new Uint8ClampedArray(w * h * 4);
-      }
-
-      for (let y = 50; y < h - 50; y++) {
-        const intensity = calcIntensity(y - midY, state.numSlits);
-        const screenY = Math.floor((y - 50) / (h - 100) * (screenX - barrierX - 20));
-        
-        for (let sx = 0; sx < screenX - barrierX - 20; sx++) {
-          const dist = sx / (screenX - barrierX - 20);
-          const brightness = intensity * (1 - dist * 0.3);
-          const idx = (y * w + Math.floor(barrierX + 20 + sx)) * 4;
-          
-          if (state.screen[idx + 3] < 255) {
-            const baseBright = 15 + brightness * 60;
-            state.screen[idx] = Math.min(255, state.screen[idx] + baseBright * state.speed * 0.1);
-            state.screen[idx + 1] = Math.min(255, state.screen[idx + 1] + baseBright * state.speed * 0.1);
-            state.screen[idx + 2] = Math.min(255, state.screen[idx + 2] + baseBright * state.speed * 0.1);
-            state.screen[idx + 3] = Math.min(255, state.screen[idx + 3] + 2);
-          }
-        }
-      }
-
-      const imgData = new ImageData(new Uint8ClampedArray(state.screen), w, h);
-      ctx.putImageData(imgData, 0, 0);
-
-      if (state.view === 'particle' || state.view === 'both') {
-        state.particles.forEach(p => {
-          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 4);
-          gradient.addColorStop(0, '#ffffff');
-          gradient.addColorStop(0.5, color);
-          gradient.addColorStop(1, 'transparent');
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        });
-      }
-
-      if (document.getElementById('show-scale').checked) {
-        ctx.fillStyle = '#4a5568';
-        ctx.fillRect(barrierX - 8, h - 30, 16, 20);
-        
-        ctx.fillStyle = '#6ad7ff';
-        ctx.font = '11px IBM Plex Sans';
-        ctx.fillText('Screen', barrierX - 25, h - 40);
-        ctx.fillText('0 mm', barrierX + 20, h - 12);
-        ctx.fillText(`${calcFringeSpacing().toFixed(2)} mm`, barrierX + 150, h - 12);
-      }
-
-      if (document.getElementById('show-labels').checked) {
-        ctx.fillStyle = color;
-        ctx.font = 'bold 12px IBM Plex Sans';
-        ctx.fillText('● Source', sourceX - 40, 30);
-        ctx.fillText('▤ Barrier', barrierX - 35, 30);
-        
-        for (let m = -3; m <= 3; m++) {
-          if (m === 0) continue;
-          const y = midY + m * calcFringeSpacing() * 2;
-          if (y > 50 && y < h - 50) {
-            ctx.fillStyle = m % 2 === 0 ? '#6ad7ff' : '#2d3748';
-            ctx.fillText(m > 0 ? `+${m}` : `${m}`, barrierX + 25, y + 4);
-          }
-        }
-      }
-
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(sourceX, midY, 12, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath();
-      ctx.arc(sourceX, midY, 6, 0, Math.PI * 2);
-      ctx.fill();
-
-      document.getElementById('stat-lambda').textContent = `${getWavelength().toFixed(0)} nm`;
-      document.getElementById('stat-sep').textContent = `${state.slitSep.toFixed(2)} mm`;
-      document.getElementById('stat-fringe').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
-    }
-
-    function updateStats() {
-      if (state.running) {
-        state.time += 0.016 * state.speed;
-      }
-      
-      if ((state.view === 'particle' || state.view === 'both') && state.running) {
-        const canvas = document.getElementById('explore-canvas');
-        const h = canvas.height;
-        const screenX = canvas.width * 0.85;
-        const barrierX = canvas.width * 0.4;
-        const midY = h / 2;
-        
-        for (let i = 0; i < Math.ceil(state.speed / 2); i++) {
-          const randY = (Math.random() - 0.5) * (h - 100) + midY;
-          const intensity = calcIntensity(randY - midY, state.numSlits);
-          
-          if (Math.random() < intensity * 0.3) {
-            state.particles.push({
-              x: screenX - 10,
-              y: randY,
-              vx: -1 - Math.random()
-            });
-          }
-        }
-        
-        state.particles = state.particles.filter(p => {
-          p.x += p.vx;
-          return p.x > barrierX + 20;
-        });
-        
-        if (state.particles.length > 500) {
-          state.particles = state.particles.slice(-500);
-        }
-      }
-      
-      document.getElementById('stat-particles').textContent = state.particles.length;
-    }
-
-    function animateExplore() {
-      updateStats();
-      drawExplore();
-      if (state.running) {
-        requestAnimationFrame(animateExplore);
-      }
-    }
-
-    function initExplore() {
-      document.getElementById('slit-sep').addEventListener('input', (e) => {
-        state.slitSep = parseFloat(e.target.value);
-        document.getElementById('val-sep').textContent = `${state.slitSep.toFixed(2)} mm`;
-        document.getElementById('stat-sep').textContent = `${state.slitSep.toFixed(2)} mm`;
-        document.getElementById('stat-fringe').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
+      ctx.fillStyle = '#ffa94d';
+      slitPositions.forEach(offset => {
+        ctx.fillRect(slitX - 4, midY + offset * 300 - 1.5, 8, 3);
       });
 
-      document.getElementById('slit-width').addEventListener('input', (e) => {
-        state.slitWidth = parseFloat(e.target.value);
-        document.getElementById('val-width').textContent = `${state.slitWidth.toFixed(2)} mm`;
-      });
+      const color = wavelengthToColor(params.lambda);
+      const maxIntensity = 0.9;
 
-      document.getElementById('wavelength').addEventListener('input', (e) => {
-        state.wavelength = parseFloat(e.target.value);
-        document.getElementById('val-lambda').textContent = `${state.wavelength} nm`;
-        document.getElementById('stat-lambda').textContent = `${state.wavelength} nm`;
-        document.getElementById('stat-fringe').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
-        const marker = (state.wavelength - 400) / 400 * 100;
-        document.getElementById('lambda-marker').style.left = `${marker}%`;
-      });
+      const maxTheta = (screenX - slitX) / L;
+      const numPoints = screenX - slitX;
 
-      document.getElementById('num-slits').addEventListener('change', (e) => {
-        state.numSlits = parseInt(e.target.value);
-        document.getElementById('val-slits').textContent = state.numSlits;
-        state.screen = null;
-      });
-
-      document.querySelectorAll('.particle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.particle-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          state.particle = btn.dataset.particle;
-          state.screen = null;
-          state.particles = [];
-          document.getElementById('stat-lambda').textContent = `${getWavelength().toFixed(0)} nm`;
-        });
-      });
-
-      document.querySelectorAll('.view-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-          document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          state.view = tab.dataset.view;
-          if (state.view === 'particle') {
-            state.particles = [];
-          }
-        });
-      });
-
-      document.getElementById('which-path').addEventListener('change', (e) => {
-        state.whichPath = e.target.checked;
-        document.getElementById('detector-warning').style.display = state.whichPath ? 'block' : 'none';
-        state.screen = null;
-      });
-
-      document.getElementById('exp-speed').addEventListener('change', (e) => {
-        state.speed = parseFloat(e.target.value);
-      });
-
-      document.getElementById('exp-run').addEventListener('click', () => {
-        state.running = !state.running;
-        document.getElementById('exp-run').textContent = state.running ? '⏸ Pause' : '▶ Play';
-        if (state.running) animateExplore();
-      });
-
-      document.getElementById('exp-reset').addEventListener('click', () => {
-        state.running = false;
-        state.time = 0;
-        state.particles = [];
-        state.screen = null;
-        document.getElementById('exp-run').textContent = '▶ Play';
-        drawExplore();
-      });
-
-      drawExplore();
-    }
-
-    const dat = {
-      running: false,
-      wavelength: 600,
-      slitSep: 0.5,
-      screen: null,
-      measurements: [],
-      tool: 'ruler',
-      swRunning: false,
-      swTime: 0,
-      rulerStart: null,
-      rulerEnd: null
-    };
-
-    function drawData() {
-      const canvas = document.getElementById('data-canvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-      
-      ctx.fillStyle = '#060a12';
-      ctx.fillRect(0, 0, w, h);
-
-      const barrierX = w * 0.4;
-      const screenX = w * 0.85;
-      const midY = h / 2;
-
-      if (!dat.screen) {
-        dat.screen = new Uint8ClampedArray(w * h * 4);
-      }
-
-      for (let y = 50; y < h - 50; y++) {
-        const intensity = calcIntensity(y - midY, 2);
-        const screenY = Math.floor((y - 50) / (h - 100) * (screenX - barrierX - 20));
-        
-        for (let sx = 0; sx < screenX - barrierX - 20; sx++) {
-          const brightness = intensity * 40;
-          const idx = (y * w + Math.floor(barrierX + 20 + sx)) * 4;
-          dat.screen[idx] = Math.min(255, dat.screen[idx] + brightness * 0.1);
-          dat.screen[idx + 1] = Math.min(255, dat.screen[idx + 1] + brightness * 0.1);
-          dat.screen[idx + 2] = Math.min(255, dat.screen[idx + 2] + brightness * 0.1);
-          dat.screen[idx + 3] = Math.min(255, dat.screen[idx + 3] + 1);
-        }
-      }
-
-      const imgData = new ImageData(new Uint8ClampedArray(dat.screen), w, h);
-      ctx.putImageData(imgData, 0, 0);
-
-      ctx.fillStyle = '#1a2332';
-      ctx.fillRect(barrierX - 8, 40, 16, h - 80);
-      const slitSpacing = dat.slitSep * 80;
-      const slitWidth = 0.1 * 60;
-      ctx.clearRect(barrierX - 10, midY - slitSpacing / 2 - slitWidth / 2, 20, slitWidth);
-
-      ctx.fillStyle = '#fbbf24';
-      ctx.beginPath();
-      ctx.arc(60, midY, 10, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (dat.tool === 'ruler' && dat.rulerStart && dat.rulerEnd) {
-        ctx.strokeStyle = '#6ad7ff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(dat.rulerStart.x, dat.rulerStart.y);
-        ctx.lineTo(dat.rulerEnd.x, dat.rulerEnd.y);
-        ctx.stroke();
-
-        const dist = Math.abs(dat.rulerEnd.y - dat.rulerStart.y);
-        const pixelsPerUnit = (h - 100) / 380;
-        const mm = dist / pixelsPerUnit;
-        ctx.fillStyle = '#6ad7ff';
-        ctx.font = 'bold 14px IBM Plex Sans';
-        ctx.fillText(`${mm.toFixed(2)} mm`, (dat.rulerStart.x + dat.rulerEnd.x) / 2, (dat.rulerStart.y + dat.rulerEnd.y) / 2 - 10);
-      }
-
-      ctx.fillStyle = '#4a5568';
-      ctx.fillRect(barrierX - 8, h - 30, 16, 20);
-    }
-
-    function initData() {
-      document.getElementById('dat-wavelength').addEventListener('input', (e) => {
-        dat.wavelength = parseFloat(e.target.value);
-        state.wavelength = dat.wavelength;
-        document.getElementById('dat-lambda').textContent = dat.wavelength;
-        document.getElementById('dat-expected').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
-      });
-
-      document.getElementById('dat-slit-sep').addEventListener('input', (e) => {
-        dat.slitSep = parseFloat(e.target.value);
-        state.slitSep = dat.slitSep;
-        document.getElementById('dat-sep').textContent = dat.slitSep.toFixed(2);
-        document.getElementById('dat-expected').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
-      });
-
-      document.querySelectorAll('[data-preset]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const preset = btn.dataset.preset;
-          const presets = {
-            youngs: { lambda: 589, sep: 0.5 },
-            laser: { lambda: 650, sep: 0.2 },
-            electron: { lambda: 5, sep: 0.1 },
-            hologram: { lambda: 632, sep: 0.3 }
-          };
-          if (presets[preset]) {
-            dat.wavelength = presets[preset].lambda;
-            dat.slitSep = presets[preset].sep;
-            state.wavelength = dat.wavelength;
-            state.slitSep = dat.slitSep;
-            document.getElementById('dat-wavelength').value = dat.wavelength;
-            document.getElementById('dat-slit-sep').value = dat.slitSep;
-            document.getElementById('dat-lambda').textContent = dat.wavelength;
-            document.getElementById('dat-sep').textContent = dat.slitSep.toFixed(2);
-            document.getElementById('dat-expected').textContent = `${calcFringeSpacing().toFixed(2)} mm`;
-            dat.screen = null;
-          }
-        });
-      });
-
-      document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          dat.tool = btn.id.replace('tool-', '');
-          document.getElementById('ruler-info').style.display = dat.tool === 'ruler' ? 'block' : 'none';
-          document.getElementById('stopwatch-info').style.display = dat.tool === 'stopwatch' ? 'block' : 'none';
-        });
-      });
-
-      const swDisplay = document.getElementById('sw-display');
-      document.getElementById('sw-toggle').addEventListener('click', () => {
-        if (!dat.swRunning) {
-          dat.swRunning = true;
-          dat.swStartTime = performance.now() - dat.swTime * 1000;
-          document.getElementById('sw-toggle').textContent = 'Stop';
-        } else {
-          dat.swRunning = false;
-          document.getElementById('sw-toggle').textContent = 'Start';
-        }
-      });
-
-      const dataCanvas = document.getElementById('data-canvas');
-      dataCanvas.addEventListener('mousedown', (e) => {
-        if (dat.tool === 'ruler') {
-          const rect = dataCanvas.getBoundingClientRect();
-          dat.rulerStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        }
-      });
-
-      dataCanvas.addEventListener('mousemove', (e) => {
-        if (dat.tool === 'ruler' && dat.rulerStart) {
-          const rect = dataCanvas.getBoundingClientRect();
-          dat.rulerEnd = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-          drawData();
-        }
-      });
-
-      dataCanvas.addEventListener('mouseup', (e) => {
-        if (dat.tool === 'ruler' && dat.rulerStart) {
-          const rect = dataCanvas.getBoundingClientRect();
-          dat.rulerEnd = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-          drawData();
-        }
-      });
-
-      document.getElementById('dat-record').addEventListener('click', () => {
-        if (dat.rulerStart && dat.rulerEnd) {
-          const dist = Math.abs(dat.rulerEnd.y - dat.rulerStart.y);
-          const pixelsPerUnit = (dataCanvas.height - 100) / 380;
-          const measured = dist / pixelsPerUnit;
-          const expected = calcFringeSpacing();
-          const error = Math.abs((measured - expected) / expected * 100);
-          
-          dat.measurements.push({
-            lambda: dat.wavelength,
-            sep: dat.slitSep,
-            measured: measured.toFixed(2),
-            expected: expected.toFixed(2),
-            error: error.toFixed(1)
-          });
-
-          updateDataTable();
-        }
-      });
-
-      document.getElementById('dat-run').addEventListener('click', () => {
-        dat.running = !dat.running;
-        document.getElementById('dat-run').textContent = dat.running ? '⏸ Pause' : '▶ Play';
-        if (dat.running) {
-          function animData() {
-            if (dat.swRunning) {
-              dat.swTime = (performance.now() - dat.swStartTime) / 1000;
-              swDisplay.textContent = dat.swTime.toFixed(2) + ' s';
-            }
-            if (dat.running) {
-              drawData();
-              requestAnimationFrame(animData);
-            }
-          }
-          animData();
-        }
-      });
-
-      document.getElementById('dat-reset').addEventListener('click', () => {
-        dat.running = false;
-        dat.screen = null;
-        dat.rulerStart = null;
-        dat.rulerEnd = null;
-        document.getElementById('dat-run').textContent = '▶ Play';
-        drawData();
-      });
-
-      drawData();
-    }
-
-    function updateDataTable() {
-      const tbody = document.getElementById('data-table-body');
-      tbody.innerHTML = '';
-      dat.measurements.forEach((m, i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${m.lambda}</td>
-          <td>${m.sep}</td>
-          <td>${m.measured}</td>
-          <td>${m.expected}</td>
-          <td>${m.error}%</td>
-        `;
-        tbody.appendChild(tr);
-      });
-      document.getElementById('dat-count').textContent = dat.measurements.length;
-      if (dat.measurements.length > 0) {
-        const avg = dat.measurements.reduce((a, m) => a + parseFloat(m.measured), 0) / dat.measurements.length;
-        const expected = calcFringeSpacing();
-        const err = Math.abs((avg - expected) / expected * 100);
-        document.getElementById('dat-avg').textContent = `${avg.toFixed(2)} mm`;
-        document.getElementById('dat-error').textContent = `${err.toFixed(1)} %`;
-      }
-    }
-
-    const cmp = {
-      sepA: 0.5,
-      sepB: 1.0,
-      lambdaA: 600,
-      lambdaB: 500,
-      slitsA: 2,
-      slitsB: 2
-    };
-
-    function updateCompare() {
-      drawCompare('compare-canvas-a', cmp.sepA, cmp.lambdaA, cmp.slitsA);
-      drawCompare('compare-canvas-b', cmp.sepB, cmp.lambdaB, cmp.slitsB);
-      
-      const fringeA = (cmp.lambdaA * 1e-9 * 1) / (cmp.sepA * 1e-3) * 1000;
-      const fringeB = (cmp.lambdaB * 1e-9 * 1) / (cmp.sepB * 1e-3) * 1000;
-      document.getElementById('cmp-fringe-a').textContent = `${fringeA.toFixed(2)} mm`;
-      document.getElementById('cmp-fringe-b').textContent = `${fringeB.toFixed(2)} mm`;
-      document.getElementById('cmp-ratio').textContent = `${(fringeA / fringeB).toFixed(2)}x`;
-    }
-
-    function drawCompare(canvasId, sep, lambda, slits) {
-      const canvas = document.getElementById(canvasId);
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-      
-      ctx.fillStyle = '#060a12';
-      ctx.fillRect(0, 0, w, h);
-
-      const barrierX = w * 0.35;
-      const screenX = w * 0.85;
-      const midY = h / 2;
-      const color = wavelengthToColor(lambda);
-
-      ctx.fillStyle = '#1a2332';
-      ctx.fillRect(barrierX - 6, 30, 12, h - 60);
-      
-      const slitSpacing = sep * 70;
-      const slitWidth = 0.1 * 50;
-      for (let s = 0; s < slits; s++) {
-        const slitY = midY + (s - (slits - 1) / 2) * slitSpacing;
-        ctx.clearRect(barrierX - 8, slitY - slitWidth / 2, 16, slitWidth);
-      }
-
-      for (let y = 40; y < h - 40; y++) {
+      for (let px = 0; px < numPoints; px++) {
+        const screenPos = px / numPoints;
+        const y = screenPos * (h - 60) + 30;
         const dy = y - midY;
-        const theta = Math.atan2(dy * 0.001, 1);
-        const lambda_m = lambda * 1e-9;
-        const d = sep * 1e-3;
-        const a = 0.1e-3;
-        let intensity;
+        const theta = Math.atan2(dy * 0.001, L);
 
-        if (slits === 1) {
-          const alpha = Math.PI * a * Math.sin(theta) / lambda_m;
-          intensity = Math.pow(Math.sin(alpha) / alpha, 2);
-        } else {
-          const beta = Math.PI * d * Math.sin(theta) / lambda_m;
-          const interference = Math.pow(Math.cos(beta), 2);
-          const alpha = Math.PI * a * Math.sin(theta) / lambda_m;
-          const diffraction = Math.pow(Math.sin(alpha) / alpha, 2);
-          intensity = interference * diffraction;
-        }
+        let amplitude = 0;
+        slitPositions.forEach(offset => {
+          const pathDiff = offset * Math.sin(theta);
+          amplitude += Math.cos(2 * Math.PI * pathDiff / lambda);
+        });
 
-        for (let sx = 0; sx < 15; sx++) {
-          const brightness = intensity * 100;
-          ctx.fillStyle = `rgb(${brightness},${brightness},${brightness})`;
-          ctx.fillRect(barrierX + 15 + sx, y, 1, 1);
+        const singleSlit = Math.sin(Math.PI * a * Math.sin(theta) / lambda) / (Math.PI * a * Math.sin(theta) / lambda);
+        const intensity = Math.pow(amplitude / numSlits, 2) * Math.pow(singleSlit || 1, 2);
+
+        const brightness = intensity * maxIntensity;
+        const barWidth = 3;
+
+        for (let bx = 0; bx < barWidth; bx++) {
+          const alpha = brightness;
+          ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
+          ctx.fillRect(screenX + px * 0.5 + bx, y - 1, 1, 2);
         }
       }
 
-      ctx.fillStyle = color;
+      const fringeSpacing = (lambda * L) / d * 1000;
+      const centralMaxWidth = (2 * lambda * L) / (a) * 1000;
+
+      const fringeSpacingPx = fringeSpacing / 1000 * (h - 60) / (centralMaxWidth / 1000);
+
+      ctx.strokeStyle = 'rgba(255, 169, 77, 0.3)';
+      ctx.setLineDash([4, 4]);
       ctx.beginPath();
-      ctx.arc(40, midY, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      const fringe = (lambda * 1e-9 * 1) / (sep * 1e-3) * 1000;
-      ctx.fillStyle = '#9fb0c5';
-      ctx.font = '10px IBM Plex Sans';
-      ctx.fillText(`Δy = ${fringe.toFixed(2)} mm`, barrierX + 20, h - 15);
-    }
-
-    function initCompare() {
-      document.getElementById('cmp-slit-a').addEventListener('input', (e) => {
-        cmp.sepA = parseFloat(e.target.value);
-        document.getElementById('cmp-sep-a').textContent = cmp.sepA.toFixed(2);
-        updateCompare();
-      });
-
-      document.getElementById('cmp-lambda-a-slider').addEventListener('input', (e) => {
-        cmp.lambdaA = parseInt(e.target.value);
-        document.getElementById('cmp-lambda-a').textContent = cmp.lambdaA;
-        updateCompare();
-      });
-
-      document.getElementById('cmp-slit-b').addEventListener('input', (e) => {
-        cmp.sepB = parseFloat(e.target.value);
-        document.getElementById('cmp-sep-b').textContent = cmp.sepB.toFixed(2);
-        updateCompare();
-      });
-
-      document.getElementById('cmp-lambda-b-slider').addEventListener('input', (e) => {
-        cmp.lambdaB = parseInt(e.target.value);
-        document.getElementById('cmp-lambda-b').textContent = cmp.lambdaB;
-        updateCompare();
-      });
-
-      document.querySelectorAll('[data-cmp]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          cmp.slitsA = btn.dataset.cmp === 'single' ? 1 : 2;
-          updateCompare();
-        });
-      });
-
-      document.querySelectorAll('[data-cmp2]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          cmp.slitsB = btn.dataset.cmp2 === 'single' ? 1 : 2;
-          updateCompare();
-        });
-      });
-
-      drawCompare('compare-canvas-a', cmp.sepA, cmp.lambdaA, cmp.slitsA);
-      drawCompare('compare-canvas-b', cmp.sepB, cmp.lambdaB, cmp.slitsB);
-    }
-
-    function initTheory() {
-      const canvas = document.getElementById('diagram-canvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-
-      ctx.fillStyle = '#0a111c';
-      ctx.fillRect(0, 0, w, h);
-
-      const barrierX = w * 0.4;
-      const screenX = w * 0.85;
-      const midY = h / 2;
-
-      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
-      ctx.setLineDash([5, 5]);
-      ctx.beginPath();
-      ctx.moveTo(50, midY);
-      ctx.lineTo(barrierX, midY);
+      ctx.moveTo(screenX, 30);
+      ctx.lineTo(screenX, h - 30);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.strokeStyle = 'rgba(246, 199, 107, 0.5)';
-      ctx.beginPath();
-      ctx.moveTo(50, midY);
-      ctx.lineTo(barrierX, midY - 60);
-      ctx.moveTo(50, midY);
-      ctx.lineTo(barrierX, midY + 60);
-      ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 169, 77, 0.15)';
+      ctx.fillRect(screenX - 20, midY - fringeSpacingPx / 2, 25, fringeSpacingPx);
 
-      ctx.fillStyle = '#2d3748';
-      ctx.fillRect(barrierX - 6, 40, 12, h - 80);
-      ctx.clearRect(barrierX - 8, midY - 25, 16, 50);
-
-      ctx.fillStyle = '#6ad7ff';
-      ctx.beginPath();
-      ctx.arc(50, midY, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#a78bfa';
+      ctx.fillStyle = '#ffa94d';
       ctx.font = '12px IBM Plex Sans';
-      ctx.fillText('S', 46, midY + 4);
-      ctx.fillText('d', barrierX + 15, midY - 15);
-      ctx.fillText('θ', barrierX + 15, midY + 30);
+      ctx.textAlign = 'right';
+      ctx.fillText('central max', screenX - 5, midY + 4);
 
-      ctx.fillStyle = '#f6c76b';
+      const halfFringes = Math.floor(centralMaxWidth / fringeSpacing / 2);
+      ctx.strokeStyle = 'rgba(255, 107, 74, 0.4)';
+      ctx.setLineDash([2, 2]);
+
       ctx.beginPath();
-      ctx.arc(screenX, midY - 60, 5, 0, Math.PI * 2);
-      ctx.arc(screenX, midY, 5, 0, Math.PI * 2);
-      ctx.arc(screenX, midY + 60, 5, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(slitX + 10, midY - centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
+      ctx.lineTo(screenX - 5, midY - centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(slitX + 10, midY + centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
+      ctx.lineTo(screenX - 5, midY + centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
+      ctx.stroke();
+      ctx.setLineDash([]);
 
       ctx.fillStyle = '#6ad7ff';
-      ctx.fillText('m=+1', screenX + 10, midY - 56);
-      ctx.fillText('m=0', screenX + 10, midY + 4);
-      ctx.fillText('m=-1', screenX + 10, midY + 64);
-
-      ctx.strokeStyle = '#4a5568';
-      ctx.beginPath();
-      ctx.moveTo(barrierX + 15, h - 30);
-      ctx.lineTo(screenX, h - 30);
-      ctx.stroke();
-      ctx.fillStyle = '#9fb0c5';
       ctx.font = '11px IBM Plex Sans';
-      ctx.fillText('L', (barrierX + 15 + screenX) / 2, h - 18);
+      ctx.textAlign = 'left';
+      ctx.fillText(`Equal spacing: ${fringeSpacing.toFixed(2)} mm`, 20, h - 20);
+
+      ctx.fillStyle = '#ffa94d';
+      ctx.fillText(`Single-slit envelope: ${centralMaxWidth.toFixed(1)} mm wide`, 20, h - 40);
+
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '10px IBM Plex Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText('Double-slit fringes within the single slit\'s central maximum', w / 2 + 30, 20);
     }
 
-    const ch = {
-      level: 1,
-      hits: 0,
-      score: 0,
-      best: parseInt(localStorage.getItem('doubleSlitBest')) || 0,
-      target: 1.5,
-      tolerance: 0.2,
-      running: false,
-      wavelength: 600,
-      slitSep: 0.5,
-      screen: null
-    };
-
-    function generateTarget() {
-      ch.target = 0.5 + Math.random() * 2;
-      ch.tolerance = Math.max(0.05, 0.2 - (ch.level - 1) * 0.015);
-      document.getElementById('ch-target').textContent = `Δy = ${ch.target.toFixed(2)} mm`;
-      document.getElementById('ch-tolerance').textContent = `${(ch.tolerance * 100).toFixed(0)}%`;
-    }
-
-    function calcCurrentFringe() {
-      return (ch.wavelength * 1e-9 * 1) / (ch.slitSep * 1e-3) * 1000;
-    }
-
-    function drawChallenge() {
-      const canvas = document.getElementById('challenge-canvas');
-      const ctx = canvas.getContext('2d');
-      const w = canvas.width;
-      const h = canvas.height;
-      
-      ctx.fillStyle = '#060a12';
-      ctx.fillRect(0, 0, w, h);
-
-      const barrierX = w * 0.4;
-      const screenX = w * 0.85;
-      const midY = h / 2;
-
-      if (!ch.screen) {
-        ch.screen = new Uint8ClampedArray(w * h * 4);
-      }
-
-      for (let y = 50; y < h - 50; y++) {
-        const dy = y - midY;
-        const theta = Math.atan2(dy * 0.001, 1);
-        const d = ch.slitSep * 1e-3;
-        const lambda = ch.wavelength * 1e-9;
-        const beta = Math.PI * d * Math.sin(theta) / lambda;
-        const intensity = Math.pow(Math.cos(beta), 2);
-
-        for (let sx = 0; sx < 15; sx++) {
-          const brightness = intensity * 80;
-          const idx = (y * w + Math.floor(barrierX + 15 + sx)) * 4;
-          if (ch.screen[idx + 3] < 255) {
-            ch.screen[idx] = Math.min(255, ch.screen[idx] + brightness * 0.2);
-            ch.screen[idx + 1] = Math.min(255, ch.screen[idx + 1] + brightness * 0.2);
-            ch.screen[idx + 2] = Math.min(255, ch.screen[idx + 2] + brightness * 0.2);
-            ch.screen[idx + 3] = Math.min(255, ch.screen[idx + 3] + 1.5);
-          }
-        }
-      }
-
-      const imgData = new ImageData(new Uint8ClampedArray(ch.screen), w, h);
-      ctx.putImageData(imgData, 0, 0);
-
-      ctx.fillStyle = '#2d3748';
-      ctx.fillRect(barrierX - 6, 40, 12, h - 80);
-      ctx.clearRect(barrierX - 8, midY - ch.slitSep * 40, 16, ch.slitSep * 80);
-
-      ctx.fillStyle = wavelengthToColor(ch.wavelength);
-      ctx.beginPath();
-      ctx.arc(50, midY, 8, 0, Math.PI * 2);
-      ctx.fill();
-
-      const currentFringe = calcCurrentFringe();
-      document.getElementById('ch-result').textContent = `${currentFringe.toFixed(2)} mm`;
-    }
-
-    function initChallenge() {
-      document.getElementById('ch-best').textContent = ch.best;
-
-      document.getElementById('ch-lambda').addEventListener('input', (e) => {
-        ch.wavelength = parseInt(e.target.value);
-        document.getElementById('ch-lambda-val').textContent = ch.wavelength;
-        ch.screen = null;
-        drawChallenge();
-      });
-
-      document.getElementById('ch-sep').addEventListener('input', (e) => {
-        ch.slitSep = parseFloat(e.target.value);
-        document.getElementById('ch-sep-val').textContent = ch.slitSep.toFixed(2);
-        ch.screen = null;
-        drawChallenge();
-      });
-
-      document.getElementById('ch-check').addEventListener('click', () => {
-        const current = calcCurrentFringe();
-        const diff = Math.abs(current - ch.target);
-        const accuracy = 1 - (diff / ch.target);
-        
-        const feedback = document.getElementById('ch-feedback');
-        
-        if (accuracy >= (1 - ch.tolerance)) {
-          feedback.textContent = `✓ Perfect! Within ${(ch.tolerance * 100).toFixed(0)}% - +${Math.round(accuracy * 100)} points!`;
-          feedback.className = 'feedback show success';
-          ch.hits++;
-          ch.score += Math.round(accuracy * 100);
-          
-          if (ch.hits >= 3) {
-            ch.level++;
-            ch.hits = 0;
-            generateTarget();
-          }
-        } else {
-          feedback.textContent = `✗ Off by ${(diff / ch.target * 100).toFixed(1)}% - try again!`;
-          feedback.className = 'feedback show fail';
-        }
-        
-        document.getElementById('ch-level').textContent = ch.level;
-        document.getElementById('ch-hits').textContent = `${ch.hits} / 3`;
-        document.getElementById('ch-score').textContent = ch.score;
-        
-        if (ch.score > ch.best) {
-          ch.best = ch.score;
-          localStorage.setItem('doubleSlitBest', ch.best);
-          document.getElementById('ch-best').textContent = ch.best;
-        }
-        
-        setTimeout(() => feedback.classList.remove('show'), 3000);
-      });
-
-      document.getElementById('ch-run').addEventListener('click', () => {
-        ch.running = !ch.running;
-        document.getElementById('ch-run').textContent = ch.running ? '⏸ Pause' : '▶ Play';
-        if (ch.running) animateChallenge();
-      });
-
-      function animateChallenge() {
-        ch.screen = null;
-        drawChallenge();
-        if (ch.running) {
-          setTimeout(animateChallenge, 100);
-        }
-      }
-
-      document.getElementById('ch-reset').addEventListener('click', () => {
-        ch.running = false;
-        ch.screen = null;
-        document.getElementById('ch-run').textContent = '▶ Play';
-        drawChallenge();
-      });
-
-      generateTarget();
-      drawChallenge();
-    }
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        const tabId = btn.dataset.tab;
-        document.getElementById(tabId).classList.add('active');
-        
-        if (tabId === 'theory') {
-          initTheory();
-        } else if (tabId === 'compare') {
-          updateCompare();
-        }
-      });
+    document.getElementById('lambda').addEventListener('input', (e) => {
+      params.lambda = parseFloat(e.target.value);
+      document.getElementById('val-lambda').textContent = params.lambda + ' nm';
+      updateResults();
+      draw();
     });
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
+    document.getElementById('sep').addEventListener('input', (e) => {
+      params.sep = parseFloat(e.target.value);
+      document.getElementById('val-sep').textContent = params.sep + ' mm';
+      updateResults();
+      draw();
     });
 
-    initExplore();
-    initData();
-    initCompare();
-    initTheory();
-    initChallenge();
+    document.getElementById('width').addEventListener('input', (e) => {
+      params.width = parseFloat(e.target.value);
+      document.getElementById('val-width').textContent = params.width + ' mm';
+      updateResults();
+      draw();
+    });
+
+    updateResults();
+    draw();
+
+    window.addEventListener('resize', draw);
   </script>
 </body>
 </html>
