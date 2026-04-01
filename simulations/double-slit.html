@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Double-Slit Experiment</title>
+  <title>Light Dispersion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -14,8 +14,6 @@
       --text: #e8edf4;
       --muted: #6b7a8f;
       --accent: #6ad7ff;
-      --red: #ff6b4a;
-      --orange: #ffa94d;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,7 +41,7 @@
 
     .lab {
       display: grid;
-      grid-template-columns: 1fr 260px;
+      grid-template-columns: 1fr 240px;
       gap: 20px;
       max-width: 1100px;
     }
@@ -113,26 +111,21 @@
       cursor: pointer;
     }
 
-    .formula {
-      background: rgba(106, 215, 255, 0.08);
-      border: 1px solid rgba(106, 215, 255, 0.2);
+    .color-preview {
+      width: 100%;
+      height: 40px;
       border-radius: 8px;
-      padding: 12px;
       margin-top: 10px;
-      font-size: 0.85rem;
-      text-align: center;
+      border: 1px solid var(--border);
     }
 
-    .formula-var { color: var(--orange); }
-    .formula-val { color: var(--accent); }
-
-    .result {
+    .info {
       font-size: 0.85rem;
       line-height: 1.6;
       color: var(--muted);
     }
 
-    .result strong { color: var(--text); }
+    .info strong { color: var(--text); }
 
     @media (max-width: 768px) {
       .lab { grid-template-columns: 1fr; }
@@ -140,58 +133,41 @@
   </style>
 </head>
 <body>
-  <h1>Double-Slit Experiment</h1>
-  <p class="subtitle">Wave interference creates alternating bright and dark fringes</p>
+  <h1>Light Dispersion</h1>
+  <p class="subtitle">Separate light into its spectral colors</p>
 
   <div class="lab">
     <canvas id="canvas" width="800" height="400"></canvas>
 
     <div class="controls">
       <div class="card">
-        <div class="card-title">Light Color</div>
+        <div class="card-title">Light Source</div>
         <div class="control">
           <div class="control-label">
             <span>Wavelength</span>
-            <span id="val-lambda">650 nm</span>
+            <span id="val-lambda">550 nm</span>
           </div>
-          <input type="range" id="lambda" min="400" max="700" value="650" step="10">
+          <input type="range" id="lambda" min="380" max="750" value="550" step="5">
+          <div id="color-preview" class="color-preview"></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-title">Slit Setup</div>
+        <div class="card-title">Prism</div>
         <div class="control">
           <div class="control-label">
-            <span>Slit Separation</span>
-            <span id="val-sep">0.3 mm</span>
+            <span>Dispersion</span>
+            <span id="val-disp">1.5</span>
           </div>
-          <input type="range" id="sep" min="0.1" max="1" value="0.3" step="0.05">
-        </div>
-        <div class="control">
-          <div class="control-label">
-            <span>Slit Width</span>
-            <span id="val-width">0.1 mm</span>
-          </div>
-          <input type="range" id="width" min="0.05" max="0.5" value="0.1" step="0.05">
+          <input type="range" id="disp" min="1.2" max="2.4" value="1.5" step="0.1">
         </div>
       </div>
 
       <div class="card">
         <div class="card-title">Results</div>
-        <div class="result">
-          <p>Fringe spacing: <strong id="fringe-spacing">4.3 mm</strong></p>
-          <p>Fringes in central max: <strong id="fringe-count">11</strong></p>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Key Formula</div>
-        <div class="formula">
-          <span class="formula-var">y</span> = <span class="formula-var">mλL</span> / <span class="formula-var">d</span>
-        </div>
-        <div class="formula">
-          <span class="formula-var">m</span> = order &nbsp;|&nbsp; <span class="formula-var">λ</span> = wavelength<br>
-          <span class="formula-var">L</span> = 1 m &nbsp;|&nbsp; <span class="formula-var">d</span> = slit separation
+        <div class="info">
+          <p>Wavelength: <strong id="res-lambda">550 nm</strong></p>
+          <p>Color: <strong id="res-color">Green</strong></p>
         </div>
       </div>
     </div>
@@ -202,41 +178,83 @@
     const ctx = canvas.getContext('2d');
 
     const params = {
-      lambda: 650,
-      sep: 0.3,
-      width: 0.1,
-      L: 1
+      lambda: 550,
+      dispersion: 1.5
     };
 
-    function updateResults() {
-      const d = params.sep * 1e-3;
-      const lambda = params.lambda * 1e-9;
-      const L = params.L;
+    function wavelengthToColor(lambda) {
+      let r, g, b, alpha = 1;
+      
+      if (lambda < 380) {
+        return { r: 0, g: 0, b: 0, alpha: 0 };
+      } else if (lambda < 440) {
+        r = -(lambda - 440) / (440 - 380);
+        g = 0;
+        b = 1;
+      } else if (lambda < 490) {
+        r = 0;
+        g = (lambda - 440) / (490 - 440);
+        b = 1;
+      } else if (lambda < 510) {
+        r = 0;
+        g = 1;
+        b = -(lambda - 510) / (510 - 490);
+      } else if (lambda < 580) {
+        r = (lambda - 510) / (580 - 510);
+        g = 1;
+        b = 0;
+      } else if (lambda < 645) {
+        r = 1;
+        g = -(lambda - 645) / (645 - 580);
+        b = 0;
+      } else if (lambda <= 750) {
+        r = 1;
+        g = 0;
+        b = 0;
+      } else {
+        return { r: 0, g: 0, b: 0, alpha: 0 };
+      }
 
-      const fringeSpacing = (lambda * L) / d * 1000;
-      const centralMaxWidth = (2 * lambda * L) / (params.width * 1e-3) * 1000;
-      const fringesInCentral = Math.floor(centralMaxWidth / fringeSpacing) | 1;
+      let factor;
+      if (lambda < 380 || lambda > 750) {
+        factor = 0;
+      } else if (lambda < 420) {
+        factor = 0.3 + 0.7 * (lambda - 380) / (420 - 380);
+      } else if (lambda > 700) {
+        factor = 0.3 + 0.7 * (750 - lambda) / (750 - 700);
+      } else {
+        factor = 1;
+      }
 
-      document.getElementById('fringe-spacing').textContent = fringeSpacing.toFixed(2) + ' mm';
-      document.getElementById('fringe-count').textContent = fringesInCentral;
-
-      return { fringeSpacing, centralMaxWidth };
+      return {
+        r: Math.round(r * factor * 255),
+        g: Math.round(g * factor * 255),
+        b: Math.round(b * factor * 255),
+        alpha: 1
+      };
     }
 
-    function wavelengthToColor(lambda) {
-      let r, g, b;
-      if (lambda < 450) {
-        r = 138; g = 43; b = 255;
-      } else if (lambda < 500) {
-        r = 0; g = 191; b = 255;
-      } else if (lambda < 570) {
-        r = 0; g = 255; b = 0;
-      } else if (lambda < 590) {
-        r = 255; g = 165; b = 0;
-      } else {
-        r = 255; g = 107; b = 74;
-      }
-      return { r, g, b };
+    function getColorName(lambda) {
+      if (lambda < 380) return 'Ultraviolet';
+      if (lambda < 450) return 'Violet';
+      if (lambda < 495) return 'Blue';
+      if (lambda < 520) return 'Cyan';
+      if (lambda < 565) return 'Green';
+      if (lambda < 590) return 'Yellow';
+      if (lambda < 625) return 'Orange';
+      if (lambda < 750) return 'Red';
+      return 'Infrared';
+    }
+
+    function updateResults() {
+      document.getElementById('val-lambda').textContent = params.lambda + ' nm';
+      document.getElementById('val-disp').textContent = params.dispersion.toFixed(1);
+      document.getElementById('res-lambda').textContent = params.lambda + ' nm';
+      document.getElementById('res-color').textContent = getColorName(params.lambda);
+
+      const color = wavelengthToColor(params.lambda);
+      const preview = document.getElementById('color-preview');
+      preview.style.background = `rgba(${color.r}, ${color.g}, ${color.b}, ${color.alpha})`;
     }
 
     function draw() {
@@ -246,126 +264,140 @@
       ctx.fillStyle = '#050608';
       ctx.fillRect(0, 0, w, h);
 
-      const midY = h / 2;
-      const slitX = 60;
-      const screenX = w - 80;
-
-      ctx.fillStyle = '#1a1d23';
-      ctx.fillRect(slitX - 15, 30, 30, h - 60);
-
-      const numSlits = 2;
-      const d = params.sep * 1e-3;
-      const lambda = params.lambda * 1e-9;
-      const a = params.width * 1e-3;
-      const L = params.L;
-
-      const slitOffset = d / 2;
-      const slitPositions = [-slitOffset, slitOffset];
-
-      ctx.fillStyle = '#ffa94d';
-      slitPositions.forEach(offset => {
-        ctx.fillRect(slitX - 4, midY + offset * 300 - 1.5, 8, 3);
-      });
-
       const color = wavelengthToColor(params.lambda);
-      const maxIntensity = 0.9;
+      const dispersion = params.dispersion;
 
-      const maxTheta = (screenX - slitX) / L;
-      const numPoints = screenX - slitX;
-
-      for (let px = 0; px < numPoints; px++) {
-        const screenPos = px / numPoints;
-        const y = screenPos * (h - 60) + 30;
-        const dy = y - midY;
-        const theta = Math.atan2(dy * 0.001, L);
-
-        let amplitude = 0;
-        slitPositions.forEach(offset => {
-          const pathDiff = offset * Math.sin(theta);
-          amplitude += Math.cos(2 * Math.PI * pathDiff / lambda);
-        });
-
-        const singleSlit = Math.sin(Math.PI * a * Math.sin(theta) / lambda) / (Math.PI * a * Math.sin(theta) / lambda);
-        const intensity = Math.pow(amplitude / numSlits, 2) * Math.pow(singleSlit || 1, 2);
-
-        const brightness = intensity * maxIntensity;
-        const barWidth = 3;
-
-        for (let bx = 0; bx < barWidth; bx++) {
-          const alpha = brightness;
-          ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`;
-          ctx.fillRect(screenX + px * 0.5 + bx, y - 1, 1, 2);
-        }
+      ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < w; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, h);
+        ctx.stroke();
       }
 
-      const fringeSpacing = (lambda * L) / d * 1000;
-      const centralMaxWidth = (2 * lambda * L) / (a) * 1000;
-
-      const fringeSpacingPx = fringeSpacing / 1000 * (h - 60) / (centralMaxWidth / 1000);
-
-      ctx.strokeStyle = 'rgba(255, 169, 77, 0.3)';
-      ctx.setLineDash([4, 4]);
+      const sourceX = 100;
+      const sourceY = h / 2;
+      
+      ctx.fillStyle = '#fbbf24';
       ctx.beginPath();
-      ctx.moveTo(screenX, 30);
-      ctx.lineTo(screenX, h - 30);
+      ctx.arc(sourceX, sourceY, 15, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, 0.9)`;
+      ctx.beginPath();
+      ctx.arc(sourceX, sourceY, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      const beamStartX = sourceX + 20;
+      const beamEndX = 300;
+
+      const gradient = ctx.createLinearGradient(beamStartX, sourceY - 30, beamStartX, sourceY + 30);
+      gradient.addColorStop(0, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+      gradient.addColorStop(0.5, `rgba(${color.r}, ${color.g}, ${color.b}, 0.8)`);
+      gradient.addColorStop(1, `rgba(${color.r}, ${color.g}, ${color.b}, 0)`);
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(beamStartX, sourceY - 30, beamEndX - beamStartX, 60);
+
+      const prismX = 320;
+      const prismY = h / 2;
+      const prismSize = 100;
+
+      ctx.fillStyle = '#1e293b';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(prismX, prismY - prismSize);
+      ctx.lineTo(prismX + prismSize * 0.866, prismY + prismSize * 0.5);
+      ctx.lineTo(prismX - prismSize * 0.866, prismY + prismSize * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      const refractIndex = dispersion - (params.lambda - 550) * 0.001;
+      const beamHeight = 25 + (dispersion - 1.2) * 10;
+
+      const wavelengths = [];
+      const numRays = 15;
+      for (let i = 0; i < numRays; i++) {
+        wavelengths.push(380 + (750 - 380) * i / (numRays - 1));
+      }
+
+      ctx.lineWidth = 2;
+      
+      wavelengths.forEach((wl, idx) => {
+        const rayColor = wavelengthToColor(wl);
+        const alpha = idx === Math.floor(numRays / 2) ? 1 : 0.6;
+        
+        ctx.strokeStyle = `rgba(${rayColor.r}, ${rayColor.g}, ${rayColor.b}, ${alpha})`;
+        
+        const angle = (idx - (numRays - 1) / 2) * 0.04 * (dispersion - 1);
+        const rayLength = 350;
+        
+        ctx.beginPath();
+        ctx.moveTo(prismX + 30, prismY + (idx - (numRays - 1) / 2) * 3);
+        ctx.lineTo(prismX + 30 + rayLength * Math.cos(angle), prismY + (idx - (numRays - 1) / 2) * 3 + rayLength * Math.sin(angle));
+        ctx.stroke();
+      });
+
+      const rainbowY = 80;
+      const rainbowH = h - 160;
+      const rainbowX = 400;
+      const rainbowW = 300;
+
+      const rainbowGradient = ctx.createLinearGradient(rainbowX, 0, rainbowX + rainbowW, 0);
+      rainbowGradient.addColorStop(0, '#8b00ff');
+      rainbowGradient.addColorStop(0.17, '#0000ff');
+      rainbowGradient.addColorStop(0.33, '#00ff00');
+      rainbowGradient.addColorStop(0.5, '#ffff00');
+      rainbowGradient.addColorStop(0.67, '#ff7f00');
+      rainbowGradient.addColorStop(0.83, '#ff0000');
+      rainbowGradient.addColorStop(1, '#ff0000');
+
+      ctx.fillStyle = rainbowGradient;
+      ctx.fillRect(rainbowX, rainbowY, rainbowW, rainbowH);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(rainbowX, rainbowY);
+      ctx.lineTo(rainbowX, rainbowY + rainbowH);
       ctx.stroke();
       ctx.setLineDash([]);
 
-      ctx.fillStyle = 'rgba(255, 169, 77, 0.15)';
-      ctx.fillRect(screenX - 20, midY - fringeSpacingPx / 2, 25, fringeSpacingPx);
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.textAlign = 'center';
 
-      ctx.fillStyle = '#ffa94d';
-      ctx.font = '12px IBM Plex Sans';
+      const labels = ['Violet', 'Blue', 'Green', 'Yellow', 'Orange', 'Red'];
+      const positions = [0.08, 0.25, 0.42, 0.58, 0.75, 0.92];
+      positions.forEach((pos, i) => {
+        ctx.fillText(labels[i], rainbowX + rainbowW * pos, rainbowY - 8);
+      });
+
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '10px IBM Plex Sans';
+      ctx.textAlign = 'left';
+      ctx.fillText('380 nm', rainbowX + 5, rainbowY + rainbowH + 15);
       ctx.textAlign = 'right';
-      ctx.fillText('central max', screenX - 5, midY + 4);
-
-      const halfFringes = Math.floor(centralMaxWidth / fringeSpacing / 2);
-      ctx.strokeStyle = 'rgba(255, 107, 74, 0.4)';
-      ctx.setLineDash([2, 2]);
-
-      ctx.beginPath();
-      ctx.moveTo(slitX + 10, midY - centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
-      ctx.lineTo(screenX - 5, midY - centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(slitX + 10, midY + centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
-      ctx.lineTo(screenX - 5, midY + centralMaxWidth / 2000 * (h - 60) / (centralMaxWidth / 1000));
-      ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.fillText('750 nm', rainbowX + rainbowW - 5, rainbowY + rainbowH + 15);
 
       ctx.fillStyle = '#6ad7ff';
-      ctx.font = '11px IBM Plex Sans';
-      ctx.textAlign = 'left';
-      ctx.fillText(`Equal spacing: ${fringeSpacing.toFixed(2)} mm`, 20, h - 20);
-
-      ctx.fillStyle = '#ffa94d';
-      ctx.fillText(`Single-slit envelope: ${centralMaxWidth.toFixed(1)} mm wide`, 20, h - 40);
-
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = '10px IBM Plex Sans';
+      ctx.font = '12px IBM Plex Sans';
       ctx.textAlign = 'center';
-      ctx.fillText('Double-slit fringes within the single slit\'s central maximum', w / 2 + 30, 20);
+      ctx.fillText('Spectral colors from dispersion', rainbowX + rainbowW / 2, h - 20);
     }
 
     document.getElementById('lambda').addEventListener('input', (e) => {
       params.lambda = parseFloat(e.target.value);
-      document.getElementById('val-lambda').textContent = params.lambda + ' nm';
       updateResults();
       draw();
     });
 
-    document.getElementById('sep').addEventListener('input', (e) => {
-      params.sep = parseFloat(e.target.value);
-      document.getElementById('val-sep').textContent = params.sep + ' mm';
-      updateResults();
-      draw();
-    });
-
-    document.getElementById('width').addEventListener('input', (e) => {
-      params.width = parseFloat(e.target.value);
-      document.getElementById('val-width').textContent = params.width + ' mm';
-      updateResults();
+    document.getElementById('disp').addEventListener('input', (e) => {
+      params.dispersion = parseFloat(e.target.value);
+      document.getElementById('val-disp').textContent = params.dispersion.toFixed(1);
       draw();
     });
 
