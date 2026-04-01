@@ -10,139 +10,286 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --accent: #6ad7ff;
+      --accent: #45d2ff;
       --accent-2: #f6c76b;
-      --electron: #6ad7ff;
+      --electron: #45d2ff;
       --proton: #ff6b6b;
       --neutron: #9fb0c5;
       --photon: #a78bfa;
-      --sim-bg: rgba(10, 16, 26, 0.95);
       --sim-text: #e9f2ff;
       --sim-muted: #9fb0c5;
       --sim-border: rgba(120, 150, 190, 0.18);
-      --panel: rgba(15, 22, 35, 0.92);
+      --panel: rgba(12, 18, 30, 0.92);
+      --panel-2: rgba(16, 24, 38, 0.92);
     }
 
     body {
       margin: 0;
       background:
-        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
-        radial-gradient(900px 700px at 90% 15%, rgba(167, 139, 250, 0.12), transparent),
+        radial-gradient(1100px 700px at 12% 0%, rgba(69, 210, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 88% 18%, rgba(167, 139, 250, 0.12), transparent),
         #0a111c;
       color: var(--sim-text);
       font-family: "IBM Plex Sans", sans-serif;
     }
 
-    .page { min-height: 100vh; display: flex; flex-direction: column; }
-
-    .topbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
-      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
-      position: sticky; top: 0; z-index: 10;
+    .bohr-page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 28px 32px;
+      gap: 18px;
     }
 
-    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
-    .toggle {
-      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
-      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
-      cursor: pointer; color: var(--sim-text);
+    .bohr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-radius: 18px;
+      background: rgba(8, 12, 20, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    header.hero {
-      text-align: center; padding: 20px 20px 10px;
+    .bohr-title {
+      display: flex;
+      gap: 12px;
+      align-items: center;
     }
 
-    header.hero h1 {
-      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
-      margin: 0 0 8px; color: var(--accent);
+    .bohr-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(69, 210, 255, 0.3), rgba(69, 210, 255, 0.1));
+      border: 1px solid rgba(69, 210, 255, 0.4);
+      display: grid;
+      place-items: center;
+      color: var(--accent);
     }
 
-    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.9rem; }
-
-    .layout {
-      display: grid; grid-template-columns: 1.2fr 300px; gap: 20px;
-      padding: 10px 28px 20px;
+    .bohr-title h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--accent);
     }
 
-    .panel {
-      background: var(--panel); border: 1px solid var(--sim-border);
-      border-radius: 18px; padding: 16px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    .bohr-title p {
+      margin: 4px 0 0;
+      font-size: 0.85rem;
+      color: var(--sim-muted);
     }
 
-    canvas {
-      width: 100%; height: 420px; background: #050810;
-      border-radius: 14px; border: 1px solid var(--sim-border);
+    .bohr-back {
+      text-decoration: none;
+      color: var(--sim-text);
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--sim-border);
+      background: rgba(12, 18, 30, 0.8);
     }
 
-    .controls { display: flex; flex-direction: column; gap: 14px; }
-
-    .control-group {
-      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
-      border-radius: 12px; padding: 14px;
+    .bohr-grid {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 300px;
+      gap: 18px;
     }
 
-    .control-label {
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.8rem; color: var(--sim-muted); margin-bottom: 10px;
+    .bohr-card {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 20px 45px rgba(5, 10, 18, 0.4);
     }
 
-    .control-label strong { color: var(--accent); font-weight: 500; }
-
-    input[type="range"] { width: 100%; }
+    .card-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--sim-muted);
+      margin-bottom: 10px;
+    }
 
     select {
-      width: 100%; padding: 10px; border-radius: 8px;
-      border: 1px solid var(--sim-border); background: #0b1420;
-      color: var(--sim-text); font-size: 0.9rem;
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid var(--sim-border);
+      background: rgba(10, 16, 28, 0.9);
+      color: var(--sim-text);
+      font-size: 0.9rem;
     }
 
-    .stats-row {
-      display: flex; gap: 8px; flex-wrap: wrap;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
     }
 
     .stat-card {
-      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
-      border-radius: 10px; padding: 10px 14px; text-align: center; flex: 1; min-width: 70px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 12px;
+      text-align: left;
+      background: var(--panel-2);
     }
 
-    .stat-value { font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-    .stat-label { font-size: 0.65rem; color: var(--sim-muted); text-transform: uppercase; margin-top: 2px; }
+    .stat-value { font-size: 1.2rem; font-weight: 700; color: var(--accent); }
+    .stat-label { font-size: 0.65rem; color: var(--sim-muted); text-transform: uppercase; margin-top: 4px; }
     .stat-card.protons .stat-value { color: var(--proton); }
     .stat-card.electrons .stat-value { color: var(--electron); }
-    .stat-card.energy .stat-value { color: var(--photon); font-size: 0.95rem; }
+    .stat-card.energy .stat-value { color: var(--photon); }
 
-    .energy-levels {
-      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
-      border-radius: 12px; padding: 12px;
+    .bohr-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: #0a111c;
     }
 
-    .level-title {
-      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
-      color: var(--sim-muted); margin-bottom: 10px;
+    .bohr-btn.primary {
+      background: linear-gradient(135deg, #29c6ff, #4ab8e8);
+    }
+
+    .bohr-btn.secondary {
+      background: linear-gradient(135deg, #f6c76b, #f59e0b);
+    }
+
+    .bohr-btn.ghost {
+      background: rgba(18, 24, 36, 0.9);
+      color: var(--sim-text);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .energy-slider {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .energy-row {
+      display: grid;
+      grid-template-columns: 42px 1fr 70px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .energy-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(69, 210, 255, 0.2);
+      background: rgba(10, 16, 28, 0.9);
+      font-size: 0.75rem;
+      color: var(--accent);
+    }
+
+    .energy-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--sim-muted);
+      text-align: right;
+    }
+
+    .energy-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(10, 16, 28, 0.9);
+      border: 1px solid rgba(69, 210, 255, 0.15);
+    }
+
+    .energy-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(69, 210, 255, 0.2);
+    }
+
+    .energy-dot.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(69, 210, 255, 0.6);
+    }
+
+    .bohr-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bohr-canvas-card {
+      background: var(--panel);
+      border: 1px solid var(--sim-border);
+      border-radius: 20px;
+      padding: 16px;
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: #050810;
+      border-radius: 16px;
+      border: 1px solid var(--sim-border);
+    }
+
+    .energy-levels {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .level-bar {
-      display: flex; align-items: center; gap: 8px; margin: 6px 0;
+      display: grid;
+      grid-template-columns: 40px 1fr 70px;
+      gap: 8px;
+      align-items: center;
       font-size: 0.8rem;
     }
 
-    .level-n { color: var(--accent-2); font-weight: 600; width: 20px; }
+    .level-n { color: var(--accent); font-weight: 600; }
     .level-line {
-      flex: 1; height: 2px; background: var(--sim-border);
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(10, 16, 28, 0.9);
+      border: 1px solid rgba(69, 210, 255, 0.15);
       position: relative;
+      overflow: hidden;
     }
 
     .level-electron {
-      position: absolute; top: -4px; width: 10px; height: 10px;
-      background: var(--electron); border-radius: 50%; transform: translateX(-50%);
+      position: absolute;
+      top: 2px;
+      width: 8px;
+      height: 8px;
+      background: var(--electron);
+      border-radius: 50%;
+      transform: translateX(-50%);
     }
 
-    .level-e { color: var(--sim-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .level-e { color: var(--sim-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; text-align: right; }
 
     .photon-panel {
-      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
-      border-radius: 12px; padding: 12px;
+      background: rgba(167, 139, 250, 0.12);
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 12px;
+      padding: 12px;
     }
 
     .photon-title { font-size: 0.75rem; color: var(--photon); text-transform: uppercase; margin-bottom: 8px; }
@@ -150,55 +297,66 @@
     .photon-series { font-size: 0.75rem; color: var(--sim-muted); margin-top: 4px; }
 
     .formula-box {
-      background: rgba(106, 215, 255, 0.08); border: 1px solid rgba(106, 215, 255, 0.2);
-      border-radius: 10px; padding: 12px; text-align: center;
+      background: rgba(69, 210, 255, 0.08);
+      border: 1px solid rgba(69, 210, 255, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .formula { font-family: 'JetBrains Mono', monospace; font-size: 0.95rem; color: var(--accent); }
-    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); margin-top: 4px; }
-
-    .btn-row { display: flex; gap: 8px; }
-
-    button {
-      flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--sim-border);
-      background: rgba(12, 18, 28, 0.8); color: var(--sim-text); cursor: pointer;
-      font-weight: 600; font-size: 0.85rem;
+    .formula {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      color: var(--accent);
     }
 
-    button:hover { border-color: var(--accent); }
-    button.primary { background: linear-gradient(135deg, var(--accent), #4ab8e8); border: none; color: #0a111c; }
+    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); }
 
-    @media (max-width: 980px) {
-      .layout { grid-template-columns: 1fr; }
-      canvas { height: 320px; }
+    .insight {
+      font-size: 0.8rem;
+      color: var(--sim-muted);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 1100px) {
+      .bohr-grid {
+        grid-template-columns: 1fr;
+      }
+      .bohr-canvas-card {
+        min-height: 420px;
+      }
+      canvas {
+        height: 320px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="topbar">
-      <a href="/index.html">← Back to Library</a>
-      <button class="toggle" id="themeToggle">Light/Dark</button>
-    </div>
-
-    <header class="hero">
-      <h1>Bohr Model of the Atom</h1>
-      <p>Quantized energy levels and electron orbits</p>
-    </header>
-
-    <section class="layout">
-      <div class="panel">
-        <canvas id="bohrCanvas" width="800" height="480"></canvas>
-        <div class="btn-row" style="margin-top: 12px;">
-          <button id="exciteBtn" class="primary">Excite Electron</button>
-          <button id="decayBtn">Photon Emission</button>
-          <button id="resetBtn">Reset</button>
+  <div class="bohr-page">
+    <header class="bohr-header">
+      <div class="bohr-title">
+        <div class="bohr-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="2.5"></circle>
+            <ellipse cx="12" cy="12" rx="9" ry="4"></ellipse>
+            <ellipse cx="12" cy="12" rx="4" ry="9"></ellipse>
+            <ellipse cx="12" cy="12" rx="8" ry="8" transform="rotate(45 12 12)"></ellipse>
+          </svg>
+        </div>
+        <div>
+          <h1>Bohr Model of the Atom</h1>
+          <p>Quantized energy levels and electron orbits</p>
         </div>
       </div>
+      <a class="bohr-back" href="/index.html">Back to Library</a>
+    </header>
 
-      <div class="controls">
-        <div class="control-group">
-          <div class="control-label">Element</div>
+    <section class="bohr-grid">
+      <aside class="bohr-left bohr-stack">
+        <div class="bohr-card">
+          <div class="card-title">Element</div>
           <select id="element">
             <option value="1,0">Hydrogen (1 proton)</option>
             <option value="2,1">Helium (2 protons)</option>
@@ -208,7 +366,7 @@
           </select>
         </div>
 
-        <div class="stats-row">
+        <div class="stats-grid">
           <div class="stat-card protons">
             <div class="stat-value" id="statProtons">1</div>
             <div class="stat-label">Protons</div>
@@ -223,14 +381,12 @@
           </div>
         </div>
 
-        <div class="energy-levels" id="energyLevels">
-          <div class="level-title">Energy Levels</div>
-          <div class="level-bar"><span class="level-n">n=6</span><div class="level-line" id="level6"></div><span class="level-e">-0.38 eV</span></div>
-          <div class="level-bar"><span class="level-n">n=5</span><div class="level-line" id="level5"></div><span class="level-e">-0.54 eV</span></div>
-          <div class="level-bar"><span class="level-n">n=4</span><div class="level-line" id="level4"></div><span class="level-e">-0.85 eV</span></div>
-          <div class="level-bar"><span class="level-n">n=3</span><div class="level-line" id="level3"></div><span class="level-e">-1.51 eV</span></div>
-          <div class="level-bar"><span class="level-n">n=2</span><div class="level-line" id="level2"></div><span class="level-e">-3.40 eV</span></div>
-          <div class="level-bar"><span class="level-n">n=1</span><div class="level-line" id="level1"><div class="level-electron" style="left: 50%;"></div></div><span class="level-e">-13.6 eV</span></div>
+        <button id="exciteBtn" class="bohr-btn primary">Excite Electron</button>
+        <button id="decayBtn" class="bohr-btn secondary">Photon Emission</button>
+        <button id="resetBtn" class="bohr-btn ghost">Reset</button>
+
+        <div class="bohr-card insight">
+          <strong style="color: var(--accent-2);">Bohr's Insight:</strong> Electrons orbit at specific distances (quantized). When they jump between levels, they absorb or emit photons with energy equal to the difference.
         </div>
 
         <div class="photon-panel" id="photonPanel" style="display: none;">
@@ -238,16 +394,42 @@
           <div class="photon-wavelength" id="photonWavelength">λ = 121.6 nm (Lyman-α)</div>
           <div class="photon-series" id="photonSeries">Series: Lyman (UV)</div>
         </div>
+      </aside>
 
-        <div class="control-group" style="font-size: 0.8rem; color: var(--sim-muted); line-height: 1.5;">
-          <strong style="color: var(--accent-2);">Bohr's Insight:</strong> Electrons orbit at specific distances (quantized). When they jump between levels, they absorb or emit photons with energy equal to the difference.
+      <main class="bohr-center">
+        <div class="bohr-canvas-card">
+          <canvas id="bohrCanvas" width="800" height="480"></canvas>
+        </div>
+      </main>
+
+      <aside class="bohr-right bohr-stack">
+        <div class="bohr-card">
+          <div class="card-title">Energy Levels</div>
+          <div class="energy-row">
+            <span class="energy-pill">n=3</span>
+            <div class="energy-dots" id="dotsN3"></div>
+            <span class="energy-value" id="energyN3">-1.51 eV</span>
+          </div>
+          <div class="energy-row">
+            <span class="energy-pill">n=2</span>
+            <div class="energy-dots" id="dotsN2"></div>
+            <span class="energy-value" id="energyN2">-3.40 eV</span>
+          </div>
+          <div class="energy-row">
+            <span class="energy-pill">n=1</span>
+            <div class="energy-dots" id="dotsN1"></div>
+            <span class="energy-value" id="energyN1">-13.6 eV</span>
+          </div>
+          <input class="energy-slider" id="levelSlider" type="range" min="1" max="6" step="1" value="1" />
         </div>
 
         <div class="formula-box">
-          <div class="formula">E_n = -13.6 / n² eV</div>
-          <div class="formula-desc">Energy of level n for hydrogen</div>
+          <div class="card-title">Bohr's Formula</div>
+          <div class="formula">Eₙ = -13.6 / n² eV</div>
+          <div class="formula-desc">Current level: <strong id="currentLevelLabel">n=1</strong></div>
+          <div class="formula-desc">Energy: <strong id="currentEnergyLabel">-13.6 eV</strong></div>
         </div>
-      </div>
+      </aside>
     </section>
   </div>
 
@@ -316,7 +498,7 @@
     }
 
     function getOrbitRadius(level) {
-      return 30 + level * 35;
+      return 40 + level * 22;
     }
 
     function draw() {
@@ -324,7 +506,7 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
+      const cy = canvas.height / 2 - 10;
 
       for (let level = 1; level <= 6; level++) {
         const r = getOrbitRadius(level);
@@ -435,14 +617,33 @@
 
       state.photons = state.photons.filter(p => p.life > 0 && p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height);
 
-      ctx.fillStyle = '#0a1020';
-      ctx.fillRect(20, canvas.height - 60, 220, 45);
-      ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
-      ctx.strokeRect(20, canvas.height - 60, 220, 45);
+      const badgeWidth = 200;
+      const badgeHeight = 46;
+      const badgeX = (canvas.width - badgeWidth) / 2;
+      const badgeY = canvas.height - badgeHeight - 18;
+      const radius = 10;
+
+      ctx.fillStyle = 'rgba(8, 18, 32, 0.9)';
+      ctx.strokeStyle = 'rgba(69, 210, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(badgeX + radius, badgeY);
+      ctx.lineTo(badgeX + badgeWidth - radius, badgeY);
+      ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY, badgeX + badgeWidth, badgeY + radius);
+      ctx.lineTo(badgeX + badgeWidth, badgeY + badgeHeight - radius);
+      ctx.quadraticCurveTo(badgeX + badgeWidth, badgeY + badgeHeight, badgeX + badgeWidth - radius, badgeY + badgeHeight);
+      ctx.lineTo(badgeX + radius, badgeY + badgeHeight);
+      ctx.quadraticCurveTo(badgeX, badgeY + badgeHeight, badgeX, badgeY + badgeHeight - radius);
+      ctx.lineTo(badgeX, badgeY + radius);
+      ctx.quadraticCurveTo(badgeX, badgeY, badgeX + radius, badgeY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
 
       ctx.fillStyle = '#6ad7ff';
-      ctx.font = 'bold 10px IBM Plex Sans';
-      ctx.fillText('ELECTRON CONFIGURATION', 30, canvas.height - 42);
+      ctx.font = 'bold 11px IBM Plex Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText('ELECTRON CONFIGURATION', canvas.width / 2, badgeY + 16);
 
       const shellCapacities = [2, 8, 18, 32];
       let configStr = state.electrons.map(e => e.level).sort((a, b) => a - b)
@@ -451,28 +652,38 @@
           return i === 0 || arr[i - 1] !== l ? `${count}n${l}` : '';
         }).filter(Boolean).join(' + ');
 
-      ctx.font = '9px JetBrains Mono';
+      ctx.font = '10px JetBrains Mono';
       ctx.fillStyle = '#e9f2ff';
-      ctx.fillText(configStr || 'Empty', 30, canvas.height - 25);
-      ctx.fillStyle = '#9fb0c5';
-      ctx.fillText(`Valence: ${state.electrons.filter(e => e.level === Math.max(...state.electrons.map(x => x.level))).length} electrons`, 30, canvas.height - 8);
+      ctx.fillText(configStr || 'Empty', canvas.width / 2, badgeY + 32);
     }
 
     function updateEnergyDisplay() {
       const e = energyLevels[state.currentLevel - 1].energy;
       document.getElementById('statEnergy').textContent = e.toFixed(1);
-      
-      for (let n = 1; n <= 6; n++) {
-        const levelEl = document.getElementById(`level${n}`);
-        const electrons = state.electrons.filter(e => e.level === n).length;
-        levelEl.innerHTML = '';
-        for (let i = 0; i < electrons; i++) {
-          const dot = document.createElement('div');
-          dot.className = 'level-electron';
-          dot.style.left = `${(i + 1) / (electrons + 1) * 100}%`;
-          levelEl.appendChild(dot);
+      document.getElementById('currentLevelLabel').textContent = `n=${state.currentLevel}`;
+      document.getElementById('currentEnergyLabel').textContent = `${e.toFixed(2)} eV`;
+
+      const dotTargets = [
+        { id: 'dotsN3', level: 3 },
+        { id: 'dotsN2', level: 2 },
+        { id: 'dotsN1', level: 1 }
+      ];
+      dotTargets.forEach(({ id, level }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerHTML = '';
+        const maxDots = 6;
+        const activeCount = state.electrons.filter(e => e.level === level).length;
+        for (let i = 0; i < maxDots; i++) {
+          const dot = document.createElement('span');
+          dot.className = 'energy-dot' + (i < activeCount ? ' active' : '');
+          el.appendChild(dot);
         }
-      }
+      });
+
+      document.getElementById('energyN3').textContent = `${energyLevels[2].energy.toFixed(2)} eV`;
+      document.getElementById('energyN2').textContent = `${energyLevels[1].energy.toFixed(2)} eV`;
+      document.getElementById('energyN1').textContent = `${energyLevels[0].energy.toFixed(2)} eV`;
     }
 
     function emitPhoton(fromLevel, toLevel) {
@@ -545,6 +756,7 @@
       state.protons = elem.protons;
       state.neutrons = elem.neutrons;
       document.getElementById('statProtons').textContent = state.protons;
+      document.getElementById('statElectrons').textContent = state.protons;
       initElectrons();
       updateEnergyDisplay();
     });
@@ -558,12 +770,30 @@
       document.getElementById('photonPanel').style.display = 'none';
     });
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light');
-    });
+    const levelSlider = document.getElementById('levelSlider');
+    if (levelSlider) {
+      levelSlider.addEventListener('input', (e) => {
+        const next = parseInt(e.target.value, 10);
+        if (!Number.isNaN(next)) {
+          state.currentLevel = next;
+          if (state.electrons[0]) state.electrons[0].level = next;
+          updateEnergyDisplay();
+        }
+      });
+      levelSlider.value = String(state.currentLevel);
+    }
+
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('light');
+      });
+    }
 
     initElectrons();
     updateEnergyDisplay();
+    document.getElementById('statElectrons').textContent = state.protons;
+    if (levelSlider) levelSlider.value = String(state.currentLevel);
     loop();
   </script>
 </body>
