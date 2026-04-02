@@ -413,6 +413,11 @@
       prediction: null
     };
 
+    const showAtomsEl = document.getElementById('showAtoms');
+    const showPredictionEl = document.getElementById('showPrediction');
+    state.showAtoms = showAtomsEl || { checked: true };
+    state.showPrediction = showPredictionEl || { checked: true };
+
     function initNuclei() {
       state.nuclei = [];
       const foilStart = canvas.width * 0.4;
@@ -603,7 +608,10 @@
         });
       }
       
-      if (state.showAtoms.checked || state.showAtoms) {
+      const showAtoms = state.showAtoms && typeof state.showAtoms.checked === 'boolean'
+        ? state.showAtoms.checked
+        : !!state.showAtoms;
+      if (showAtoms) {
         state.nuclei.forEach((n, i) => {
           n.pulse += 0.05;
           const pulseSize = 6 + Math.sin(n.pulse) * 2;
@@ -629,7 +637,10 @@
         });
       }
       
-      if (state.showPrediction.checked && state.prediction && !state.auto) {
+      const showPrediction = state.showPrediction && typeof state.showPrediction.checked === 'boolean'
+        ? state.showPrediction.checked
+        : !!state.showPrediction;
+      if (showPrediction && state.prediction && !state.auto) {
         ctx.strokeStyle = 'rgba(106, 215, 255, 0.3)';
         ctx.setLineDash([5, 5]);
         ctx.lineWidth = 2;

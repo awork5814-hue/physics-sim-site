@@ -167,6 +167,8 @@ if (process.env.EMAIL_HOST) {
 
 const emailTransporter = nodemailer.createTransport(emailConfig);
 
+const CSP_HEADER = "default-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; worker-src 'self' https://cdnjs.cloudflare.com; frame-src 'self' https://accept.paymob.com https://secure-egypt.paytabs.com; connect-src 'self' https:";
+
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -367,6 +369,70 @@ app.post('/api/auth/user-data', authMiddleware, async (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+app.get('/api/exam-questions', authMiddleware, async (req, res) => {
+  try {
+    const userData = await db.prepare('SELECT local_storage_data FROM user_data WHERE user_id = ?').get(req.userId);
+    if (!userData || !userData.local_storage_data) {
+      return res.json({ success: true, examStudio: null, questions: [] });
+    }
+    let localData = {};
+    try {
+      localData = JSON.parse(userData.local_storage_data || '{}');
+    } catch {
+      localData = {};
+    }
+    const examStudio = localData.examStudio || null;
+    const questions = Array.isArray(localData.examQuestions) ? localData.examQuestions : [];
+    return res.json({ success: true, examStudio, questions });
+  } catch (error) {
+    console.error('Fetch exam questions error:', error);
+    res.status(500).json({ error: 'Failed to fetch exam questions' });
+  }
+});
+
+app.post('/api/exam-questions', authMiddleware, async (req, res) => {
+  try {
+    const { examStudio, examQuestions } = req.body;
+    if (!examStudio && !Array.isArray(examQuestions)) {
+      return res.status(400).json({ error: 'examStudio or examQuestions must be provided' });
+    }
+
+    const userData = await db.prepare('SELECT local_storage_data FROM user_data WHERE user_id = ?').get(req.userId);
+    let localData = {};
+    if (userData && userData.local_storage_data) {
+      try {
+        localData = JSON.parse(userData.local_storage_data || '{}');
+      } catch {
+        localData = {};
+      }
+    }
+
+    if (examStudio) {
+      localData.examStudio = examStudio;
+    }
+    if (Array.isArray(examQuestions)) {
+      localData.examQuestions = examQuestions;
+    }
+
+    if (userData) {
+      await db.prepare('UPDATE user_data SET local_storage_data = ? WHERE user_id = ?').run(
+        JSON.stringify(localData),
+        req.userId
+      );
+    } else {
+      await db.prepare('INSERT INTO user_data (user_id, local_storage_data) VALUES (?, ?)').run(
+        req.userId,
+        JSON.stringify(localData)
+      );
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Save exam questions error:', error);
+    res.status(500).json({ error: 'Failed to save exam questions' });
+  }
 });
 
 app.post('/api/auth/forgot-password', async (req, res) => {
@@ -713,6 +779,15 @@ app.post('/api/auth/merge-local-data', authMiddleware, async (req, res) => {
     const { localData } = req.body;
     
     const userData = db.prepare('SELECT * FROM user_data WHERE user_id = ?').get(req.userId);
+    let existingLocalStorageData = {};
+    if (userData && userData.local_storage_data) {
+      try {
+        existingLocalStorageData = JSON.parse(userData.local_storage_data || '{}');
+      } catch {
+        existingLocalStorageData = {};
+      }
+    }
+    const mergedLocalStorageData = { ...existingLocalStorageData, ...(localData || {}) };
     
     if (!userData) {
       db.prepare('INSERT INTO user_data (user_id, favorites, achievements, quiz_progress, streak_count, streak_last_date, settings, local_storage_data) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
@@ -723,7 +798,7 @@ app.post('/api/auth/merge-local-data', authMiddleware, async (req, res) => {
         0,
         null,
         '{}',
-        JSON.stringify(localData || {})
+        JSON.stringify(mergedLocalStorageData)
       );
       return res.json({ success: true, merged: false, data: localData || {} });
     }
@@ -756,7 +831,7 @@ app.post('/api/auth/merge-local-data', authMiddleware, async (req, res) => {
       JSON.stringify(mergedAchievements),
       JSON.stringify(mergedQuizProgress),
       mergedStreakCount,
-      JSON.stringify(localData || {}),
+      JSON.stringify(mergedLocalStorageData),
       req.userId
     );
     
@@ -1342,7 +1417,7 @@ app.get('/admin/payment-events', (req, res) => {
     </tr>
   `).join('');
 
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'");
+  res.setHeader('Content-Security-Policy', CSP_HEADER);
   res.send(`
     <!doctype html>
     <html lang="en">
@@ -1421,6 +1496,11 @@ const startServer = async () => {
   
   await initDatabase();
   await initTables();
+
+  app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', CSP_HEADER);
+    next();
+  });
   
   app.use(express.static(path.join(__dirname)));
   
@@ -1448,6 +1528,18 @@ const startServer = async () => {
     } catch (error) {
       res.json({ count: 0, error: error.message });
     }
+  });
+
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    if (req.path.includes('.')) {
+      res.status(404).send('Not found');
+      return;
+    }
+    res.sendFile(path.join(__dirname, 'index.html'));
   });
   
   app.listen(PORT, '0.0.0.0', () => {

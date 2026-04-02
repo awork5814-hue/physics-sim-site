@@ -5,6 +5,8 @@ const path = require('path');
 const root = __dirname;
 const port = process.env.PORT || 8080;
 
+const CSP_HEADER = "default-src 'self' https:; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; worker-src 'self' https://cdnjs.cloudflare.com; frame-src 'self' https://accept.paymob.com https://secure-egypt.paytabs.com; connect-src 'self' https:";
+
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -34,6 +36,7 @@ const pickCompressed = (filePath, encHeader) => {
 };
 
 http.createServer((req, res) => {
+  res.setHeader('Content-Security-Policy', CSP_HEADER);
   const filePath = resolveFile(req.url);
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     res.writeHead(404);

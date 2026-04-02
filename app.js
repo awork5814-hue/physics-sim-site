@@ -32720,26 +32720,65 @@ window.initQuestionBank = async () => {
   const paginationEl = document.getElementById('questionPagination');
   if (!listEl || !countEl || !searchInput || !viewToggle || !pagesEl || !paginationEl) return;
 
-  const STORAGE_KEY = 'physicsExamQuestionsV1';
-  const loadStoredQuestions = () => {
+  const STORAGE_KEY = 'physicsExamStudioV1';
+  const LEGACY_KEY = 'physicsExamQuestionsV1';
+  const loadStoredStudio = () => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return [];
+      if (!raw) return null;
       const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return parsed && typeof parsed === 'object' ? parsed : null;
     } catch (err) {
-      return [];
+      return null;
     }
   };
-  const saveStoredQuestions = (items) => {
+  const saveStoredStudio = (studio) => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(studio));
     } catch (err) {
       // Ignore storage errors
     }
   };
+  const loadLegacyQuestions = () => {
+    try {
+      const raw = localStorage.getItem(LEGACY_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
+  const createDefaultSet = (questionsList) => ({
+    id: `set_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    name: 'Main Exam',
+    questions: Array.isArray(questionsList) ? questionsList : []
+  });
 
-  let questions = loadStoredQuestions();
+  let examStudio = loadStoredStudio();
+  if (!examStudio) {
+    const legacy = loadLegacyQuestions();
+    examStudio = {
+      currentSetId: null,
+      sets: [createDefaultSet(legacy)]
+    };
+    examStudio.currentSetId = examStudio.sets[0].id;
+    saveStoredStudio(examStudio);
+  }
+  if (!Array.isArray(examStudio.sets) || examStudio.sets.length === 0) {
+    examStudio.sets = [createDefaultSet([])];
+  }
+  if (!examStudio.currentSetId || !examStudio.sets.find((s) => s.id === examStudio.currentSetId)) {
+    examStudio.currentSetId = examStudio.sets[0].id;
+  }
+
+  const getCurrentSet = () => examStudio.sets.find((s) => s.id === examStudio.currentSetId) || examStudio.sets[0];
+  const setCurrentSet = (setId) => {
+    examStudio.currentSetId = setId;
+    saveStoredStudio(examStudio);
+  };
+
+  let questions = getCurrentSet().questions;
 
   const setSyncStatus = (message, tone = '') => {
     if (!syncStatusEl) return;
@@ -32759,14 +32798,21 @@ window.initQuestionBank = async () => {
       });
       if (!response.ok) return null;
       const data = await response.json();
-      if (!data || !Array.isArray(data.questions)) return null;
-      return data.questions;
+      if (!data) return null;
+      if (data.examStudio && typeof data.examStudio === 'object') return data.examStudio;
+      if (Array.isArray(data.questions)) {
+        return {
+          currentSetId: null,
+          sets: [createDefaultSet(data.questions)]
+        };
+      }
+      return null;
     } catch (err) {
       return null;
     }
   };
 
-  const saveQuestionsToServer = async (items) => {
+  const saveQuestionsToServer = async (studio) => {
     if (!canSync()) return false;
     try {
       const token = Auth.getToken();
@@ -32776,7 +32822,7 @@ window.initQuestionBank = async () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ examQuestions: items })
+        body: JSON.stringify({ examStudio: studio })
       });
       return response.ok;
     } catch (err) {
@@ -32789,9 +32835,15 @@ window.initQuestionBank = async () => {
     if (syncTimer) clearTimeout(syncTimer);
     setSyncStatus('Saving to cloud...');
     syncTimer = setTimeout(async () => {
-      const ok = await saveQuestionsToServer(questions);
+      const ok = await saveQuestionsToServer(examStudio);
       setSyncStatus(ok ? 'Synced to cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
     }, 600);
+  };
+
+  const persistStudio = () => {
+    const current = getCurrentSet();
+    if (current) current.questions = questions;
+    saveStoredStudio(examStudio);
   };
 
   const form = document.getElementById('examQuestionForm');
@@ -32802,6 +32854,11 @@ window.initQuestionBank = async () => {
   const openField = document.getElementById('examOpenAnswerField');
   const addBtn = document.getElementById('examAddBtn');
   const resetBtn = document.getElementById('examResetBtn');
+  const examSetSelect = document.getElementById('examSetSelect');
+  const examSetNew = document.getElementById('examSetNew');
+  const examSetRename = document.getElementById('examSetRename');
+  const examSetDelete = document.getElementById('examSetDelete');
+  const examExportPdfBtn = document.getElementById('examExportPdfBtn');
   const importPdfBtn = document.getElementById('examImportPdfBtn');
   const importPdfInput = document.getElementById('examImportPdfInput');
   const importDrop = document.getElementById('examImportDrop');
@@ -32821,6 +32878,7 @@ window.initQuestionBank = async () => {
     currentIndex: 0,
     answers: {},
     flagged: {},
+    manualGrades: {},
     startTime: null,
     timerSeconds: 0,
     timerInterval: null,
@@ -32831,12 +32889,14 @@ window.initQuestionBank = async () => {
   const updateExamSummary = () => {
     if (!summaryEl) return;
     const total = questions.length;
+    const currentSet = getCurrentSet();
     const counts = {
       mc: questions.filter((q) => q.type === 'Multiple Choice').length,
       tf: questions.filter((q) => q.type === 'True/False').length,
       oe: questions.filter((q) => q.type === 'Open Ended').length,
     };
     summaryEl.innerHTML = `
+      <div><strong>${currentSet?.name || 'Exam Set'}</strong> <span>(Active set)</span></div>
       <div><strong>${total}</strong> total questions <span>(Your custom pool)</span></div>
       <div><strong>${counts.mc}</strong> multiple choice</div>
       <div><strong>${counts.tf}</strong> true/false</div>
@@ -32859,6 +32919,14 @@ window.initQuestionBank = async () => {
     }).join('');
   };
 
+  const updateExamSetSelect = () => {
+    if (!examSetSelect) return;
+    examSetSelect.innerHTML = examStudio.sets.map((set) => `
+      <option value="${set.id}">${set.name}</option>
+    `).join('');
+    examSetSelect.value = examStudio.currentSetId;
+  };
+
   const ensurePdfWorker = () => {
     if (typeof window === 'undefined') return false;
     if (!window.pdfjsLib) {
@@ -32874,32 +32942,186 @@ window.initQuestionBank = async () => {
     return true;
   };
 
+  const escapeHtml = (value) => {
+    const str = String(value ?? '');
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
   const extractQuestionsFromText = (text) => {
     if (!text) return [];
     const cleaned = text.replace(/\r/g, '\n').replace(/\n{2,}/g, '\n');
-    const numberedSplit = cleaned.split(/\n?\s*(?:Question\s*)?\d+\s*[.)]\s+/i).map((part) => part.trim()).filter(Boolean);
-    let candidates = numberedSplit.length >= 2 ? numberedSplit : [];
-    if (candidates.length === 0) {
-      const questionMatches = cleaned.match(/[^?\n]{8,}\?/g);
-      candidates = questionMatches ? questionMatches.map((q) => q.trim()) : [];
+    const regex = /(?:^|\s)(?:Question\s*)?(\d+)\s*[.)]\s+/gi;
+    const indices = [];
+    let match;
+    while ((match = regex.exec(cleaned)) !== null) {
+      indices.push({ index: match.index + match[0].length });
     }
-    return candidates
-      .map((q) => q.replace(/\s+/g, ' ').trim())
-      .filter((q) => q.length >= 8);
+    if (indices.length === 0) {
+      const questionMatches = cleaned.match(/[^?\n]{8,}\?/g);
+      return questionMatches ? questionMatches.map((q) => ({ text: q.trim() })) : [];
+    }
+    const blocks = indices.map((start, i) => {
+      const end = i + 1 < indices.length ? indices[i + 1].index - 1 : cleaned.length;
+      return { text: cleaned.slice(start.index, end).trim() };
+    });
+    return blocks.filter((b) => b.text.length >= 8);
   };
 
-  const buildImportedQuestion = (text) => ({
-    id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    question: text,
-    type: 'Multiple Choice',
-    difficulty: 'Medium',
-    category: 'Custom',
-    topic: 'Imported',
-    explanation: '',
-    choices: ['Option A', 'Option B', 'Option C', 'Option D'],
-    answerIndex: 0,
-    answer: 'Option A',
-  });
+  const parseChoiceBlock = (text) => {
+    const answerMatch = text.match(/(?:Answer|Ans|Correct|Correct Answer)\s*[:\-]?\s*\(?\s*([A-D])\s*\)?/i);
+    const answerLetter = answerMatch ? answerMatch[1].toUpperCase() : null;
+    const cleaned = text.replace(/(?:Answer|Ans|Correct|Correct Answer)\s*[:\-]?\s*\(?\s*[A-D]\s*\)?\s*$/i, '').trim();
+    const normalized = cleaned.replace(/\(([A-Da-d])\)/g, '$1)');
+    const optionRegex = /(?:^|\s)([A-Da-d])\s*[-\.\):]\s+/g;
+    const matches = [];
+    let m;
+    while ((m = optionRegex.exec(normalized)) !== null) {
+      matches.push({ letter: m[1].toUpperCase(), index: m.index, end: m.index + m[0].length });
+    }
+    if (matches.length >= 2) {
+      const options = matches.map((opt, i) => {
+        const end = i + 1 < matches.length ? matches[i + 1].index : cleaned.length;
+        return normalized.slice(opt.end, end).trim();
+      });
+      const questionText = normalized.slice(0, matches[0].index).trim();
+      return { questionText, options, answerLetter };
+    }
+    return { questionText: normalized, options: null, answerLetter };
+  };
+
+  const computeQuizScores = () => {
+    let correct = 0;
+    let incorrect = 0;
+    let skipped = 0;
+    let ungraded = 0;
+
+    quizState.questions.forEach((q, i) => {
+      const answer = quizState.answers[i];
+      if (q.type === 'Open Ended') {
+        const grade = quizState.manualGrades?.[i];
+        if (grade === 'correct') {
+          correct++;
+        } else if (grade === 'incorrect') {
+          incorrect++;
+        } else {
+          ungraded++;
+          if (!answer) skipped++;
+        }
+        return;
+      }
+      if (answer === undefined || answer === '') {
+        skipped++;
+      } else if (answer === q.answerIndex || answer === q.answer.toLowerCase() || answer === q.answer) {
+        correct++;
+      } else {
+        incorrect++;
+      }
+    });
+
+    const total = quizState.questions.length;
+    const gradedTotal = Math.max(0, total - ungraded);
+    const percent = gradedTotal > 0 ? Math.round((correct / gradedTotal) * 100) : 0;
+    return { correct, incorrect, skipped, ungraded, gradedTotal, percent };
+  };
+
+  const updateResultsDisplay = () => {
+    const { correct, incorrect, skipped, ungraded, gradedTotal, percent } = computeQuizScores();
+    document.getElementById('quizScorePercent').textContent = gradedTotal > 0 ? `${percent}%` : 'N/A';
+    document.getElementById('quizScoreCorrect').textContent = correct;
+    document.getElementById('quizScoreWrong').textContent = incorrect;
+    document.getElementById('quizScoreSkipped').textContent = skipped;
+    document.getElementById('quizScoreUngraded').textContent = ungraded;
+    const gradedNote = document.getElementById('quizGradedNote');
+    if (gradedNote) {
+      gradedNote.textContent = gradedTotal > 0
+        ? `Score based on ${gradedTotal} auto-graded question${gradedTotal === 1 ? '' : 's'}.`
+        : 'No auto-graded questions in this exam.';
+    }
+    const circle = document.getElementById('quizScoreCircle');
+    if (gradedTotal === 0) {
+      circle.style.borderColor = 'rgba(148, 163, 184, 0.7)';
+      circle.style.color = 'rgba(148, 163, 184, 0.7)';
+    } else if (percent >= 80) {
+      circle.style.borderColor = '#4ade80';
+      circle.style.color = '#4ade80';
+    } else if (percent >= 50) {
+      circle.style.borderColor = '#facc15';
+      circle.style.color = '#facc15';
+    } else {
+      circle.style.borderColor = '#f87171';
+      circle.style.color = '#f87171';
+    }
+  };
+
+  const renderManualGradingPanel = () => {
+    const panel = document.getElementById('manualGradingPanel');
+    if (!panel) return;
+    const openEnded = quizState.questions
+      .map((q, i) => ({ q, i }))
+      .filter(({ q }) => q.type === 'Open Ended');
+    if (openEnded.length === 0) {
+      panel.innerHTML = '';
+      return;
+    }
+    panel.innerHTML = `
+      <h4>Manual Grading (Open Ended)</h4>
+      ${openEnded.map(({ q, i }) => {
+        const userAnswer = escapeHtml(quizState.answers[i] || 'No answer provided.');
+        const model = escapeHtml(q.modelAnswer || q.answer || 'No model answer.');
+        const questionText = escapeHtml(q.question || '');
+        const current = quizState.manualGrades?.[i] || '';
+        return `
+          <div class="manual-grading-item" data-index="${i}">
+            <div class="manual-grading-question"><strong>Q${i + 1}:</strong> ${questionText}</div>
+            <div class="manual-grading-answer"><strong>User:</strong> ${userAnswer}</div>
+            <div class="manual-grading-answer"><strong>Model:</strong> ${model}</div>
+            <select class="manual-grading-select">
+              <option value="">Ungraded</option>
+              <option value="correct" ${current === 'correct' ? 'selected' : ''}>Correct</option>
+              <option value="incorrect" ${current === 'incorrect' ? 'selected' : ''}>Incorrect</option>
+            </select>
+          </div>
+        `;
+      }).join('')}
+    `;
+
+    panel.querySelectorAll('.manual-grading-select').forEach((select) => {
+      select.addEventListener('change', (e) => {
+        const item = e.target.closest('.manual-grading-item');
+        if (!item) return;
+        const idx = parseInt(item.dataset.index);
+        if (!quizState.manualGrades) quizState.manualGrades = {};
+        quizState.manualGrades[idx] = e.target.value || '';
+        updateResultsDisplay();
+      });
+    });
+  };
+
+  const buildImportedQuestion = (block) => {
+    const parsed = parseChoiceBlock(block.text || block);
+    const options = parsed.options && parsed.options.length >= 2
+      ? parsed.options
+      : ['Option A', 'Option B', 'Option C', 'Option D'];
+    while (options.length < 4) options.push(`Option ${String.fromCharCode(65 + options.length)}`);
+    const answerIndex = parsed.answerLetter ? Math.max(0, parsed.answerLetter.charCodeAt(0) - 65) : 0;
+    return {
+      id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      question: parsed.questionText || block.text || String(block),
+      type: 'Multiple Choice',
+      difficulty: 'Medium',
+      category: 'Custom',
+      topic: 'Imported',
+      explanation: '',
+      choices: options.slice(0, 4),
+      answerIndex,
+      answer: options[answerIndex] || options[0],
+    };
+  };
 
   const importPdfFile = async (file) => {
     if (!file) return;
@@ -32926,7 +33148,7 @@ window.initQuestionBank = async () => {
       const imported = extracted.map(buildImportedQuestion);
       const replace = window.confirm(`Found ${imported.length} questions. Replace current list? Click Cancel to merge.`);
       questions = ensureUniqueIds(replace ? imported : [...imported, ...questions]);
-      saveStoredQuestions(questions);
+      persistStudio();
       updateExamSummary();
       updateQuestionCountOptions();
       render();
@@ -33055,6 +33277,7 @@ window.initQuestionBank = async () => {
       questions: filtered,
       currentIndex: 0,
       answers: {},
+      manualGrades: {},
       startTime: Date.now(),
       timerSeconds: timerSeconds,
       timerInterval: null,
@@ -33424,75 +33647,23 @@ window.initQuestionBank = async () => {
     quizState.active = false;
     quizState.resultsShown = true;
     
-    // Calculate results
-    let correct = 0;
-    let incorrect = 0;
-    let ungraded = 0;
-    skipped = 0; // Reset for recount
-    
-    quizState.questions.forEach((q, i) => {
-      const answer = quizState.answers[i];
-      if (answer === undefined || answer === '') {
-        skipped++;
-        if (q.type === 'Open Ended') {
-          ungraded++;
-        }
-      } else if (q.type === 'Open Ended') {
-        // Open ended - can't auto-grade
-        ungraded++;
-      } else if (answer === q.answerIndex || answer === q.answer.toLowerCase() || answer === q.answer) {
-        correct++;
-      } else {
-        incorrect++;
-      }
-    });
-    
-    const total = quizState.questions.length;
-    const gradedTotal = Math.max(0, total - ungraded);
-    const percent = gradedTotal > 0 ? Math.round((correct / gradedTotal) * 100) : 0;
-    
     // Show results
     document.getElementById('quizActive').style.display = 'none';
     document.getElementById('quizResults').style.display = 'block';
-    
-    document.getElementById('quizScorePercent').textContent = gradedTotal > 0 ? `${percent}%` : 'N/A';
-    document.getElementById('quizScoreCorrect').textContent = correct;
-    document.getElementById('quizScoreWrong').textContent = incorrect;
-    document.getElementById('quizScoreSkipped').textContent = skipped;
-    document.getElementById('quizScoreUngraded').textContent = ungraded;
-    
+
     const elapsed = Math.floor((Date.now() - quizState.startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
     document.getElementById('quizTimeUsed').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    const gradedNote = document.getElementById('quizGradedNote');
-    if (gradedNote) {
-      gradedNote.textContent = gradedTotal > 0
-        ? `Score based on ${gradedTotal} auto-graded question${gradedTotal === 1 ? '' : 's'}.`
-        : 'No auto-graded questions in this exam.';
-    }
-    
-    // Score circle color
-    const circle = document.getElementById('quizScoreCircle');
-    if (gradedTotal === 0) {
-      circle.style.borderColor = 'rgba(148, 163, 184, 0.7)';
-      circle.style.color = 'rgba(148, 163, 184, 0.7)';
-    } else if (percent >= 80) {
-      circle.style.borderColor = '#4ade80';
-      circle.style.color = '#4ade80';
-    } else if (percent >= 50) {
-      circle.style.borderColor = '#facc15';
-      circle.style.color = '#facc15';
-    } else {
-      circle.style.borderColor = '#f87171';
-      circle.style.color = '#f87171';
-    }
+    updateResultsDisplay();
+    renderManualGradingPanel();
 
     // Track achievements
     if (typeof AchievementTracker !== 'undefined') {
+      const scores = computeQuizScores();
       AchievementTracker.onQuizComplete({
-        questionsAnswered: gradedTotal,
-        correctAnswers: correct,
+        questionsAnswered: scores.gradedTotal,
+        correctAnswers: scores.correct,
         timeSeconds: elapsed,
         difficulty: quizState.difficulty,
         mode: quizState.mode,
@@ -33522,6 +33693,7 @@ window.initQuestionBank = async () => {
       currentIndex: 0,
       answers: {},
       flagged: {},
+      manualGrades: {},
       startTime: null,
       timerSeconds: 0,
       timerInterval: null,
@@ -33831,9 +34003,11 @@ window.initQuestionBank = async () => {
       render();
     });
   });
+  let searchDebounce;
   safeAddEventListener(searchInput, 'input', () => {
     currentPage = 1;
-    render();
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(render, 150);
   });
 
   const syncTypeFields = () => {
@@ -33943,7 +34117,7 @@ window.initQuestionBank = async () => {
       } else {
         questions = [newQuestion, ...questions];
       }
-      saveStoredQuestions(questions);
+      persistStudio();
       updateExamSummary();
       updateQuestionCountOptions();
       render();
@@ -33988,6 +34162,116 @@ window.initQuestionBank = async () => {
     });
   }
 
+  if (examSetSelect) {
+    updateExamSetSelect();
+    safeAddEventListener(examSetSelect, 'change', (e) => {
+      const nextId = e.target.value;
+      setCurrentSet(nextId);
+      questions = getCurrentSet().questions;
+      currentPage = 1;
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      scheduleServerSave();
+    });
+  }
+
+  if (examSetNew) {
+    safeAddEventListener(examSetNew, 'click', () => {
+      const name = window.prompt('New exam set name:', 'New Exam');
+      if (!name) return;
+      const newSet = {
+        id: `set_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        name: name.trim(),
+        questions: []
+      };
+      examStudio.sets.push(newSet);
+      setCurrentSet(newSet.id);
+      questions = newSet.questions;
+      currentPage = 1;
+      updateExamSetSelect();
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      scheduleServerSave();
+    });
+  }
+
+  if (examSetRename) {
+    safeAddEventListener(examSetRename, 'click', () => {
+      const current = getCurrentSet();
+      if (!current) return;
+      const name = window.prompt('Rename exam set:', current.name);
+      if (!name) return;
+      current.name = name.trim();
+      updateExamSetSelect();
+      persistStudio();
+      scheduleServerSave();
+    });
+  }
+
+  if (examSetDelete) {
+    safeAddEventListener(examSetDelete, 'click', () => {
+      if (examStudio.sets.length <= 1) {
+        alert('You must keep at least one exam set.');
+        return;
+      }
+      const current = getCurrentSet();
+      if (!current) return;
+      const confirmed = window.confirm(`Delete "${current.name}"? This cannot be undone.`);
+      if (!confirmed) return;
+      examStudio.sets = examStudio.sets.filter((s) => s.id !== current.id);
+      const next = examStudio.sets[0];
+      setCurrentSet(next.id);
+      questions = next.questions;
+      currentPage = 1;
+      updateExamSetSelect();
+      updateExamSummary();
+      updateQuestionCountOptions();
+      render();
+      scheduleServerSave();
+    });
+  }
+
+  if (examExportPdfBtn) {
+    safeAddEventListener(examExportPdfBtn, 'click', () => {
+      const current = getCurrentSet();
+      const title = current?.name || 'Exam Set';
+      const html = `
+        <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
+            h1 { font-size: 20px; margin-bottom: 16px; }
+            .q { margin-bottom: 16px; }
+            .q-title { font-weight: 600; margin-bottom: 6px; }
+            .opt { margin-left: 16px; }
+          </style>
+        </head>
+        <body>
+          <h1>${title}</h1>
+          ${(current?.questions || []).map((q, i) => `
+            <div class="q">
+              <div class="q-title">${i + 1}. ${escapeHtml(q.question)}</div>
+              ${(q.choices || []).map((c, idx) => `<div class="opt">${String.fromCharCode(65 + idx)}) ${escapeHtml(c)}</div>`).join('')}
+            </div>
+          `).join('')}
+        </body>
+        </html>
+      `;
+      const win = window.open('', '_blank');
+      if (!win) {
+        alert('Popup blocked. Allow popups to export PDF.');
+        return;
+      }
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      win.print();
+    });
+  }
+
   safeAddEventListener(listEl, 'click', (e) => {
     const button = e.target.closest('.question-action-btn');
     if (!button) return;
@@ -34000,7 +34284,7 @@ window.initQuestionBank = async () => {
       const confirmed = window.confirm('Delete this question?');
       if (!confirmed) return;
       questions = questions.filter((q) => q.id !== id);
-      saveStoredQuestions(questions);
+      persistStudio();
       updateExamSummary();
       updateQuestionCountOptions();
       render();
@@ -34081,29 +34365,47 @@ window.initQuestionBank = async () => {
   });
 
   updateExamSummary();
+  updateExamSetSelect();
   updateQuestionCountOptions();
   syncTypeFields();
   render();
 
   if (canSync()) {
     setSyncStatus('Checking cloud data...');
-    loadQuestionsFromServer().then((serverQuestions) => {
-      if (Array.isArray(serverQuestions) && serverQuestions.length > 0) {
-        const normalized = serverQuestions.map(normalizeQuestion).filter(Boolean);
-        if (questions.length > 0) {
-          questions = ensureUniqueIds([...normalized, ...questions]);
-        } else {
-          questions = ensureUniqueIds(normalized);
-        }
-        saveStoredQuestions(questions);
+    loadQuestionsFromServer().then((serverStudio) => {
+      if (serverStudio && Array.isArray(serverStudio.sets)) {
+        const localById = new Map(examStudio.sets.map((s) => [s.id, s]));
+        const mergedSets = serverStudio.sets.map((set) => {
+          const normalizedQuestions = (set.questions || []).map(normalizeQuestion).filter(Boolean);
+          const localSet = localById.get(set.id);
+          if (!localSet) {
+            return { ...set, questions: normalizedQuestions };
+          }
+          const combined = [...normalizedQuestions, ...(localSet.questions || [])];
+          const seenQ = new Set();
+          const mergedQuestions = combined.filter((q) => {
+            if (!q || !q.id) return false;
+            if (seenQ.has(q.id)) return false;
+            seenQ.add(q.id);
+            return true;
+          });
+          return { ...localSet, name: localSet.name || set.name, questions: mergedQuestions };
+        });
+        const serverIds = new Set(mergedSets.map((s) => s.id));
+        const localOnly = examStudio.sets.filter((s) => !serverIds.has(s.id));
+        examStudio.sets = [...mergedSets, ...localOnly];
+        examStudio.currentSetId = serverStudio.currentSetId || examStudio.sets[0]?.id;
+        questions = getCurrentSet().questions;
+        persistStudio();
+        updateExamSetSelect();
         updateExamSummary();
         updateQuestionCountOptions();
         render();
-        saveQuestionsToServer(questions).then((ok) => {
+        saveQuestionsToServer(examStudio).then((ok) => {
           setSyncStatus(ok ? 'Merged with cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
         });
       } else if (questions.length > 0) {
-        saveQuestionsToServer(questions).then((ok) => {
+        saveQuestionsToServer(examStudio).then((ok) => {
           setSyncStatus(ok ? 'Synced to cloud.' : 'Cloud sync failed. Using local only.', ok ? 'success' : 'error');
         });
       } else {
