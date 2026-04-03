@@ -1425,34 +1425,24 @@
           
           if (data.success && data.iframeToken) {
             const iframeContainer = document.getElementById('paymobIframeContainer');
-            iframeContainer.innerHTML = `
-              <iframe 
-                id="paymobIframe"
-                src="https://accept.paymob.com/api/acceptance/iframes/${data.integrationId}?payment_token=${data.iframeToken}" 
-                width="100%" 
-                height="500" 
-                frameborder="0"
-                allowpaymentrequest
-              ></iframe>
-            `;
-            iframeContainer.style.display = 'block';
+            iframeContainer.innerHTML = '';
+            iframeContainer.style.display = 'none';
             document.getElementById('paymobSpinner').style.display = 'none';
-            document.getElementById('paymobStep3Title').textContent = 'Complete Payment';
-            document.getElementById('paymobStep3Text').textContent = 'Enter your card details in the form below';
-            
-            // Poll for iframe completion
-            const checkPayment = setInterval(async () => {
-              try {
-                const iframe = document.getElementById('paymobIframe');
-                if (!iframe || iframe.src.includes('success') || iframe.contentWindow?.location?.href?.includes('success')) {
-                  clearInterval(checkPayment);
-                  await completeSubscription(data.paymobOrderId);
-                }
-              } catch (e) {}
-            }, 2000);
-            
-            // Timeout after 30 minutes
-            setTimeout(() => clearInterval(checkPayment), 30 * 60 * 1000);
+            document.getElementById('paymobStep3Title').textContent = 'Redirecting to secure payment...';
+            document.getElementById('paymobStep3Text').textContent = 'If you are not redirected, click the button below.';
+
+            const paymobUrl = `https://accept.paymob.com/api/acceptance/iframes/${data.integrationId}?payment_token=${data.iframeToken}`;
+
+            const fallbackBtn = document.createElement('button');
+            fallbackBtn.className = 'btn primary';
+            fallbackBtn.textContent = 'Open Secure Payment';
+            fallbackBtn.addEventListener('click', () => {
+              window.location.href = paymobUrl;
+            });
+            const step3 = document.getElementById('paymobStep3');
+            step3.appendChild(fallbackBtn);
+
+            window.location.href = paymobUrl;
           } else {
             throw new Error(data.error || 'Failed to get payment token');
           }
