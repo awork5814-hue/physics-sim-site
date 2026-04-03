@@ -1340,6 +1340,22 @@
         if (radio) radio.checked = true;
       }
       updateCurrency();
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymobStatus = urlParams.get('paymob');
+      if (paymobStatus) {
+        const plan = urlParams.get('plan');
+        const amount = urlParams.get('amount');
+        const message = urlParams.get('message');
+        const hmacInvalid = urlParams.get('hmac') === 'invalid';
+        if (hmacInvalid) {
+          showNotice('Payment status could not be verified. Please contact support.', 'error');
+        } else if (paymobStatus === 'success') {
+          showNotice(`Payment successful${plan ? ` (${plan})` : ''}${amount ? ` - ${amount} EGP` : ''}.`, 'success');
+        } else {
+          showNotice(`Payment failed${message ? `: ${message}` : ''}.`, 'error');
+        }
+      }
       
       // Paymob Modal Functions
       function openPaymobModal(plan, amount) {
@@ -1433,13 +1449,16 @@
 
             const paymobUrl = `https://accept.paymob.com/api/acceptance/iframes/${data.integrationId}?payment_token=${data.iframeToken}`;
 
+            const step3 = document.getElementById('paymobStep3');
+            const existingBtn = step3.querySelector('.paymob-redirect-btn');
+            if (existingBtn) existingBtn.remove();
+
             const fallbackBtn = document.createElement('button');
-            fallbackBtn.className = 'btn primary';
+            fallbackBtn.className = 'btn primary paymob-redirect-btn';
             fallbackBtn.textContent = 'Open Secure Payment';
             fallbackBtn.addEventListener('click', () => {
               window.location.href = paymobUrl;
             });
-            const step3 = document.getElementById('paymobStep3');
             step3.appendChild(fallbackBtn);
 
             window.location.href = paymobUrl;

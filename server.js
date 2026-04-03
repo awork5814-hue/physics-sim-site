@@ -8,6 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 
@@ -120,7 +121,8 @@ async function initTables() {
     const createUserData = libsqlClient.execute('CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, favorites TEXT DEFAULT \'[]\', achievements TEXT DEFAULT \'[]\', quiz_progress TEXT DEFAULT \'{}\', streak_count INTEGER DEFAULT 0, streak_last_date TEXT, settings TEXT DEFAULT \'{}\', local_storage_data TEXT DEFAULT \'{}\')');
     const createSubscriptions = libsqlClient.execute('CREATE TABLE IF NOT EXISTS subscriptions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, plan TEXT NOT NULL, amount INTEGER NOT NULL, currency TEXT DEFAULT \'EGP\', txn_id TEXT, paymob_order_id TEXT, status TEXT DEFAULT \'active\', created_at TEXT, expires_at TEXT)');
     const createPaymentEvents = libsqlClient.execute('CREATE TABLE IF NOT EXISTS payment_events (id INTEGER PRIMARY KEY AUTOINCREMENT, provider TEXT NOT NULL, event_type TEXT NOT NULL, status TEXT NOT NULL, order_id TEXT, amount INTEGER, currency TEXT, user_id TEXT, txn_id TEXT, payload TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
-    await Promise.all([createUsers, createUserData, createSubscriptions, createPaymentEvents]);
+    const createPaymobOrders = libsqlClient.execute('CREATE TABLE IF NOT EXISTS paymob_orders (id INTEGER PRIMARY KEY AUTOINCREMENT, paymob_order_id TEXT, merchant_order_id TEXT, user_id TEXT, plan TEXT, amount INTEGER, currency TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');
+    await Promise.all([createUsers, createUserData, createSubscriptions, createPaymentEvents, createPaymobOrders]);
     console.log('All tables created');
   } catch (e) {
     console.log('Table error:', e.message);
@@ -887,6 +889,47 @@ function logPaymentEvent({
   }
 }
 
+function normalizePaymobField(value) {
+  if (value === undefined || value === null) return '';
+  return String(value);
+}
+
+function computePaymobHmacFromQuery(query, secret) {
+  if (!secret) return null;
+  const fields = [
+    'amount_cents',
+    'created_at',
+    'currency',
+    'error_occured',
+    'has_parent_transaction',
+    'id',
+    'integration_id',
+    'is_3d_secure',
+    'is_auth',
+    'is_capture',
+    'is_refunded',
+    'is_standalone_payment',
+    'is_voided',
+    'order.id',
+    'owner',
+    'pending',
+    'source_data.pan',
+    'source_data.sub_type',
+    'source_data.type',
+    'success'
+  ];
+
+  const valueFor = (key) => {
+    if (key === 'order.id') {
+      return normalizePaymobField(query['order.id'] ?? query.order);
+    }
+    return normalizePaymobField(query[key]);
+  };
+
+  const concatenated = fields.map(valueFor).join('');
+  return crypto.createHmac('sha512', secret).update(concatenated).digest('hex');
+}
+
 function activateSubscription(userId, plan, amount, currency, txnId, paymobOrderId) {
   const planInfo = PLANS[plan];
   if (!planInfo) {
@@ -1123,6 +1166,14 @@ app.post('/api/paymob/create-order', async (req, res) => {
 
     const authToken = await getAuthToken();
     const { orderId, merchantOrderId } = await createPaymobOrder(authToken, amountCents, user);
+    try {
+      await db.prepare(`
+        INSERT INTO paymob_orders (paymob_order_id, merchant_order_id, user_id, plan, amount, currency)
+        VALUES (?, ?, ?, ?, ?, ?)
+      `).run(orderId, merchantOrderId, userId, plan, planInfo.amountEGP, 'EGP');
+    } catch (e) {
+      console.log('paymob_orders insert skipped:', e.message);
+    }
     const paymentKey = await getPaymentKey(authToken, amountCents, orderId, user, userEmail);
 
     console.log(`Order created successfully: ${merchantOrderId}`);
@@ -1331,7 +1382,7 @@ app.post('/api/paytabs/return', (req, res) => {
   res.redirect(303, redirectUrl.toString());
 });
 
-app.post('/api/paymob/webhook', express.json(), (req, res) => {
+app.post('/api/paymob/webhook', express.json(), async (req, res) => {
   const { type, data } = req.body;
   
   if (type === 'TRANSACTION' && data.success) {
@@ -1340,6 +1391,27 @@ app.post('/api/paymob/webhook', express.json(), (req, res) => {
       amount: data.amount_cents / 100,
       txn: data.id
     });
+    try {
+      const order = await db.prepare(`
+        SELECT paymob_order_id, merchant_order_id, user_id, plan, amount, currency
+        FROM paymob_orders
+        WHERE paymob_order_id = ? OR merchant_order_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+      `).get(data.order, data.order);
+      if (order?.user_id && order?.plan) {
+        activateSubscription(
+          order.user_id,
+          order.plan,
+          order.amount,
+          order.currency || 'EGP',
+          data.id,
+          order.paymob_order_id || data.order
+        );
+      }
+    } catch (e) {
+      console.log('Paymob webhook activation skipped:', e.message);
+    }
   }
 
   logPaymentEvent({
@@ -1354,6 +1426,80 @@ app.post('/api/paymob/webhook', express.json(), (req, res) => {
   });
   
   res.json({ received: true });
+});
+
+app.get('/api/paymob/return', async (req, res) => {
+  const query = req.query || {};
+  const hmacProvided = normalizePaymobField(query.hmac).toLowerCase();
+  const expectedHmac = computePaymobHmacFromQuery(query, PAYMOB_WEBHOOK_SECRET);
+  const hmacValid = !PAYMOB_WEBHOOK_SECRET || (expectedHmac && hmacProvided === expectedHmac.toLowerCase());
+
+  const success = normalizePaymobField(query.success) === 'true';
+  const orderId = normalizePaymobField(query.order || query['order.id']);
+  const txnId = normalizePaymobField(query.id);
+  const amount = Number(query.amount_cents || 0) / 100;
+  const currency = normalizePaymobField(query.currency || 'EGP');
+  const message = normalizePaymobField(query['data.message']);
+
+  if (!hmacValid) {
+    logPaymentEvent({
+      provider: 'paymob',
+      eventType: 'return.hmac_invalid',
+      status: 'failed',
+      orderId,
+      amount,
+      currency,
+      txnId,
+      payload: { query }
+    });
+  } else {
+    logPaymentEvent({
+      provider: 'paymob',
+      eventType: 'return',
+      status: success ? 'success' : 'failed',
+      orderId,
+      amount,
+      currency,
+      txnId,
+      payload: { query }
+    });
+  }
+
+  let order = null;
+  if (success && hmacValid && orderId) {
+    try {
+      order = await db.prepare(`
+        SELECT paymob_order_id, merchant_order_id, user_id, plan, amount, currency
+        FROM paymob_orders
+        WHERE paymob_order_id = ? OR merchant_order_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+      `).get(orderId, orderId);
+      if (order?.user_id && order?.plan) {
+        activateSubscription(
+          order.user_id,
+          order.plan,
+          order.amount,
+          order.currency || 'EGP',
+          txnId || orderId,
+          order.paymob_order_id || orderId
+        );
+      }
+    } catch (e) {
+      console.log('Paymob return activation skipped:', e.message);
+    }
+  }
+
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  const redirectUrl = new URL('/pricing.html', baseUrl);
+  redirectUrl.searchParams.set('paymob', success ? 'success' : 'failed');
+  if (order?.plan) redirectUrl.searchParams.set('plan', order.plan);
+  if (order?.amount) redirectUrl.searchParams.set('amount', order.amount);
+  if (txnId) redirectUrl.searchParams.set('txn_id', txnId);
+  if (message) redirectUrl.searchParams.set('message', message);
+  if (!hmacValid) redirectUrl.searchParams.set('hmac', 'invalid');
+
+  res.redirect(303, redirectUrl.toString());
 });
 
 app.get('/api/paymob/health', (req, res) => {
