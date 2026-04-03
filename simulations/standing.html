@@ -1,332 +1,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Standing Waves</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/simulation-theme.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0c131d;
-      --panel: #142131;
-      --ink: #f5f8fd;
-      --muted: #a9b6c6;
       --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --line: rgba(255,255,255,0.08);
+      --wave: #a78bfa;
+      --node: #ff6b6b;
+      --antinode: #22c55e;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
     }
-    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      background: radial-gradient(900px 600px at 10% -10%, #1a2433 0%, var(--bg) 60%);
-      color: var(--ink);
-      font-family: "Trebuchet MS", Verdana, sans-serif;
-    }
-    header {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--line);
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; }
-    header .subtitle { color: var(--muted); font-size: 13px; }
-
-    .wrap { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; padding: 16px; }
-    .card {
-      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
     }
 
-    canvas { width: 100%; height: 420px; background: #0b0f14; border-radius: 10px; border: 1px solid var(--line); }
+    .page { min-height: 100vh; display: flex; flex-direction: column; }
 
-    .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .control {
-      background: #0f151c;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 13px;
-      color: var(--muted);
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
     }
-    .control label { display: block; margin-bottom: 6px; color: var(--ink); }
-    .control input[type="range"] { width: 100%; }
-    .control select { width: 100%; background: #0c1116; border: 1px solid var(--line); color: var(--ink); padding: 6px; border-radius: 6px; }
-    .control .row { display: flex; justify-content: space-between; }
 
-    .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 12px; }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
 
-    .readout {
-      font-family: "Consolas", "SFMono-Regular", monospace;
-      background: #0c1116;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 12px;
-      line-height: 1.5;
-      white-space: pre;
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
+
+    header.hero {
+      text-align: center; padding: 24px 20px 12px;
+    }
+
+    header.hero h1 {
+      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin: 0 0 8px; color: var(--accent);
+    }
+
+    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.95rem; }
+
+    .layout {
+      display: grid; grid-template-columns: 1.2fr 340px; gap: 24px;
+      padding: 12px 28px 24px;
+    }
+
+    .panel {
+      background: var(--panel); border: 1px solid var(--sim-border);
+      border-radius: 18px; padding: 18px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
+    }
+
+    .panel-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--sim-muted); margin-bottom: 14px;
+    }
+
+    canvas {
+      width: 100%; height: 400px; background: #050810;
+      border-radius: 14px; border: 1px solid var(--sim-border);
+    }
+
+    .controls { display: flex; flex-direction: column; gap: 16px; }
+
+    .control-group {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px;
+    }
+
+    .control-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; color: var(--sim-muted); margin-bottom: 10px;
+    }
+
+    .control-label strong { color: var(--accent); font-weight: 500; }
+
+    input[type="range"] { width: 100%; }
+
+    select {
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--sim-border); background: #0b1420;
+      color: var(--sim-text); font-size: 0.9rem;
+    }
+
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px; text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.4rem; font-weight: 700; color: var(--accent);
+    }
+
+    .stat-label {
+      font-size: 0.7rem; color: var(--sim-muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 4px;
+    }
+
+    .stat-card.wavelength .stat-value { color: var(--wave); }
+    .stat-card.frequency .stat-value { color: var(--accent-2); }
+    .stat-card.nodes .stat-value { color: var(--node); }
+    .stat-card.antinodes .stat-value { color: var(--antinode); }
+
+    .formula-box {
+      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 10px; padding: 14px; text-align: center;
     }
 
     .formula {
-      margin-top: 10px;
-      font-family: "Consolas", "SFMono-Regular", monospace;
-      background: #0c1116;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 10px;
-      font-size: 12px;
-      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace; font-size: 0.95rem;
+      color: #a78bfa; margin-bottom: 6px;
     }
 
-    footer { padding: 0 16px 16px; color: var(--muted); font-size: 12px; }
+    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); }
+
+    .harmonic-presets {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    .preset-btn {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(11, 20, 32, 0.8); color: var(--sim-text);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(106, 215, 255, 0.15);
+      border-color: var(--accent);
+    }
+
+    .preset-btn.active {
+      background: rgba(106, 215, 255, 0.25);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .wave-type-selector {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    }
+
+    .wave-type-btn {
+      padding: 10px 8px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(11, 20, 32, 0.8); color: var(--sim-text);
+      font-size: 0.8rem; cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+
+    .wave-type-btn:hover { background: rgba(106, 215, 255, 0.15); }
+
+    .wave-type-btn.active {
+      background: rgba(106, 215, 255, 0.25);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .wave-type-btn .icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+
+    @media (max-width: 980px) {
+      .layout { grid-template-columns: 1fr; }
+      canvas { height: 300px; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Standing Waves</h1>
-    <div class="subtitle">Nodes, antinodes, and harmonic modes on a string or pipe</div>
-  </header>
-
-  <div class="wrap">
-    <div class="card">
-      <canvas id="scene" width="960" height="420"></canvas>
-      <div class="formula" id="formulaBox"></div>
+  <div class="page">
+    <div class="topbar">
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
     </div>
 
-    <div class="card">
-      <div class="controls">
-        <div class="control">
-          <label>Harmonic Mode (n)</label>
-          <input id="harmonic" type="range" min="1" max="8" step="1" value="1" />
-          <div class="row"><span>1</span><span id="harmonicVal">1</span><span>8</span></div>
-        </div>
-        <div class="control">
-          <label>Amplitude</label>
-          <input id="amplitude" type="range" min="10" max="80" step="1" value="50" />
-          <div class="row"><span>10</span><span id="amplitudeVal">50</span><span>80</span></div>
-        </div>
-        <div class="control">
-          <label>Wave Speed v (m/s)</label>
-          <input id="speed" type="range" min="0.5" max="5" step="0.1" value="2" />
-          <div class="row"><span>0.5</span><span id="speedVal">2.0</span><span>5.0</span></div>
-        </div>
-        <div class="control">
-          <label>Medium Length L (m)</label>
-          <input id="length" type="range" min="1" max="10" step="0.5" value="5" />
-          <div class="row"><span>1</span><span id="lengthVal">5.0</span><span>10</span></div>
-        </div>
-        <div class="control">
-          <label>Tension T (N)</label>
-          <input id="tension" type="range" min="1" max="50" step="1" value="10" />
-          <div class="row"><span>1</span><span id="tensionVal">10</span><span>50</span></div>
-        </div>
-        <div class="control">
-          <label>Linear Density μ (kg/m)</label>
-          <input id="mu" type="range" min="0.01" max="0.2" step="0.01" value="0.05" />
-          <div class="row"><span>0.01</span><span id="muVal">0.05</span><span>0.20</span></div>
-        </div>
-        <div class="control">
-          <label>Wave Type</label>
-          <select id="waveType">
-            <option value="string">Fixed Ends (String)</option>
-            <option value="open">Open Pipe</option>
-            <option value="closed">Closed Pipe</option>
-          </select>
-        </div>
-        <div class="control">
-          <label>Display Options</label>
-          <div class="checks">
-            <label><input id="showTravel" type="checkbox" /> Traveling waves</label>
-            <label><input id="showNodes" type="checkbox" checked /> Nodes/Antinodes</label>
-          </div>
-        </div>
+    <header class="hero">
+      <h1>Standing Waves</h1>
+      <p>Visualize nodes, antinodes, and harmonic modes on strings and pipes</p>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <canvas id="simCanvas"></canvas>
       </div>
 
-      <div style="margin-top: 12px;" class="readout" id="readout"></div>
-    </div>
+      <div class="controls">
+        <div class="control-group">
+          <div class="panel-title">Wave Properties</div>
+          <div class="stats-grid">
+            <div class="stat-card wavelength">
+              <div class="stat-value" id="wavelengthValue">10.0 m</div>
+              <div class="stat-label">Wavelength (λ)</div>
+            </div>
+            <div class="stat-card frequency">
+              <div class="stat-value" id="frequencyValue">20.0 Hz</div>
+              <div class="stat-label">Frequency (f)</div>
+            </div>
+            <div class="stat-card nodes">
+              <div class="stat-value" id="nodesValue">2</div>
+              <div class="stat-label">Nodes</div>
+            </div>
+            <div class="stat-card antinodes">
+              <div class="stat-value" id="antinodesValue">1</div>
+              <div class="stat-label">Antinodes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="panel-title">Wave Type</div>
+          <div class="wave-type-selector">
+            <button class="wave-type-btn active" data-type="string">
+              <span class="icon">〰️</span>
+              Fixed Ends
+            </button>
+            <button class="wave-type-btn" data-type="open">
+              <span class="icon">|→←|</span>
+              Open Pipe
+            </button>
+            <button class="wave-type-btn" data-type="closed">
+              <span class="icon">|→■</span>
+              Closed Pipe
+            </button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <div class="panel-title">Harmonic (n)</div>
+          <div class="harmonic-presets">
+            <button class="preset-btn active" data-n="1">1st</button>
+            <button class="preset-btn" data-n="2">2nd</button>
+            <button class="preset-btn" data-n="3">3rd</button>
+            <button class="preset-btn" data-n="4">4th</button>
+            <button class="preset-btn" data-n="5">5th</button>
+          </div>
+          <div class="control-label" style="margin-top: 12px;">
+            <span>Harmonic Number</span>
+            <strong id="valHarmonic">1</strong>
+          </div>
+          <input type="range" id="harmonicSlider" min="1" max="8" value="1" step="1" />
+        </div>
+
+        <div class="control-group">
+          <div class="panel-title">Parameters</div>
+          <div class="control-label">
+            <span>Length (L)</span>
+            <strong id="valLength">5.0 m</strong>
+          </div>
+          <input type="range" id="lengthSlider" min="1" max="10" value="5" step="0.5" />
+
+          <div class="control-label" style="margin-top: 12px;">
+            <span>Tension (T)</span>
+            <strong id="valTension">20 N</strong>
+          </div>
+          <input type="range" id="tensionSlider" min="1" max="100" value="20" step="1" />
+
+          <div class="control-label" style="margin-top: 12px;">
+            <span>Amplitude</span>
+            <strong id="valAmplitude">60</strong>
+          </div>
+          <input type="range" id="amplitudeSlider" min="20" max="100" value="60" step="5" />
+        </div>
+
+        <div class="formula-box">
+          <div class="formula">v = √(T/μ) &nbsp; fₙ = nv/2L</div>
+          <div class="formula-desc" id="formulaDesc">Fixed ends: λₙ = 2L/n</div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <footer>
-    Standing wave: y(x,t) = A sin(kx) cos(ωt). For fixed ends, λ = 2L/n and f = nv/(2L).
-  </footer>
-
   <script>
-    const canvas = document.getElementById('scene');
+    const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
-    const state = {
-      n: 1,
-      amplitude: 50,
-      v: 2,
-      L: 5,
-      T: 10,
-      mu: 0.05,
-      showTraveling: false,
-      showNodes: true,
-      waveType: 'string',
-      time: 0
-    };
+    const harmonicSlider = document.getElementById('harmonicSlider');
+    const lengthSlider = document.getElementById('lengthSlider');
+    const tensionSlider = document.getElementById('tensionSlider');
+    const amplitudeSlider = document.getElementById('amplitudeSlider');
+    const waveTypeBtns = document.querySelectorAll('.wave-type-btn');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+
+    let n = 1;
+    let L = 5;
+    let T = 20;
+    let amplitude = 60;
+    let waveType = 'string';
+    let time = 0;
+
+    const mu = 0.01;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      ctx.scale(2, 2);
+    }
 
     function getWaveSpeed() {
-      return Math.sqrt(state.T / state.mu);
+      return Math.sqrt(T / mu);
     }
 
     function getWavelength() {
-      if (state.waveType === 'open') return 2 * state.L / state.n;
-      if (state.waveType === 'closed') return 4 * state.L / (2 * state.n - 1);
-      return 2 * state.L / state.n;
+      if (waveType === 'open') return 2 * L / n;
+      if (waveType === 'closed') return 4 * L / (2 * n - 1);
+      return 2 * L / n;
     }
 
     function getFrequency() {
-      return state.n * getWaveSpeed() / (2 * state.L);
+      return n * getWaveSpeed() / (2 * L);
     }
 
-    function drawBackground() {
-      ctx.fillStyle = '#0b0f14';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      for (let x = 0; x < canvas.width; x += 80) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    function getNodes() {
+      if (waveType === 'closed') return 2 * n;
+      return n + 1;
+    }
+
+    function getAntinodes() {
+      if (waveType === 'closed') return 2 * n - 1;
+      return n;
+    }
+
+    function drawGrid() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
       }
     }
 
-    function drawWave() {
-      const mid = canvas.height / 2;
-      const left = 80;
-      const right = canvas.width - 80;
-      const lengthPx = right - left;
-      const k = 2 * Math.PI / getWavelength();
-      const w = 2 * Math.PI * getFrequency();
+    function drawBoundary() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const y = h / 2 + 100;
 
-      ctx.strokeStyle = '#6ad7ff';
-      ctx.lineWidth = 2;
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillRect(margin - 10, y - 5, 20, 10);
+      ctx.fillRect(w - margin - 10, y - 5, 20, 10);
+
+      ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
+      ctx.font = 'bold 11px IBM Plex Sans';
+      ctx.textAlign = 'center';
+      ctx.fillText('Fixed', margin, y + 25);
+      if (waveType === 'string') {
+        ctx.fillText('End', margin, y + 38);
+      }
+      ctx.textAlign = 'left';
+
+      if (waveType === 'closed') {
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillRect(w - margin - 10, y - 100, 20, 100);
+        ctx.fillStyle = 'rgba(255, 107, 107, 0.5)';
+        ctx.fillRect(w - margin - 10, y - 100, 20, 5);
+        
+        ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
+        ctx.font = 'bold 11px IBM Plex Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText('Closed', w - margin, y + 25);
+        ctx.textAlign = 'left';
+      } else if (waveType === 'open') {
+        ctx.strokeStyle = 'rgba(106, 215, 255, 0.5)';
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w - margin, y - 80);
+        ctx.lineTo(w - margin, y + 5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = 'rgba(106, 215, 255, 0.8)';
+        ctx.font = 'bold 11px IBM Plex Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText('Open', w - margin, y + 25);
+        ctx.textAlign = 'left';
+      }
+    }
+
+    function drawStandingWave() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const centerY = h / 2 + 100;
+      const lengthPx = w - margin * 2;
+
+      const k = 2 * Math.PI / (L * 40);
+      const w_omega = 2 * Math.PI * getFrequency() * 0.5;
+
+      const gradient = ctx.createLinearGradient(margin, 0, w - margin, 0);
+      gradient.addColorStop(0, '#a78bfa');
+      gradient.addColorStop(0.5, '#6ad7ff');
+      gradient.addColorStop(1, '#a78bfa');
+
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      for (let i = 0; i <= 300; i++) {
-        const x = left + (i / 300) * lengthPx;
-        const xPhys = (i / 300) * state.L;
-        let y = state.amplitude * Math.sin(k * xPhys) * Math.cos(w * state.time);
 
-        // boundary conditions
-        if (state.waveType === 'closed') {
-          y = state.amplitude * Math.sin(k * xPhys) * Math.cos(w * state.time);
+      for (let i = 0; i <= 500; i++) {
+        const x = margin + (i / 500) * lengthPx;
+        const xPhys = (i / 500) * L;
+        let y = amplitude * Math.sin(k * xPhys) * Math.cos(w_omega * time);
+
+        if (waveType === 'closed') {
+          const closedK = 2 * Math.PI / getWavelength();
+          y = amplitude * Math.abs(Math.sin(closedK * xPhys * 40)) * Math.cos(w_omega * time);
         }
 
-        if (i === 0) ctx.moveTo(x, mid + y);
-        else ctx.lineTo(x, mid + y);
+        if (i === 0) ctx.moveTo(x, centerY - y);
+        else ctx.lineTo(x, centerY - y);
       }
       ctx.stroke();
+
+      ctx.shadowColor = '#a78bfa';
+      ctx.shadowBlur = 15;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawTravelingWaves() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const centerY = h / 2 + 100;
+      const lengthPx = w - margin * 2;
+
+      const k = 2 * Math.PI / (L * 40);
+      const w_omega = 2 * Math.PI * getFrequency() * 0.5;
+      const phaseOffset = time * 2;
+
+      ctx.strokeStyle = 'rgba(246, 199, 107, 0.4)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 4]);
+      ctx.beginPath();
+
+      for (let i = 0; i <= 500; i++) {
+        const x = margin + (i / 500) * lengthPx;
+        const xPhys = (i / 500) * L;
+        const y = (amplitude * 0.5) * Math.sin(k * xPhys - w_omega * time - phaseOffset);
+
+        if (i === 0) ctx.moveTo(x, centerY - y);
+        else ctx.lineTo(x, centerY - y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.4)';
+      ctx.beginPath();
+
+      for (let i = 0; i <= 500; i++) {
+        const x = margin + (i / 500) * lengthPx;
+        const xPhys = (i / 500) * L;
+        const y = (amplitude * 0.5) * Math.sin(k * xPhys + w_omega * time + phaseOffset);
+
+        if (i === 0) ctx.moveTo(x, centerY - y);
+        else ctx.lineTo(x, centerY - y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawNodesAndAntinodes() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const centerY = h / 2 + 100;
+      const lengthPx = w - margin * 2;
+
+      const nodes = getNodes();
+      const antinodes = getAntinodes();
+
+      for (let i = 0; i < nodes; i++) {
+        const x = margin + (i / (nodes - 1)) * lengthPx;
+
+        ctx.fillStyle = 'rgba(255, 107, 107, 0.9)';
+        ctx.beginPath();
+        ctx.arc(x, centerY, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#ff6b6b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, centerY, 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px IBM Plex Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', x, centerY + 4);
+      }
+
+      for (let i = 0; i < antinodes; i++) {
+        const x = margin + ((i + 0.5) / antinodes) * lengthPx;
+
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.9)';
+        ctx.beginPath();
+        ctx.arc(x, centerY, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(x, centerY, 10, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 9px IBM Plex Sans';
+        ctx.textAlign = 'center';
+        ctx.fillText('A', x, centerY + 3);
+      }
+    }
+
+    function drawLabels() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const centerY = h / 2 + 100;
+
+      ctx.fillStyle = '#e9f2ff';
+      ctx.font = 'bold 14px IBM Plex Sans';
+      ctx.fillText(`L = ${L.toFixed(1)} m`, w / 2 - 30, centerY + 70);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '12px IBM Plex Sans';
+      ctx.fillText(`v = ${getWaveSpeed().toFixed(1)} m/s`, 20, 30);
+
+      ctx.fillStyle = '#a78bfa';
+      ctx.fillText(`Harmonic n = ${n}`, 20, 55);
+
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.textAlign = 'right';
+      ctx.fillText('A = Antinode', w - 20, 30);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('N = Node', w - 20, 48);
+      ctx.textAlign = 'left';
+    }
+
+    function drawEnvelope() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const margin = 60;
+      const centerY = h / 2 + 100;
+      const lengthPx = w - margin * 2;
+
+      const k = 2 * Math.PI / (L * 40);
+
+      ctx.strokeStyle = 'rgba(167, 139, 250, 0.3)';
       ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
 
-      if (state.showTraveling) {
-        ctx.strokeStyle = 'rgba(246,199,107,0.6)';
-        ctx.beginPath();
-        for (let i = 0; i <= 300; i++) {
-          const x = left + (i / 300) * lengthPx;
-          const xPhys = (i / 300) * state.L;
-          const y = state.amplitude * Math.sin(k * xPhys - w * state.time);
-          if (i === 0) ctx.moveTo(x, mid + y);
-          else ctx.lineTo(x, mid + y);
-        }
-        ctx.stroke();
+      ctx.beginPath();
+      for (let i = 0; i <= 500; i++) {
+        const x = margin + (i / 500) * lengthPx;
+        const xPhys = (i / 500) * L;
+        const y = amplitude * Math.abs(Math.sin(k * xPhys));
 
-        ctx.strokeStyle = 'rgba(106,215,255,0.4)';
-        ctx.beginPath();
-        for (let i = 0; i <= 300; i++) {
-          const x = left + (i / 300) * lengthPx;
-          const xPhys = (i / 300) * state.L;
-          const y = state.amplitude * Math.sin(k * xPhys + w * state.time);
-          if (i === 0) ctx.moveTo(x, mid + y);
-          else ctx.lineTo(x, mid + y);
-        }
-        ctx.stroke();
+        if (i === 0) ctx.moveTo(x, centerY - y);
+        else ctx.lineTo(x, centerY - y);
       }
+      ctx.stroke();
 
-      if (state.showNodes) {
-        const nodes = state.waveType === 'closed' ? (2 * state.n) : (state.n + 1);
-        for (let i = 0; i < nodes; i++) {
-          const x = left + (i / (nodes - 1)) * lengthPx;
-          ctx.fillStyle = '#f6c76b';
-          ctx.beginPath();
-          ctx.arc(x, mid, 5, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        const antinodes = state.waveType === 'closed' ? (2 * state.n - 1) : state.n;
-        for (let i = 0; i < antinodes; i++) {
-          const x = left + ((i + 0.5) / antinodes) * lengthPx;
-          ctx.fillStyle = 'rgba(106,215,255,0.6)';
-          ctx.beginPath();
-          ctx.arc(x, mid, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
+      ctx.beginPath();
+      for (let i = 0; i <= 500; i++) {
+        const x = margin + (i / 500) * lengthPx;
+        const xPhys = (i / 500) * L;
+        const y = amplitude * Math.abs(Math.sin(k * xPhys));
+
+        if (i === 0) ctx.moveTo(x, centerY + y);
+        else ctx.lineTo(x, centerY + y);
       }
-
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.beginPath(); ctx.moveTo(left, mid); ctx.lineTo(right, mid); ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.fillText(`L = ${state.L.toFixed(1)} m`, right - 80, mid - 10);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
-    function updateReadout() {
+    function updateDisplay() {
       const lambda = getWavelength();
-      const v = getWaveSpeed();
       const f = getFrequency();
-      const nodes = state.waveType === 'closed' ? (2 * state.n) : (state.n + 1);
-      const antinodes = state.waveType === 'closed' ? (2 * state.n - 1) : state.n;
-      const text = `STANDING WAVES\n` +
-        `----------------\n` +
-        `n = ${state.n}\n` +
-        `L = ${state.L.toFixed(2)} m\n` +
-        `v = ${v.toFixed(2)} m/s\n` +
-        `λ = ${lambda.toFixed(2)} m\n` +
-        `f = ${f.toFixed(2)} Hz\n` +
-        `Nodes: ${nodes}\n` +
-        `Antinodes: ${antinodes}\n`;
-      document.getElementById('readout').textContent = text;
+      const nodes = getNodes();
+      const antinodes = getAntinodes();
 
-      document.getElementById('formulaBox').textContent = `λₙ = 2L/n   fₙ = nv/2L   v = √(T/μ)`;
+      document.getElementById('wavelengthValue').textContent = lambda.toFixed(2) + ' m';
+      document.getElementById('frequencyValue').textContent = f.toFixed(1) + ' Hz';
+      document.getElementById('nodesValue').textContent = nodes;
+      document.getElementById('antinodesValue').textContent = antinodes;
+
+      let formulaDesc = 'Fixed ends: λₙ = 2L/n';
+      if (waveType === 'open') formulaDesc = 'Open pipe: λₙ = 2L/n';
+      if (waveType === 'closed') formulaDesc = 'Closed pipe: λₙ = 4L/(2n-1)';
+
+      document.getElementById('formulaDesc').textContent = formulaDesc;
     }
 
-    function tick() {
-      state.time += 0.016;
-      drawBackground();
-      drawWave();
-      updateReadout();
-      requestAnimationFrame(tick);
+    function draw() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      ctx.clearRect(0, 0, w, h);
+
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(0, 0, w, h);
+
+      drawGrid();
+      drawBoundary();
+      drawEnvelope();
+      drawTravelingWaves();
+      drawStandingWave();
+      drawNodesAndAntinodes();
+      drawLabels();
+
+      time += 0.02;
+      requestAnimationFrame(draw);
     }
 
-    document.getElementById('harmonic').addEventListener('input', e => {
-      state.n = parseInt(e.target.value, 10);
-      document.getElementById('harmonicVal').textContent = state.n;
+    harmonicSlider.addEventListener('input', (e) => {
+      n = parseInt(e.target.value);
+      document.getElementById('valHarmonic').textContent = n;
+      presetBtns.forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.n) === n);
+      });
+      updateDisplay();
     });
-    document.getElementById('amplitude').addEventListener('input', e => {
-      state.amplitude = parseFloat(e.target.value);
-      document.getElementById('amplitudeVal').textContent = state.amplitude.toFixed(0);
-    });
-    document.getElementById('speed').addEventListener('input', e => {
-      state.v = parseFloat(e.target.value);
-      document.getElementById('speedVal').textContent = state.v.toFixed(1);
-    });
-    document.getElementById('length').addEventListener('input', e => {
-      state.L = parseFloat(e.target.value);
-      document.getElementById('lengthVal').textContent = state.L.toFixed(1);
-    });
-    document.getElementById('tension').addEventListener('input', e => {
-      state.T = parseFloat(e.target.value);
-      document.getElementById('tensionVal').textContent = state.T.toFixed(0);
-    });
-    document.getElementById('mu').addEventListener('input', e => {
-      state.mu = parseFloat(e.target.value);
-      document.getElementById('muVal').textContent = state.mu.toFixed(2);
-    });
-    document.getElementById('waveType').addEventListener('change', e => {
-      state.waveType = e.target.value;
-    });
-    document.getElementById('showTravel').addEventListener('change', e => state.showTraveling = e.target.checked);
-    document.getElementById('showNodes').addEventListener('change', e => state.showNodes = e.target.checked);
 
-    tick();
+    lengthSlider.addEventListener('input', (e) => {
+      L = parseFloat(e.target.value);
+      document.getElementById('valLength').textContent = L.toFixed(1) + ' m';
+      updateDisplay();
+    });
+
+    tensionSlider.addEventListener('input', (e) => {
+      T = parseFloat(e.target.value);
+      document.getElementById('valTension').textContent = T + ' N';
+      updateDisplay();
+    });
+
+    amplitudeSlider.addEventListener('input', (e) => {
+      amplitude = parseFloat(e.target.value);
+      document.getElementById('valAmplitude').textContent = amplitude;
+    });
+
+    waveTypeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        waveTypeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        waveType = btn.dataset.type;
+        updateDisplay();
+      });
+    });
+
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        presetBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        n = parseInt(btn.dataset.n);
+        harmonicSlider.value = n;
+        document.getElementById('valHarmonic').textContent = n;
+        updateDisplay();
+      });
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    updateDisplay();
+    draw();
   </script>
 </body>
 </html>
