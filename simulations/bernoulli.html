@@ -1,830 +1,780 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bernoulli's Principle</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/simulation-theme.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #6ad7ff;
-      --secondary: #818cf8;
-      --accent: #34d399;
+      --accent: #6ad7ff;
       --accent-2: #f6c76b;
-      --fast: #ff6b6b;
-      --slow: #6bff6b;
       --high-pressure: #3b82f6;
       --low-pressure: #ef4444;
-      
-      --bg-deep: #0a1628;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --text-dim: #64748b;
-      --border: rgba(255, 255, 255, 0.08);
+      --fast: #ff6b6b;
+      --slow: #22c55e;
+      --sim-bg: rgba(10, 16, 26, 0.95);
+      --sim-text: #e9f2ff;
+      --sim-muted: #9fb0c5;
+      --sim-border: rgba(120, 150, 190, 0.18);
+      --panel: rgba(15, 22, 35, 0.92);
     }
-
-    * { box-sizing: border-box; scrollbar-width: thin; scrollbar-color: var(--primary) var(--bg-deep); }
-    *::-webkit-scrollbar { width: 8px; height: 8px; }
-    *::-webkit-scrollbar-track { background: var(--bg-deep); }
-    *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--secondary)); border-radius: 4px; }
 
     body {
       margin: 0;
-      background: linear-gradient(180deg, #0a1628 0%, #071320 50%, #040d18 100%);
-      color: var(--text);
-      font-family: 'Outfit', 'Space Grotesk', sans-serif;
-      min-height: 100vh;
+      background:
+        radial-gradient(1100px 700px at 10% 0%, rgba(106, 215, 255, 0.12), transparent),
+        radial-gradient(900px 700px at 90% 15%, rgba(246, 199, 107, 0.12), transparent),
+        #0a111c;
+      color: var(--sim-text);
+      font-family: "IBM Plex Sans", sans-serif;
     }
 
     .page { min-height: 100vh; display: flex; flex-direction: column; }
 
     .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px clamp(20px, 4vw, 40px);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(20px);
-      background: rgba(10, 22, 40, 0.9);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 28px; border-bottom: 1px solid var(--sim-border);
+      backdrop-filter: blur(10px); background: rgba(8, 12, 20, 0.7);
+      position: sticky; top: 0; z-index: 10;
     }
 
-    .topbar a {
-      color: var(--text);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      padding: 8px 16px;
-      border-radius: 10px;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+    .topbar a { color: var(--sim-text); text-decoration: none; font-weight: 600; }
 
-    .topbar a::before { content: '←'; transition: transform 0.3s; }
-    .topbar a:hover { color: var(--primary); background: rgba(106, 215, 255, 0.1); }
+    .toggle {
+      display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px;
+      border: 1px solid var(--sim-border); border-radius: 999px; background: rgba(14, 20, 32, 0.8);
+      cursor: pointer; color: var(--sim-text);
+    }
 
     header.hero {
-      text-align: center;
-      padding: 30px 20px 20px;
+      text-align: center; padding: 24px 20px 12px;
     }
 
     header.hero h1 {
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      font-size: clamp(1.8rem, 3vw, 2.8rem);
-      margin: 0 0 8px;
-      color: var(--text);
-      font-weight: 800;
+      letter-spacing: 0.05em; text-transform: uppercase; font-size: clamp(1.4rem, 2.4vw, 2rem);
+      margin: 0 0 8px; color: var(--accent);
     }
 
-    header.hero p { color: var(--text-muted); margin: 0; font-size: 1.1rem; }
+    header.hero p { color: var(--sim-muted); margin: 0; font-size: 0.95rem; }
 
     .layout {
-      display: grid;
-      grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
-      gap: 20px;
-      padding: 12px clamp(20px, 4vw, 24px);
-      align-items: start;
+      display: grid; grid-template-columns: 1.2fr 360px; gap: 24px;
+      padding: 12px 28px 24px;
     }
 
     .panel {
-      background: linear-gradient(180deg, rgba(20, 35, 55, 0.95), rgba(10, 20, 35, 0.98));
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+      background: var(--panel); border: 1px solid var(--sim-border);
+      border-radius: 18px; padding: 18px; box-shadow: 0 24px 45px rgba(5, 10, 18, 0.35);
     }
 
-    .canvas-wrap { display: flex; flex-direction: column; gap: 12px; }
+    .panel-title {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--sim-muted); margin-bottom: 14px;
+    }
 
     canvas {
-      width: 100%;
-      height: 280px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 100%; height: 400px; background: #050810;
+      border-radius: 14px; border: 1px solid var(--sim-border);
     }
 
-    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .controls { display: flex; flex-direction: column; gap: 16px; }
 
-    button {
-      background: linear-gradient(135deg, rgba(30, 45, 65, 0.95), rgba(20, 30, 45, 0.95));
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 10px 16px;
-      color: var(--text);
-      font-weight: 600;
-      font-family: inherit;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .control-group {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 14px;
     }
 
-    button:hover { border-color: var(--primary); background: linear-gradient(135deg, rgba(106, 215, 255, 0.15), rgba(129, 140, 248, 0.15)); }
-    button:active { transform: scale(0.97); }
-    button.active { background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(129, 140, 248, 0.25)); border-color: var(--primary); }
-
-    .controls { display: flex; flex-direction: column; gap: 12px; }
-
-    .control-group { display: flex; flex-direction: column; gap: 6px; }
-
-    .control-group > label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+    .control-label {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85rem; color: var(--sim-muted); margin-bottom: 10px;
     }
 
-    .control-group > label strong { color: var(--primary); font-weight: 700; font-size: 0.85rem; }
+    .control-label strong { color: var(--accent); font-weight: 500; }
 
-    input[type="range"] {
-      width: 100%;
-      -webkit-appearance: none;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 18px;
-      height: 18px;
-      background: linear-gradient(135deg, #fff, #e2e8f0);
-      border-radius: 50%;
-      border: 2px solid var(--primary);
-      cursor: pointer;
-    }
+    input[type="range"] { width: 100%; }
 
     select {
-      width: 100%;
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.9rem;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236ad7ff' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
+      width: 100%; padding: 10px; border-radius: 8px;
+      border: 1px solid var(--sim-border); background: #0b1420;
+      color: var(--sim-text); font-size: 0.9rem;
     }
 
-    select:hover, select:focus { border-color: var(--primary); outline: none; }
-    select option { background: #0f1f35; color: var(--text); }
-
-    .checkbox-group { display: flex; flex-direction: column; gap: 6px; }
-
-    .checkbox-group label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 6px;
+    .stats-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
     }
 
-    .checkbox-group label:hover { background: rgba(255, 255, 255, 0.03); }
-
-    .checkbox-group input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      appearance: none;
-      -webkit-appearance: none;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 4px;
-      cursor: pointer;
-      position: relative;
+    .stat-card {
+      background: rgba(11, 20, 32, 0.8); border: 1px solid var(--sim-border);
+      border-radius: 12px; padding: 12px; text-align: center;
     }
 
-    .checkbox-group input[type="checkbox"]:checked { background: var(--primary); border-color: var(--primary); }
-    .checkbox-group input[type="checkbox"]:checked::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 4px;
-      width: 5px;
-      height: 8px;
-      border: solid #0a1628;
-      border-width: 0 2px 2px 0;
-      transform: rotate(45deg);
+    .stat-value {
+      font-size: 1.2rem; font-weight: 700; color: var(--accent);
     }
+
+    .stat-label {
+      font-size: 0.65rem; color: var(--sim-muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-top: 4px;
+    }
+
+    .stat-card.high-vel .stat-value { color: var(--fast); }
+    .stat-card.low-vel .stat-value { color: var(--slow); }
+    .stat-card.high-pres .stat-value { color: var(--high-pressure); }
+    .stat-card.low-pres .stat-value { color: var(--low-pressure); }
 
     .formula-box {
-      background: linear-gradient(135deg, rgba(106, 215, 255, 0.1), rgba(129, 140, 248, 0.05));
-      border: 1px solid rgba(106, 215, 255, 0.2);
-      border-radius: 12px;
-      padding: 12px;
-      padding-right: 50px;
-      text-align: center;
-      position: relative;
+      background: rgba(167, 139, 250, 0.1); border: 1px solid rgba(167, 139, 250, 0.3);
+      border-radius: 10px; padding: 14px; text-align: center;
     }
 
-    .formula-box .copy-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
+    .formula {
+      font-family: 'JetBrains Mono', monospace; font-size: 1rem;
+      color: #a78bfa; margin-bottom: 6px;
+    }
+
+    .formula-desc { font-size: 0.75rem; color: var(--sim-muted); }
+
+    .scenario-buttons {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+
+    .scenario-btn {
+      padding: 10px 12px; border-radius: 8px; border: 1px solid var(--sim-border);
+      background: rgba(11, 20, 32, 0.8); color: var(--sim-text);
+      font-size: 0.85rem; cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+
+    .scenario-btn:hover {
       background: rgba(106, 215, 255, 0.15);
-      border: none;
-      border-radius: 6px;
-      padding: 4px 8px;
-      cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.2s, background 0.2s;
-      font-size: 0.9rem;
+      border-color: var(--accent);
     }
 
-    .formula-box:hover .copy-btn {
-      opacity: 1;
+    .scenario-btn.active {
+      background: rgba(106, 215, 255, 0.25);
+      border-color: var(--accent);
+      color: var(--accent);
     }
 
-    .formula-box .copy-btn:hover {
-      background: rgba(106, 215, 255, 0.3);
-    }
-
-    .formula-box.copied::after {
-      content: "✓ Copied!";
-      position: absolute;
-      right: 40px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #4ade80;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .formula-box .formula-main { font-size: 1.1rem; font-weight: 700; color: var(--primary); font-family: 'Space Grotesk', sans-serif; }
-    .formula-box .formula-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; }
-
-    .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
-
-    .data-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--border);
+    .pressure-indicator {
+      display: flex; align-items: center; justify-content: center; gap: 20px;
+      margin-top: 10px; padding: 10px; background: rgba(6, 10, 18, 0.4);
       border-radius: 10px;
-      padding: 10px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
     }
 
-    .data-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
-    .data-value { font-size: 1rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; line-height: 1.2; }
-    .data-value.blue { color: var(--primary); }
-    .data-value.green { color: var(--accent); }
-    .data-value.yellow { color: var(--accent-2); }
-    .data-value.red { color: var(--fast); }
-
-    .data-value small { font-size: 0.55rem; opacity: 0.7; font-weight: 500; }
-
-    .status-indicator {
-      background: linear-gradient(135deg, rgba(106, 215, 255, 0.25), rgba(106, 215, 255, 0.1));
-      border: 2px solid var(--primary);
-      border-radius: 10px;
-      padding: 8px 16px;
-      text-align: center;
-      margin-bottom: 8px;
-      transition: all 0.3s ease;
+    .pressure-item {
+      display: flex; align-items: center; gap: 8px;
     }
 
-    .status-indicator .status-text {
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      color: var(--primary);
+    .pressure-dot {
+      width: 12px; height: 12px; border-radius: 50%;
     }
 
-    @media (max-width: 900px) {
+    .pressure-dot.high { background: var(--high-pressure); }
+    .pressure-dot.low { background: var(--low-pressure); }
+
+    .pressure-value { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+
+    @media (max-width: 980px) {
       .layout { grid-template-columns: 1fr; }
-      canvas { height: 240px; }
-      .data-grid { grid-template-columns: repeat(2, 1fr); }
+      canvas { height: 320px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="page">
     <div class="topbar">
-      <a href="/index.html">Back to Library</a>
+      <a href="/index.html">← Back to Library</a>
+      <button class="toggle" id="themeToggle">Light/Dark</button>
     </div>
 
     <header class="hero">
       <h1>Bernoulli's Principle</h1>
-      <p>Pressure decreases where velocity increases</p>
+      <p>Pressure decreases where velocity increases in a flowing fluid</p>
     </header>
 
-  <section class="layout">
-    <div class="panel canvas-wrap">
-      <canvas id="scene" width="960" height="280"></canvas>
-      
-      <div class="btn-row">
-        <button id="playPause"><span>▶</span> Play</button>
-        <button id="reset"><span>↺</span> Reset</button>
+    <section class="layout">
+      <div class="panel">
+        <canvas id="simCanvas"></canvas>
       </div>
-      
-      <div class="status-indicator" id="statusIndicator">
-        <span class="status-text" id="statusText">FLOWING</span>
-      </div>
-      
-      <div class="data-grid">
-        <div class="data-card">
-          <span class="data-label">Inlet Velocity</span>
-          <span class="data-value blue" id="v1Val">0 <small>m/s</small></span>
+
+      <div class="controls">
+        <div class="control-group">
+          <div class="panel-title">Scenarios</div>
+          <div class="scenario-buttons">
+            <button class="scenario-btn active" data-scenario="venturi">Venturi Tube</button>
+            <button class="scenario-btn" data-scenario="airfoil">Airfoil Wing</button>
+            <button class="scenario-btn" data-scenario="spray">Spray Bottle</button>
+            <button class="scenario-btn" data-scenario="pipe">Pipe Flow</button>
+          </div>
         </div>
-        <div class="data-card">
-          <span class="data-label">Throat Velocity</span>
-          <span class="data-value red" id="v2Val">0 <small>m/s</small></span>
+
+        <div class="control-group">
+          <div class="panel-title">Velocity & Pressure</div>
+          <div class="stats-grid">
+            <div class="stat-card high-vel">
+              <div class="stat-value" id="vHigh">0 m/s</div>
+              <div class="stat-label">High Velocity</div>
+            </div>
+            <div class="stat-card low-vel">
+              <div class="stat-value" id="vLow">0 m/s</div>
+              <div class="stat-label">Low Velocity</div>
+            </div>
+            <div class="stat-card high-pres">
+              <div class="stat-value" id="pHigh">0 Pa</div>
+              <div class="stat-label">High Pressure</div>
+            </div>
+            <div class="stat-card low-pres">
+              <div class="stat-value" id="pLow">0 Pa</div>
+              <div class="stat-label">Low Pressure</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="flowRate">0</div>
+              <div class="stat-label">Flow Rate</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="deltaP">0</div>
+              <div class="stat-label">ΔP</div>
+            </div>
+          </div>
+
+          <div class="pressure-indicator">
+            <div class="pressure-item">
+              <span class="pressure-dot high"></span>
+              <span class="pressure-value" id="presWide">High P</span>
+            </div>
+            <div class="pressure-item">
+              <span class="pressure-dot low"></span>
+              <span class="pressure-value" id="presNarrow">Low P</span>
+            </div>
+          </div>
         </div>
-        <div class="data-card">
-          <span class="data-label">Outlet Velocity</span>
-          <span class="data-value blue" id="v3Val">0 <small>m/s</small></span>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Flow Speed</span>
+            <strong id="valFlowSpeed">2.0 m/s</strong>
+          </div>
+          <input type="range" id="flowSpeed" min="0.5" max="8" value="2" step="0.1" />
         </div>
-        <div class="data-card">
-          <span class="data-label">Pressure Drop</span>
-          <span class="data-value yellow" id="dPVal">0 <small>Pa</small></span>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Constriction Ratio</span>
+            <strong id="valConstriction">50%</strong>
+          </div>
+          <input type="range" id="constriction" min="20" max="90" value="50" step="5" />
         </div>
-        <div class="data-card">
-          <span class="data-label">Flow Rate Q</span>
-          <span class="data-value green" id="flowVal">0 <small>L/s</small></span>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Fluid Density (ρ)</span>
+          </div>
+          <select id="density">
+            <option value="1000">Water (1000 kg/m³)</option>
+            <option value="1.2">Air (1.2 kg/m³)</option>
+            <option value="800">Oil (800 kg/m³)</option>
+            <option value="13600">Mercury (13600 kg/m³)</option>
+          </select>
         </div>
-        <div class="data-card">
-          <span class="data-label">Reynolds #</span>
-          <span class="data-value yellow" id="reVal">0</span>
-        </div>
-      </div>
-    </div>
 
-    <div class="panel controls">
-      <div class="formula-box" onclick="copyFormula(this)">
-        <div class="formula-main">P + ½ρv² + ρgh = const</div>
-        <div class="formula-desc">Bernoulli's Equation along a streamline</div>
-        <button class="copy-btn" title="Copy formula">📋</button>
-      </div>
-
-      <div class="control-group">
-        <label>Inlet Radius r₁ <strong id="r1Label">3.0 cm</strong></label>
-        <input type="range" id="r1" min="1" max="6" step="0.1" value="3">
-      </div>
-
-      <div class="control-group">
-        <label>Throat Radius r₂ <strong id="r2Label">1.5 cm</strong></label>
-        <input type="range" id="r2" min="0.5" max="4" step="0.1" value="1.5">
-      </div>
-
-      <div class="control-group">
-        <label>Outlet Radius r₃ <strong id="r3Label">3.0 cm</strong></label>
-        <input type="range" id="r3" min="1" max="6" step="0.1" value="3">
-      </div>
-
-      <div class="control-group">
-        <label>Flow Rate Q <strong id="flowLabel">2.0 L/s</strong></label>
-        <input type="range" id="flow" min="0.2" max="5" step="0.1" value="2">
-      </div>
-
-      <div class="control-group">
-        <label>Density ρ <strong id="rhoLabel">1000 kg/m³</strong></label>
-        <input type="range" id="rho" min="500" max="1300" step="10" value="1000">
-      </div>
-
-      <div class="control-group">
-        <label>Height Δh <strong id="dhLabel">0.0 m</strong></label>
-        <input type="range" id="dh" min="-2" max="2" step="0.1" value="0">
-      </div>
-
-      <div class="control-group">
-        <label>Background Theme</label>
-        <select id="bgTheme">
-          <option value="tunnel">Wind Tunnel</option>
-          <option value="water">Water Flow</option>
-          <option value="air">Air Stream</option>
-          <option value="lab">Lab Setup</option>
-        </select>
-      </div>
-
-      <div class="control-group">
-        <label>Display</label>
-        <div class="checkbox-group">
-          <label><input type="checkbox" id="showGauges" checked> Pressure gauges</label>
-          <label><input type="checkbox" id="showParticles" checked> Particles</label>
-          <label><input type="checkbox" id="showVelocity" checked> Velocity colors</label>
-          <label><input type="checkbox" id="showHeights"> Height markers</label>
+        <div class="formula-box">
+          <div class="formula">P + ½ρv² = constant</div>
+          <div class="formula-desc">Bernoulli's equation along a streamline</div>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <script>
-    const canvas = document.getElementById('scene');
+    const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
 
-    const state = {
-      r1: 3,
-      r2: 1.5,
-      r3: 3,
-      flowRate: 2,
-      density: 1000,
-      heightDiff: 0,
-      bgTheme: 'tunnel',
-      showGauges: true,
-      showParticles: true,
-      showVelocity: true,
-      showHeights: false,
-      playing: true,
-      particles: [],
-      time: 0
-    };
+    const scenarioBtns = document.querySelectorAll('.scenario-btn');
+    const flowSpeedSlider = document.getElementById('flowSpeed');
+    const constrictionSlider = document.getElementById('constriction');
+    const densitySelect = document.getElementById('density');
 
-    function area(r) {
-      const rm = r / 100; // cm to m
-      return Math.PI * rm * rm;
+    let currentScenario = 'venturi';
+    let flowSpeed = 2;
+    let constrictionRatio = 0.5;
+    let density = 1000;
+    let particles = [];
+    let time = 0;
+
+    const rho = 101325;
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * 2;
+      canvas.height = rect.height * 2;
+      ctx.scale(2, 2);
     }
 
-    function velocity(r) {
-      const Q = state.flowRate / 1000; // L/s to m^3/s
-      return Q / area(r);
+    function getVelocities() {
+      const A1 = 1;
+      const A2 = constrictionRatio;
+      const v1 = flowSpeed;
+      const v2 = v1 * (A1 / A2);
+      const P1 = rho;
+      const P2 = P1 + 0.5 * density * (v1 * v1 - v2 * v2);
+      const dP = Math.abs(P1 - P2);
+      return { v1, v2, P1, P2, dP };
     }
 
-    function pressure(v, h) {
-      const P0 = 101325;
-      const v0 = velocity(state.r1);
-      return P0 + 0.5 * state.density * (v0*v0 - v*v) + state.density * 9.81 * (0 - h);
-    }
-
-    function drawBackground() {
-      const w = canvas.width;
-      const h = canvas.height;
-      const time = Date.now() / 1000;
-
-      if (state.bgTheme === 'tunnel') {
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, '#1a1a2e');
-        grad.addColorStop(0.5, '#16213e');
-        grad.addColorStop(1, '#0f0f1a');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.strokeStyle = 'rgba(106, 215, 255, 0.1)';
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 20; i++) {
-          const x = (i * 60 + time * 20) % (w + 60) - 30;
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, h);
-          ctx.stroke();
-        }
-        for (let i = 0; i < 12; i++) {
-          ctx.beginPath();
-          ctx.moveTo(0, i * 40);
-          ctx.lineTo(w, i * 40);
-          ctx.stroke();
-        }
-
-      } else if (state.bgTheme === 'water') {
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, '#0c4a6e');
-        grad.addColorStop(0.5, '#0a1628');
-        grad.addColorStop(1, '#040d18');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        for (let i = 0; i < 8; i++) {
-          const rayX = w * 0.1 + i * w * 0.12;
-          const rayGrad = ctx.createLinearGradient(rayX, 0, rayX + 40, h);
-          const alpha = 0.05 + 0.02 * Math.sin(time * 0.5 + i);
-          rayGrad.addColorStop(0, `rgba(200, 240, 255, ${alpha})`);
-          rayGrad.addColorStop(0.5, `rgba(200, 240, 255, ${alpha * 0.3})`);
-          rayGrad.addColorStop(1, 'transparent');
-          ctx.fillStyle = rayGrad;
-          ctx.beginPath();
-          ctx.moveTo(rayX, 0);
-          ctx.lineTo(rayX + 30, 0);
-          ctx.lineTo(rayX + 60, h);
-          ctx.lineTo(rayX - 10, h);
-          ctx.closePath();
-          ctx.fill();
-        }
-
-      } else if (state.bgTheme === 'air') {
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, '#e0f2fe');
-        grad.addColorStop(0.5, '#bae6fd');
-        grad.addColorStop(1, '#7dd3fc');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, w, h);
-
-        for (let i = 0; i < 5; i++) {
-          const cloudX = (i * 200 + time * 15) % (w + 150) - 75;
-          const cloudY = 30 + i * 25;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-          ctx.beginPath();
-          ctx.arc(cloudX, cloudY, 25, 0, Math.PI * 2);
-          ctx.arc(cloudX + 25, cloudY - 10, 20, 0, Math.PI * 2);
-          ctx.arc(cloudX + 45, cloudY, 22, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-      } else if (state.bgTheme === 'lab') {
-        const labGrad = ctx.createLinearGradient(0, 0, 0, h);
-        labGrad.addColorStop(0, '#1e293b');
-        labGrad.addColorStop(1, '#0f172a');
-        ctx.fillStyle = labGrad;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.1)';
-        ctx.lineWidth = 1;
-        const gridSize = 30;
-        for (let x = 0; x < w; x += gridSize) {
-          ctx.beginPath();
-          ctx.moveTo(x, 0);
-          ctx.lineTo(x, h);
-          ctx.stroke();
-        }
-        for (let y = 0; y < h; y += gridSize) {
-          ctx.beginPath();
-          ctx.moveTo(0, y);
-          ctx.lineTo(w, y);
-          ctx.stroke();
-        }
-
-        const flicker = 0.9 + 0.1 * Math.abs(Math.sin(time * 5));
-        ctx.fillStyle = `rgba(200, 220, 255, ${0.05 * flicker})`;
-        ctx.fillRect(0, 0, w, 40);
+    function drawGrid() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.04)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+      for (let y = 0; y < h; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
       }
     }
 
-    function drawPipe() {
-      const mid = canvas.height / 2;
-      const left = 80, right = canvas.width - 80;
-      const w = right - left;
-      const seg = w / 3;
+    function drawVenturi() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const midY = h / 2 + 40;
+      const left = 60;
+      const right = w - 60;
+      const pipeWidth = w - 120;
+      const maxRadius = 80;
+      const minRadius = maxRadius * constrictionRatio;
 
-      const r1 = state.r1 * 8;
-      const r2 = state.r2 * 8;
-      const r3 = state.r3 * 8;
+      const gradient = ctx.createLinearGradient(left, 0, right, 0);
+      const { v1, v2, P1, P2 } = getVelocities();
+      const maxV = Math.max(v1, v2);
 
-      const points = [
-        { x: left, y: mid - r1 },
-        { x: left + seg, y: mid - r2 },
-        { x: left + 2*seg, y: mid - r3 },
-        { x: right, y: mid - r3 }
-      ];
+      const color1 = getVelocityColor(v1, maxV);
+      const color2 = getVelocityColor(v2, maxV);
+
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.8)';
+      ctx.fillRect(left, midY - maxRadius - 20, pipeWidth, maxRadius * 2 + 40);
+
+      for (let x = left; x < right; x++) {
+        const t = (x - left) / pipeWidth;
+        let radius;
+        if (t < 0.25) {
+          radius = maxRadius;
+        } else if (t < 0.4) {
+          const nt = (t - 0.25) / 0.15;
+          radius = maxRadius - (maxRadius - minRadius) * nt;
+        } else if (t < 0.6) {
+          radius = minRadius;
+        } else if (t < 0.75) {
+          const nt = (t - 0.6) / 0.15;
+          radius = minRadius + (maxRadius - minRadius) * nt;
+        } else {
+          radius = maxRadius;
+        }
+
+        const pressure = P1 + (P2 - P1) * ((t - 0.25) / 0.5);
+        const pNorm = (pressure - Math.min(P1, P2)) / (Math.max(P1, P2) - Math.min(P1, P2) + 1);
+        const r = Math.floor(59 + (37 - 59) * pNorm);
+        const g = Math.floor(130 + (82 - 130) * pNorm);
+        const b = Math.floor(246 + (242 - 246) * pNorm);
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.3)`;
+        ctx.fillRect(x, midY - radius, 1, radius * 2);
+      }
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, midY - maxRadius);
+      ctx.bezierCurveTo(left + pipeWidth * 0.2, midY - maxRadius, left + pipeWidth * 0.3, midY - minRadius, left + pipeWidth * 0.5, midY - minRadius);
+      ctx.bezierCurveTo(left + pipeWidth * 0.7, midY - minRadius, left + pipeWidth * 0.8, midY - maxRadius, right, midY - maxRadius);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(left, midY + maxRadius);
+      ctx.bezierCurveTo(left + pipeWidth * 0.2, midY + maxRadius, left + pipeWidth * 0.3, midY + minRadius, left + pipeWidth * 0.5, midY + minRadius);
+      ctx.bezierCurveTo(left + pipeWidth * 0.7, midY + minRadius, left + pipeWidth * 0.8, midY + maxRadius, right, midY + maxRadius);
+      ctx.stroke();
+
+      drawVenturiLabels(w, h, midY, left, right, maxRadius, minRadius);
+    }
+
+    function drawVenturiLabels(w, h, midY, left, right, maxRadius, minRadius) {
+      const pipeWidth = right - left;
+      const { v1, v2, P1, P2 } = getVelocities();
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 12px IBM Plex Sans';
+      ctx.fillText('Wide Section', left + 30, midY - maxRadius - 15);
+      ctx.fillText(`v = ${v1.toFixed(1)} m/s`, left + 30, midY - maxRadius - 2);
+      ctx.fillText(`P = ${P1.toFixed(0)} Pa`, left + 30, midY + maxRadius + 15);
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('Narrow Section', left + pipeWidth * 0.4, midY - minRadius - 15);
+      ctx.fillText(`v = ${v2.toFixed(1)} m/s`, left + pipeWidth * 0.4, midY - minRadius - 2);
+      ctx.fillText(`P = ${P2.toFixed(0)} Pa`, left + pipeWidth * 0.4, midY + minRadius + 15);
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('← Fluid Flow →', w / 2 - 40, h - 20);
+    }
+
+    function drawAirfoil() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const midY = h / 2;
+      const left = 80;
+      const right = w - 80;
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 13px IBM Plex Sans';
+      ctx.fillText('Airfoil Cross-Section', w / 2 - 60, 35);
+
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(left, midY);
+      ctx.lineTo(right, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const airfoilPoints = [];
+      for (let t = 0; t <= 1; t += 0.02) {
+        const x = left + t * (right - left);
+        const thickness = Math.sin(t * Math.PI) * 50 * constrictionRatio;
+        const camber = Math.sin(t * Math.PI) * 15;
+        airfoilPoints.push({ x, top: midY - thickness / 2 + camber, bottom: midY + thickness / 2 + camber });
+      }
+
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.15)';
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(airfoilPoints[0].x, airfoilPoints[0].top);
+      airfoilPoints.forEach(p => ctx.lineTo(p.x, p.top));
+      ctx.lineTo(right, midY);
+      ctx.lineTo(left, midY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      const streamlines = 8;
+      for (let i = 0; i < streamlines; i++) {
+        const baseY = midY - 80 + i * 25;
+        ctx.strokeStyle = i < streamlines / 2 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(255, 107, 107, 0.6)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+
+        for (let x = left - 20; x < right + 20; x += 2) {
+          const t = (x - left) / (right - left);
+          let deflection = 0;
+          if (t > 0.1 && t < 0.9) {
+            deflection = Math.sin(t * Math.PI) * (20 - i * 2) * (1 - constrictionRatio + 0.5);
+            if (i >= streamlines / 2) deflection = -deflection;
+          }
+          const y = baseY + deflection + Math.sin(x * 0.1 + time * 3) * 3;
+          if (x === left - 20) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = '#22c55e';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('Lower pressure (fast flow)', right - 120, midY - 50);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText('Higher pressure (slow flow)', left + 20, midY + 60);
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('← Lift Force ↑', w / 2 - 30, midY + 100);
+    }
+
+    function drawSpray() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const midY = h / 2;
+      const left = 100;
+      const right = w - 100;
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = 'bold 13px IBM Plex Sans';
+      ctx.fillText('Atomizer / Spray Bottle', w / 2 - 60, 35);
 
       ctx.strokeStyle = '#6ad7ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(points[0].x, points[0].y);
-      ctx.bezierCurveTo(left + seg*0.6, mid - r1, left + seg*0.4, mid - r2, points[1].x, points[1].y);
-      ctx.bezierCurveTo(left + seg*1.6, mid - r2, left + seg*1.4, mid - r3, points[2].x, points[2].y);
-      ctx.lineTo(points[3].x, points[3].y);
+      ctx.moveTo(left, midY - 30);
+      ctx.lineTo(left, midY + 30);
+      ctx.lineTo(right - 40, midY + 30);
+      ctx.lineTo(right - 40, midY - 30);
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(106, 215, 255, 0.2)';
+      ctx.fillRect(left, midY - 30, right - left - 40, 60);
+
+      ctx.strokeStyle = '#f6c76b';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(right - 30, midY - 10);
+      ctx.lineTo(right + 40, midY - 10);
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.moveTo(points[0].x, mid + r1);
-      ctx.bezierCurveTo(left + seg*0.6, mid + r1, left + seg*0.4, mid + r2, points[1].x, mid + r2);
-      ctx.bezierCurveTo(left + seg*1.6, mid + r2, left + seg*1.4, mid + r3, points[2].x, mid + r3);
-      ctx.lineTo(points[3].x, mid + r3);
+      ctx.moveTo(right - 30, midY + 10);
+      ctx.lineTo(right + 40, midY + 10);
       ctx.stroke();
 
-      if (state.showHeights) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      const angle1 = Math.atan2(-15, 50);
+      const angle2 = Math.atan2(15, 50);
+      ctx.beginPath();
+      ctx.moveTo(right - 25, midY);
+      ctx.lineTo(right + 60, midY - 20);
+      ctx.strokeStyle = 'rgba(106, 215, 255, 0.5)';
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(right - 25, midY);
+      ctx.lineTo(right + 60, midY + 20);
+      ctx.stroke();
+
+      for (let i = 0; i < 5; i++) {
+        const spreadX = right + 50 + i * 15;
+        const spreadY = (i % 2 === 0 ? -1 : 1) * (10 + i * 8);
+        const alpha = 1 - i * 0.15;
+        ctx.fillStyle = `rgba(106, 215, 255, ${alpha * 0.8})`;
         ctx.beginPath();
-        ctx.moveTo(left + seg, mid - r2 - 40);
-        ctx.lineTo(left + seg, mid + r2 + 40);
-        ctx.stroke();
-        ctx.fillStyle = '#a9b6c6';
-        ctx.fillText('Δh', left + seg + 6, mid - r2 - 20);
+        ctx.arc(spreadX, midY + spreadY, 3, 0, Math.PI * 2);
+        ctx.fill();
       }
+
+      const waterLevel = midY + 50 + Math.sin(time * 2) * 5;
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+      ctx.fillRect(left + 10, waterLevel, right - left - 60, midY + 25 - waterLevel);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('Air blown →', right - 80, midY - 25);
+      ctx.fillText('Water rises ↑', left + 20, waterLevel - 10);
+
+      ctx.fillStyle = '#ff6b6b';
+      ctx.font = '10px IBM Plex Sans';
+      ctx.fillText('Low pressure zone', right - 50, midY + 5);
+
+      const { v1, v2, P1, P2 } = getVelocities();
+      ctx.fillStyle = '#22c55e';
+      ctx.fillText(`v_air = ${v2.toFixed(1)} m/s`, right - 100, midY + 70);
+      ctx.fillText(`P_drop = ${Math.abs(P1 - P2).toFixed(0)} Pa`, right - 100, midY + 85);
     }
 
-    function velocityColor(v, vmax) {
-      const t = Math.min(1, v / vmax);
+    function drawPipe() {
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const midY = h / 2;
+      const left = 60;
+      const right = w - 60;
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(left, midY - 40);
+      ctx.lineTo(right, midY - 40);
+      ctx.moveTo(left, midY + 40);
+      ctx.lineTo(right, midY + 40);
+      ctx.stroke();
+
+      const gradient = ctx.createLinearGradient(left, 0, right, 0);
+      const { v1, v2 } = getVelocities();
+      const maxV = Math.max(v1, v2);
+
+      ctx.fillStyle = 'rgba(6, 10, 18, 0.6)';
+      ctx.fillRect(left, midY - 40, right - left, 80);
+
+      for (let x = left; x < right; x++) {
+        const t = (x - left) / (right - left);
+        const speed = v1 + (v2 - v1) * constrictionRatio;
+        const vNorm = speed / maxV;
+        const r = Math.floor(106 + (255 - 106) * vNorm);
+        const g = Math.floor(215 - (215 - 107) * vNorm);
+        const b = Math.floor(255 - (255 - 107) * vNorm);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.4)`;
+        ctx.fillRect(x, midY - 40, 1, 80);
+      }
+
+      const gaugeY = midY - 90;
+      const gaugeH = 50;
+
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
+      ctx.fillRect(left + 30, gaugeY, 30, gaugeH);
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+      ctx.fillRect(left + 130, gaugeY, 30, gaugeH * constrictionRatio + 10);
+
+      ctx.strokeStyle = '#6ad7ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(left + 30, gaugeY, 30, gaugeH);
+      ctx.strokeRect(left + 130, gaugeY, 30, gaugeH);
+
+      ctx.fillStyle = '#6ad7ff';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('P', left + 40, gaugeY + gaugeH + 15);
+      ctx.fillText('P', left + 140, gaugeY + gaugeH + 15);
+
+      ctx.fillStyle = '#f6c76b';
+      ctx.font = '11px IBM Plex Sans';
+      ctx.fillText('← Fluid enters (high P, low v)', left + 70, midY + 80);
+      ctx.fillText('Fluid exits (low P, high v) →', left + 200, midY + 80);
+    }
+
+    function getVelocityColor(v, maxV) {
+      const t = v / maxV;
       const r = Math.floor(106 + (255 - 106) * t);
       const g = Math.floor(215 - (215 - 107) * t);
       const b = Math.floor(255 - (255 - 107) * t);
-      return `rgb(${r},${g},${b})`;
-    }
-
-    function drawVelocityBands() {
-      if (!state.showVelocity) return;
-      const mid = canvas.height / 2;
-      const left = 80, right = canvas.width - 80;
-      const w = right - left;
-      const seg = w / 3;
-      const v1 = velocity(state.r1);
-      const v2 = velocity(state.r2);
-      const v3 = velocity(state.r3);
-      const vmax = Math.max(v1, v2, v3);
-
-      ctx.fillStyle = velocityColor(v1, vmax);
-      ctx.fillRect(left, mid - state.r1 * 8, seg, state.r1 * 16);
-      ctx.fillStyle = velocityColor(v2, vmax);
-      ctx.fillRect(left + seg, mid - state.r2 * 8, seg, state.r2 * 16);
-      ctx.fillStyle = velocityColor(v3, vmax);
-      ctx.fillRect(left + 2*seg, mid - state.r3 * 8, seg, state.r3 * 16);
+      return `rgb(${r}, ${g}, ${b})`;
     }
 
     function spawnParticles() {
-      if (!state.showParticles) return;
-      if (state.particles.length > 120) return;
-      state.particles.push({ x: 80, y: canvas.height/2 + (Math.random()-0.5)*40 });
+      if (particles.length > 100) return;
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      const midY = h / 2;
+
+      if (currentScenario === 'venturi') {
+        particles.push({
+          x: 60,
+          y: midY + (Math.random() - 0.5) * 120,
+          speed: flowSpeed * 30,
+          color: '#6ad7ff'
+        });
+      } else if (currentScenario === 'pipe') {
+        particles.push({
+          x: 60,
+          y: midY + (Math.random() - 0.5) * 60,
+          speed: flowSpeed * 25,
+          color: '#6ad7ff'
+        });
+      }
     }
 
     function updateParticles() {
-      if (!state.showParticles) return;
-      const left = 80, right = canvas.width - 80;
-      const w = right - left;
-      const seg = w / 3;
-      const v1 = velocity(state.r1);
-      const v2 = velocity(state.r2);
-      const v3 = velocity(state.r3);
-
-      state.particles.forEach(p => {
-        let v = v1;
-        if (p.x > left + seg) v = v2;
-        if (p.x > left + 2*seg) v = v3;
-        p.x += v * 20 * 0.016;
+      particles.forEach((p, i) => {
+        p.x += p.speed * 0.016;
+        if (p.x > canvas.width / 2 - 60) {
+          p.speed = flowSpeed * 40;
+        }
+        if (p.x > canvas.width / 2 + 50) {
+          particles.splice(i, 1);
+        }
       });
-      state.particles = state.particles.filter(p => p.x < right);
     }
 
     function drawParticles() {
-      if (!state.showParticles) return;
-      ctx.fillStyle = '#f6c76b';
-      for (const p of state.particles) {
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2);
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
         ctx.fill();
-      }
+
+        ctx.fillStyle = 'rgba(106, 215, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+      });
     }
 
-    function drawGauges() {
-      if (!state.showGauges) return;
-      const base = 320;
-      const x = 140;
-      const y = 60;
-      const v1 = velocity(state.r1);
-      const v2 = velocity(state.r2);
-      const v3 = velocity(state.r3);
-      const P1 = pressure(v1, 0);
-      const P2 = pressure(v2, state.heightDiff);
-      const P3 = pressure(v3, 0);
-      const Ps = [P1, P2, P3];
-      const maxP = Math.max(...Ps);
-      const minP = Math.min(...Ps);
+    function updateStats() {
+      const { v1, v2, P1, P2, dP } = getVelocities();
 
-      for (let i = 0; i < 3; i++) {
-        const h = 80 + (Ps[i] - minP) / (maxP - minP + 1) * 80;
-        ctx.strokeStyle = '#f6c76b';
-        ctx.strokeRect(x + i*120, y + base - h, 20, h);
-        ctx.fillStyle = '#f6c76b';
-        ctx.fillText(`P${i+1}`, x + i*120 - 2, y + base + 14);
-      }
+      const highV = Math.max(v1, v2);
+      const lowV = Math.min(v1, v2);
+      const highP = Math.max(P1, P2);
+      const lowP = Math.min(P1, P2);
+
+      document.getElementById('vHigh').textContent = highV.toFixed(1) + ' m/s';
+      document.getElementById('vLow').textContent = lowV.toFixed(1) + ' m/s';
+      document.getElementById('pHigh').textContent = highP.toFixed(0) + ' Pa';
+      document.getElementById('pLow').textContent = lowP.toFixed(0) + ' Pa';
+      document.getElementById('flowRate').textContent = (flowSpeed * 0.01).toFixed(3) + ' m³/s';
+      document.getElementById('deltaP').textContent = dP.toFixed(0) + ' Pa';
+
+      document.getElementById('presWide').textContent = highP.toFixed(0) + ' Pa';
+      document.getElementById('presNarrow').textContent = lowP.toFixed(0) + ' Pa';
     }
 
     function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      drawBackground();
-      drawVelocityBands();
-      drawPipe();
-      drawGauges();
-      drawParticles();
-      updateDataCards();
-    }
+      const w = canvas.width / 2;
+      const h = canvas.height / 2;
+      ctx.clearRect(0, 0, w, h);
 
-    function updateDataCards() {
-      const v1 = velocity(state.r1);
-      const v2 = velocity(state.r2);
-      const v3 = velocity(state.r3);
-      const P1 = pressure(v1, 0);
-      const P2 = pressure(v2, state.heightDiff);
-      const dP = Math.abs(P1 - P2);
-      const Q = state.flowRate;
-      const mu = 0.001;
-      const Re = (state.density * v2 * (state.r2 / 100)) / mu;
-      
-      document.getElementById('v1Val').innerHTML = `${v1.toFixed(2)} <small>m/s</small>`;
-      document.getElementById('v2Val').innerHTML = `${v2.toFixed(2)} <small>m/s</small>`;
-      document.getElementById('v3Val').innerHTML = `${v3.toFixed(2)} <small>m/s</small>`;
-      document.getElementById('dPVal').innerHTML = `${(dP/1000).toFixed(1)} <small>kPa</small>`;
-      document.getElementById('flowVal').innerHTML = `${Q.toFixed(1)} <small>L/s</small>`;
-      document.getElementById('reVal').innerHTML = Re.toFixed(0);
-    }
+      ctx.fillStyle = '#050810';
+      ctx.fillRect(0, 0, w, h);
 
-    function updateReadout() {
-      const v1 = velocity(state.r1);
-      const v2 = velocity(state.r2);
-      const v3 = velocity(state.r3);
-      const P1 = pressure(v1, 0);
-      const P2 = pressure(v2, state.heightDiff);
-      const P3 = pressure(v3, 0);
-      const dP = P1 - P2;
-      const text = `BERNOULLI READOUT\n` +
-        `----------------\n` +
-        `INLET\n` +
-        `v1 = ${v1.toFixed(2)} m/s\n` +
-        `P1 = ${(P1/1000).toFixed(1)} kPa\n` +
-        `\nTHROAT\n` +
-        `v2 = ${v2.toFixed(2)} m/s\n` +
-        `P2 = ${(P2/1000).toFixed(1)} kPa\n` +
-        `\nOUTLET\n` +
-        `v3 = ${v3.toFixed(2)} m/s\n` +
-        `P3 = ${(P3/1000).toFixed(1)} kPa\n` +
-        `\nΔP (1-2) = ${(dP/1000).toFixed(2)} kPa\n`;
-      const readoutEl = document.getElementById('readout');
-      if (readoutEl) readoutEl.textContent = text;
-    }
+      drawGrid();
 
-    function tick() {
-      state.time += 0.016;
-      if (state.playing) {
-        spawnParticles();
-        updateParticles();
+      switch (currentScenario) {
+        case 'venturi':
+          drawVenturi();
+          spawnParticles();
+          updateParticles();
+          drawParticles();
+          break;
+        case 'airfoil':
+          drawAirfoil();
+          break;
+        case 'spray':
+          drawSpray();
+          break;
+        case 'pipe':
+          drawPipe();
+          spawnParticles();
+          updateParticles();
+          drawParticles();
+          break;
       }
-      draw();
-      updateReadout();
-      requestAnimationFrame(tick);
+
+      updateStats();
+      time += 0.016;
+      requestAnimationFrame(draw);
     }
 
-    // UI bindings
-    // (Event listeners defined below with new controls)
-    const r1Input = document.getElementById('r1');
-    const r2Input = document.getElementById('r2');
-    const r3Input = document.getElementById('r3');
-    const flowInput = document.getElementById('flow');
-    const rhoInput = document.getElementById('rho');
-    const dhInput = document.getElementById('dh');
-    const bgSelect = document.getElementById('bgTheme');
-    const playPauseBtn = document.getElementById('playPause');
-    const resetBtn = document.getElementById('reset');
-
-    function updateLabels() {
-      document.getElementById('r1Label').textContent = r1Input.value + ' cm';
-      document.getElementById('r2Label').textContent = r2Input.value + ' cm';
-      document.getElementById('r3Label').textContent = r3Input.value + ' cm';
-      document.getElementById('flowLabel').textContent = parseFloat(flowInput.value).toFixed(1) + ' L/s';
-      document.getElementById('rhoLabel').textContent = rhoInput.value + ' kg/m³';
-      document.getElementById('dhLabel').textContent = parseFloat(dhInput.value).toFixed(1) + ' m';
-    }
-
-    r1Input.addEventListener('input', () => { state.r1 = parseFloat(r1Input.value); updateLabels(); });
-    r2Input.addEventListener('input', () => { state.r2 = parseFloat(r2Input.value); updateLabels(); });
-    r3Input.addEventListener('input', () => { state.r3 = parseFloat(r3Input.value); updateLabels(); });
-    flowInput.addEventListener('input', () => { state.flowRate = parseFloat(flowInput.value); updateLabels(); });
-    rhoInput.addEventListener('input', () => { state.density = parseFloat(rhoInput.value); updateLabels(); });
-    dhInput.addEventListener('input', () => { state.heightDiff = parseFloat(dhInput.value); updateLabels(); });
-    bgSelect.addEventListener('change', () => { state.bgTheme = bgSelect.value; });
-
-    playPauseBtn.addEventListener('click', () => {
-      state.playing = !state.playing;
-      playPauseBtn.innerHTML = state.playing ? '<span>⏸</span> Pause' : '<span>▶</span> Play';
-    });
-
-    resetBtn.addEventListener('click', () => {
-      state.particles = [];
-      state.r1 = 3;
-      state.r2 = 1.5;
-      state.r3 = 3;
-      state.flowRate = 2;
-      state.density = 1000;
-      state.heightDiff = 0;
-      r1Input.value = 3;
-      r2Input.value = 1.5;
-      r3Input.value = 3;
-      flowInput.value = 2;
-      rhoInput.value = 1000;
-      dhInput.value = 0;
-      updateLabels();
-    });
-
-    updateLabels();
-    tick();
-
-    function copyFormula(el) {
-      const text = el.querySelector('.formula-main').textContent.trim();
-      navigator.clipboard.writeText(text).then(() => {
-        el.classList.add('copied');
-        setTimeout(() => el.classList.remove('copied'), 1500);
+    scenarioBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        scenarioBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentScenario = btn.dataset.scenario;
+        particles = [];
       });
-    }
+    });
+
+    flowSpeedSlider.addEventListener('input', (e) => {
+      flowSpeed = parseFloat(e.target.value);
+      document.getElementById('valFlowSpeed').textContent = flowSpeed.toFixed(1) + ' m/s';
+    });
+
+    constrictionSlider.addEventListener('input', (e) => {
+      constrictionRatio = parseInt(e.target.value) / 100;
+      document.getElementById('valConstriction').textContent = e.target.value + '%';
+    });
+
+    densitySelect.addEventListener('change', (e) => {
+      density = parseInt(e.target.value);
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    resizeCanvas();
+    draw();
   </script>
 </body>
 </html>
