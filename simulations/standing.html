@@ -306,12 +306,30 @@
     let time = 0;
 
     const mu = 0.01;
+    const L_MIN = 1;
+    const L_MAX = 10;
+
+    let canvasScale = 1;
 
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * 2;
-      canvas.height = rect.height * 2;
-      ctx.scale(2, 2);
+      const dpr = window.devicePixelRatio || 1;
+      canvasScale = dpr;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+
+    function getCanvasSize() {
+      return { w: canvas.width / canvasScale, h: canvas.height / canvasScale };
+    }
+
+    function getLengthPx(w, margin) {
+      const full = w - margin * 2;
+      const t = Math.min(1, Math.max(0, (L - L_MIN) / (L_MAX - L_MIN)));
+      const minFactor = 0.45;
+      return full * (minFactor + (1 - minFactor) * t);
     }
 
     function getWaveSpeed() {
@@ -339,8 +357,7 @@
     }
 
     function drawGrid() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       ctx.strokeStyle = 'rgba(106, 215, 255, 0.04)';
       ctx.lineWidth = 1;
       for (let x = 0; x < w; x += 40) {
@@ -358,64 +375,65 @@
     }
 
     function drawBoundary() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const y = h / 2 + 100;
+      const lengthPx = getLengthPx(w, margin);
+      const startX = margin;
+      const endX = margin + lengthPx;
 
       ctx.fillStyle = '#ff6b6b';
-      ctx.fillRect(margin - 10, y - 5, 20, 10);
-      ctx.fillRect(w - margin - 10, y - 5, 20, 10);
+      ctx.fillRect(startX - 10, y - 5, 20, 10);
+      ctx.fillRect(endX - 10, y - 5, 20, 10);
 
       ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
       ctx.font = 'bold 11px IBM Plex Sans';
       ctx.textAlign = 'center';
-      ctx.fillText('Fixed', margin, y + 25);
+      ctx.fillText('Fixed', startX, y + 25);
       if (waveType === 'string') {
-        ctx.fillText('End', margin, y + 38);
+        ctx.fillText('End', startX, y + 38);
       }
       ctx.textAlign = 'left';
 
       if (waveType === 'closed') {
         ctx.fillStyle = '#ff6b6b';
-        ctx.fillRect(w - margin - 10, y - 100, 20, 100);
+        ctx.fillRect(endX - 10, y - 100, 20, 100);
         ctx.fillStyle = 'rgba(255, 107, 107, 0.5)';
-        ctx.fillRect(w - margin - 10, y - 100, 20, 5);
+        ctx.fillRect(endX - 10, y - 100, 20, 5);
         
         ctx.fillStyle = 'rgba(255, 107, 107, 0.8)';
         ctx.font = 'bold 11px IBM Plex Sans';
         ctx.textAlign = 'center';
-        ctx.fillText('Closed', w - margin, y + 25);
+        ctx.fillText('Closed', endX, y + 25);
         ctx.textAlign = 'left';
       } else if (waveType === 'open') {
         ctx.strokeStyle = 'rgba(106, 215, 255, 0.5)';
         ctx.setLineDash([5, 5]);
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(w - margin, y - 80);
-        ctx.lineTo(w - margin, y + 5);
+        ctx.moveTo(endX, y - 80);
+        ctx.lineTo(endX, y + 5);
         ctx.stroke();
         ctx.setLineDash([]);
 
         ctx.fillStyle = 'rgba(106, 215, 255, 0.8)';
         ctx.font = 'bold 11px IBM Plex Sans';
         ctx.textAlign = 'center';
-        ctx.fillText('Open', w - margin, y + 25);
+        ctx.fillText('Open', endX, y + 25);
         ctx.textAlign = 'left';
       }
     }
 
     function drawStandingWave() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const centerY = h / 2 + 100;
-      const lengthPx = w - margin * 2;
+      const lengthPx = getLengthPx(w, margin);
 
       const k = 2 * Math.PI / (L * 40);
       const w_omega = 2 * Math.PI * getFrequency() * 0.5;
 
-      const gradient = ctx.createLinearGradient(margin, 0, w - margin, 0);
+      const gradient = ctx.createLinearGradient(margin, 0, margin + lengthPx, 0);
       gradient.addColorStop(0, '#a78bfa');
       gradient.addColorStop(0.5, '#6ad7ff');
       gradient.addColorStop(1, '#a78bfa');
@@ -446,11 +464,10 @@
     }
 
     function drawTravelingWaves() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const centerY = h / 2 + 100;
-      const lengthPx = w - margin * 2;
+      const lengthPx = getLengthPx(w, margin);
 
       const k = 2 * Math.PI / (L * 40);
       const w_omega = 2 * Math.PI * getFrequency() * 0.5;
@@ -487,11 +504,10 @@
     }
 
     function drawNodesAndAntinodes() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const centerY = h / 2 + 100;
-      const lengthPx = w - margin * 2;
+      const lengthPx = getLengthPx(w, margin);
 
       const nodes = getNodes();
       const antinodes = getAntinodes();
@@ -538,37 +554,62 @@
     }
 
     function drawLabels() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const centerY = h / 2 + 100;
 
+      const drawLabelBox = (text, x, y) => {
+        ctx.font = 'bold 14px IBM Plex Sans';
+        const paddingX = 8;
+        const paddingY = 4;
+        const width = ctx.measureText(text).width + paddingX * 2;
+        const height = 18 + paddingY * 2;
+        ctx.fillStyle = 'rgba(5, 8, 16, 0.75)';
+        ctx.strokeStyle = 'rgba(120, 150, 190, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(x - paddingX, y - paddingY - 12, width, height, 6);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#e9f2ff';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(text, x, y);
+      };
+
       ctx.fillStyle = '#e9f2ff';
+      const labelText = `L = ${L.toFixed(1)} m`;
       ctx.font = 'bold 14px IBM Plex Sans';
-      ctx.fillText(`L = ${L.toFixed(1)} m`, w / 2 - 30, centerY + 70);
+      const labelWidth = ctx.measureText(labelText).width;
+      const lengthPx = getLengthPx(w, margin);
+      const labelX = margin + lengthPx / 2 - labelWidth / 2;
+      drawLabelBox(labelText, labelX, centerY + 70);
 
       ctx.fillStyle = '#6ad7ff';
       ctx.font = '12px IBM Plex Sans';
-      ctx.fillText(`v = ${getWaveSpeed().toFixed(1)} m/s`, 20, 30);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`v = ${getWaveSpeed().toFixed(1)} m/s`, 24, 18);
 
       ctx.fillStyle = '#a78bfa';
-      ctx.fillText(`Harmonic n = ${n}`, 20, 55);
+      ctx.fillText(`Harmonic n = ${n}`, 24, 40);
 
       ctx.fillStyle = '#22c55e';
       ctx.font = '11px IBM Plex Sans';
       ctx.textAlign = 'right';
+      ctx.textBaseline = 'top';
       ctx.fillText('A = Antinode', w - 20, 30);
       ctx.fillStyle = '#ff6b6b';
       ctx.fillText('N = Node', w - 20, 48);
       ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
     }
 
     function drawEnvelope() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       const margin = 60;
       const centerY = h / 2 + 100;
-      const lengthPx = w - margin * 2;
+      const lengthPx = getLengthPx(w, margin);
 
       const k = 2 * Math.PI / (L * 40);
 
@@ -619,8 +660,7 @@
     }
 
     function draw() {
-      const w = canvas.width / 2;
-      const h = canvas.height / 2;
+      const { w, h } = getCanvasSize();
       ctx.clearRect(0, 0, w, h);
 
       ctx.fillStyle = '#050810';
